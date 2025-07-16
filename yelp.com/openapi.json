@@ -1,126 +1,446 @@
 {
-	"openapi": "3.0.0",
-	"info": {
-		"title": "Yelp V3",
-		"description": "Yelp's Fusion API allows you to get the best local business information and user reviews of over million businesses in 32 countries",
-		"termsOfService": "",
-		"version": "",
-		"contact": {
-			"name": "No Contact",
-			"url": "http://example.com",
-			"email": "email@example.com"
-		},
-		"license": {
-			"name": "No License",
-			"url": "http://example.com"
-		}
-	},
-	"servers": [{
-		"url": "httpsapi.yelp.com/v3"
-	}],
-	"paths": {
-		"/businesses/search": {
-			"get": {
-				"summary": "Get Businesses Search",
-				"description": "Get businesses search.",
-				"operationId": "getBusinessesSearch",
-				"parameters": [{
-					"name": "term",
-					"in": "query",
-					"description": "",
-					"schema": {
-						"type": ""
-					}
-				}]
-			}
-		},
-		"/businesses/{id}": {
-			"get": {
-				"summary": "Get Businesses",
-				"description": "Get businesses.",
-				"operationId": "getBusinesses",
-				"parameters": [{
-					"name": "id",
-					"in": "path",
-					"description": "",
-					"schema": {
-						"type": ""
-					}
-				}]
-			}
-		},
-		"/businesses/{id}/reviews": {
-			"get": {
-				"summary": "Get Businesses Reviews",
-				"description": "Get businesses reviews.",
-				"operationId": "getBusinessesReviews",
-				"parameters": [{
-					"name": "id",
-					"in": "path",
-					"description": "",
-					"schema": {
-						"type": ""
-					}
-				}]
-			}
-		},
-		"/autocomplete": {
-			"get": {
-				"summary": "Get Autocomplete",
-				"description": "Get autocomplete.",
-				"operationId": "getAutocomplete",
-				"parameters": [{
-					"name": "text",
-					"in": "query",
-					"description": "",
-					"schema": {
-						"type": ""
-					}
-				}]
-			}
-		},
-		"/businesses/search/phone": {
-			"get": {
-				"summary": "Get Businesses Search Phone",
-				"description": "Get businesses search phone.",
-				"operationId": "getBusinessesSearchPhone",
-				"parameters": [{
-					"name": "phone",
-					"in": "query",
-					"description": "",
-					"schema": {
-						"type": ""
-					}
-				}]
-			}
-		},
-		"/transactions/delivery/search": {
-			"get": {
-				"summary": "Get Transactions Delivery Search",
-				"description": "Get transactions delivery search.",
-				"operationId": "getTransactionsDeliverySearch",
-				"parameters": []
-			}
-		}
-	},
-	"components": {
-		"schemas": {
-			"term": {
-				"type": "",
-				"description": ""
-			},
-			"id": {
-				"type": "",
-				"description": ""
-			},
-			"text": {
-				"type": "",
-				"description": ""
-			},
-			"phone": {
-				"type": "",
-				"description": ""
-			}
-		}
-	}
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Yelp Business Search and Reviews API",
+    "description": "API for searching businesses, retrieving business details, and accessing business reviews. Provides endpoints to search businesses by terms, get specific business information by ID, and fetch reviews for individual businesses.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Yelp",
+      "url": "https://docs.developer.yelp.com/",
+      "email": "email@example.com"
+    },
+    "license": {
+      "name": "No License",
+      "url": "http://example.com"
+    },
+    "x-jentic-source-url": "https://raw.githubusercontent.com/sophie-jentic/openapi-specs/refs/heads/main/yelp.com/openapi.json"
+  },
+  "servers": [
+    {
+      "url": "https://api.yelp.com/v3"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Business": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "alias": { "type": "string" },
+          "name": { "type": "string" },
+          "image_url": { "type": "string", "format": "uri" },
+          "is_closed": { "type": "boolean" },
+          "url": { "type": "string", "format": "uri" },
+          "review_count": { "type": "integer" },
+          "rating": { "type": "number", "format": "float" },
+          "coordinates": { "$ref": "#/components/schemas/Coordinates" },
+          "transactions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "price": { "type": "string" },
+          "location": { "$ref": "#/components/schemas/Location" },
+          "phone": { "type": "string" },
+          "display_phone": { "type": "string" },
+          "distance": {
+            "type": "number",
+            "format": "float",
+            "description": "Meters from search center."
+          }
+        },
+        "required": ["id", "name", "review_count", "rating"]
+      },
+      "Coordinates": {
+        "type": "object",
+        "properties": {
+          "latitude": { "type": "number", "format": "float" },
+          "longitude": { "type": "number", "format": "float" }
+        }
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "address1": { "type": "string" },
+          "address2": { "type": "string" },
+          "address3": { "type": "string" },
+          "city": { "type": "string" },
+          "zip_code": { "type": "string" },
+          "country": { "type": "string" },
+          "state": { "type": "string" },
+          "display_address": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "BusinessSearch": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "businesses": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Business" }
+          },
+          "region": {
+            "type": "object",
+            "properties": {
+              "center": { "$ref": "#/components/schemas/Coordinates" }
+            }
+          }
+        }
+      },
+      "PhoneSearch": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "businesses": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Business" }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "profile_url": { "type": "string", "format": "uri" },
+          "image_url": { "type": "string", "format": "uri" },
+          "name": { "type": "string" }
+        }
+      },
+      "Term": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string" }
+        }
+      },
+      "BusinessSuggestion": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "Autocomplete": {
+        "type": "object",
+        "properties": {
+          "terms": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Term" }
+          },
+          "businesses": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BusinessSuggestion" }
+          },
+          "categories": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Category" }
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "alias": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      },
+      "TransactionSearch": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "businesses": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Business" }
+          }
+        }
+      }
+    },
+    "paths": {
+      "/businesses/search": {
+        "get": {
+          "summary": "Search Businesses",
+          "description": "Returns a list of businesses based on the provided search criteria. Either `location` or both `latitude` and `longitude` are required.",
+          "operationId": "getBusinessesSearch",
+          "security": [
+            { "BearerAuth": [] }
+          ],
+          "parameters": [
+            {
+              "name": "term",
+              "in": "query",
+              "description": "Optional. Search term (e.g. 'food', 'restaurants'). Accepts business names such as 'Starbucks'.",
+              "schema": { "type": "string" }
+            },
+            {
+              "name": "location",
+              "in": "query",
+              "description": "Required if latitude/longitude not provided. Address, neighborhood, city, state, or zip, optional country.",
+              "schema": { "type": "string" }
+            },
+            {
+              "name": "latitude",
+              "in": "query",
+              "description": "Required if location not provided. WGS-84 latitude.",
+              "schema": {
+                "type": "number",
+                "format": "float",
+                "minimum": -90,
+                "maximum": 90
+              }
+            },
+            {
+              "name": "longitude",
+              "in": "query",
+              "description": "Required if location not provided. WGS-84 longitude.",
+              "schema": {
+                "type": "number",
+                "format": "float",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            {
+              "name": "radius",
+              "in": "query",
+              "description": "Optional. Search radius in meters (max 40000).",
+              "schema": {
+                "type": "integer",
+                "maximum": 40000
+              }
+            },
+            {
+              "name": "categories",
+              "in": "query",
+              "description": "Optional. Comma-delimited list of category aliases (e.g. 'bars,french').",
+              "schema": { "type": "string" }
+            },
+            {
+              "name": "locale",
+              "in": "query",
+              "description": "Optional. Locale code (default 'en_US').",
+              "schema": { "type": "string", "default": "en_US" }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Optional. Number of results to return (default 20).",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 20
+              }
+            },
+            {
+              "name": "offset",
+              "in": "query",
+              "description": "Optional. Offset the list of returned business results.",
+              "schema": { "type": "integer", "minimum": 0 }
+            },
+            {
+              "name": "sort_by",
+              "in": "query",
+              "description": "Optional. Sort mode: best_match, rating, review_count or distance.",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "best_match",
+                  "rating",
+                  "review_count",
+                  "distance"
+                ],
+                "default": "best_match"
+              }
+            },
+            {
+              "name": "price",
+              "in": "query",
+              "description": "Optional. Comma-delimited pricing levels: 1=$,2=$$,3=$$$,4=$$$$.",
+              "schema": {
+                "type": "string",
+                "pattern": "^[1-4](,[1-4])*$"
+              }
+            },
+            {
+              "name": "open_now",
+              "in": "query",
+              "description": "Optional. When true, only return businesses open now.",
+              "schema": { "type": "boolean" }
+            },
+            {
+              "name": "open_at",
+              "in": "query",
+              "description": "Optional. UNIX timestamp to filter for businesses open at that time.",
+              "schema": { "type": "integer" }
+            },
+            {
+              "name": "attributes",
+              "in": "query",
+              "description": "Optional. Comma-delimited list of extra filters (e.g. 'hot_and_new').",
+              "schema": { "type": "string" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "A list of businesses and metadata.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/BusinessSearch" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/businesses/search/phone": {
+        "get": {
+          "summary": "Phone Search",
+          "description": "Search businesses by phone number.",
+          "operationId": "getBusinessesSearchPhone",
+          "security": [
+            { "BearerAuth": [] }
+          ],
+          "parameters": [
+            {
+              "name": "phone",
+              "in": "query",
+              "description": "Required. Phone number with country code (e.g. '+14159083801').",
+              "required": true,
+              "schema": { "type": "string" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Businesses matching the phone number.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/PhoneSearch" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/businesses/{id}": {
+        "get": {
+          "summary": "Business Details",
+          "description": "Retrieve detailed business information.",
+          "operationId": "getBusinessDetails",
+          "security": [
+            { "BearerAuth": [] }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "Yelp business ID.",
+              "required": true,
+              "schema": { "type": "string" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Detailed business content.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Business" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/autocomplete": {
+        "get": {
+          "summary": "Autocomplete",
+          "description": "Returns autocomplete suggestions for terms, businesses, and categories.",
+          "operationId": "getAutocomplete",
+          "security": [
+            { "BearerAuth": [] }
+          ],
+          "parameters": [
+            {
+              "name": "text",
+              "in": "query",
+              "description": "Required. Text to return autocomplete suggestions for.",
+              "required": true,
+              "schema": { "type": "string" }
+            },
+            {
+              "name": "latitude",
+              "in": "query",
+              "description": "Optional. Latitude for business suggestions.",
+              "schema": { "type": "number", "format": "float" }
+            },
+            {
+              "name": "longitude",
+              "in": "query",
+              "description": "Optional. Longitude for business suggestions.",
+              "schema": { "type": "number", "format": "float" }
+            },
+            {
+              "name": "locale",
+              "in": "query",
+              "description": "Optional. Locale code (default 'en_US').",
+              "schema": { "type": "string", "default": "en_US" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Autocomplete results.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Autocomplete" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/transactions/delivery/search": {
+        "get": {
+          "summary": "Food Delivery Search",
+          "description": "Returns businesses that support food delivery.",
+          "operationId": "getDeliverySearch",
+          "parameters": [
+            {
+              "name": "location",
+              "in": "query",
+              "description": "Required if latitude/longitude not provided. Address to deliver to.",
+              "schema": { "type": "string" }
+            },
+            {
+              "name": "latitude",
+              "in": "query",
+              "description": "Required if location not provided. Latitude to deliver to.",
+              "schema": { "type": "number", "format": "float" }
+            },
+            {
+              "name": "longitude",
+              "in": "query",
+              "description": "Required if location not provided. Longitude to deliver to.",
+              "schema": { "type": "number", "format": "float" }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Businesses supporting food delivery.",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/TransactionSearch" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
