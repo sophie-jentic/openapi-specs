@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: Coinbase App API (v2) — Accounts, Addresses & Transactions
+  version: 1.1.0
+  description: |
+    This specification models the Coinbase **App** v2 endpoints for users, accounts,
+    addresses and transactions exposed under `https://api.coinbase.com/v2`.
+
+    Versioning:
+    All requests should include the `CB-VERSION` header (YYYY-MM-DD). See the
+    `CB-VERSION` header parameter defined below.
+
+    Pagination:
+    List endpoints use cursor-style pagination with `starting_after`, `ending_before`,
+    and `limit`.
+
+servers:
+  - url: https://api.coinbase.com/v2
+    description: Coinbase App v2 (production)
+
+tags:
+  - name: user
+    description: Current user and public user resources
+  - name: accounts
+    description: Accounts (wallet, fiat, vault)
+  - name: addresses
+    description: Onchain addresses for an account
+  - name: transactions
+    description: Account transactions and money requests
+
+externalDocs:
+  description: Coinbase Exchange docs (separate trading API)
+  url: https://docs.cdp.coinbase.com/exchange/introduction/welcome
+
+components:
+  securitySchemes:
+    CoinbaseOAuth2:
+      type: oauth2
+      description: |
+        OAuth2 Authorization Code — use to access other Coinbase users' accounts.
+        Authorization: https://login.coinbase.com/oauth2/auth
+        Token: https://login.coinbase.com/oauth2/token
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.coinbase.com/oauth2/auth
+          tokenUrl: https://login.coinbase.com/oauth2/token
+          scopes:
+            wallet:user:read: Read basic user information
+            wallet:user:email: Read the user’s email
+            wallet:accounts:read: Read accounts
+            wallet:addresses:read: Read addresses
+            wallet:transactions:read: Read transactions
+    CoinbaseApiKeyJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer **JWT** signed with your CDP API Key (ES256). Recommended when
+        accessing **your own** Coinbase App account via API Key auth.
+        See Coinbase App API Key Authentication for details.
+
+  parameters:
+    CBVersion:
+      in: header
+      name: CB-VERSION
+      required: false
+      schema:
+        type: string
+        pattern: '^\d{4}-\d{2}-\d{2}$'
+        example: '2025-04-03'
+      description: API version date (YYYY-MM-DD).
+    CB2FAToken:
+      in: header
+      name: CB-2FA-TOKEN
+      required: false
+      schema:
+        type: string
+      description: Two-factor token required for certain money-sending operations.
+    AccountId:
+      in: path
+      name: account_id
+      required: true
+      schema:
+        type: string
+      description: The account ID (UUID) or special keywords like `primary` for some endpoints.
+    AddressId:
+      in: path
+      name: address_id
+      required: true
+      schema:
+        type: string
+      description: The address ID or blockchain address associated with the account.
+    TransactionId:
+      in: path
+      name: transaction_id
+      required: true
+      schema:
+        type: string
+      description: The transaction ID.
+    ListLimit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 25
+      description: Max number of items to return.
+    StartingAfter:
+      in: query
+      name: starting_after
+      required: false
+      schema:
+        type: string
+      description: Return items **after** this resource ID (cursor).
+    EndingBefore:
+      in: query
+      name: ending_before
+      required: false
+      schema:
+        type: string
+      description: Return items **before** this resource ID (cursor).
+
+  schemas:
+    Money:
+      type: object
+      properties:
+        amount:
+          type: string
+          example: "39.59000000"
+        currency:
+          type: string
+          example: BTC
+    Pagination:
+      type: object
+      properties:
+        ending_before: { type: string, nullable: true }
+        starting_after: { type: string, nullable: true }
+        previous_ending_before: { type: string, nullable: true }
+        next_starting_after: { type: string, nullable: true }
+        limit: { type: integer, example: 25 }
+        order: { type: string, enum: [asc, desc], example: desc }
+        previous_uri: { type: string, nullable: true }
+        next_uri: { type: string, nullable: true }
+    Currency:
+      type: object
+      properties:
+        code: { type: string, example: BTC }
+        name: { type: string, example: Bitcoin }
+        type: { type: string, example: crypto }
+        exponent: { type: integer, example: 8 }
+        slug: { type: string, example: bitcoin }
+    Account:
+      type: object
+      required: [id, type, balance, resource, resource_path]
+      properties:
+        id: { type: string, example: "2bbf394c-193b-5b2a-9155-3b4732659ede" }
+        name: { type: string, example: "My Wallet" }
+        primary: { type: boolean, example: true }
+        type: { type: string, enum: [wallet, fiat, vault], example: wallet }
+        currency: { $ref: '#/components/schemas/Currency' }
+        balance: { $ref: '#/components/schemas/Money' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        resource: { type: string, example: account }
+        resource_path: { type: string, example: "/v2/accounts/2bbf394c-..."}
+    Address:
+      type: object
+      properties:
+        id: { type: string, example: "dd3183eb-af1d-5f5d-a90d-cbff946435ff" }
+        address: { type: string, example: "mswUGcPHp1YnkLCgF1TtoryqSc5E9Q8xFa" }
+        name: { type: string, nullable: true, example: "One off payment" }
+        network: { type: string, example: bitcoin }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        resource: { type: string, example: address }
+        resource_path: { type: string, example: "/v2/accounts/{account_id}/addresses/{address_id}" }
+    NetworkInfo:
+      type: object
+      properties:
+        status: { type: string, enum: [off_blockchain, pending, confirmed, unconfirmed] }
+        transaction_fee: { $ref: '#/components/schemas/Money' }
+        transaction_amount: { $ref: '#/components/schemas/Money' }
+        network_name: { type: string, example: "bitcoin" }
+        hash: { type: string, nullable: true }
+    Transaction:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, example: send }
+        status: { type: string, example: pending }
+        amount: { $ref: '#/components/schemas/Money' }
+        native_amount: { $ref: '#/components/schemas/Money' }
+        description: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        resource: { type: string, example: transaction }
+        resource_path: { type: string }
+        idem: { type: string, nullable: true }
+        network: { $ref: '#/components/schemas/NetworkInfo' }
+        to:
+          type: object
+          nullable: true
+          properties:
+            resource: { type: string, example: ethereum_address }
+            address: { type: string, example: "0xabc" }
+        details:
+          type: object
+          nullable: true
+          additionalProperties: true
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        username: { type: string, nullable: true }
+        resource: { type: string, example: user }
+        resource_path: { type: string }
+        avatar_url: { type: string, nullable: true }
+        profile_location: { type: string, nullable: true }
+        profile_bio: { type: string, nullable: true }
+    Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, example: invalid_request }
+              message: { type: string, example: "Bad request" }
+              url: { type: string, nullable: true }
+
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+security:
+  # Allow either OAuth2 or API-key JWT for most read endpoints
+  - CoinbaseOAuth2: []
+  - CoinbaseApiKeyJWT: []
+
+paths:
+  /user:
+    get:
+      tags: [user]
+      summary: Show current user
+      operationId: getCurrentUser
+      description: |
+        Get current user’s public information. Use scopes `wallet:user:email` and
+        `wallet:user:read` to access email/private fields.
+      parameters:
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+
+  /user/auth:
+    get:
+      tags: [user]
+      summary: Show authorization information
+      operationId: getAuthorizationInfo
+      description: Get current user’s authorization information including granted scopes and limits (OAuth2).
+      parameters:
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Authorization info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+
+  /users/{user_id}:
+    get:
+      tags: [user]
+      summary: Show a user (public)
+      operationId: getUserById
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Public user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/User' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+
+  /accounts:
+    get:
+      tags: [accounts]
+      summary: List accounts
+      operationId: listAccounts
+      description: List the current user’s accounts to which the auth method has access.
+      parameters:
+        - $ref: '#/components/parameters/ListLimit'
+        - $ref: '#/components/parameters/StartingAfter'
+        - $ref: '#/components/parameters/EndingBefore'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Account' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+
+  /accounts/{account_id}:
+    get:
+      tags: [accounts]
+      summary: Show an account
+      operationId: getAccount
+      description: Show current user’s account by ID (or `primary` for some currencies).
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Account' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+
+  /accounts/{account_id}/primary:
+    post:
+      tags: [accounts]
+      summary: Set account as primary
+      operationId: setAccountPrimary
+      description: Promote an account to be the primary wallet account for its currency.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Primary account set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Account' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+
+  /accounts/{account_id}/addresses:
+    get:
+      tags: [addresses]
+      summary: List addresses
+      operationId: listAccountAddresses
+      description: |
+        Lists onchain receive addresses for an account.
+        **Important:** treat addresses as one-time use.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/ListLimit'
+        - $ref: '#/components/parameters/StartingAfter'
+        - $ref: '#/components/parameters/EndingBefore'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Address' }
+
+  /accounts/{account_id}/addresses/{address_id}:
+    get:
+      tags: [addresses]
+      summary: Show an address
+      operationId: getAddress
+      description: Show an individual address for an account.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/AddressId'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Address
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Address' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+
+  /accounts/{account_id}/addresses/{address_id}/transactions:
+    get:
+      tags: [transactions]
+      summary: List an address’s transactions
+      operationId: listAddressTransactions
+      description: List transactions that have been sent to a specific address belonging to the account.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/AddressId'
+        - $ref: '#/components/parameters/ListLimit'
+        - $ref: '#/components/parameters/StartingAfter'
+        - $ref: '#/components/parameters/EndingBefore'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Transactions for address
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Transaction' }
+
+  /accounts/{account_id}/transactions:
+    get:
+      tags: [transactions]
+      summary: List transactions
+      operationId: listAccountTransactions
+      description: List an account’s transactions.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/ListLimit'
+        - $ref: '#/components/parameters/StartingAfter'
+        - $ref: '#/components/parameters/EndingBefore'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Transaction' }
+
+  /accounts/{account_id}/transactions/{transaction_id}:
+    get:
+      tags: [transactions]
+      summary: Show a transaction
+      operationId: getTransaction
+      description: Show an individual transaction for an account.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Transaction' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
+
+  /accounts/{account_id}/transactions/{transaction_id}/complete:
+    post:
+      tags: [transactions]
+      summary: Complete request money
+      operationId: completeMoneyRequest
+      description: |
+        Lets the **recipient** of a money request complete the request by sending funds
+        to the requester. Only the original recipient can complete.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/CB2FAToken'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Completion accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Transaction' }
+        '401': { $ref: '#/components/responses/UnauthorizedError' }
+        '403': { $ref: '#/components/responses/ForbiddenError' }
+
+  /accounts/{account_id}/transactions/{transaction_id}/resend:
+    post:
+      tags: [transactions]
+      summary: Re-send request money
+      operationId: resendMoneyRequest
+      description: Resend a pending money request; triggers a fresh notification to the recipient.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/CBVersion'
+      responses:
+        '200':
+          description: Request re-sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Transaction' }
+        '404': { $ref: '#/components/responses/NotFoundError' }
