@@ -3,7 +3,7 @@
     "info": {
       "version": "7.0.0",
       "title": "Xero OAuth 2 Identity Service API",
-      "description": "These endpoints are related to managing authentication tokens and identity for Xero API. IMPORTANT: Xero's OAuth flow requires two steps: (1) User authorizes your app (OAuth token obtained), (2) User must explicitly select which Xero organisation (tenant) to connect. Client ID and client secret do NOT automatically bind a tenant. After authorization, use GET /Connections to retrieve the tenantId(s) that the user connected. Without a tenant connection, you'll have a valid OAuth token but Accounting API calls will return 403 errors.",
+      "description": "These endpoints are related to managing authentication tokens and identity for Xero API. IMPORTANT: Xero's OAuth flow requires two steps: (1) User authorizes your app (OAuth token obtained), (2) User must explicitly select which Xero organisation (tenant) to connect. Client ID and client secret do NOT automatically bind a tenant. The tenant types available for selection depend on the scopes your app requests during authorization. CRITICAL: You can only request scopes for a single tenant type at a time - you cannot mix accounting scopes with practice manager scopes in one OAuth flow. If you need multiple tenant types, users must complete separate authentication flows for each. After authorization, use GET /Connections to retrieve the tenantId(s) that the user connected. Connections remain active indefinitely, even if access tokens expire. Without a tenant connection, you'll have a valid OAuth token but Accounting API calls will return 403 errors. Reference: https://developer.xero.com/documentation/guides/oauth2/tenants",
       "termsOfService": "https://developer.xero.com/xero-developer-platform-terms-conditions/",
       "contact": {
         "name": "Xero Platform Team",
@@ -33,7 +33,7 @@
           "tags": [
             "identity"
           ],
-          "description": "Retrieves the connections (tenant bindings) for the authenticated user. A Connection represents a link between your app and a Xero organisation (tenant) that was authorized by the user. After OAuth authorization, users must explicitly select which tenant(s) to connect. This endpoint returns all connected tenants for the current user. Use the tenantId from the Connection objects as the xero-tenant-id header value when making Accounting API requests. If this returns an empty array, no tenants are connected and Accounting API calls will fail with 403 errors.",
+          "description": "Retrieves the connections (tenant bindings) for the authenticated user. A Connection represents a link between your app and a Xero organisation (tenant) that was authorized by the user. After OAuth authorization, users must explicitly select which tenant(s) to connect. Connections are created for each unique user-tenant combination and remain active indefinitely, even if access tokens expire. This endpoint returns all connected tenants for the current user. Use the tenantId from the Connection objects as the xero-tenant-id header value when making Accounting API requests. If this returns an empty array, no tenants are connected and Accounting API calls will fail with 403 errors. Note: Uncertified apps are limited to 25 tenant connections total. Reference: https://developer.xero.com/documentation/guides/oauth2/tenants",
           "operationId": "getConnections",
           "summary": "Retrieves the connections for this user",
           "parameters": [
@@ -212,7 +212,7 @@
         },
         "OAuth2": {
           "type": "oauth2",
-          "description": "Xero uses a two-step OAuth flow: (1) User authorizes your app and grants permissions, (2) User must explicitly select which Xero organisation (tenant) to connect. Client ID and client secret alone do NOT bind a tenant. After authorization, call GET /Connections to retrieve connected tenants. Without a tenant connection, you'll have a valid OAuth token but Accounting API calls will return 403 errors.",
+          "description": "Xero uses a two-step OAuth flow: (1) User authorizes your app and grants permissions, (2) User must explicitly select which Xero organisation (tenant) to connect. Client ID and client secret alone do NOT bind a tenant. The tenant types available depend on the scopes requested - you can only request scopes for a single tenant type at a time (cannot mix accounting scopes with practice manager scopes in one flow). After authorization, call GET /Connections to retrieve connected tenants. Connections remain active indefinitely, even if access tokens expire. Without a tenant connection, you'll have a valid OAuth token but Accounting API calls will return 403 errors. Reference: https://developer.xero.com/documentation/guides/oauth2/tenants",
           "flows": {
             "authorizationCode": {
               "authorizationUrl": "https://login.xero.com/identity/connect/authorize",
