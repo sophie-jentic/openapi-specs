@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Fulcrum API",
-    "description": "Fulcrum is a mobile data collection platform. The REST API allows you to programmatically manage records, forms, projects, and other objects.",
+    "description": "Fulcrum is a mobile data collection platform. The Fulcrum REST API allows you to programmatically create, read, update, and delete records, forms, and other objects in your Fulcrum account.",
     "version": "2.0.0",
     "contact": {
       "name": "Fulcrum",
@@ -12,7 +12,7 @@
   },
   "servers": [
     {
-      "url": "https://api.fulcrumapp.com",
+      "url": "https://api.fulcrumapp.com/api/v2",
       "description": "Fulcrum API v2"
     }
   ],
@@ -49,31 +49,27 @@
             "name": "page",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 1
             }
           },
           {
             "name": "per_page",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 50
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Successful response.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "records": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Record"
-                      }
-                    },
                     "current_page": {
                       "type": "integer"
                     },
@@ -82,17 +78,29 @@
                     },
                     "total_count": {
                       "type": "integer"
+                    },
+                    "per_page": {
+                      "type": "integer"
+                    },
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Record"
+                      }
                     }
                   }
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         },
         "description": "List records"
       },
       "post": {
-        "summary": "Create record",
+        "summary": "Create a record",
         "operationId": "createRecord",
         "tags": [
           "Records"
@@ -101,6 +109,7 @@
           {
             "name": "x-skipworkflows",
             "in": "header",
+            "description": "When true, does not trigger workflows.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -109,6 +118,7 @@
           {
             "name": "x-skipwebhooks",
             "in": "header",
+            "description": "When true, does not trigger webhooks.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -135,15 +145,30 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Record created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "$ref": "#/components/schemas/Record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error"
           }
         },
-        "description": "Create record"
+        "description": "Create a record"
       }
     },
     "/records/{id}": {
       "get": {
-        "summary": "Get record",
+        "summary": "Get a record",
         "operationId": "getRecord",
         "tags": [
           "Records"
@@ -160,13 +185,28 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "$ref": "#/components/schemas/Record"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
           }
         },
-        "description": "Get record"
+        "description": "Get a record"
       },
       "put": {
-        "summary": "Update record",
+        "summary": "Update a record",
         "operationId": "updateRecord",
         "tags": [
           "Records"
@@ -183,6 +223,7 @@
           {
             "name": "x-skipworkflows",
             "in": "header",
+            "description": "When true, does not trigger workflows.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -191,6 +232,7 @@
           {
             "name": "x-skipwebhooks",
             "in": "header",
+            "description": "When true, does not trigger webhooks.",
             "schema": {
               "type": "boolean",
               "default": false
@@ -217,13 +259,25 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Record updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "$ref": "#/components/schemas/Record"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "description": "Update record"
+        "description": "Update a record"
       },
       "delete": {
-        "summary": "Delete record",
+        "summary": "Delete a record",
         "operationId": "deleteRecord",
         "tags": [
           "Records"
@@ -240,10 +294,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete record"
+        "description": "Delete a record"
       }
     },
     "/records/{id}/history": {
@@ -265,7 +319,22 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Record history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Record"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "Get record history"
@@ -283,26 +352,43 @@
             "name": "page",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 1
             }
           },
           {
             "name": "per_page",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "default": 50
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "forms": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Form"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "List forms"
       },
       "post": {
-        "summary": "Create form",
+        "summary": "Create a form",
         "operationId": "createForm",
         "tags": [
           "Forms"
@@ -327,15 +413,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Form created."
           }
         },
-        "description": "Create form"
+        "description": "Create a form"
       }
     },
     "/forms/{id}": {
       "get": {
-        "summary": "Get form",
+        "summary": "Get a form",
         "operationId": "getForm",
         "tags": [
           "Forms"
@@ -352,13 +438,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get form"
+        "description": "Get a form"
       },
       "put": {
-        "summary": "Update form",
+        "summary": "Update a form",
         "operationId": "updateForm",
         "tags": [
           "Forms"
@@ -393,13 +479,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Form updated."
           }
         },
-        "description": "Update form"
+        "description": "Update a form"
       },
       "delete": {
-        "summary": "Delete form",
+        "summary": "Delete a form",
         "operationId": "deleteForm",
         "tags": [
           "Forms"
@@ -416,35 +502,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete form"
-      }
-    },
-    "/forms/{id}/history": {
-      "get": {
-        "summary": "Get form history",
-        "operationId": "getFormHistory",
-        "tags": [
-          "Forms"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "description": "Get form history"
+        "description": "Delete a form"
       }
     },
     "/projects": {
@@ -456,13 +517,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List projects"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create projects",
         "operationId": "createProjects",
         "tags": [
           "Projects"
@@ -479,15 +540,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create projects"
       }
     },
     "/projects/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get projects",
         "operationId": "getProjects",
         "tags": [
           "Projects"
@@ -504,13 +565,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get projects"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update projects",
         "operationId": "updateProjects",
         "tags": [
           "Projects"
@@ -537,13 +598,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update projects"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete projects",
         "operationId": "deleteProjects",
         "tags": [
           "Projects"
@@ -560,10 +621,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete projects"
       }
     },
     "/choice_lists": {
@@ -575,13 +636,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List choice lists"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create choice lists",
         "operationId": "createChoiceLists",
         "tags": [
           "Choice Lists"
@@ -598,15 +659,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create choice lists"
       }
     },
     "/choice_lists/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get choice lists",
         "operationId": "getChoiceLists",
         "tags": [
           "Choice Lists"
@@ -623,13 +684,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get choice lists"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update choice lists",
         "operationId": "updateChoiceLists",
         "tags": [
           "Choice Lists"
@@ -656,13 +717,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update choice lists"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete choice lists",
         "operationId": "deleteChoiceLists",
         "tags": [
           "Choice Lists"
@@ -679,10 +740,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete choice lists"
       }
     },
     "/classification_sets": {
@@ -694,13 +755,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List classification sets"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create classification sets",
         "operationId": "createClassificationSets",
         "tags": [
           "Classification Sets"
@@ -717,15 +778,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create classification sets"
       }
     },
     "/classification_sets/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get classification sets",
         "operationId": "getClassificationSets",
         "tags": [
           "Classification Sets"
@@ -742,13 +803,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get classification sets"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update classification sets",
         "operationId": "updateClassificationSets",
         "tags": [
           "Classification Sets"
@@ -775,13 +836,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update classification sets"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete classification sets",
         "operationId": "deleteClassificationSets",
         "tags": [
           "Classification Sets"
@@ -798,10 +859,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete classification sets"
       }
     },
     "/webhooks": {
@@ -813,13 +874,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List webhooks"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create webhooks",
         "operationId": "createWebhooks",
         "tags": [
           "Webhooks"
@@ -836,15 +897,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create webhooks"
       }
     },
     "/webhooks/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get webhooks",
         "operationId": "getWebhooks",
         "tags": [
           "Webhooks"
@@ -861,13 +922,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get webhooks"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update webhooks",
         "operationId": "updateWebhooks",
         "tags": [
           "Webhooks"
@@ -894,13 +955,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update webhooks"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete webhooks",
         "operationId": "deleteWebhooks",
         "tags": [
           "Webhooks"
@@ -917,10 +978,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete webhooks"
       }
     },
     "/layers": {
@@ -932,13 +993,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List layers"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create layers",
         "operationId": "createLayers",
         "tags": [
           "Layers"
@@ -955,15 +1016,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create layers"
       }
     },
     "/layers/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get layers",
         "operationId": "getLayers",
         "tags": [
           "Layers"
@@ -980,13 +1041,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get layers"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update layers",
         "operationId": "updateLayers",
         "tags": [
           "Layers"
@@ -1013,13 +1074,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update layers"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete layers",
         "operationId": "deleteLayers",
         "tags": [
           "Layers"
@@ -1036,10 +1097,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete layers"
       }
     },
     "/groups": {
@@ -1051,13 +1112,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List groups"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create groups",
         "operationId": "createGroups",
         "tags": [
           "Groups"
@@ -1074,15 +1135,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create groups"
       }
     },
     "/groups/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get groups",
         "operationId": "getGroups",
         "tags": [
           "Groups"
@@ -1099,13 +1160,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get groups"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update groups",
         "operationId": "updateGroups",
         "tags": [
           "Groups"
@@ -1132,13 +1193,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update groups"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete groups",
         "operationId": "deleteGroups",
         "tags": [
           "Groups"
@@ -1155,10 +1216,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete groups"
       }
     },
     "/authorizations": {
@@ -1170,13 +1231,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List authorizations"
       },
       "post": {
-        "summary": "Create",
+        "summary": "Create authorizations",
         "operationId": "createAuthorizations",
         "tags": [
           "Authorizations"
@@ -1193,15 +1254,15 @@
         },
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Created."
           }
         },
-        "description": "Create"
+        "description": "Create authorizations"
       }
     },
     "/authorizations/{id}": {
       "get": {
-        "summary": "Get",
+        "summary": "Get authorizations",
         "operationId": "getAuthorizations",
         "tags": [
           "Authorizations"
@@ -1218,13 +1279,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get"
+        "description": "Get authorizations"
       },
       "put": {
-        "summary": "Update",
+        "summary": "Update authorizations",
         "operationId": "updateAuthorizations",
         "tags": [
           "Authorizations"
@@ -1251,13 +1312,13 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Updated."
           }
         },
-        "description": "Update"
+        "description": "Update authorizations"
       },
       "delete": {
-        "summary": "Delete",
+        "summary": "Delete authorizations",
         "operationId": "deleteAuthorizations",
         "tags": [
           "Authorizations"
@@ -1274,10 +1335,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Deleted."
           }
         },
-        "description": "Delete"
+        "description": "Delete authorizations"
       }
     },
     "/memberships": {
@@ -1289,35 +1350,10 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List memberships"
-      }
-    },
-    "/memberships/{id}": {
-      "get": {
-        "summary": "Get",
-        "operationId": "getMemberships",
-        "tags": [
-          "Memberships"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "description": "Get"
       }
     },
     "/roles": {
@@ -1329,35 +1365,10 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List roles"
-      }
-    },
-    "/roles/{id}": {
-      "get": {
-        "summary": "Get",
-        "operationId": "getRoles",
-        "tags": [
-          "Roles"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "description": "Get"
       }
     },
     "/audit_logs": {
@@ -1369,7 +1380,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List audit logs"
@@ -1384,13 +1395,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List photos"
       },
       "post": {
-        "summary": "Upload photo",
+        "summary": "Upload a photo",
         "operationId": "uploadPhoto",
         "tags": [
           "Photos"
@@ -1409,17 +1420,21 @@
                     "type": "string",
                     "format": "binary"
                   }
-                }
+                },
+                "required": [
+                  "photo[access_key]",
+                  "photo[file]"
+                ]
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Uploaded"
+            "description": "Photo uploaded."
           }
         },
-        "description": "Upload photo"
+        "description": "Upload a photo"
       }
     },
     "/photos/{id}": {
@@ -1441,7 +1456,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "Get photos"
@@ -1456,7 +1471,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List videos"
@@ -1481,7 +1496,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "Get videos"
@@ -1496,7 +1511,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List audio"
@@ -1521,7 +1536,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "Get audio"
@@ -1536,7 +1551,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List signatures"
@@ -1561,7 +1576,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "Get signatures"
@@ -1585,7 +1600,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
         "description": "List changesets"
@@ -1593,7 +1608,7 @@
     },
     "/changesets/{id}": {
       "get": {
-        "summary": "Get changeset",
+        "summary": "Get a changeset",
         "operationId": "getChangeset",
         "tags": [
           "Changesets"
@@ -1610,13 +1625,13 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Successful response."
           }
         },
-        "description": "Get changeset"
+        "description": "Get a changeset"
       },
       "put": {
-        "summary": "Close changeset",
+        "summary": "Close a changeset",
         "operationId": "closeChangeset",
         "tags": [
           "Changesets"
@@ -1633,22 +1648,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Closed"
+            "description": "Changeset closed."
           }
         },
-        "description": "Close changeset"
+        "description": "Close a changeset"
       }
     }
   },
   "components": {
-    "securitySchemes": {
-      "ApiToken": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-ApiToken",
-        "description": "Fulcrum API token."
-      }
-    },
     "schemas": {
       "Record": {
         "type": "object",
@@ -1673,8 +1680,13 @@
             "type": "number",
             "format": "double"
           },
+          "altitude": {
+            "type": "number",
+            "format": "double"
+          },
           "form_values": {
-            "type": "object"
+            "type": "object",
+            "description": "Key-value pairs of form field data."
           },
           "created_at": {
             "type": "string",
@@ -1687,7 +1699,13 @@
           "created_by": {
             "type": "string"
           },
+          "created_by_id": {
+            "type": "string"
+          },
           "updated_by": {
+            "type": "string"
+          },
+          "updated_by_id": {
             "type": "string"
           },
           "changeset_id": {
@@ -1739,6 +1757,9 @@
           "description": {
             "type": "string"
           },
+          "status": {
+            "type": "string"
+          },
           "elements": {
             "type": "array",
             "items": {
@@ -1776,59 +1797,83 @@
           }
         }
       }
+    },
+    "securitySchemes": {
+      "ApiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "ApiToken"
+      }
     }
   },
   "tags": [
     {
-      "name": "Records"
+      "name": "Records",
+      "description": "Manage data records."
     },
     {
-      "name": "Forms"
+      "name": "Forms",
+      "description": "Manage forms."
     },
     {
-      "name": "Projects"
+      "name": "Projects",
+      "description": "Manage projects."
     },
     {
-      "name": "Choice Lists"
+      "name": "Choice Lists",
+      "description": "Manage choice lists."
     },
     {
-      "name": "Classification Sets"
+      "name": "Classification Sets",
+      "description": "Manage classification sets."
     },
     {
-      "name": "Webhooks"
+      "name": "Webhooks",
+      "description": "Manage webhooks."
     },
     {
-      "name": "Photos"
+      "name": "Photos",
+      "description": "Manage photos."
     },
     {
-      "name": "Signatures"
+      "name": "Signatures",
+      "description": "Manage signatures."
     },
     {
-      "name": "Videos"
+      "name": "Videos",
+      "description": "Manage videos."
     },
     {
-      "name": "Audio"
+      "name": "Audio",
+      "description": "Manage audio files."
     },
     {
-      "name": "Changesets"
+      "name": "Changesets",
+      "description": "Manage changesets."
     },
     {
-      "name": "Layers"
+      "name": "Layers",
+      "description": "Manage layers."
     },
     {
-      "name": "Memberships"
+      "name": "Memberships",
+      "description": "Manage memberships."
     },
     {
-      "name": "Roles"
+      "name": "Roles",
+      "description": "Manage roles."
     },
     {
-      "name": "Groups"
+      "name": "Groups",
+      "description": "Manage groups."
     },
     {
-      "name": "Audit Logs"
+      "name": "Audit Logs",
+      "description": "View audit logs."
     },
     {
-      "name": "Authorizations"
+      "name": "Authorizations",
+      "description": "Manage API authorizations."
     }
   ]
 }

@@ -2,18 +2,15 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Refiner API",
-    "description": "Refiner REST API for managing surveys, collecting user feedback, and analyzing survey responses. Access survey data, track user events, manage contacts, and retrieve reporting metrics.",
     "version": "1.0.0",
+    "description": "The Refiner API gives you access to all survey data that you collected with Refiner. Our API adheres to REST principles and uses the JSON format.\n\n## Authentication\n\nAPI requests require authentication using API tokens obtained from your Refiner account. Use one of three methods:\n\n1. **Bearer Token** (Recommended): `Authorization: Bearer YOUR_API_KEY`  \n2. **Request Parameter**: `api_key=YOUR_API_KEY`  \n3. **HTTP Basic Auth**: Username as API key, empty password\n\n## Rate Limits\n\n- 4,000 requests/min per API key  \n- 80 requests/min per user ID",
     "contact": {
-      "name": "Refiner Support",
-      "email": "contact@refiner.io",
-      "url": "https://refiner.io"
+      "url": "https://refiner.io/docs/api/"
     }
   },
   "servers": [
     {
-      "url": "https://api.refiner.io/v1",
-      "description": "Refiner API Server"
+      "url": "https://api.refiner.io/v1"
     }
   ],
   "security": [
@@ -24,8 +21,8 @@
   "paths": {
     "/identify-user": {
       "post": {
-        "summary": "Create or update user profile",
-        "description": "Create or update a user profile with traits and account grouping",
+        "summary": "Identify User",
+        "operationId": "identifyUser",
         "tags": [
           "User Tracking"
         ],
@@ -35,30 +32,33 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "user_id"
-                ],
                 "properties": {
-                  "user_id": {
-                    "type": "string"
+                  "id": {
+                    "type": "string",
+                    "description": "User ID (required if email not provided)"
                   },
                   "email": {
                     "type": "string",
-                    "format": "email"
-                  },
-                  "traits": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "account": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      }
+                    "description": "User email (required if id not provided)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "contact_uuid": {
+                      "type": "string"
                     }
                   }
                 }
@@ -66,24 +66,13 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "User profile created or updated successfully"
-          },
-          "400": {
-            "description": "Bad request"
-          },
-          "429": {
-            "description": "Rate limit exceeded"
-          }
-        },
-        "operationId": "post_identify_user"
+        "description": "Identify User"
       }
     },
     "/track-event": {
       "post": {
-        "summary": "Track user event",
-        "description": "Log a user event for analytics and triggering surveys",
+        "summary": "Track Event",
+        "operationId": "trackEvent",
         "tags": [
           "User Tracking"
         ],
@@ -94,19 +83,18 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "user_id",
                   "event"
                 ],
                 "properties": {
-                  "user_id": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "email": {
                     "type": "string"
                   },
                   "event": {
-                    "type": "string"
-                  },
-                  "properties": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "string",
+                    "description": "Event name"
                   }
                 }
               }
@@ -115,27 +103,32 @@
         },
         "responses": {
           "200": {
-            "description": "Event tracked successfully"
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
-        "operationId": "post_track_event"
+        "description": "Track Event"
       }
     },
     "/responses": {
       "get": {
-        "summary": "Retrieve survey responses",
-        "description": "Get survey views and responses with filtering and pagination",
+        "summary": "Get Responses",
+        "operationId": "getResponses",
         "tags": [
           "Responses"
         ],
         "parameters": [
-          {
-            "name": "form_uuid",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "page",
             "in": "query",
@@ -144,106 +137,13 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page_length",
             "in": "query",
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "maximum": 1000
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of survey responses",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get_responses"
-      },
-      "post": {
-        "summary": "Store survey response",
-        "description": "Store historical survey data or custom responses",
-        "tags": [
-          "Responses"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Response created successfully"
-          }
-        },
-        "operationId": "post_responses"
-      }
-    },
-    "/responses/tags": {
-      "post": {
-        "summary": "Tag survey responses",
-        "description": "Add tags to existing survey responses",
-        "tags": [
-          "Responses"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "response_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Tags added successfully"
-          }
-        },
-        "operationId": "post_responses_tags"
-      }
-    },
-    "/reporting": {
-      "get": {
-        "summary": "Get aggregate metrics",
-        "description": "Retrieve NPS, CSAT, ratings, distribution, and counts with filtering",
-        "tags": [
-          "Reporting"
-        ],
-        "parameters": [
+          },
           {
             "name": "form_uuid",
             "in": "query",
@@ -252,218 +152,40 @@
             }
           },
           {
-            "name": "from_date",
+            "name": "include",
             "in": "query",
             "schema": {
               "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to_date",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date"
+              "enum": [
+                "completed",
+                "partials",
+                "all"
+              ]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Aggregate metrics",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get_reporting"
-      }
-    },
-    "/contacts": {
-      "get": {
-        "summary": "List all contacts",
-        "description": "Retrieve all contacts with attributes and segments",
-        "tags": [
-          "Contacts"
-        ],
-        "responses": {
-          "200": {
-            "description": "List of contacts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "type": "object"
                   }
                 }
               }
             }
           }
         },
-        "operationId": "get_contacts"
-      }
-    },
-    "/contact": {
-      "get": {
-        "summary": "Get contact data",
-        "description": "Fetch data for a specific contact",
-        "tags": [
-          "Contacts"
-        ],
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contact data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get_contact"
+        "description": "Get Responses"
       },
-      "delete": {
-        "summary": "Delete contact",
-        "description": "Remove a contact and associated responses",
-        "tags": [
-          "Contacts"
-        ],
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Contact deleted successfully"
-          }
-        },
-        "operationId": "delete_contact"
-      }
-    },
-    "/forms": {
-      "get": {
-        "summary": "List surveys",
-        "description": "Get all surveys with optional configuration and metadata",
-        "tags": [
-          "Forms"
-        ],
-        "responses": {
-          "200": {
-            "description": "List of surveys",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get_forms"
-      },
-      "delete": {
-        "summary": "Archive survey",
-        "description": "Archive a survey",
-        "tags": [
-          "Forms"
-        ],
-        "parameters": [
-          {
-            "name": "form_uuid",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Survey archived"
-          }
-        },
-        "operationId": "delete_forms"
-      }
-    },
-    "/forms/publish": {
       "post": {
-        "summary": "Publish or unpublish survey",
-        "description": "Change the publish status of a survey",
+        "summary": "Store Response",
+        "operationId": "storeResponse",
         "tags": [
-          "Forms"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "form_uuid",
-                  "published"
-                ],
-                "properties": {
-                  "form_uuid": {
-                    "type": "string"
-                  },
-                  "published": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Survey status updated"
-          }
-        },
-        "operationId": "post_forms_publish"
-      }
-    },
-    "/forms/duplicate": {
-      "post": {
-        "summary": "Duplicate survey",
-        "description": "Create a copy of an existing survey",
-        "tags": [
-          "Forms"
+          "Responses"
         ],
         "requestBody": {
           "required": true,
@@ -475,6 +197,12 @@
                   "form_uuid"
                 ],
                 "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
                   "form_uuid": {
                     "type": "string"
                   }
@@ -484,67 +212,17 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Survey duplicated successfully"
-          }
-        },
-        "operationId": "post_forms_duplicate"
-      }
-    },
-    "/segments": {
-      "get": {
-        "summary": "Retrieve all segments",
-        "description": "Get all user segments",
-        "tags": [
-          "Segments"
-        ],
-        "responses": {
           "200": {
-            "description": "List of segments",
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "get_segments"
-      }
-    },
-    "/sync-segment": {
-      "post": {
-        "summary": "Add users to segment",
-        "description": "Add users to a manual segment",
-        "tags": [
-          "Segments"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "segment_id",
-                  "user_ids"
-                ],
-                "properties": {
-                  "segment_id": {
-                    "type": "string"
-                  },
-                  "user_ids": {
-                    "type": "array",
-                    "items": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "uuid": {
                       "type": "string"
                     }
                   }
@@ -553,62 +231,84 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Users added to segment"
-          }
-        },
-        "operationId": "post_sync_segment"
-      },
-      "delete": {
-        "summary": "Remove users from segment",
-        "description": "Remove users from a manual segment",
-        "tags": [
-          "Segments"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "segment_id",
-                  "user_ids"
-                ],
-                "properties": {
-                  "segment_id": {
-                    "type": "string"
-                  },
-                  "user_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Users removed from segment"
-          }
-        },
-        "operationId": "delete_sync_segment"
+        "description": "Store Response"
       }
     },
-    "/account": {
+    "/contacts": {
       "get": {
-        "summary": "Get account details",
-        "description": "Retrieve subscription usage and environment details",
+        "summary": "Get Contacts",
+        "operationId": "getContacts",
         "tags": [
-          "Account"
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_length",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 1000
+            }
+          }
         ],
         "responses": {
           "200": {
-            "description": "Account details",
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get Contacts"
+      }
+    },
+    "/contact": {
+      "get": {
+        "summary": "Get Single Contact",
+        "operationId": "getContact",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
@@ -618,7 +318,210 @@
             }
           }
         },
-        "operationId": "get_account"
+        "description": "Get Single Contact"
+      },
+      "delete": {
+        "summary": "Delete Contact",
+        "operationId": "deleteContact",
+        "tags": [
+          "Contacts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uuid",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Delete Contact"
+      }
+    },
+    "/forms": {
+      "get": {
+        "summary": "Get Forms",
+        "operationId": "getForms",
+        "tags": [
+          "Forms"
+        ],
+        "parameters": [
+          {
+            "name": "list",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "published",
+                "drafts",
+                "archived",
+                "all_with_archived"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_length",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get Forms"
+      },
+      "delete": {
+        "summary": "Delete Form",
+        "operationId": "deleteForm",
+        "tags": [
+          "Forms"
+        ],
+        "parameters": [
+          {
+            "name": "form_uuid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Delete Form"
+      }
+    },
+    "/segments": {
+      "get": {
+        "summary": "Get Segments",
+        "operationId": "getSegments",
+        "tags": [
+          "Segments"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_length",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get Segments"
+      }
+    },
+    "/account": {
+      "get": {
+        "summary": "Get Account Info",
+        "operationId": "getAccount",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "description": "Get Account Info"
       }
     }
   },
@@ -626,38 +529,34 @@
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
-        "scheme": "bearer",
-        "description": "Bearer token authentication using API key from Refiner dashboard"
-      },
-      "ApiKeyQuery": {
-        "type": "apiKey",
-        "in": "query",
-        "name": "api_key",
-        "description": "API key as query parameter (alternative authentication method)"
+        "scheme": "bearer"
       }
     }
   },
   "tags": [
     {
-      "name": "Account"
+      "name": "User Tracking",
+      "description": "User identification and event tracking"
     },
     {
-      "name": "Contacts"
+      "name": "Responses",
+      "description": "Survey response management"
     },
     {
-      "name": "Forms"
+      "name": "Contacts",
+      "description": "Contact management"
     },
     {
-      "name": "Reporting"
+      "name": "Forms",
+      "description": "Form/Survey management"
     },
     {
-      "name": "Responses"
+      "name": "Segments",
+      "description": "Segment management"
     },
     {
-      "name": "Segments"
-    },
-    {
-      "name": "User Tracking"
+      "name": "Account",
+      "description": "Account information"
     }
   ]
 }

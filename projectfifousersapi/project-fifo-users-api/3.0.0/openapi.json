@@ -1,148 +1,20 @@
 {
-  "swagger": "2.0",
-  "basePath": "/api/3",
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
+  "openapi": "3.0.1",
   "info": {
-    "version": "3.0.0",
     "title": "Project-FiFo Users API",
     "description": "The API of Project FiFo to interact with users.",
     "license": {
       "name": "CDDL"
     },
+    "version": "3.0.0",
     "x-jentic-source-url": "https://api.swaggerhub.com/apis/Licenser/fifo-users/3.0.0",
-    "contact": {
-      "name": "API Support"
-    }
+    "contact": {}
   },
-  "parameters": {
-    "fulllistParam": {
-      "name": "full-list",
-      "in": "query",
-      "description": "Enables or disables the return ov objects rather then uuids",
-      "required": false,
-      "allowEmptyValue": false,
-      "type": "boolean",
-      "format": "boolean"
-    },
-    "fulllistfieldsParam": {
-      "name": "full-list-fields",
-      "in": "query",
-      "description": "Fields to be returnd when full-list is enabled",
-      "required": false,
-      "format": "string",
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "collectionFormat": "csv"
+  "servers": [
+    {
+      "url": "/api/3"
     }
-  },
-  "definitions": {
-    "uuid": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-    },
-    "permission": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "apikey": {
-      "properties": {
-        "bearer": {
-          "type": "string"
-        },
-        "id": {
-          "$ref": "#/definitions/uuid"
-        }
-      }
-    },
-    "token": {
-      "properties": {
-        "client": {
-          "$ref": "#/definitions/uuid"
-        },
-        "expiery": {
-          "type": "integer"
-        },
-        "scope": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "type": {
-          "enum": [
-            "refresh",
-            "access"
-          ]
-        },
-        "id": {
-          "$ref": "#/definitions/uuid"
-        }
-      },
-      "required": [
-        "type",
-        "scope",
-        "id"
-      ]
-    },
-    "user": {
-      "properties": {
-        "keys": {
-          "type": "object"
-        },
-        "metadata": {
-          "type": "object"
-        },
-        "name": {
-          "type": "string"
-        },
-        "org": {
-          "$ref": "#/definitions/uuid"
-        },
-        "orgs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/uuid"
-          }
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/permission"
-          }
-        },
-        "roles": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/uuid"
-          }
-        },
-        "tokens": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/token"
-          }
-        },
-        "uuid": {
-          "$ref": "#/definitions/uuid"
-        },
-        "yubikeys": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    }
-  },
+  ],
   "paths": {
     "/users": {
       "get": {
@@ -153,31 +25,53 @@
         "description": "See Get User for the fields available for full-list-fields.\n",
         "parameters": [
           {
-            "$ref": "#/parameters/fulllistParam"
+            "name": "full-list",
+            "in": "query",
+            "description": "Enables or disables the return ov objects rather then uuids",
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "boolean",
+              "format": "boolean"
+            }
           },
           {
-            "$ref": "#/parameters/fulllistfieldsParam"
+            "name": "full-list-fields",
+            "in": "query",
+            "description": "Fields to be returnd when full-list is enabled",
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "list of users",
-            "schema": {
-              "type": "array",
-              "items": {
-                "allOf": [
-                  {
-                    "$ref": "#/definitions/user"
-                  },
-                  {
-                    "$ref": "#/definitions/uuid"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/user"
+                      },
+                      {
+                        "$ref": "#/components/schemas/uuid"
+                      }
+                    ]
                   }
-                ]
+                }
               }
             }
           }
         },
-        "operationId": "get_users"
+        "operationId": "get-users"
       },
       "post": {
         "tags": [
@@ -187,37 +81,44 @@
         "description": "Creates a new user\n",
         "responses": {
           "303": {
-            "description": "Redirect to new user"
+            "description": "Redirect to new user",
+            "content": {}
           }
         },
-        "operationId": "post_users"
+        "operationId": "post-users"
       }
     },
     "/user/{uuid}": {
-      "parameters": [
-        {
-          "name": "uuid",
-          "in": "path",
-          "description": "uuid of the user",
-          "required": true,
-          "type": "string"
-        }
-      ],
       "get": {
         "tags": [
           "users"
         ],
         "summary": "Reads a user",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "uuid of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "returns a grouping",
-            "schema": {
-              "$ref": "#/definitions/user"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user"
+                }
+              }
             }
           }
         },
         "description": "Reads a user",
-        "operationId": "get_user_uuid"
+        "operationId": "get-user-by-uuid"
       },
       "put": {
         "tags": [
@@ -226,144 +127,245 @@
         "summary": "Changes the password of a user",
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
+            "name": "uuid",
+            "in": "path",
+            "description": "uuid of the user",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "password": {
-                  "description": "new password to set",
-                  "type": "string"
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "new password to set"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user"
                 }
               }
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/user"
-            }
-          }
         },
+        "x-codegen-request-body-name": "body",
         "description": "Changes the password of a user",
-        "operationId": "put_user_uuid"
+        "operationId": "put-user-by-uuid"
       },
       "delete": {
         "tags": [
           "users"
         ],
         "summary": "Deletes a user",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "uuid of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Deletes a user",
-        "operationId": "delete_user_uuid"
+        "operationId": "delete-user-by-uuid"
       }
     },
     "/user/{uuid}/permissions/{permission}": {
-      "parameters": [
-        {
-          "name": "uuid",
-          "in": "path",
-          "description": "UUID of the user",
-          "required": true,
-          "type": "string"
-        },
-        {
-          "name": "permission",
-          "in": "path",
-          "description": "the permission to grant as path i.e. 'some/funky/permission'\n",
-          "required": true,
-          "type": "string"
-        }
-      ],
       "get": {
         "tags": [
           "users"
         ],
         "summary": "Tests if a user has is allowed to perform an action.\nPlease note that 403 here does not mean the user is not allowed\nbut that the requesting token was not allowed to test for the client!\n",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "UUID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "description": "the permission to grant as path i.e. 'some/funky/permission'\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Tests if a user has is allowed to perform an action.\nPlease note that 403 here does not mean the user is not allowed\nbut that the requesting token was not allowed to test for the client!\n",
-        "operationId": "get_user_uuid_permissions_permission"
+        "operationId": "get-user-by-uuid-permissions-by-permission"
       },
       "put": {
         "tags": [
           "users"
         ],
         "summary": "Grants a permission to a user",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "UUID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "description": "the permission to grant as path i.e. 'some/funky/permission'\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Grants a permission to a user",
-        "operationId": "put_user_uuid_permissions_permission"
+        "operationId": "put-user-by-uuid-permissions-by-permission"
       },
       "delete": {
         "tags": [
           "users"
         ],
         "summary": "Revokes a permission from a user",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "UUID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "description": "the permission to grant as path i.e. 'some/funky/permission'\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Revokes a permission from a user",
-        "operationId": "delete_user_uuid_permissions_permission"
+        "operationId": "delete-user-by-uuid-permissions-by-permission"
       }
     },
     "/user/{uuid}/role/{role}": {
-      "parameters": [
-        {
-          "name": "uuid",
-          "in": "path",
-          "description": "UUID of the user",
-          "required": true,
-          "type": "string"
-        },
-        {
-          "name": "role",
-          "in": "path",
-          "description": "UUID of the role to join",
-          "required": true,
-          "type": "string"
-        }
-      ],
       "put": {
         "tags": [
           "users"
         ],
         "summary": "Gives a user a role",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "UUID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "path",
+            "description": "UUID of the role to join",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Gives a user a role",
-        "operationId": "put_user_uuid_role_role"
+        "operationId": "put-user-by-uuid-role-by-role"
       },
       "delete": {
         "tags": [
           "users"
         ],
         "summary": "Removes a role from a user",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "UUID of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "path",
+            "description": "UUID of the role to join",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Removes a role from a user",
-        "operationId": "delete_user_uuid_role_role"
+        "operationId": "delete-user-by-uuid-role-by-role"
       }
     },
     "/users/{uuid}/keys": {
@@ -378,30 +380,36 @@
             "in": "path",
             "description": "uuid of the user",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "keys": {
-                  "description": "key/value pair for the key",
-                  "type": "string"
-                }
-              }
+              "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "keys": {
+                    "type": "string",
+                    "description": "key/value pair for the key"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
+        "x-codegen-request-body-name": "body",
         "description": "Adds a SSH key to a user",
-        "operationId": "put_users_uuid_keys"
+        "operationId": "put-users-by-uuid-keys"
       }
     },
     "/users/{uuid}/keys/{key-id}": {
@@ -416,23 +424,28 @@
             "in": "path",
             "description": "UUID of the user",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "key-id",
             "in": "path",
             "description": "id if the key to delete",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Removes a SSH key from a user",
-        "operationId": "delete_users_uuid_keys_key_id"
+        "operationId": "delete-users-by-uuid-keys-by-key-id"
       }
     },
     "/users/{uuid}/yubikeys": {
@@ -447,30 +460,36 @@
             "in": "path",
             "description": "uuid of the user",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "otp": {
-                  "description": "OTP from the YubiKey to add",
-                  "type": "string"
-                }
-              }
+              "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "otp": {
+                    "type": "string",
+                    "description": "OTP from the YubiKey to add"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
+        "x-codegen-request-body-name": "body",
         "description": "Removes a SSH key from a user",
-        "operationId": "put_users_uuid_yubikeys"
+        "operationId": "put-users-by-uuid-yubikeys"
       }
     },
     "/users/{uuid}/yubikeys/{key-id}": {
@@ -485,42 +504,31 @@
             "in": "path",
             "description": "UUID of the user",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "key-id",
             "in": "path",
             "description": "id if the key to delete",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Removes a SSH key from a user",
-        "operationId": "delete_users_uuid_yubikeys_key_id"
+        "operationId": "delete-users-by-uuid-yubikeys-by-key-id"
       }
     },
     "/users/{uuid}/orgs/{org}": {
-      "parameters": [
-        {
-          "name": "uuid",
-          "in": "path",
-          "description": "uuid of the user",
-          "required": true,
-          "type": "string"
-        },
-        {
-          "name": "org",
-          "in": "path",
-          "description": "UUID of the org to join",
-          "required": true,
-          "type": "string"
-        }
-      ],
       "put": {
         "tags": [
           "users"
@@ -528,40 +536,83 @@
         "summary": "Adds a user to an Organisation. The first joined Organisation\nwill automatically be set as active. Any further Organisations\nneed to be selected as active by passing the 'active' parameter\nin a JSON.\n",
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": false,
+            "name": "uuid",
+            "in": "path",
+            "description": "uuid of the user",
+            "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "active": {
-                  "description": "used to set an org",
-                  "type": "boolean"
-                }
-              }
+              "type": "string"
+            }
+          },
+          {
+            "name": "org",
+            "in": "path",
+            "description": "UUID of the org to join",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "active": {
+                    "type": "boolean",
+                    "description": "used to set an org"
+                  }
+                }
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
+        "x-codegen-request-body-name": "body",
         "description": "Adds a user to an Organisation. The first joined Organisation\nwill automatically be set as active. Any further Organisations\nneed to be selected as active by passing the 'active' parameter\nin a JSON.\n",
-        "operationId": "put_users_uuid_orgs_org"
+        "operationId": "put-users-by-uuid-orgs-by-org"
       },
       "delete": {
         "tags": [
           "users"
         ],
         "summary": "Removes user from an organization",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "uuid of the user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "org",
+            "in": "path",
+            "description": "UUID of the org to join",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Removes user from an organization",
-        "operationId": "delete_users_uuid_orgs_org"
+        "operationId": "delete-users-by-uuid-orgs-by-org"
       }
     },
     "/users/{uuid}/tokens": {
@@ -576,40 +627,49 @@
             "in": "path",
             "description": "uuid of the user",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "comment": {
-                  "description": "A comment for the token",
-                  "type": "string"
-                },
-                "scopes": {
-                  "description": "A list of scopes for the token",
-                  "type": "array",
-                  "items": {
-                    "type": "string"
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment": {
+                    "type": "string",
+                    "description": "A comment for the token"
+                  },
+                  "scopes": {
+                    "type": "array",
+                    "description": "A list of scopes for the token",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/apikey"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apikey"
+                }
+              }
             }
           }
         },
+        "x-codegen-request-body-name": "body",
         "description": "Crates a API token for a user with a given scope, please keep in\nmind that the reply to this request is THE ONLY TIME the bearer\ntoken can be accessed!\n",
-        "operationId": "post_users_uuid_tokens"
+        "operationId": "post-users-by-uuid-tokens"
       }
     },
     "/users/{uuid}/tokens/{token-id}": {
@@ -624,32 +684,144 @@
             "in": "path",
             "description": "UUID of the user",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "token-id",
             "in": "path",
             "description": "ID of the token to delete (not the token itself!)",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {}
           }
         },
         "description": "Revokes a token, this applies equally for access and refresh tokens\n",
-        "operationId": "delete_users_uuid_tokens_token_id"
+        "operationId": "delete-users-by-uuid-tokens-by-token-id"
       }
     }
   },
+  "components": {
+    "schemas": {
+      "uuid": {
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        "type": "string"
+      },
+      "permission": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "apikey": {
+        "type": "object",
+        "properties": {
+          "bearer": {
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/uuid"
+          }
+        }
+      },
+      "token": {
+        "required": [
+          "id",
+          "scope",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "client": {
+            "$ref": "#/components/schemas/uuid"
+          },
+          "expiery": {
+            "type": "integer"
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "refresh",
+              "access"
+            ]
+          },
+          "id": {
+            "$ref": "#/components/schemas/uuid"
+          }
+        }
+      },
+      "user": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "object",
+            "properties": {}
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {}
+          },
+          "name": {
+            "type": "string"
+          },
+          "org": {
+            "$ref": "#/components/schemas/uuid"
+          },
+          "orgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/uuid"
+            }
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/permission"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/uuid"
+            }
+          },
+          "tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/token"
+            }
+          },
+          "uuid": {
+            "$ref": "#/components/schemas/uuid"
+          },
+          "yubikeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-original-swagger-version": "2.0",
   "tags": [
     {
       "name": "users"
     }
-  ],
-  "schemes": [
-    "https"
   ]
 }

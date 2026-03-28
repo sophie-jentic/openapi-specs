@@ -72,7 +72,7 @@
           {
             "name": "giver_email",
             "in": "query",
-            "description": "Filter by giver's email",
+            "description": "Filter by giver's email address",
             "schema": {
               "type": "string",
               "format": "email"
@@ -81,7 +81,7 @@
           {
             "name": "receiver_email",
             "in": "query",
-            "description": "Filter by receiver's email",
+            "description": "Filter by receiver's email address",
             "schema": {
               "type": "string",
               "format": "email"
@@ -99,7 +99,7 @@
           {
             "name": "hashtag",
             "in": "query",
-            "description": "Filter by hashtag (URL-encoded)",
+            "description": "Filter by hashtag (URL-encoded, e.g., %23teamwork)",
             "schema": {
               "type": "string"
             }
@@ -107,7 +107,7 @@
           {
             "name": "include_children",
             "in": "query",
-            "description": "Include child bonuses",
+            "description": "Include child bonuses in results",
             "schema": {
               "type": "boolean",
               "default": false
@@ -194,6 +194,7 @@
       "get": {
         "operationId": "getBonus",
         "summary": "Retrieve a bonus",
+        "description": "Get details of a specific bonus by ID.",
         "tags": [
           "Bonuses"
         ],
@@ -202,6 +203,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Bonus ID",
             "schema": {
               "type": "string"
             }
@@ -221,13 +223,12 @@
           "404": {
             "description": "Bonus not found"
           }
-        },
-        "description": "Retrieve a bonus"
+        }
       },
       "put": {
         "operationId": "updateBonus",
         "summary": "Update a bonus",
-        "description": "Update an existing bonus. Only updatable within 30 minutes of creation.",
+        "description": "Update an existing bonus. Bonuses are only updatable within 30 minutes of creation.",
         "tags": [
           "Bonuses"
         ],
@@ -236,6 +237,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Bonus ID",
             "schema": {
               "type": "string"
             }
@@ -249,7 +251,8 @@
                 "type": "object",
                 "properties": {
                   "reason": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Updated recognition message"
                   }
                 }
               }
@@ -268,7 +271,7 @@
             }
           },
           "400": {
-            "description": "Update window expired"
+            "description": "Update window expired or invalid parameters"
           },
           "403": {
             "description": "Insufficient permissions"
@@ -281,7 +284,7 @@
       "delete": {
         "operationId": "deleteBonus",
         "summary": "Delete a bonus",
-        "description": "Delete a bonus. Only deletable within 30 minutes of creation.",
+        "description": "Delete a bonus. Bonuses are only deletable within 30 minutes of creation.",
         "tags": [
           "Bonuses"
         ],
@@ -290,6 +293,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Bonus ID",
             "schema": {
               "type": "string"
             }
@@ -297,7 +301,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Bonus deleted"
+            "description": "Bonus deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Deletion window expired"
@@ -315,6 +334,7 @@
       "get": {
         "operationId": "listUsers",
         "summary": "List users",
+        "description": "Retrieve a list of company users with optional filtering and sorting.",
         "tags": [
           "Users"
         ],
@@ -322,6 +342,7 @@
           {
             "name": "limit",
             "in": "query",
+            "description": "Number of records to retrieve",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -332,6 +353,7 @@
           {
             "name": "skip",
             "in": "query",
+            "description": "Number of records to skip for pagination",
             "schema": {
               "type": "integer",
               "minimum": 0,
@@ -341,6 +363,7 @@
           {
             "name": "email",
             "in": "query",
+            "description": "Filter by user email",
             "schema": {
               "type": "string",
               "format": "email"
@@ -349,6 +372,7 @@
           {
             "name": "externalId",
             "in": "query",
+            "description": "Filter by external system ID",
             "schema": {
               "type": "string"
             }
@@ -356,13 +380,33 @@
           {
             "name": "sort",
             "in": "query",
+            "description": "Sort field (prefix with '-' for descending)",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "created_at",
+                "-created_at",
+                "last_active_at",
+                "-last_active_at",
+                "display_name",
+                "-display_name",
+                "first_name",
+                "-first_name",
+                "last_name",
+                "-last_name",
+                "email",
+                "-email",
+                "country",
+                "-country",
+                "time_zone",
+                "-time_zone"
+              ]
             }
           },
           {
             "name": "include_archived",
             "in": "query",
+            "description": "Include deactivated users",
             "schema": {
               "type": "boolean",
               "default": false
@@ -371,6 +415,7 @@
           {
             "name": "show_financial_data",
             "in": "query",
+            "description": "Include financial data (admin only)",
             "schema": {
               "type": "boolean"
             }
@@ -378,6 +423,7 @@
           {
             "name": "user_mode",
             "in": "query",
+            "description": "Filter by comma-separated user modes",
             "schema": {
               "type": "string"
             }
@@ -394,12 +440,12 @@
               }
             }
           }
-        },
-        "description": "List users"
+        }
       },
       "post": {
         "operationId": "createUser",
         "summary": "Create a user (admin)",
+        "description": "Create a new user in the company. Requires admin privileges.",
         "tags": [
           "Users"
         ],
@@ -408,6 +454,7 @@
             "name": "email",
             "in": "query",
             "required": true,
+            "description": "User email address",
             "schema": {
               "type": "string",
               "format": "email"
@@ -417,6 +464,7 @@
             "name": "first_name",
             "in": "query",
             "required": true,
+            "description": "User's first name",
             "schema": {
               "type": "string"
             }
@@ -425,6 +473,7 @@
             "name": "last_name",
             "in": "query",
             "required": true,
+            "description": "User's last name",
             "schema": {
               "type": "string"
             }
@@ -432,6 +481,7 @@
           {
             "name": "user_mode",
             "in": "query",
+            "description": "User mode type",
             "schema": {
               "type": "string",
               "enum": [
@@ -447,6 +497,7 @@
           {
             "name": "budget_boost",
             "in": "query",
+            "description": "Monthly bonus supplement amount",
             "schema": {
               "type": "number"
             }
@@ -454,6 +505,7 @@
           {
             "name": "external_unique_id",
             "in": "query",
+            "description": "Third-party system identifier",
             "schema": {
               "type": "string"
             }
@@ -461,6 +513,7 @@
           {
             "name": "time_zone",
             "in": "query",
+            "description": "IANA timezone identifier",
             "schema": {
               "type": "string"
             }
@@ -468,6 +521,7 @@
           {
             "name": "country",
             "in": "query",
+            "description": "Two-letter country code (ISO 3166-1 alpha-2)",
             "schema": {
               "type": "string"
             }
@@ -475,13 +529,33 @@
           {
             "name": "send_invite",
             "in": "query",
+            "description": "Send invitation email to the user",
             "schema": {
               "type": "boolean"
             }
           },
           {
+            "name": "hired_on",
+            "in": "query",
+            "description": "Hire date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_of_birth",
+            "in": "query",
+            "description": "Birthday (year will be stripped)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
             "name": "manager_email",
             "in": "query",
+            "description": "Manager's email address",
             "schema": {
               "type": "string",
               "format": "email"
@@ -499,17 +573,20 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid parameters"
+          },
           "403": {
             "description": "Must be company admin"
           }
-        },
-        "description": "Create a user (admin)"
+        }
       }
     },
     "/v1/users/me": {
       "get": {
         "operationId": "getCurrentUser",
         "summary": "Get current user",
+        "description": "Retrieve details of the currently authenticated user including financial data.",
         "tags": [
           "Users"
         ],
@@ -524,14 +601,14 @@
               }
             }
           }
-        },
-        "description": "Get current user"
+        }
       }
     },
     "/v1/users/autocomplete": {
       "get": {
         "operationId": "autocompleteUsers",
         "summary": "Autocomplete users",
+        "description": "Search for users by name or email for autocomplete functionality.",
         "tags": [
           "Users"
         ],
@@ -540,6 +617,7 @@
             "name": "search",
             "in": "query",
             "required": true,
+            "description": "Search query string",
             "schema": {
               "type": "string"
             }
@@ -559,14 +637,14 @@
           "400": {
             "description": "Query too short"
           }
-        },
-        "description": "Autocomplete users"
+        }
       }
     },
     "/v1/users/{id}": {
       "get": {
         "operationId": "getUser",
         "summary": "Retrieve a user",
+        "description": "Get details of a specific user by ID.",
         "tags": [
           "Users"
         ],
@@ -575,6 +653,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "User ID",
             "schema": {
               "type": "string"
             }
@@ -594,12 +673,12 @@
           "404": {
             "description": "User not found"
           }
-        },
-        "description": "Retrieve a user"
+        }
       },
       "put": {
         "operationId": "updateUser",
         "summary": "Update a user (admin)",
+        "description": "Update user details. Requires admin privileges.",
         "tags": [
           "Users"
         ],
@@ -608,6 +687,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "User ID",
             "schema": {
               "type": "string"
             }
@@ -621,7 +701,8 @@
                 "type": "object",
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email"
                   },
                   "first_name": {
                     "type": "string"
@@ -646,7 +727,8 @@
                     "type": "string"
                   },
                   "custom_properties": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true
                   },
                   "time_zone": {
                     "type": "string"
@@ -655,7 +737,8 @@
                     "type": "string"
                   },
                   "manager_email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email"
                   }
                 }
               }
@@ -673,18 +756,21 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid parameters"
+          },
           "403": {
             "description": "Must be company admin"
           },
           "404": {
             "description": "User not found"
           }
-        },
-        "description": "Update a user (admin)"
+        }
       },
       "delete": {
         "operationId": "deactivateUser",
         "summary": "Deactivate a user (admin)",
+        "description": "Deactivate (archive) a user. Requires admin privileges.",
         "tags": [
           "Users"
         ],
@@ -693,6 +779,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "User ID",
             "schema": {
               "type": "string"
             }
@@ -700,7 +787,25 @@
         ],
         "responses": {
           "200": {
-            "description": "User deactivated"
+            "description": "User deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Failed to delete user"
           },
           "403": {
             "description": "Must be company admin"
@@ -708,14 +813,14 @@
           "404": {
             "description": "User not found"
           }
-        },
-        "description": "Deactivate a user (admin)"
+        }
       }
     },
     "/v1/users/{id}/redemptions": {
       "post": {
         "operationId": "createRedemption",
         "summary": "Create a redemption for a user",
+        "description": "Create a new reward redemption for a specific user.",
         "tags": [
           "Redemptions"
         ],
@@ -724,6 +829,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "User ID",
             "schema": {
               "type": "string"
             }
@@ -740,7 +846,8 @@
                 ],
                 "properties": {
                   "catalog_item_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "ID of the reward catalog item to redeem"
                   }
                 }
               }
@@ -758,17 +865,23 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "403": {
+            "description": "Authorization issue"
+          },
           "404": {
             "description": "User not found"
           }
-        },
-        "description": "Create a redemption for a user"
+        }
       }
     },
     "/v1/redemptions": {
       "get": {
         "operationId": "listRedemptions",
         "summary": "List redemptions",
+        "description": "Retrieve a list of redemptions.",
         "tags": [
           "Redemptions"
         ],
@@ -776,6 +889,7 @@
           {
             "name": "limit",
             "in": "query",
+            "description": "Number of redemptions to retrieve",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -786,6 +900,7 @@
           {
             "name": "skip",
             "in": "query",
+            "description": "Number of redemptions to skip for pagination",
             "schema": {
               "type": "integer",
               "minimum": 0
@@ -802,15 +917,18 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid limit parameter"
           }
-        },
-        "description": "List redemptions"
+        }
       }
     },
     "/v1/redemptions/{id}": {
       "get": {
         "operationId": "getRedemption",
         "summary": "Retrieve a redemption",
+        "description": "Get details of a specific redemption by ID.",
         "tags": [
           "Redemptions"
         ],
@@ -819,6 +937,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Redemption ID",
             "schema": {
               "type": "string"
             }
@@ -838,15 +957,14 @@
           "404": {
             "description": "Redemption not found"
           }
-        },
-        "description": "Retrieve a redemption"
+        }
       }
     },
     "/v1/achievements": {
       "get": {
         "operationId": "listAchievements",
         "summary": "List achievements",
-        "description": "View the 50 most recent achievements.",
+        "description": "View the 50 most recent achievements for the authenticated user's company.",
         "tags": [
           "Achievements"
         ],
@@ -868,6 +986,7 @@
       "get": {
         "operationId": "listWebhooks",
         "summary": "List webhooks",
+        "description": "Retrieve all registered webhooks.",
         "tags": [
           "Webhooks"
         ],
@@ -882,12 +1001,12 @@
               }
             }
           }
-        },
-        "description": "List webhooks"
+        }
       },
       "post": {
         "operationId": "createWebhook",
         "summary": "Create a webhook",
+        "description": "Register a new webhook subscription.",
         "tags": [
           "Webhooks"
         ],
@@ -913,16 +1032,16 @@
             }
           },
           "400": {
-            "description": "Invalid parameters"
+            "description": "Invalid parameters (e.g., blank URL)"
           }
-        },
-        "description": "Create a webhook"
+        }
       }
     },
     "/v1/webhooks/{id}": {
       "put": {
         "operationId": "updateWebhook",
         "summary": "Update a webhook",
+        "description": "Update an existing webhook subscription.",
         "tags": [
           "Webhooks"
         ],
@@ -931,6 +1050,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Webhook ID",
             "schema": {
               "type": "string"
             }
@@ -956,13 +1076,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Validation failure"
           }
-        },
-        "description": "Update a webhook"
+        }
       },
       "delete": {
         "operationId": "deleteWebhook",
         "summary": "Delete a webhook",
+        "description": "Remove a webhook subscription.",
         "tags": [
           "Webhooks"
         ],
@@ -971,6 +1094,7 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "description": "Webhook ID",
             "schema": {
               "type": "string"
             }
@@ -978,13 +1102,19 @@
         ],
         "responses": {
           "200": {
-            "description": "Webhook deleted"
+            "description": "Webhook deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "Webhook not found"
           }
-        },
-        "description": "Delete a webhook"
+        }
       }
     },
     "/v1/analytics/trends": {
@@ -1016,6 +1146,7 @@
       "get": {
         "operationId": "getLeaderboards",
         "summary": "Get leaderboards",
+        "description": "Ranks users by bonuses given or received.",
         "tags": [
           "Analytics"
         ],
@@ -1023,6 +1154,7 @@
           {
             "name": "direction",
             "in": "query",
+            "description": "Leaderboard direction",
             "schema": {
               "type": "string",
               "enum": [
@@ -1034,6 +1166,7 @@
           {
             "name": "hashtag",
             "in": "query",
+            "description": "Filter by hashtag",
             "schema": {
               "type": "string"
             }
@@ -1041,6 +1174,7 @@
           {
             "name": "team",
             "in": "query",
+            "description": "Filter by team",
             "schema": {
               "type": "string"
             }
@@ -1048,6 +1182,7 @@
           {
             "name": "start_date",
             "in": "query",
+            "description": "Start date for filtering",
             "schema": {
               "type": "string",
               "format": "date"
@@ -1056,6 +1191,7 @@
           {
             "name": "end_date",
             "in": "query",
+            "description": "End date for filtering",
             "schema": {
               "type": "string",
               "format": "date"
@@ -1073,14 +1209,14 @@
               }
             }
           }
-        },
-        "description": "Get leaderboards"
+        }
       }
     },
     "/v1/analytics/words": {
       "get": {
         "operationId": "getPopularWords",
         "summary": "Get popular words",
+        "description": "Returns popular words used in bonuses sorted by frequency.",
         "tags": [
           "Analytics"
         ],
@@ -1095,25 +1231,18 @@
               }
             }
           }
-        },
-        "description": "Get popular words"
+        }
       }
     }
   },
   "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "API key passed as Bearer token in Authorization header"
-      }
-    },
     "schemas": {
       "SuccessResponse": {
         "type": "object",
         "properties": {
           "success": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the request was successful"
           },
           "result": {
             "description": "Response data (varies by endpoint)"
@@ -1138,26 +1267,33 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique bonus identifier"
           },
           "created_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Creation timestamp"
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "Recognition message"
           },
           "reason_html": {
-            "type": "string"
+            "type": "string",
+            "description": "HTML-formatted recognition message"
           },
           "amount": {
-            "type": "number"
+            "type": "number",
+            "description": "Bonus point amount"
           },
           "amount_with_currency": {
-            "type": "string"
+            "type": "string",
+            "description": "Formatted amount with currency"
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "Hashtag value"
           },
           "giver": {
             "$ref": "#/components/schemas/User"
@@ -1166,7 +1302,8 @@
             "$ref": "#/components/schemas/User"
           },
           "child_count": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Number of child bonuses"
           },
           "child_bonuses": {
             "type": "array",
@@ -1175,10 +1312,12 @@
             }
           },
           "via": {
-            "type": "string"
+            "type": "string",
+            "description": "Channel through which bonus was given (e.g., web, api)"
           },
           "family_amount": {
-            "type": "number"
+            "type": "number",
+            "description": "Total amount including child bonuses"
           }
         }
       },
@@ -1281,7 +1420,8 @@
             ]
           },
           "custom_properties": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
@@ -1330,6 +1470,11 @@
             "type": "string",
             "format": "email"
           },
+          "giftee_email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
           "title": {
             "type": "string"
           },
@@ -1352,6 +1497,17 @@
               "pending"
             ]
           },
+          "certificate_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "claim_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "auto_approvable": {
+            "type": "boolean"
+          },
           "reward_details": {
             "type": "object",
             "properties": {
@@ -1363,6 +1519,9 @@
               },
               "price": {
                 "type": "number"
+              },
+              "display_price": {
+                "type": "string"
               },
               "type": {
                 "type": "string"
@@ -1419,10 +1578,12 @@
         "properties": {
           "url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "Target URL for webhook notifications"
           },
           "event_types": {
             "type": "array",
+            "description": "Event types to subscribe to",
             "items": {
               "type": "string",
               "enum": [
@@ -1432,6 +1593,12 @@
             }
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

@@ -3,20 +3,18 @@
   "info": {
     "title": "NotePM API",
     "version": "1.0.0",
-    "description": "NotePM is a Japanese knowledge base / wiki tool. This API allows you to manage notes, pages, comments, users, and teams.",
+    "description": "Knowledge sharing and documentation management API (Beta)",
     "x-jentic-source-url": "https://notepm.jp/docs/api",
-    "contact": {
-      "name": "API Support"
-    }
+    "contact": {}
   },
   "servers": [
     {
-      "url": "https://{team_domain}.notepm.jp/api/v1",
-      "description": "NotePM API (team-specific subdomain)",
+      "url": "https://{teamDomain}.notepm.jp/api/v1",
+      "description": "NotePM API",
       "variables": {
-        "team_domain": {
-          "default": "your-team",
-          "description": "Your team's subdomain on notepm.jp"
+        "teamDomain": {
+          "default": "demo",
+          "description": "Your team domain"
         }
       }
     }
@@ -27,65 +25,63 @@
     }
   ],
   "paths": {
-    "/notes": {
+    "/team": {
       "get": {
-        "operationId": "listNotes",
-        "summary": "List notes",
-        "tags": [
-          "Notes"
-        ],
-        "parameters": [
-          {
-            "name": "include_archived",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "enum": [
-                0,
-                1
-              ],
-              "default": 0
-            },
-            "description": "Include archived notes (1) or not (0)"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "maximum": 100
-            }
-          }
-        ],
+        "summary": "Get Team Info",
+        "operationId": "getTeamInfo",
+        "description": "Retrieve team information",
         "responses": {
           "200": {
-            "description": "List of notes",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NoteListResponse"
+                  "$ref": "#/components/schemas/Team"
                 }
               }
             }
           },
-          "400": {
-            "description": "Bad request",
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate Limit Exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "team"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List Users",
+        "operationId": "listUsers",
+        "description": "Retrieve a list of users",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
                 }
               }
             }
@@ -101,14 +97,49 @@
             }
           }
         },
-        "description": "List notes"
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/notes": {
+      "get": {
+        "summary": "List Notes",
+        "operationId": "listNotes",
+        "description": "Retrieve a list of notes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "notes"
+        ]
       },
       "post": {
+        "summary": "Create Note",
         "operationId": "createNote",
-        "summary": "Create a note",
-        "tags": [
-          "Notes"
-        ],
+        "description": "Create a new note",
         "requestBody": {
           "required": true,
           "content": {
@@ -121,27 +152,17 @@
         },
         "responses": {
           "201": {
-            "description": "Note created",
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NoteResponse"
+                  "$ref": "#/components/schemas/Note"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -151,40 +172,39 @@
             }
           }
         },
-        "description": "Create a note"
+        "tags": [
+          "notes"
+        ]
       }
     },
-    "/notes/{note_code}": {
+    "/notes/{id}": {
       "get": {
+        "summary": "Get Note",
         "operationId": "getNote",
-        "summary": "Get a note",
-        "tags": [
-          "Notes"
-        ],
+        "description": "Retrieve a single note by ID",
         "parameters": [
           {
-            "name": "note_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "Note code"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Note details",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NoteDetailResponse"
+                  "$ref": "#/components/schemas/Note"
                 }
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/json": {
                 "schema": {
@@ -194,17 +214,17 @@
             }
           }
         },
-        "description": "Get a note"
-      },
-      "patch": {
-        "operationId": "updateNote",
-        "summary": "Update a note",
         "tags": [
-          "Notes"
-        ],
+          "notes"
+        ]
+      },
+      "put": {
+        "summary": "Update Note",
+        "operationId": "updateNote",
+        "description": "Update an existing note",
         "parameters": [
           {
-            "name": "note_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -217,54 +237,34 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NoteUpdateRequest"
+                "$ref": "#/components/schemas/NoteRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Note updated",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NoteListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Note"
                 }
               }
             }
           }
         },
-        "description": "Update a note"
+        "tags": [
+          "notes"
+        ]
       },
       "delete": {
+        "summary": "Delete Note",
         "operationId": "deleteNote",
-        "summary": "Delete a note",
-        "tags": [
-          "Notes"
-        ],
+        "description": "Delete a note",
         "parameters": [
           {
-            "name": "note_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -274,223 +274,77 @@
         ],
         "responses": {
           "204": {
-            "description": "Note deleted"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "No Content"
           }
         },
-        "description": "Delete a note"
-      }
-    },
-    "/notes/{note_code}/archive": {
-      "patch": {
-        "operationId": "archiveNote",
-        "summary": "Archive a note",
         "tags": [
-          "Notes"
-        ],
-        "parameters": [
-          {
-            "name": "note_code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Note archived"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Archive a note"
+          "notes"
+        ]
       }
     },
-    "/notes/{note_code}/extract": {
-      "patch": {
-        "operationId": "unarchiveNote",
-        "summary": "Unarchive a note",
-        "tags": [
-          "Notes"
-        ],
-        "parameters": [
-          {
-            "name": "note_code",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Note unarchived"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Unarchive a note"
-      }
-    },
-    "/pages": {
+    "/folders": {
       "get": {
-        "operationId": "listPages",
-        "summary": "List pages",
-        "tags": [
-          "Pages"
-        ],
-        "parameters": [
-          {
-            "name": "note_code",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by note code"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "maximum": 100
-            }
-          },
-          {
-            "name": "q",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search keyword"
-          }
-        ],
+        "summary": "List Folders",
+        "operationId": "listFolders",
+        "description": "Retrieve a list of folders",
         "responses": {
           "200": {
-            "description": "List of pages",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Folder"
+                  }
                 }
               }
             }
           }
         },
-        "description": "List pages"
+        "tags": [
+          "folders"
+        ]
       },
       "post": {
-        "operationId": "createPage",
-        "summary": "Create a page",
-        "tags": [
-          "Pages"
-        ],
+        "summary": "Create Folder",
+        "operationId": "createFolder",
+        "description": "Create a new folder",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PageRequest"
+                "$ref": "#/components/schemas/FolderRequest"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Page created",
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Folder"
                 }
               }
             }
           }
         },
-        "description": "Create a page"
+        "tags": [
+          "folders"
+        ]
       }
     },
-    "/pages/{page_code}": {
+    "/folders/{id}": {
       "get": {
-        "operationId": "getPage",
-        "summary": "Get a page",
-        "tags": [
-          "Pages"
-        ],
+        "summary": "Get Folder",
+        "operationId": "getFolder",
+        "description": "Retrieve a single folder by ID",
         "parameters": [
           {
-            "name": "page_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -500,37 +354,27 @@
         ],
         "responses": {
           "200": {
-            "description": "Page details",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageDetailResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/Folder"
                 }
               }
             }
           }
         },
-        "description": "Get a page"
-      },
-      "patch": {
-        "operationId": "updatePage",
-        "summary": "Update a page",
         "tags": [
-          "Pages"
-        ],
+          "folders"
+        ]
+      },
+      "put": {
+        "summary": "Update Folder",
+        "operationId": "updateFolder",
+        "description": "Update a folder",
         "parameters": [
           {
-            "name": "page_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -543,54 +387,27 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PageRequest"
+                "$ref": "#/components/schemas/FolderRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Page updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "OK"
           }
         },
-        "description": "Update a page"
+        "tags": [
+          "folders"
+        ]
       },
       "delete": {
-        "operationId": "deletePage",
-        "summary": "Delete a page",
-        "tags": [
-          "Pages"
-        ],
+        "summary": "Delete Folder",
+        "operationId": "deleteFolder",
+        "description": "Delete a folder",
         "parameters": [
           {
-            "name": "page_code",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -600,72 +417,157 @@
         ],
         "responses": {
           "204": {
-            "description": "Page deleted"
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "No Content"
           }
         },
-        "description": "Delete a page"
+        "tags": [
+          "folders"
+        ]
       }
     },
-    "/users": {
+    "/comments": {
       "get": {
-        "operationId": "listUsers",
-        "summary": "List users",
-        "tags": [
-          "Users"
-        ],
+        "summary": "List Comments",
+        "operationId": "listComments",
+        "description": "Retrieve comments",
         "parameters": [
           {
-            "name": "page",
+            "name": "note_id",
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
-              "default": 1
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "List of users",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Comment"
+                  }
                 }
               }
             }
           }
         },
-        "description": "List users"
+        "tags": [
+          "comments"
+        ]
+      },
+      "post": {
+        "summary": "Create Comment",
+        "operationId": "createComment",
+        "description": "Create a new comment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "comments"
+        ]
+      }
+    },
+    "/tags": {
+      "get": {
+        "summary": "List Tags",
+        "operationId": "listTags",
+        "description": "Retrieve all tags",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "tags"
+        ]
+      }
+    },
+    "/groups": {
+      "get": {
+        "summary": "List Groups",
+        "operationId": "listGroups",
+        "description": "Retrieve all groups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "groups"
+        ]
+      }
+    },
+    "/attachments": {
+      "post": {
+        "summary": "Upload Attachment",
+        "operationId": "uploadAttachment",
+        "description": "Upload a file attachment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "attachments"
+        ]
       }
     }
   },
@@ -674,172 +576,60 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Bearer token (API access token from NotePM settings)"
+        "description": "Access token obtained from NotePM settings"
       }
     },
     "schemas": {
-      "NoteSummary": {
+      "ErrorResponse": {
         "type": "object",
         "properties": {
-          "note_code": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "string"
           },
           "name": {
             "type": "string"
           },
-          "description": {
+          "domain": {
             "type": "string"
-          },
-          "icon_url": {
-            "type": "string"
-          },
-          "archived": {
-            "type": "boolean"
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "open",
-              "private"
-            ]
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GroupSummary"
-            }
-          },
-          "users": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSummary"
-            }
           }
         }
       },
-      "NoteListResponse": {
+      "User": {
         "type": "object",
         "properties": {
-          "notes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NoteSummary"
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
-          }
-        }
-      },
-      "NoteDetailResponse": {
-        "type": "object",
-        "properties": {
-          "note": {
-            "$ref": "#/components/schemas/NoteSummary"
-          },
-          "meta": {
-            "type": "object"
-          }
-        }
-      },
-      "NoteResponse": {
-        "type": "object",
-        "properties": {
-          "note": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NoteSummary"
-            }
-          },
-          "meta": {
-            "type": "object"
-          }
-        }
-      },
-      "NoteRequest": {
-        "type": "object",
-        "required": [
-          "name",
-          "scope"
-        ],
-        "properties": {
-          "icon": {
-            "type": "string",
-            "description": "BASE64 encoded icon image"
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 30
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "open",
-              "private"
-            ]
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Group names (only for scope=private)"
-          },
-          "users": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "User codes"
-          }
-        }
-      },
-      "NoteUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "icon": {
+          "id": {
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "email": {
             "type": "string",
-            "maxLength": 30
+            "format": "email"
           },
-          "description": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "scope": {
-            "type": "string",
-            "enum": [
-              "open",
-              "private"
-            ]
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "users": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "role": {
+            "type": "string"
           }
         }
       },
-      "PageSummary": {
+      "Note": {
         "type": "object",
         "properties": {
-          "page_code": {
-            "type": "string"
-          },
-          "note_code": {
+          "id": {
             "type": "string"
           },
           "title": {
@@ -848,8 +638,11 @@
           "body": {
             "type": "string"
           },
-          "created_by": {
-            "$ref": "#/components/schemas/UserSummary"
+          "folder_id": {
+            "type": "string"
+          },
+          "author_id": {
+            "type": "string"
           },
           "created_at": {
             "type": "string",
@@ -858,50 +651,6 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "PageListResponse": {
-        "type": "object",
-        "properties": {
-          "pages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PageSummary"
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
-          }
-        }
-      },
-      "PageDetailResponse": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "$ref": "#/components/schemas/PageSummary"
-          },
-          "meta": {
-            "type": "object"
-          }
-        }
-      },
-      "PageRequest": {
-        "type": "object",
-        "required": [
-          "note_code",
-          "title"
-        ],
-        "properties": {
-          "note_code": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string",
-            "description": "Page body in Markdown"
           },
           "tags": {
             "type": "array",
@@ -911,69 +660,141 @@
           }
         }
       },
-      "UserSummary": {
+      "NoteRequest": {
         "type": "object",
+        "required": [
+          "title",
+          "body"
+        ],
         "properties": {
-          "user_code": {
+          "title": {
             "type": "string"
           },
-          "name": {
+          "body": {
             "type": "string"
-          }
-        }
-      },
-      "GroupSummary": {
-        "type": "object",
-        "properties": {
-          "name": {
+          },
+          "folder_id": {
             "type": "string"
-          }
-        }
-      },
-      "UserListResponse": {
-        "type": "object",
-        "properties": {
-          "users": {
+          },
+          "tags": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserSummary"
+              "type": "string"
             }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/PaginationMeta"
           }
         }
       },
-      "PaginationMeta": {
+      "Folder": {
         "type": "object",
         "properties": {
-          "previous_page": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "created_at": {
             "type": "string",
-            "nullable": true
-          },
-          "next_page": {
-            "type": "string",
-            "nullable": true
-          },
-          "page": {
-            "type": "integer"
-          },
-          "per_page": {
-            "type": "integer"
-          },
-          "total": {
-            "type": "integer"
+            "format": "date-time"
           }
         }
       },
-      "ErrorResponse": {
+      "FolderRequest": {
         "type": "object",
+        "required": [
+          "name"
+        ],
         "properties": {
-          "error": {
+          "name": {
             "type": "string"
           },
-          "message": {
+          "parent_id": {
             "type": "string"
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "note_id": {
+            "type": "string"
+          },
+          "author_id": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CommentRequest": {
+        "type": "object",
+        "required": [
+          "note_id",
+          "body"
+        ],
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "size": {
+            "type": "integer"
           }
         }
       }
@@ -981,13 +802,28 @@
   },
   "tags": [
     {
-      "name": "Notes"
+      "name": "attachments"
     },
     {
-      "name": "Pages"
+      "name": "comments"
     },
     {
-      "name": "Users"
+      "name": "folders"
+    },
+    {
+      "name": "groups"
+    },
+    {
+      "name": "notes"
+    },
+    {
+      "name": "tags"
+    },
+    {
+      "name": "team"
+    },
+    {
+      "name": "users"
     }
   ]
 }
