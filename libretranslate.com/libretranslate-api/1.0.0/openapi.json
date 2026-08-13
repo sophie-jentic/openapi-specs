@@ -196,6 +196,106 @@
           }
         }
       }
+    },
+    "/translate_file": {
+      "post": {
+        "operationId": "translateFile",
+        "summary": "Translate a file",
+        "description": "Translate an uploaded document from source to target language. Returns a URL to the translated file.",
+        "tags": ["Translation"],
+        "security": [
+          {},
+          { "ApiKeyAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "source", "target"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary", "description": "File to translate." },
+                  "source": { "type": "string", "description": "Source language code (e.g. en) or 'auto' for auto-detection." },
+                  "target": { "type": "string", "description": "Target language code (e.g. es)." },
+                  "api_key": { "type": "string", "description": "API key (UUID format). Required on some instances." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Translated file URL",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TranslateFileResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "403": {
+            "description": "Banned",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "500": {
+            "description": "Translation error",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/suggest": {
+      "post": {
+        "operationId": "suggestTranslation",
+        "summary": "Submit a translation suggestion",
+        "description": "Submit a suggestion to improve a translation, contributing feedback to the translation engine.",
+        "tags": ["Translation"],
+        "security": [
+          {},
+          { "ApiKeyAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SuggestRequest" }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": { "$ref": "#/components/schemas/SuggestRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Suggestion accepted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuggestResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "403": {
+            "description": "Not authorized",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -273,6 +373,28 @@
           },
           "suggestions": { "type": "boolean", "description": "Whether translation suggestions are enabled." },
           "supportedFilesFormat": { "type": "array", "items": { "type": "string" }, "description": "Supported file formats for file translation." }
+        }
+      },
+      "SuggestRequest": {
+        "type": "object",
+        "required": ["q", "s", "source", "target"],
+        "properties": {
+          "q": { "type": "string", "description": "Original text.", "example": "Hello world!" },
+          "s": { "type": "string", "description": "Suggested translation.", "example": "¡Hola mundo!" },
+          "source": { "type": "string", "description": "Language of the original text.", "example": "en" },
+          "target": { "type": "string", "description": "Language of the suggested translation.", "example": "es" }
+        }
+      },
+      "SuggestResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "description": "Whether the suggestion submission was successful." }
+        }
+      },
+      "TranslateFileResponse": {
+        "type": "object",
+        "properties": {
+          "translatedFileUrl": { "type": "string", "description": "URL of the translated file." }
         }
       },
       "HealthStatus": {
