@@ -1,0 +1,2527 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MFSN-REPORTS",
+    "version": "1.0.0",
+    "description": "Specification for the MFSN 2.0 production authentication and 3B report APIs.\nThis spec is derived from the Postman collection \"MFSN 2.0 - PRODUCTION-Fetch 3B\"\nand the observed request/response samples in Postman.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/myfreescorenowinc/MyFreeScoreNow-Reports-1.0/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.myfreescorenow.com",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login and obtain session tokens",
+        "operationId": "login",
+        "description": "Authenticates a user and returns access/session tokens that are then used in subsequent calls such as\n`/api/auth/fetch-3B-json` and `/api/auth/logout`.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "invalidCredentials": {
+                    "summary": "Invalid email or password",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid credentials"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "examples": {
+                  "missingFields": {
+                    "summary": "Missing required fields",
+                    "value": {
+                      "success": false,
+                      "message": "Validation failed",
+                      "errors": {
+                        "email": [
+                          "The email field is required."
+                        ],
+                        "password": [
+                          "The password field is required."
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/fetch-3B-json": {
+      "post": {
+        "summary": "Fetch 3B credit report as JSON",
+        "operationId": "fetch3BJson",
+        "description": "Fetches a three-bureau (3B) credit report for a logged-in member.\n\nThe request in Postman uses `multipart/form-data` with:\n- `email`: member email (typically `{{email_mem}}`)\n- `client_token`: client authorization token\n\nThe response is a large nested JSON structure that includes provider views,\nscores, accounts, inquiries, and more. The schema below focuses on the\ntop-level structure and key nested objects; it can be extended as needed.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Fetch3BRequest"
+              },
+              "examples": {
+                "validFetch": {
+                  "summary": "Valid fetch 3B request",
+                  "value": {
+                    "email": "testmember@test.com",
+                    "client_token": "MAPIK#gdIvaalSFxyONVPWGdSOzXNTQdHh"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "3B report fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fetch3BResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Sample successful 3B response (truncated)",
+                    "value": {
+                      "success": true,
+                      "message": "Report fetched successfully",
+                      "data": {
+                        "providerViews": [
+                          {
+                            "provider": "EFX",
+                            "summary": {
+                              "id": "3BR:cc2f7c44f709--bd92-524f9785-5e358c46...",
+                              "reportGenerated": 1771250521553,
+                              "creditFileSecurityFreezeFlag": false,
+                              "reportType": "US_3B",
+                              "provider": "EFX",
+                              "subject": {
+                                "provider": "EFX",
+                                "currentName": {
+                                  "lastName": "TEST",
+                                  "firstName": "TEST",
+                                  "middleName": "M",
+                                  "suffix": null
+                                },
+                                "currentAddress": {
+                                  "country": {
+                                    "code": "USA"
+                                  },
+                                  "line1": "SAMPLE",
+                                  "line3": "SAMPLE",
+                                  "line4": "TX",
+                                  "line5": "123134"
+                                },
+                                "nationalIdentifier": "xxxxx 0000",
+                                "dateOfBirth": 807231800000
+                              },
+                              "creditScore": {
+                                "score": 627,
+                                "provider": "EFX",
+                                "scoreReasons": [
+                                  {
+                                    "code": "00012",
+                                    "description": "The date that you opened your oldest account...",
+                                    "creditScoreFactorEffect": "HURTING"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid input or token)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "invalidClientToken": {
+                    "summary": "Invalid client token",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid client token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Invalid Email",
+                    "value": {
+                      "success": false,
+                      "message": "The email field must be a valid email address."
+                    }
+                  },
+                  "unauthorized1": {
+                    "summary": "Incorrect email or client token",
+                    "value": {
+                      "success": false,
+                      "message": "Incorrect email or client token"
+                    }
+                  },
+                  "unauthorized2": {
+                    "summary": "TOKEN_MISSING",
+                    "value": {
+                      "success": false,
+                      "message": "Access token is required. Please login."
+                    }
+                  },
+                  "unauthorized3": {
+                    "summary": "TOKEN_INVALID",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid or expired access token. Please login again."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User Not Active",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "User Suspended",
+                    "value": {
+                      "success": false,
+                      "message": "User suspended"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "User Unavailable",
+                    "value": {
+                      "success": false,
+                      "message": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unauthorized (incorrect email or token)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Email Missing",
+                    "value": {
+                      "success": false,
+                      "message": "The email field is required."
+                    }
+                  },
+                  "unauthorized2": {
+                    "summary": "Client Token Missing",
+                    "value": {
+                      "success": false,
+                      "message": "The client token field is required."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Report Could not be fetched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Report could not be fetched",
+                    "value": {
+                      "success": false,
+                      "message": "Report could not be fetched"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Logout current session",
+        "operationId": "logout",
+        "description": "Logs out the currently authenticated user and invalidates the session\nassociated with the provided tokens.\n",
+        "responses": {
+          "200": {
+            "description": "Successfully logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful logout",
+                    "value": {
+                      "success": true,
+                      "message": "Logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized or already logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericResponse"
+                },
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Not logged in or invalid tokens",
+                    "value": {
+                      "success": false,
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "Bankruptcy": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": " : ID indicates an object ID used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "sequence": {
+            "type": "string",
+            "description": " : Sequence indicates an corresponding object sequence accross the bureaus used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "filedDate": {
+            "type": "string",
+            "description": " : Date item was filed with the courts. _Optional_",
+            "format": "date-time"
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": "_Optional_",
+            "format": "date-time"
+          },
+          "referenceNumber": {
+            "type": "string",
+            "description": " : Case Number. _Optional_"
+          },
+          "dispositionStatus": {
+            "allOf": [
+              {
+                "description": " : Indicates the chapter type and the current status of the bankruptcy (i.e. chapter 13 filed, chapter 13 dismissed, and chapter 13 discharged). _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CodeDescription"
+              }
+            ]
+          },
+          "courtName": {
+            "type": "string",
+            "description": " : Name of the court handling the case. _Optional_"
+          },
+          "liability": {
+            "allOf": [
+              {
+                "description": " : Liability amount. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "exemptAmount": {
+            "allOf": [
+              {
+                "description": " : Exempt amount. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "assetAmount": {
+            "allOf": [
+              {
+                "description": " : Asset amount. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          }
+        }
+      },
+      "CodeDescription": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "description": {
+            "type": "string",
+            "description": "_Optional_"
+          }
+        },
+        "xml": {
+          "name": "codeDescription"
+        }
+      },
+      "CollectionItem": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": " : ID indicates an object ID used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Date the collection was reported to Equifax. _Optional_",
+            "format": "date-time"
+          },
+          "assignedDate": {
+            "type": "string",
+            "description": " : Date the account was assigned to collection status. _Optional_",
+            "format": "date-time"
+          },
+          "agencyClient": {
+            "type": "string",
+            "description": " : Collection agency name. _Optional_"
+          },
+          "orginalAmountOwed": {
+            "allOf": [
+              {
+                "description": " : Amount under collection. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": " : Account number under collection. _Optional_"
+          },
+          "accountDesignatorCode": {
+            "type": "string",
+            "description": " : Designation by a lender of an individual responsible for payment of an account. _Optional_",
+            "enum": [
+              "AUTHORIZED_USER",
+              "CO_MAKER",
+              "DECEASED",
+              "INDIVIDUAL_ACCOUNT",
+              "JOINT_ACCOUNT",
+              "MAKER",
+              "ON_BEHALF_OF_ANOTHER_PERSON",
+              "SHARED",
+              "TERMINATED",
+              "UNDESIGNATED"
+            ]
+          },
+          "balanceDate": {
+            "type": "string",
+            "description": " : Date associated with the current balance. _Optional_",
+            "format": "date-time"
+          },
+          "statusDate": {
+            "type": "string",
+            "description": " : Date associated with the current status. _Optional_",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "description": " : Current status. _Optional_",
+            "enum": [
+              "CLOSED",
+              "FROZEN",
+              "OPEN",
+              "REFINANCED",
+              "TRANSFERRED",
+              "ACCOUNT_DISPUTED",
+              "ADJUSTMENT",
+              "CHECKED",
+              "FINANCIAL_COUNSELOR",
+              "IN_BANKRUPTCY",
+              "NEW_LISTING",
+              "OTHER",
+              "PAID",
+              "PAYMENT",
+              "SETTLED",
+              "STATUS_UNKNOWN",
+              "SUPPRESS_COLLECTION",
+              "UNPAID",
+              "UNSETTLED",
+              "WAGE_EARNER"
+            ]
+          },
+          "amount": {
+            "allOf": [
+              {
+                "description": " : Current balance of the collection. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          }
+        }
+      },
+      "ConsumerStatement": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": " : ID indicates an object ID used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Date the consumer statement was reported to Equifax. _Optional_",
+            "format": "date-time"
+          },
+          "statement": {
+            "type": "string",
+            "description": " : Consumer statement text. _Optional_"
+          }
+        }
+      },
+      "ContactInformation": {
+        "properties": {
+          "contactName": {
+            "type": "string",
+            "description": " : Name of contact. _Optional_"
+          },
+          "address": {
+            "allOf": [
+              {
+                "description": " : address of contact. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalAddress"
+              }
+            ]
+          },
+          "phone": {
+            "allOf": [
+              {
+                "description": " : phone number of contact. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "contactInformation"
+        }
+      },
+      "Country": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": " : Country Code. _Optional_"
+          },
+          "name": {
+            "type": "string",
+            "description": " : Country name. _Optional_"
+          }
+        },
+        "xml": {
+          "name": "country"
+        }
+      },
+      "CreditReportAbstract": {
+        "properties": {
+          "generatedDate": {
+            "type": "string",
+            "description": " : Date the report is generated. _Optional_",
+            "format": "date-time"
+          },
+          "reportType": {
+            "type": "string",
+            "description": " : Type of report (1B vs. 3B). _Optional_",
+            "enum": [
+              "US_EFX",
+              "US_3B"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": " : ID indicates an object ID used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "scoreId": {
+            "type": "string",
+            "description": " : The id of the score associated with this report. _Optional_"
+          }
+        },
+        "xml": {
+          "name": "creditReportAbstract"
+        }
+      },
+      "CreditReportAccount": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": " : ID indicates an object ID used in the scenario that there are multiples of the object in question. _Optional_"
+          },
+          "accountOpen": {
+            "type": "boolean",
+            "description": " : Indicates whether the account is open or closed. _Optional_",
+            "default": false
+          },
+          "accountName": {
+            "type": "string",
+            "description": " : Name of the creditor. _Optional_"
+          },
+          "contactInformation": {
+            "allOf": [
+              {
+                "description": " : Creditor contact information. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/ContactInformation"
+              }
+            ]
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": " : Account number. _Optional_"
+          },
+          "accountStatus": {
+            "type": "string",
+            "description": " : Shows the status that identifies the current condition of the account as of the Date Reported. For example, Pays as agreed, 60 - 90 days late this month, or Account included in bankruptcy. _Optional_",
+            "enum": [
+              "BANKRUPTCY_OR_WAGE_EARNER_PLAN",
+              "COLLECTION_OR_CHARGEOFF",
+              "FORECLOSURE",
+              "FORECLOSURE_OR_REPOSSESSION",
+              "LATE_30_DAYS",
+              "LATE_60_DAYS",
+              "LATE_90_DAYS",
+              "WAGE_EARNER_PLAN",
+              "TOO_NEW_TO_RATE",
+              "PAYS_AS_AGREED",
+              "NOT_MORE_THAN_TWO_PAYMENTS_PAST_DUE",
+              "NOT_MORE_THAN_THREE_PAYMENTS_PAST_DUE",
+              "NOT_MORE_THAN_FOUR_PAYMENTS_PAST_DUE",
+              "OVER_120_DAYS_PAST_DUE",
+              "COLLECTION",
+              "INCLUDED_IN_CHAPTER_13",
+              "REPOSSESSION",
+              "CHARGE_OFF",
+              "ZERO_BALANCE_AND_CURRENT_ACCOUNT",
+              "NO_RATE_REPORTED",
+              "ACCOUNT_INACTIVE",
+              "LOST_OR_STOLEN_CARD",
+              "CONTACT_MEMBER_FOR_STATUS",
+              "REFINANCED_OR_RENEWED",
+              "CONSUMER_DECEASED",
+              "IN_FINANCIAL_COUNSELING",
+              "FORECLOSURE_PROCESS_STARTED",
+              "IN_WEP",
+              "ADJUSTMENT_PENDING",
+              "DISPUTE_RESOLUTION_PENDING",
+              "INCLUDED_IN_BANKRUPTCY",
+              "IN_BK",
+              "ASSIGNED_TO_US_DEPT_OF_ED",
+              "UNAVAILABLE"
+            ]
+          },
+          "paymentResponsibility": {
+            "type": "string",
+            "description": " : Designation by a lender of an individual responsible for payment of an account. _Optional_",
+            "enum": [
+              "INDIVIDUAL",
+              "JOINT_CONTRACTUAL_LIABILITY",
+              "SHARED",
+              "UNDESIGNATED"
+            ]
+          },
+          "highCreditAmount": {
+            "allOf": [
+              {
+                "description": " : The highest amount charged to this account. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "accountType": {
+            "type": "string",
+            "description": " : Describes the payment arrangement of the account (revolving, installment, mortgage or other). _Optional_",
+            "enum": [
+              "REVOLVING",
+              "MORTGAGE",
+              "INSTALLMENT",
+              "OTHER"
+            ]
+          },
+          "creditLimitAmount": {
+            "allOf": [
+              {
+                "description": " : Credit limit. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "termDurationMonths": {
+            "type": "integer",
+            "description": " : The amount of time to repay the loan. _Optional_",
+            "format": "int32"
+          },
+          "termFrequency": {
+            "type": "string",
+            "description": " : How often the payments are due. _Optional_"
+          },
+          "dateOpened": {
+            "type": "string",
+            "description": " : Date the account was originally opened. _Optional_",
+            "format": "date-time"
+          },
+          "balanceAmount": {
+            "allOf": [
+              {
+                "description": " : Amount due to the creditor at the time account. information was last reported _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Represents the 'as of' date of the most recent update received from the data furnisher. Accounts may continue to be updated by the data furnisher even after they are closed, paid out or become severely delinquent (charge off, repossession, etc.). _Optional_",
+            "format": "date-time"
+          },
+          "pastDueAmount": {
+            "allOf": [
+              {
+                "description": " : Amount currently past due, which can include late charges and fees. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "lastPaymentDate": {
+            "type": "string",
+            "description": " : Date of the most recent payment. _Optional_",
+            "format": "date-time"
+          },
+          "actualPayment": {
+            "allOf": [
+              {
+                "description": " : The payment actually received for a reporting period. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "monthlyPayment": {
+            "allOf": [
+              {
+                "description": " : The contractual amount due for a payment period. (the monthly amount due regardless of\tthe actual payment frequency.). _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "description": " : * For paid as agreed accounts with a zero balance, the DLA contains the Date of Last Payment on the account. * For paid as agreed accounts with a balance greater than zero, the DLA contains the most recent date associated with the account. * For delinquent accounts and accounts included in bankruptcy, the DLA contains the date the first delinquency occurred leading to the Status being reported on the account. _Optional_",
+            "format": "date-time"
+          },
+          "majorDelinquencyFirstReportedDate": {
+            "type": "string",
+            "description": " : The first date the major delinquency status was reported for this account. A major delinquency is considered to be a collection, repossession, charge-off, foreclosure or account included in bankruptcy. _Optional_",
+            "format": "date-time"
+          },
+          "monthsReviewed": {
+            "type": "integer",
+            "description": " : How many months the account has been reviewed. _Optional_",
+            "format": "int32"
+          },
+          "creditorClassification": {
+            "type": "string",
+            "description": " : A general type of business for the original creditor. _Optional_",
+            "enum": [
+              "ADVERTISING",
+              "CLOTHING",
+              "COLLECTION_SERVICES",
+              "CONTRACTORS",
+              "DEPARTMENT_AND_MAIL_ORDER",
+              "EMPLOYMENT",
+              "FARM_AND_GARDEN_SUPPLIES",
+              "FINANCE",
+              "GROCERY",
+              "HOME_FURNISHING",
+              "JEWELRY_AND_CAMERA",
+              "LUMBER_AND_HARDWARE",
+              "MEDICAL_AND_HEALTH",
+              "MISCELLANEOUS_AND_PUBLIC_RECORD",
+              "OIL_AND_NATIONAL_CREDIT_CARDS",
+              "PERSONAL_SERVICES_NOT_MEDICAL",
+              "REAL_ESTATE_AND_PUBLIC_ACCOMMODATION",
+              "SPORTING_GOODS",
+              "UTILITIES_AND_FUEL",
+              "WHOLESALE",
+              "AUTOMOTIVE",
+              "BANKING",
+              "CABLE_OR_CELLULAR",
+              "CHECK_GUARANTEE",
+              "CREDIT_UNION",
+              "EDUCATIONAL",
+              "FINANCIAL",
+              "GOVERNMENT",
+              "INSURANCE",
+              "MEDICAL_OR_HEALTH_CARE",
+              "OIL_COMPANY",
+              "PERSONAL_SERVICES",
+              "RENTAL_OR_LEASING",
+              "RETAIL",
+              "UTILITIES",
+              "UNKNOWN"
+            ]
+          },
+          "activityDesignator": {
+            "type": "string",
+            "description": " : Describes the final state of the account. _Optional_",
+            "enum": [
+              "CLOSED",
+              "DEFAULT",
+              "FROZEN",
+              "LOST_OR_STOLEN",
+              "OPEN",
+              "PAID",
+              "PAID_AND_CLOSED",
+              "REFINANCED",
+              "TRANSFER_OR_SOLD",
+              "TRANSFER_OR_SOLD_OR_PAID",
+              "TRANSFERRED",
+              "UNKNOWN"
+            ]
+          },
+          "chargeOffAmount": {
+            "allOf": [
+              {
+                "description": " : The amount charged to loss by creditor. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "deferredPaymentStartDate": {
+            "type": "string",
+            "description": " : Contains the date the first payment is due for deferred loans. _Optional_",
+            "format": "date-time"
+          },
+          "balloonPaymentAmount": {
+            "allOf": [
+              {
+                "description": " : The amount of the balloon payment. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "balloonPaymentDate": {
+            "type": "string",
+            "description": " : The date the balloon payment is due. _Optional_",
+            "format": "date-time"
+          },
+          "dateClosed": {
+            "type": "string",
+            "description": " : Date the account was closed to further purchases or paid in full. _Optional_",
+            "format": "date-time"
+          },
+          "loanType": {
+            "allOf": [
+              {
+                "description": " : Contains a code that describes the kind of loan (for example: auto, home improvement, credit card, etc.). _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CodeDescription"
+              }
+            ]
+          },
+          "firstDelinquencyDate": {
+            "type": "string",
+            "description": " : Contains the date of the first\tdelinquency that led to the Rate/Status being reported greater than or equal to current Rate/Status 2. _Optional_",
+            "format": "date-time"
+          },
+          "comments": {
+            "type": "array",
+            "description": " : Any comments a creditor reports regarding account. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CodeDescription"
+            }
+          },
+          "paymentHistory": {
+            "type": "array",
+            "description": " : Payment history for this account for up to the past 81 months. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/PaymentHistoryYear"
+            }
+          },
+          "trendedDataHistory": {
+            "allOf": [
+              {
+                "description": " : Trended Data History for this account going back 24 months. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/TrendedDataHistory"
+              }
+            ]
+          },
+          "isNegative": {
+            "type": "boolean",
+            "description": " : A boolean where true indicates that the account has a negative impact on credit. _Optional_",
+            "default": false
+          },
+          "isDelinquent": {
+            "type": "boolean",
+            "description": " : A boolean where true indicates that the account has delinquency. _Optional_",
+            "default": false
+          },
+          "disputeFlag": {
+            "type": "boolean",
+            "description": " : A boolean where true indicates that the account is under dispute. _Optional_",
+            "default": false
+          },
+          "accountRating": {
+            "type": "string",
+            "description": " : Reported Status of the account _Optional_",
+            "enum": [
+              "CLOSED",
+              "DEFAULT",
+              "FROZEN",
+              "LOST_OR_STOLEN",
+              "OPEN",
+              "PAID",
+              "PAID_AND_CLOSED",
+              "REFINANCED",
+              "TRANSFER_OR_SOLD",
+              "TRANSFER_OR_SOLD_OR_PAID",
+              "TRANSFERRED",
+              "UNKNOWN",
+              "DEROG"
+            ]
+          },
+          "originalCreditor": {
+            "type": "string",
+            "description": " :The Original Creditor in case of a collection Account. _Optional_"
+          },
+          "late30Count": {
+            "type": "integer",
+            "description": " : How many times has the account been in the LATE_30_DAYS status _Optional_",
+            "format": "int32"
+          },
+          "late60Count": {
+            "type": "integer",
+            "description": " : How many times has the account been in the LATE_30_DAYS status _Optional_",
+            "format": "int32"
+          },
+          "late90Count": {
+            "type": "integer",
+            "description": " : How many times has the account been in the LATE_30_DAYS status _Optional_",
+            "format": "int32"
+          }
+        },
+        "xml": {
+          "name": "creditReportAccount"
+        }
+      },
+      "CreditReportDeliveryHistory": {
+        "properties": {
+          "creditReportAbstract": {
+            "allOf": [
+              {
+                "description": " : Abstract of the credit report. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportAbstract"
+              }
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": " : Id for the delivery History table. _Optional_"
+          },
+          "deliveryStatus": {
+            "type": "string",
+            "description": " : Reported  Delivery Status of the credit report. _Optional_",
+            "enum": [
+              "REPRINT",
+              "SENT",
+              "RESENT",
+              "MAILED",
+              "REMAILED",
+              "ORDER_FAILED",
+              "RETURN_MAIL",
+              "EXCEPTION_LETTER_MAILED",
+              "ADDRESS_CHANGE",
+              "NOT_MAILED"
+            ]
+          },
+          "creationDate": {
+            "type": "string",
+            "description": " : Date the report was produced for delivery. _Optional_",
+            "format": "date-time"
+          },
+          "modifiedDate": {
+            "type": "string",
+            "description": " : Date the report was  modified for re delivery. _Optional_",
+            "format": "date-time"
+          },
+          "methodOfDelivery": {
+            "type": "string",
+            "description": " : Method of delivery the report was delivered. _Optional_",
+            "enum": [
+              "POST_MAIL"
+            ]
+          }
+        },
+        "xml": {
+          "name": "creditReportDeliveryHistory"
+        }
+      },
+      "CreditReportProviderDisputeInformation": {
+        "properties": {
+          "contactName": {
+            "type": "string",
+            "description": " : Name of contact. _Optional_"
+          },
+          "address": {
+            "allOf": [
+              {
+                "description": " : address of contact. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalAddress"
+              }
+            ]
+          },
+          "phone": {
+            "allOf": [
+              {
+                "description": " : phone number of contact. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "creditReportProviderDisputeInformation"
+        }
+      },
+      "CreditReportProviderView": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "summary": {
+            "allOf": [
+              {
+                "description": " : The summary portion of the credit report. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummary"
+              }
+            ]
+          },
+          "revolvingAccounts": {
+            "type": "array",
+            "description": " : List of all the accounts on the report of type Revolving. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditReportAccount"
+            }
+          },
+          "mortgageAccounts": {
+            "type": "array",
+            "description": " : List of all the accounts on the report of type Mortgage. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditReportAccount"
+            }
+          },
+          "installmentAccounts": {
+            "type": "array",
+            "description": " : List of all the accounts on the report of type Installmnet. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditReportAccount"
+            }
+          },
+          "otherAccounts": {
+            "type": "array",
+            "description": " : List of all the accounts on the report of type Other. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditReportAccount"
+            }
+          },
+          "inquiries": {
+            "type": "array",
+            "description": " : List of inquiries on the report. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/Inquiry"
+            }
+          },
+          "consumerStatements": {
+            "type": "array",
+            "description": " : List of consumer statements on the report. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/ConsumerStatement"
+            }
+          },
+          "publicRecords": {
+            "allOf": [
+              {
+                "description": " : List of public records on the report. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PublicRecords"
+              }
+            ]
+          },
+          "collections": {
+            "type": "array",
+            "description": " : List of collections on the report. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CollectionItem"
+            }
+          }
+        },
+        "xml": {
+          "name": "creditReportProviderView"
+        }
+      },
+      "CreditReportSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "reportGenerated": {
+            "type": "string",
+            "description": " : Date the report is generated. _Optional_",
+            "format": "date-time"
+          },
+          "creditFileSecurityFreezeFlag": {
+            "type": "boolean",
+            "description": " : A flag indicating whether the consumer has a Security Freeze on the report. In certain states a consumer is entitled by state law to place a security freeze upon his/ her credit file. Credit grantors and service providers will not be able to access the consumer's credit file without his/her permission (with the exception of companies with which the consumer has already established credit; with the exception of collection agencies which need access to the file for collection of a debt owed by that consumer; and with a few other state-specific exceptions). _Optional_",
+            "default": false
+          },
+          "reportType": {
+            "type": "string",
+            "description": " : Report type. _Optional_",
+            "enum": [
+              "US_EFX",
+              "US_3B"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "subject": {
+            "allOf": [
+              {
+                "description": " : PII for the consumer. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PersonSubject"
+              }
+            ]
+          },
+          "creditScore": {
+            "allOf": [
+              {
+                "description": " : A score compiled based upon variables in a consumer's credit file that is indicative of the consumer's creditworthiness. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditScore"
+              }
+            ]
+          },
+          "revolvingAccounts": {
+            "allOf": [
+              {
+                "description": " : Credit summary information for Revolving accounts. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummaryAccounts"
+              }
+            ]
+          },
+          "mortgageAccounts": {
+            "allOf": [
+              {
+                "description": " : Credit summary information for Mortgage accounts. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummaryAccounts"
+              }
+            ]
+          },
+          "installmentAccounts": {
+            "allOf": [
+              {
+                "description": " : Credit summary information for Installment accounts. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummaryAccounts"
+              }
+            ]
+          },
+          "otherAccounts": {
+            "allOf": [
+              {
+                "description": " : Credit summary information for Other accounts. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummaryAccounts"
+              }
+            ]
+          },
+          "totalOpenAccounts": {
+            "allOf": [
+              {
+                "description": " : Total number of open accounts on the report. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportSummaryAccounts"
+              }
+            ]
+          },
+          "lengthOfCreditHistoryMonths": {
+            "type": "integer",
+            "description": " : Total length of consumer's credit history, in months. _Optional_",
+            "format": "int32"
+          },
+          "totalNegativeAccounts": {
+            "type": "integer",
+            "description": " : Count of negative accounts. _Optional_",
+            "format": "int32"
+          },
+          "averageAccountAgeMonths": {
+            "type": "integer",
+            "description": " : Total age of all the open acocunts divided by the number of open accounts. _Optional_",
+            "format": "int32"
+          },
+          "oldestAccountOpenDate": {
+            "type": "string",
+            "description": " : The date the oldest account on the report was opened. _Optional_",
+            "format": "date-time"
+          },
+          "oldestAccountName": {
+            "type": "string",
+            "description": " : The name of the oldest account on the report. _Optional_"
+          },
+          "mostRecentAccountOpenDate": {
+            "type": "string",
+            "description": " : The date the most recent account on the report was opened. _Optional_",
+            "format": "date-time"
+          },
+          "mostRecentAccountName": {
+            "type": "string",
+            "description": " : The name of the most recent account on the report. _Optional_"
+          },
+          "totalConsumerStatements": {
+            "type": "integer",
+            "description": " : Total count of consumer statements on the report. _Optional_",
+            "format": "int32"
+          },
+          "mostRecentInquiryDate": {
+            "type": "string",
+            "description": " : The date the most recent inquiry reported. _Optional_",
+            "format": "date-time"
+          },
+          "mostRecentInquiryName": {
+            "type": "string",
+            "description": " : The name of the most recent inquiry reported. _Optional_"
+          },
+          "totalPersonalInformation": {
+            "type": "integer",
+            "description": " : Total count of personal information records on the report, including the person subject, address, and employment records. _Optional_",
+            "format": "int32"
+          },
+          "totalInquires": {
+            "type": "integer",
+            "description": " : Total count of inquiries on the report. _Optional_",
+            "format": "int32"
+          },
+          "totalPublicRecords": {
+            "type": "integer",
+            "description": " : Total count of public records on the report. _Optional_",
+            "format": "int32"
+          },
+          "totalCollections": {
+            "type": "integer",
+            "description": " : Total count of collections on the report. _Optional_",
+            "format": "int32"
+          },
+          "disputeInformation": {
+            "allOf": [
+              {
+                "description": " : Bureau dispute information. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CreditReportProviderDisputeInformation"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "creditReportSummary"
+        }
+      },
+      "CreditReportSummaryAccounts": {
+        "properties": {
+          "balance": {
+            "allOf": [
+              {
+                "description": " : Total balance across all the open accounts of a given type. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "creditLimit": {
+            "allOf": [
+              {
+                "description": " : Total credit limit across all the open accounts of a given type. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "available": {
+            "allOf": [
+              {
+                "description": " : Total available credit across all the open accounts of a given type. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "monthlyPaymentAmount": {
+            "allOf": [
+              {
+                "description": " : Sum of the scheduled monthly payment amount across all the open accounts of a given type. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "debtToCreditRatio": {
+            "type": "number",
+            "description": " : Total debt-to-credit ratio (balance divided by credit limit) across all the open accounts of a given type. _Optional_",
+            "format": "double"
+          },
+          "totalAccounts": {
+            "type": "integer",
+            "description": " : Count of open accounts by a given type. _Optional_",
+            "format": "int32"
+          },
+          "totalNegativeAccounts": {
+            "type": "integer",
+            "description": " : Count of negative accounts by a given type. _Optional_",
+            "format": "int32"
+          },
+          "totalAccountsWithBalance": {
+            "type": "integer",
+            "description": " : Total count of the accounts of the given type that are open and have a balance. _Optional_",
+            "format": "int32"
+          }
+        },
+        "xml": {
+          "name": "creditReportSummaryAccounts"
+        }
+      },
+      "CreditScore": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "description": " : A score compiled based upon variables in a consumer's credit file that is indicative of the consumer's creditworthiness. _Optional_",
+            "format": "int32"
+          },
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "scoreRanges": {
+            "type": "array",
+            "description": " : The list of the credit score ranges and the corresponding score rating for each range associated with the particular score model. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditScoreRange"
+            }
+          },
+          "loanRiskRanges": {
+            "type": "array",
+            "description": " : The list of loan risk ranges and the corresponding risk rating for each range associated with a particular score model. The Loan Risk Rating describes how lenders may view the consumer's level of credit risk based on the consumer's score. People with higher credit scores have a greater likelihood to repay loans on time, over time. People with lower scores have a higher risk of becoming delinquent on loan payments. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditScoreLoanRiskRange"
+            }
+          },
+          "scoreReasons": {
+            "type": "array",
+            "description": " : A list of codes returned based on the Vantage 3.0 method of scoring that are either positive or negative adverse actions. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/CreditScoreReason"
+            }
+          }
+        },
+        "xml": {
+          "name": "creditScore"
+        }
+      },
+      "CreditScoreLoanRiskRange": {
+        "properties": {
+          "low": {
+            "type": "integer",
+            "description": "_Optional_",
+            "format": "int32"
+          },
+          "high": {
+            "type": "integer",
+            "description": "_Optional_",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "_Optional_"
+          }
+        },
+        "xml": {
+          "name": "creditScoreLoanRiskRange"
+        }
+      },
+      "CreditScoreRange": {
+        "properties": {
+          "low": {
+            "type": "integer",
+            "description": "_Optional_",
+            "format": "int32"
+          },
+          "high": {
+            "type": "integer",
+            "description": "_Optional_",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "_Optional_"
+          }
+        },
+        "xml": {
+          "name": "creditScoreRange"
+        }
+      },
+      "CreditScoreReason": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "description": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "creditScoreFactorEffect": {
+            "type": "string",
+            "description": "_Optional_",
+            "enum": [
+              "HELPING",
+              "HURTING",
+              "NEUTRAL"
+            ]
+          }
+        }
+      },
+      "Employer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "corresponding object id across bureaus:_Optional_"
+          },
+          "employerName": {
+            "type": "string",
+            "description": " : Employer Name. _Optional_"
+          },
+          "employeeTitle": {
+            "type": "string",
+            "description": " : Occupation. _Optional_"
+          },
+          "currentEmployer": {
+            "type": "boolean",
+            "description": " : Use this to determine the order in which to display the employment records. If no employment dates are returned with the record, this field will be set false by default. _Optional_",
+            "default": false
+          },
+          "ordinal": {
+            "type": "integer",
+            "description": " : The order in which the employment records should be displayed (i.e. the most recent record is #1, the next recent is #2, etc.). If no employment dates are returned with the record, this field will be set to -1. _Optional_",
+            "format": "int32"
+          },
+          "dateOfEmployment": {
+            "type": "string",
+            "description": " : Date employment began. _Optional_",
+            "format": "date-time"
+          },
+          "address": {
+            "allOf": [
+              {
+                "description": " : Employment address. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalAddress"
+              }
+            ]
+          }
+        }
+      },
+      "Inquiry": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "type": {
+            "type": "string",
+            "description": " : Hard inquiries are visible to anyone that obtains a copy of the credit report. Soft inquiries are only visible to the owner of the credit report. _Optional_",
+            "enum": [
+              "HARD",
+              "SOFT",
+              "OTHER"
+            ]
+          },
+          "prefix": {
+            "allOf": [
+              {
+                "description": " : Inquiry intent. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CodeDescription"
+              }
+            ]
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Date the inquiry was reported to Equifax. _Optional_",
+            "format": "date-time"
+          },
+          "contactInformation": {
+            "allOf": [
+              {
+                "description": " : Contact information for the party that initiated the inquiry. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/ContactInformation"
+              }
+            ]
+          }
+        }
+      },
+      "InternationalAddress": {
+        "properties": {
+          "country": {
+            "allOf": [
+              {
+                "description": "_Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Country"
+              }
+            ]
+          },
+          "line1": {
+            "type": "string",
+            "description": " : Address line 1. _Optional_"
+          },
+          "line2": {
+            "type": "string",
+            "description": " : Address line 2. _Optional_"
+          },
+          "line3": {
+            "type": "string",
+            "description": " : City. _Optional_"
+          },
+          "line4": {
+            "type": "string",
+            "description": " : State. _Optional_"
+          },
+          "line5": {
+            "type": "string",
+            "description": " : Zip. _Optional_"
+          },
+          "firstReportedDate": {
+            "type": "string",
+            "description": " : Date address first reported. _Optional_",
+            "format": "date-time"
+          },
+          "lastReportedDate": {
+            "type": "string",
+            "description": " : Date address last reported. _Optional_",
+            "format": "date-time"
+          },
+          "phone": {
+            "allOf": [
+              {
+                "description": " : Phone. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "internationalAddress"
+        }
+      },
+      "InternationalAddressPrev": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "corresponding object id across bureaus:_Optional_"
+          },
+          "country": {
+            "allOf": [
+              {
+                "description": "_Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Country"
+              }
+            ]
+          },
+          "line1": {
+            "type": "string",
+            "description": " : Address line 1. _Optional_"
+          },
+          "line2": {
+            "type": "string",
+            "description": " : Address line 2. _Optional_"
+          },
+          "line3": {
+            "type": "string",
+            "description": " : City. _Optional_"
+          },
+          "line4": {
+            "type": "string",
+            "description": " : State. _Optional_"
+          },
+          "line5": {
+            "type": "string",
+            "description": " : Zip. _Optional_"
+          },
+          "firstReportedDate": {
+            "type": "string",
+            "description": " : Date address first reported. _Optional_",
+            "format": "date-time"
+          },
+          "lastReportedDate": {
+            "type": "string",
+            "description": " : Date address last reported. _Optional_",
+            "format": "date-time"
+          },
+          "phone": {
+            "allOf": [
+              {
+                "description": " : Phone. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "internationalAddress"
+        }
+      },
+      "InternationalPhone": {
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "description": " : Country Code of phone. _Optional_"
+          },
+          "areaCode": {
+            "type": "string",
+            "description": " : area Code of Phone. _Optional_"
+          },
+          "exchange": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "extension": {
+            "type": "string",
+            "description": "_Optional_"
+          }
+        },
+        "xml": {
+          "name": "StringernationalPhone"
+        }
+      },
+      "Judgment": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "filedDate": {
+            "type": "string",
+            "description": " : Date item was filed with the courts. _Optional_",
+            "format": "date-time"
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Date the <item> was reported to Equifax. _Optional_",
+            "format": "date-time"
+          },
+          "courtName": {
+            "type": "string",
+            "description": " : Name of the court handling the case. _Optional_"
+          },
+          "defendant": {
+            "type": "string",
+            "description": " : The person against whom the lawsuit is filed and from whom relief is sought. _Optional_"
+          },
+          "amount": {
+            "allOf": [
+              {
+                "description": " : The actual amount of the last payment. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "caseDocumentNumber": {
+            "type": "string",
+            "description": " : The court docket number assigned to a case by the Clerk. _Optional_"
+          },
+          "plaintiff": {
+            "type": "string",
+            "description": " : The person who begins the lawsuit because he/she believes they have suffered some injury or injustice. _Optional_"
+          },
+          "verifiedDate": {
+            "type": "string",
+            "description": " : Date the court record <item> was re-checked and verified. _Optional_",
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "description": " : Used as in current status - how an account is currently being paid, either paid on time or paid late. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/CodeDescription"
+              }
+            ]
+          },
+          "satisfiedDate": {
+            "type": "string",
+            "description": " : Date the <item> was satisfied. _Optional_",
+            "format": "date-time"
+          }
+        }
+      },
+      "Lien": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "_Optional_"
+          },
+          "filedDate": {
+            "type": "string",
+            "description": " : Date item was filed with the courts. _Optional_",
+            "format": "date-time"
+          },
+          "reportedDate": {
+            "type": "string",
+            "description": " : Date the lien was reported to Equifax. _Optional_",
+            "format": "date-time"
+          },
+          "courtName": {
+            "type": "string",
+            "description": " : Name of the court handling the case. _Optional_"
+          },
+          "caseDocumentNumber": {
+            "type": "string",
+            "description": " : The court docket number assigned to a case by the Clerk. _Optional_"
+          },
+          "lienAmount": {
+            "allOf": [
+              {
+                "description": " : The monetary amount for any given lien. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/Money"
+              }
+            ]
+          },
+          "verifiedDate": {
+            "type": "string",
+            "description": " : Date the court record <item> was re-checked and verified. _Optional_",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "description": " : Used as in current status- how an account is currently being paid, either paid on time or paid late. _Optional_"
+          }
+        }
+      },
+      "Money": {
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "_Optional_",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string",
+            "description": "_Optional_",
+            "enum": [
+              "USD",
+              "CAD",
+              "GBP"
+            ]
+          }
+        },
+        "xml": {
+          "name": "money"
+        }
+      },
+      "PaymentHistoryMonth": {
+        "properties": {
+          "monthType": {
+            "type": "string",
+            "description": "_Optional_",
+            "enum": [
+              "NO_DATA",
+              "NEGATIVE",
+              "POSITIVE",
+              "COLLECTION",
+              "NEW_ACCOUNT",
+              "BANKRUPTCY",
+              "FORECLOSURE",
+              "VOLUNTARY_SURRENDER",
+              "REPOSSESSION",
+              "CHARGE_OFF",
+              "COLLECTION_CHARGEOFF"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "description": " : The payment status for a given month/year. _Optional_",
+            "enum": [
+              "PAYS_AS_AGREED C",
+              "DAYSLATE_30    1",
+              "DAYSLATE_60    2",
+              "DAYSLATE_90    3",
+              "DAYSLATE_120   4",
+              "DAYSLATE_150   5",
+              "DAYSLATE_180   6",
+              "TOO_NEW_TO_RATE U",
+              "BANKRUPTCY    B",
+              "COLLECTION    7",
+              "FORECLOSURE   8",
+              "VOLUNTARY_SURRENDER 7",
+              "REPOSSESSION  8",
+              "CHARGE_OFF    9",
+              "COLLECTION_CHARGEOFF 9",
+              "ZERO_BAL_AND_CURR_ACCT U",
+              "NOT_REPORTED U",
+              "UNAVAILABLE U"
+            ]
+          }
+        }
+      },
+      "PaymentHistoryYear": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": " : The year associated with the payment history element. _Optional_",
+            "format": "int32"
+          },
+          "january": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "february": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "march": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "april": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "may": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "june": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "july": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "august": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "september": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "october": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "november": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          },
+          "december": {
+            "allOf": [
+              {
+                "description": " : The month associated with the payment history element. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentHistoryMonth"
+              }
+            ]
+          }
+        },
+        "xml": {
+          "name": "paymentHistoryYear"
+        }
+      },
+      "PersonName": {
+        "properties": {
+          "lastName": {
+            "type": "string",
+            "description": " : The individual's Last Name. _Optional_"
+          },
+          "firstName": {
+            "type": "string",
+            "description": " : The individual's First Name. _Optional_"
+          },
+          "middleName": {
+            "type": "string",
+            "description": " : The individual's Middle Name. _Optional_"
+          },
+          "suffix": {
+            "type": "string",
+            "description": " : The individual's suffix. _Optional_"
+          }
+        },
+        "xml": {
+          "name": "personName"
+        }
+      },
+      "PersonNameAlias": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "corresponding object id across bureaus:_Optional_"
+          },
+          "lastName": {
+            "type": "string",
+            "description": " : The individual's Last Name. _Optional_"
+          },
+          "firstName": {
+            "type": "string",
+            "description": " : The individual's First Name. _Optional_"
+          },
+          "middleName": {
+            "type": "string",
+            "description": " : The individual's Middle Name. _Optional_"
+          },
+          "suffix": {
+            "type": "string",
+            "description": " : The individual's suffix. _Optional_"
+          }
+        },
+        "xml": {
+          "name": "PersonNameAlias"
+        }
+      },
+      "PersonSubject": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "currentName": {
+            "allOf": [
+              {
+                "description": " : Name. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/PersonName"
+              }
+            ]
+          },
+          "aliases": {
+            "type": "array",
+            "description": " : Alias of individual. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/PersonNameAlias"
+            }
+          },
+          "currentAddress": {
+            "allOf": [
+              {
+                "description": " : Currrent address of individual. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalAddress"
+              }
+            ]
+          },
+          "previousAddresses": {
+            "type": "array",
+            "description": " : Previous address of individual. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/InternationalAddressPrev"
+            }
+          },
+          "homePhone": {
+            "allOf": [
+              {
+                "description": " : Home phone of the individual. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          },
+          "mobilePhone": {
+            "allOf": [
+              {
+                "description": " : Mobile phone of the individual. _Optional_"
+              },
+              {
+                "$ref": "#/components/schemas/InternationalPhone"
+              }
+            ]
+          },
+          "nationalIdentifier": {
+            "type": "string",
+            "description": " : National Identifier of the individual. _Optional_"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": " : Date of Birth of the individual. _Optional_",
+            "format": "date-time"
+          },
+          "dateOfDeath": {
+            "type": "string",
+            "description": " : Date of Death of the individual. _Optional_",
+            "format": "date-time"
+          },
+          "employmentHistory": {
+            "type": "array",
+            "description": " : Employment History of the individual. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/Employer"
+            }
+          }
+        },
+        "xml": {
+          "name": "personSubject"
+        }
+      },
+      "PublicRecords": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": " : A firm which receives, maintains, and provides information about consumer's credit history. There are three national credit reporting agencies (Equifax, Experian and TransUnion). There are many smaller agencies, but almost all of them get information from one or more of the three major agencies. National credit reporting agencies adhere to the requirements of the Fair Credit Reporting Act (FCRA). _Optional_",
+            "enum": [
+              "EFX",
+              "TU",
+              "EXP",
+              "UNKNOWN"
+            ]
+          },
+          "bankruptcies": {
+            "type": "array",
+            "description": " : A proceeding in federal court whereby a person who is unable to pay his debts in full may be discharged from the legal obligation to do so. Three types apply to consumers: 1. Chapter 7 refers to a court proceeding where one's unprotected assets are sold and disbursed to pay creditors. 2. Chapter 13 allows the debtor an extended time to repay all or part of his/her debts. The debtor is allowed to keep his/her assets. 3. Chapter 12 refers to a court proceeding where financial obligations are released due to the inability of a family farm to pay their debts. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/Bankruptcy"
+            }
+          },
+          "judgments": {
+            "type": "array",
+            "description": " : A determination by a court of law that, in the case of credit, may require a person to fulfill an obligation-to pay a debt, for example. When a judgement has been satisfied (i.e, the debit has been paid or settled), the consumer has fulfilled their requirements and is no longer liable. Information about judgments is recorded in the public records section of a credit report. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/Judgment"
+            }
+          },
+          "liens": {
+            "type": "array",
+            "description": " : A legal claim upon the property of another as security to ensure that a debt will be paid. A tax lien is a lien filed by a state government or by the Federal government. The Federal Government's Internal Revenue Service, which collects income taxes from consumers may place notices of liens in county courts, listing the consumer's unpaid federal income taxes. Lien Released - Means that the lien is paid. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/Lien"
+            }
+          }
+        }
+      },
+      "TrendedData": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": " : The name of trended data in this element. _Optional_"
+          },
+          "years": {
+            "type": "array",
+            "description": " : The list of trended data years per element. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/TrendedDataYear"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "description": " : The list of trended data labels per element. _Optional_",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "xml": {
+          "name": "trendedData"
+        }
+      },
+      "TrendedDataHistory": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": " : The name of the trended data history element. _Optional_"
+          },
+          "trendedDataList": {
+            "type": "array",
+            "description": " : The list of the trended data for the element type. _Optional_",
+            "items": {
+              "$ref": "#/components/schemas/TrendedData"
+            }
+          }
+        }
+      },
+      "TrendedDataYear": {
+        "properties": {
+          "year": {
+            "type": "string",
+            "description": " : The string year label of the TrendedDataYear element. _Optional_"
+          },
+          "monthData": {
+            "type": "array",
+            "description": " : The list of month values for the TrendedDataYear element starting with January for a 12 month period. _Optional_",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "testmember@test.com",
+            "description": "Email address of the member."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "ExamplePassword123!",
+            "description": "Password for the member account."
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Login successful"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessToken": {
+                "type": "string",
+                "description": "Access token used in subsequent requests."
+              },
+              "sessionId": {
+                "type": "string",
+                "description": "Session identifier used with the access token."
+              }
+            },
+            "required": [
+              "accessToken",
+              "sessionId"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ]
+      },
+      "Fetch3BRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "client_token"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Member email, usually the same as the login email."
+          },
+          "client_token": {
+            "type": "string",
+            "description": "Client-specific token identifying the requesting application."
+          }
+        }
+      },
+      "Fetch3BResponse": {
+        "type": "object",
+        "description": "Top-level 3B report response. This schema captures the overall structure\nbased on the sample 200 response seen in Postman. Many nested properties\nare complex; start here and extend as needed.\n",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Report fetched successfully"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "providerViews": {
+                "type": "array",
+                "description": "List of provider-specific views (EFX, etc.).",
+                "items": {
+                  "$ref": "#/components/schemas/CreditReportProviderView"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ]
+      },
+      "GenericResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "errors"
+        ]
+      }
+    }
+  }
+}

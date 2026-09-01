@@ -1,0 +1,2033 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bambora / Worldline North America Payment API",
+    "description": "North American payment processing API by Bambora (now Worldline). Supports card payments, tokenization, payment profiles, returns, voids, completions, recurring billing, and reporting. Used for direct payment gateway integration.",
+    "version": "1.0.5",
+    "x-jentic-source-url": "https://docs.na.worldline-solutions.com/"
+  },
+  "servers": [
+    {
+      "url": "https://api.na.bambora.com/v1",
+      "description": "Production API endpoint"
+    }
+  ],
+  "security": [
+    {
+      "Passcode": []
+    }
+  ],
+  "paths": {
+    "/payments": {
+      "post": {
+        "operationId": "makePayment",
+        "summary": "Make a Payment",
+        "description": "Processes a payment transaction. Supports card, token, payment profile, cash, cheque, Apple Pay, Google Pay, 3D Secure token, and processor token payment methods.",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed - invalid Passcode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment declined",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{transId}": {
+      "get": {
+        "operationId": "getPayment",
+        "summary": "Get Payment Details",
+        "description": "Retrieves the details of a previously processed payment transaction by its transaction ID.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transId",
+            "in": "path",
+            "required": true,
+            "description": "Transaction identifier",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transaction ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{transId}/returns": {
+      "post": {
+        "operationId": "returnPayment",
+        "summary": "Return a Payment",
+        "description": "Processes a return (refund) against a previous payment transaction. Supports full or partial returns.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transId",
+            "in": "path",
+            "required": true,
+            "description": "Original transaction identifier to return against",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{transId}/void": {
+      "post": {
+        "operationId": "voidPayment",
+        "summary": "Void a Payment",
+        "description": "Voids a previously authorized payment transaction before it has been settled.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transId",
+            "in": "path",
+            "required": true,
+            "description": "Transaction identifier to void",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Void processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{transId}/completions": {
+      "post": {
+        "operationId": "completePayment",
+        "summary": "Complete a Pre-Authorization",
+        "description": "Captures a previously authorized (pre-auth) payment. Completes the transaction so funds are transferred.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transId",
+            "in": "path",
+            "required": true,
+            "description": "Transaction identifier of the pre-auth to complete",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Completion processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{merchant_data}/continue": {
+      "post": {
+        "operationId": "continuePayment",
+        "summary": "Continue a Payment",
+        "description": "Continues a payment flow after 3D Secure authentication or other redirect-based verification steps.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "merchant_data",
+            "in": "path",
+            "required": true,
+            "description": "Merchant data token from the initial payment response",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContinueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment continued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles": {
+      "post": {
+        "operationId": "createProfile",
+        "summary": "Create Payment Profile",
+        "description": "Creates a new payment profile to securely store customer card information for future transactions.",
+        "tags": ["Payment Profiles"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{profileId}": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "Get Payment Profile",
+        "description": "Retrieves a payment profile with stored customer and card information.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid profile ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProfile",
+        "summary": "Update Payment Profile",
+        "description": "Updates an existing payment profile's customer or billing information.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteProfile",
+        "summary": "Delete Payment Profile",
+        "description": "Permanently deletes a payment profile and all associated card data.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{profileId}/cards": {
+      "get": {
+        "operationId": "getAllCards",
+        "summary": "Get All Cards on Profile",
+        "description": "Retrieves all cards stored on a payment profile.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cards retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileGetCards"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addCard",
+        "summary": "Add Card to Profile",
+        "description": "Adds a new card to an existing payment profile.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileBodyCard"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Card added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid card data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profiles/{profileId}/cards/{cardId}": {
+      "get": {
+        "operationId": "getCard",
+        "summary": "Get Card Details",
+        "description": "Retrieves details of a specific card on a payment profile.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "description": "Payment profile identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "description": "Card identifier within the profile",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Card details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileCardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateCard",
+        "summary": "Update Card on Profile",
+        "description": "Updates card information on an existing payment profile.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileBodyCard"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Card updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCard",
+        "summary": "Delete Card from Profile",
+        "description": "Removes a card from a payment profile.",
+        "tags": ["Payment Profiles"],
+        "parameters": [
+          {
+            "name": "profileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Card deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "operationId": "searchTransactions",
+        "summary": "Search Transactions",
+        "description": "Searches for transactions using various filter criteria including date range, amount, card type, and status.",
+        "tags": ["Reports"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/settlement": {
+      "get": {
+        "operationId": "getCardSettlementReport",
+        "summary": "Get Card Settlement Report",
+        "description": "Retrieves the card settlement report for a specified date range.",
+        "tags": ["Reports"],
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": true,
+            "description": "Start date for settlement report (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": true,
+            "description": "End date for settlement report (YYYY-MM-DD)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settlement report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardSettlementReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/statements": {
+      "get": {
+        "operationId": "getStatementReport",
+        "summary": "Get Statement Report",
+        "description": "Retrieves the merchant statement report for a specified month range.",
+        "tags": ["Reports"],
+        "parameters": [
+          {
+            "name": "start_year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "end_year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "end_month",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statement report retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scripts/tokenization/tokens": {
+      "post": {
+        "operationId": "tokenizeCard",
+        "summary": "Tokenize Card",
+        "description": "Creates a single-use payment token from card details. The token can then be used for a payment request without transmitting card data to the merchant server.",
+        "tags": ["Tokenization"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid card data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recurring/{accountId}": {
+      "get": {
+        "operationId": "getRecurringAccount",
+        "summary": "Get Recurring Billing Account",
+        "description": "Retrieves details of a recurring billing account including schedule, status, and payment history.",
+        "tags": ["Recurring Billing"],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "description": "Recurring billing account identifier",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recurring account details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringPaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid account ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Passcode": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Passcode authentication. Format: 'Passcode Base64Encoded(merchant_id:passcode)'"
+      },
+      "SubMerchantId": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Sub-Merchant-Id",
+        "description": "Optional sub-merchant identifier for payment facilitator integrations"
+      }
+    },
+    "schemas": {
+      "PaymentRequest": {
+        "type": "object",
+        "required": ["amount", "payment_method"],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Payment amount in dollars"
+          },
+          "payment_method": {
+            "type": "string",
+            "description": "Payment method type",
+            "enum": ["card", "token", "payment_profile", "cash", "cheque", "apple_pay", "google_pay", "3d_secure_token", "processor_token"]
+          },
+          "order_number": {
+            "type": "string",
+            "description": "Merchant-defined order number",
+            "maxLength": 30
+          },
+          "language": {
+            "type": "string",
+            "description": "Language code",
+            "maxLength": 3
+          },
+          "customer_ip": {
+            "type": "string",
+            "description": "Customer's IP address",
+            "maxLength": 30
+          },
+          "term_url": {
+            "type": "string",
+            "description": "URL for 3D Secure redirect",
+            "maxLength": 256
+          },
+          "comments": {
+            "type": "string",
+            "description": "Transaction comments",
+            "maxLength": 256
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardDetails"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipping": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "token": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Single-use token code"
+              },
+              "name": {
+                "type": "string",
+                "description": "Cardholder name"
+              },
+              "complete": {
+                "type": "boolean",
+                "description": "True for purchase, false for pre-auth"
+              }
+            }
+          },
+          "payment_profile": {
+            "type": "object",
+            "properties": {
+              "customer_code": {
+                "type": "string",
+                "description": "Payment profile ID"
+              },
+              "card_id": {
+                "type": "integer",
+                "description": "Card index on the profile"
+              },
+              "complete": {
+                "type": "boolean"
+              }
+            }
+          },
+          "recurring_payment": {
+            "type": "object",
+            "properties": {
+              "amount": {
+                "type": "number"
+              },
+              "frequency": {
+                "type": "string"
+              },
+              "end_date": {
+                "type": "string"
+              }
+            }
+          },
+          "card_on_file": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["first", "subsequent_customer_initiated", "subsequent_merchant_initiated"]
+              }
+            }
+          }
+        }
+      },
+      "CardDetails": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Cardholder name"
+          },
+          "number": {
+            "type": "string",
+            "description": "Card number"
+          },
+          "expiry_month": {
+            "type": "string",
+            "description": "Expiry month (MM)"
+          },
+          "expiry_year": {
+            "type": "string",
+            "description": "Expiry year (YY)"
+          },
+          "cvd": {
+            "type": "string",
+            "description": "Card verification digit (CVV/CVC)"
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True for purchase, false for pre-authorization"
+          },
+          "type": {
+            "type": "string",
+            "description": "Card brand",
+            "enum": ["VI", "MC", "AM", "DI", "JB", "NN", "MD"]
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address_line1": {
+            "type": "string"
+          },
+          "address_line2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "phone_number": {
+            "type": "string"
+          },
+          "email_address": {
+            "type": "string"
+          }
+        }
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Transaction identifier"
+          },
+          "authorizing_merchant_id": {
+            "type": "integer"
+          },
+          "approved": {
+            "type": "integer",
+            "description": "1 if approved, 0 if declined"
+          },
+          "message_id": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "auth_code": {
+            "type": "string",
+            "description": "Authorization code"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "order_number": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "Transaction type (P=Purchase, PA=Pre-Auth, PAC=Pre-Auth Completion, R=Return, VP=Void Purchase, VR=Void Return)"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "card": {
+            "type": "object",
+            "properties": {
+              "card_type": {
+                "type": "string"
+              },
+              "last_four": {
+                "type": "string"
+              },
+              "address_match": {
+                "type": "integer"
+              },
+              "postal_result": {
+                "type": "integer"
+              },
+              "avs_result": {
+                "type": "string"
+              },
+              "cvd_result": {
+                "type": "integer"
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rel": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TransactionDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "auth_code": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "order_number": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "payment_method": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "total_completions": {
+            "type": "number"
+          },
+          "total_refunds": {
+            "type": "number"
+          },
+          "card": {
+            "type": "object",
+            "properties": {
+              "card_type": {
+                "type": "string"
+              },
+              "last_four": {
+                "type": "string"
+              },
+              "avs_result": {
+                "type": "string"
+              },
+              "cvd_result": {
+                "type": "integer"
+              },
+              "avs": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "processed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "billing": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "shipping": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "adjusted_by": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "created": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rel": {
+                  "type": "string"
+                },
+                "href": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ReturnRequest": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Amount to return/refund"
+          },
+          "order_number": {
+            "type": "string",
+            "description": "Optional order number",
+            "maxLength": 30
+          }
+        }
+      },
+      "VoidRequest": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Original transaction amount"
+          },
+          "order_number": {
+            "type": "string",
+            "maxLength": 30
+          }
+        }
+      },
+      "ContinueRequest": {
+        "type": "object",
+        "properties": {
+          "payment_method": {
+            "type": "string"
+          },
+          "card_response": {
+            "type": "object",
+            "properties": {
+              "pa_res": {
+                "type": "string",
+                "description": "3D Secure Payer Authentication Response"
+              }
+            }
+          }
+        }
+      },
+      "ProfileBody": {
+        "type": "object",
+        "properties": {
+          "card": {
+            "$ref": "#/components/schemas/CardDetails"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "custom": {
+            "type": "object",
+            "properties": {
+              "ref1": {
+                "type": "string"
+              },
+              "ref2": {
+                "type": "string"
+              },
+              "ref3": {
+                "type": "string"
+              },
+              "ref4": {
+                "type": "string"
+              },
+              "ref5": {
+                "type": "string"
+              }
+            }
+          },
+          "language": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Response code (1=success)"
+          },
+          "message": {
+            "type": "string"
+          },
+          "customer_code": {
+            "type": "string",
+            "description": "Profile identifier"
+          }
+        }
+      },
+      "PaymentProfileResponse": {
+        "type": "object",
+        "properties": {
+          "customer_code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "card": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "number": {
+                "type": "string",
+                "description": "Masked card number"
+              },
+              "expiry_month": {
+                "type": "string"
+              },
+              "expiry_year": {
+                "type": "string"
+              },
+              "card_type": {
+                "type": "string"
+              }
+            }
+          },
+          "modified_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProfileGetCards": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "card": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "card_id": {
+                  "type": "integer"
+                },
+                "function": {
+                  "type": "string"
+                },
+                "card_type": {
+                  "type": "string"
+                },
+                "last_four": {
+                  "type": "string"
+                },
+                "expiry_month": {
+                  "type": "string"
+                },
+                "expiry_year": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProfileCardResponse": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "integer"
+          },
+          "card_type": {
+            "type": "string"
+          },
+          "last_four": {
+            "type": "string"
+          },
+          "expiry_month": {
+            "type": "string"
+          },
+          "expiry_year": {
+            "type": "string"
+          },
+          "function": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileBodyCard": {
+        "type": "object",
+        "properties": {
+          "card": {
+            "$ref": "#/components/schemas/CardDetails"
+          }
+        }
+      },
+      "SearchQuery": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Search name"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_row": {
+            "type": "integer"
+          },
+          "end_row": {
+            "type": "integer"
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "integer"
+                },
+                "operator": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row_id": {
+                  "type": "integer"
+                },
+                "trn_id": {
+                  "type": "integer"
+                },
+                "trn_date_time": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "trn_type": {
+                  "type": "string"
+                },
+                "trn_order_number": {
+                  "type": "string"
+                },
+                "trn_amount": {
+                  "type": "number"
+                },
+                "trn_returns": {
+                  "type": "number"
+                },
+                "trn_completions": {
+                  "type": "number"
+                },
+                "trn_card_type": {
+                  "type": "string"
+                },
+                "message_id": {
+                  "type": "integer"
+                },
+                "message_text": {
+                  "type": "string"
+                },
+                "trn_masked_card": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CardSettlementReport": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "merchant_id": {
+                  "type": "integer"
+                },
+                "merchant_name": {
+                  "type": "string"
+                },
+                "settlement_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "settlement_amount": {
+                  "type": "number"
+                },
+                "transaction_count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StatementReport": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "month": {
+                  "type": "integer"
+                },
+                "statement_url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "TokenRequest": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Card number"
+          },
+          "expiry_month": {
+            "type": "string"
+          },
+          "expiry_year": {
+            "type": "string"
+          },
+          "cvd": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Single-use payment token"
+          },
+          "code": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "RecurringPaymentResponse": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "card": {
+            "type": "object",
+            "properties": {
+              "card_type": {
+                "type": "string"
+              },
+              "last_four": {
+                "type": "string"
+              }
+            }
+          },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "interval": {
+                "type": "string"
+              },
+              "next_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "end_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Error code"
+          },
+          "category": {
+            "type": "integer",
+            "description": "Error category"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Error reference"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Payments",
+      "description": "Payment processing operations including purchases, pre-authorizations, returns, voids, and completions"
+    },
+    {
+      "name": "Payment Profiles",
+      "description": "Secure storage and management of customer payment information"
+    },
+    {
+      "name": "Reports",
+      "description": "Transaction search and settlement reporting"
+    },
+    {
+      "name": "Tokenization",
+      "description": "Client-side card tokenization for PCI compliance"
+    },
+    {
+      "name": "Recurring Billing",
+      "description": "Recurring payment account management"
+    }
+  ]
+}

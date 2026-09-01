@@ -1,0 +1,1658 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Braintree Payments GraphQL API",
+    "description": "Braintree Payments API (now part of PayPal) providing payment processing, customer management, tokenization, and vault services via a GraphQL endpoint. This spec documents the primary mutations and queries as REST-style operations for interoperability. Braintree supports credit cards, PayPal, Venmo, Apple Pay, Google Pay, and other payment methods with built-in fraud protection and 3D Secure support.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://developer.paypal.com/braintree/docs/",
+    "contact": {
+      "name": "Braintree Developer Support",
+      "url": "https://developer.paypal.com/braintree/docs/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://payments.braintree-api.com/graphql",
+      "description": "Braintree Production GraphQL API"
+    },
+    {
+      "url": "https://payments.sandbox.braintree-api.com/graphql",
+      "description": "Braintree Sandbox GraphQL API"
+    }
+  ],
+  "security": [
+    {
+      "BasicAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Transactions",
+      "description": "Payment transaction processing - charges, captures, refunds, and voids"
+    },
+    {
+      "name": "Customers",
+      "description": "Customer profile management"
+    },
+    {
+      "name": "Payment Methods",
+      "description": "Payment method tokenization and vault management"
+    },
+    {
+      "name": "Client Tokens",
+      "description": "Client-side SDK token generation"
+    },
+    {
+      "name": "Disputes",
+      "description": "Transaction dispute management"
+    },
+    {
+      "name": "Configuration",
+      "description": "Client and merchant configuration"
+    }
+  ],
+  "paths": {
+    "/chargePaymentMethod": {
+      "post": {
+        "operationId": "chargePaymentMethod",
+        "summary": "Charge a Payment Method",
+        "description": "Authorize and optionally capture a transaction using a vaulted payment method token or single-use payment method nonce. Supports credit cards, PayPal, Venmo, Apple Pay, Google Pay, and other payment methods.",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChargePaymentMethodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid input parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error - transaction declined or failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authorizeCreditCard": {
+      "post": {
+        "operationId": "authorizeCreditCard",
+        "summary": "Authorize a Credit Card Transaction",
+        "description": "Authorize a credit card transaction without capturing funds. Use captureTransaction to collect the authorized amount later.",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeCreditCardInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/captureTransaction": {
+      "post": {
+        "operationId": "captureTransaction",
+        "summary": "Capture an Authorized Transaction",
+        "description": "Capture a previously authorized transaction to collect funds. Supports full or partial capture amounts.",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Capture result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refundTransaction": {
+      "post": {
+        "operationId": "refundTransaction",
+        "summary": "Refund a Transaction",
+        "description": "Issue a full or partial refund for a previously settled transaction.",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refund result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voidTransaction": {
+      "post": {
+        "operationId": "voidTransaction",
+        "summary": "Void a Transaction",
+        "description": "Void a previously authorized transaction that has not yet been settled, releasing the hold on the customer's funds.",
+        "tags": ["Transactions"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoidTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Void result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/createCustomer": {
+      "post": {
+        "operationId": "createCustomer",
+        "summary": "Create a Customer",
+        "description": "Create a new customer record in the Braintree vault with optional payment method and billing address.",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/updateCustomer": {
+      "post": {
+        "operationId": "updateCustomer",
+        "summary": "Update a Customer",
+        "description": "Update an existing customer's information in the Braintree vault.",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deleteCustomer": {
+      "post": {
+        "operationId": "deleteCustomer",
+        "summary": "Delete a Customer",
+        "description": "Delete a customer and all associated payment methods from the Braintree vault.",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteCustomerInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletePayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tokenizeCreditCard": {
+      "post": {
+        "operationId": "tokenizeCreditCard",
+        "summary": "Tokenize a Credit Card",
+        "description": "Tokenize a credit card to create a single-use payment method nonce for use in transactions.",
+        "tags": ["Payment Methods"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenizeCreditCardInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokenization result with payment method nonce",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenizePayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vaultPaymentMethod": {
+      "post": {
+        "operationId": "vaultPaymentMethod",
+        "summary": "Vault a Payment Method",
+        "description": "Store a payment method in the Braintree vault for future transactions. Associates the payment method with a customer.",
+        "tags": ["Payment Methods"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VaultPaymentMethodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment method vaulted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultPaymentMethodPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deletePaymentMethodFromVault": {
+      "post": {
+        "operationId": "deletePaymentMethodFromVault",
+        "summary": "Delete Payment Method from Vault",
+        "description": "Remove a stored payment method from the Braintree vault.",
+        "tags": ["Payment Methods"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePaymentMethodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment method deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletePayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/createClientToken": {
+      "post": {
+        "operationId": "createClientToken",
+        "summary": "Generate Client Token",
+        "description": "Generate a client token for initializing the Braintree client-side SDK. The token encodes the merchant configuration and optionally associates with a customer.",
+        "tags": ["Client Tokens"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClientTokenInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client token generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientTokenPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/acceptDispute": {
+      "post": {
+        "operationId": "acceptDispute",
+        "summary": "Accept a Dispute",
+        "description": "Accept a transaction dispute, acknowledging the chargeback and forfeiting the disputed amount.",
+        "tags": ["Disputes"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptDisputeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dispute accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisputePayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientConfiguration": {
+      "post": {
+        "operationId": "getClientConfiguration",
+        "summary": "Get Client Configuration",
+        "description": "Retrieve the client configuration for the authenticated merchant including enabled payment methods, environment settings, and feature flags.",
+        "tags": ["Configuration"],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client configuration retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientConfigurationPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ping": {
+      "post": {
+        "operationId": "pingApi",
+        "summary": "Ping API",
+        "description": "Verify connectivity to the Braintree GraphQL API. Returns a simple confirmation string.",
+        "tags": ["Configuration"],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API is reachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ping": {
+                          "type": "string",
+                          "example": "pong"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "HTTP Basic authentication using Braintree API public key as username and private key as password. Include Braintree-Version header for API versioning."
+      }
+    },
+    "schemas": {
+      "ChargePaymentMethodInput": {
+        "type": "object",
+        "required": ["paymentMethodId", "transaction"],
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "description": "Vault payment method token or single-use nonce"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionInput"
+          }
+        }
+      },
+      "AuthorizeCreditCardInput": {
+        "type": "object",
+        "required": ["paymentMethodId", "transaction"],
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "description": "Credit card payment method ID"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/TransactionInput"
+          }
+        }
+      },
+      "TransactionInput": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Transaction amount as a decimal string",
+            "pattern": "^\\d+\\.\\d{2}$",
+            "example": "10.00"
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Merchant-defined order identifier",
+            "maxLength": 255
+          },
+          "merchantAccountId": {
+            "type": "string",
+            "description": "Merchant account to use for the transaction"
+          },
+          "purchaseOrderNumber": {
+            "type": "string",
+            "description": "Purchase order number for Level 2/3 processing",
+            "maxLength": 17
+          },
+          "customFields": {
+            "type": "object",
+            "description": "Custom key-value fields defined in the Braintree Control Panel",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "descriptor": {
+            "type": "object",
+            "description": "Dynamic descriptor fields",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Dynamic descriptor name (company*product format)",
+                "maxLength": 22
+              },
+              "phone": {
+                "type": "string",
+                "description": "Dynamic descriptor phone",
+                "maxLength": 14
+              },
+              "url": {
+                "type": "string",
+                "description": "Dynamic descriptor URL",
+                "maxLength": 13
+              }
+            }
+          },
+          "shipping": {
+            "$ref": "#/components/schemas/AddressInput"
+          },
+          "riskData": {
+            "type": "object",
+            "properties": {
+              "customerBrowser": {
+                "type": "string",
+                "description": "Customer's browser User-Agent"
+              },
+              "customerIp": {
+                "type": "string",
+                "description": "Customer's IP address"
+              },
+              "deviceData": {
+                "type": "string",
+                "description": "Braintree device data for fraud detection"
+              }
+            }
+          }
+        }
+      },
+      "CaptureTransactionInput": {
+        "type": "object",
+        "required": ["transactionId"],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "ID of the authorized transaction to capture"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount to capture (for partial capture). Omit for full capture.",
+            "pattern": "^\\d+\\.\\d{2}$"
+          }
+        }
+      },
+      "RefundTransactionInput": {
+        "type": "object",
+        "required": ["transactionId"],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "ID of the settled transaction to refund"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount to refund (for partial refund). Omit for full refund.",
+            "pattern": "^\\d+\\.\\d{2}$"
+          }
+        }
+      },
+      "VoidTransactionInput": {
+        "type": "object",
+        "required": ["transactionId"],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "ID of the authorized transaction to void"
+          }
+        }
+      },
+      "CreateCustomerInput": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Custom customer ID (max 36 characters)",
+                "maxLength": 36
+              },
+              "firstName": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "lastName": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "company": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "website": {
+                "type": "string",
+                "format": "uri",
+                "maxLength": 255
+              },
+              "fax": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "customFields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateCustomerInput": {
+        "type": "object",
+        "required": ["customerId"],
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "description": "ID of the customer to update"
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "lastName": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "company": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "website": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        }
+      },
+      "DeleteCustomerInput": {
+        "type": "object",
+        "required": ["customerId"],
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "description": "ID of the customer to delete"
+          }
+        }
+      },
+      "TokenizeCreditCardInput": {
+        "type": "object",
+        "required": ["creditCard"],
+        "properties": {
+          "creditCard": {
+            "type": "object",
+            "required": ["number", "expirationMonth", "expirationYear"],
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Credit card number"
+              },
+              "expirationMonth": {
+                "type": "string",
+                "description": "Two-digit expiration month",
+                "pattern": "^(0[1-9]|1[0-2])$"
+              },
+              "expirationYear": {
+                "type": "string",
+                "description": "Four-digit expiration year"
+              },
+              "cvv": {
+                "type": "string",
+                "description": "Card verification value"
+              },
+              "cardholderName": {
+                "type": "string",
+                "description": "Name as printed on card"
+              },
+              "billingAddress": {
+                "$ref": "#/components/schemas/AddressInput"
+              }
+            }
+          }
+        }
+      },
+      "VaultPaymentMethodInput": {
+        "type": "object",
+        "required": ["paymentMethodId"],
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "description": "Single-use payment method nonce to vault"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Customer to associate the payment method with"
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "merchantAccountId": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string",
+                "description": "Verification amount"
+              }
+            }
+          }
+        }
+      },
+      "DeletePaymentMethodInput": {
+        "type": "object",
+        "required": ["paymentMethodId"],
+        "properties": {
+          "paymentMethodId": {
+            "type": "string",
+            "description": "ID of the payment method to delete from vault"
+          }
+        }
+      },
+      "CreateClientTokenInput": {
+        "type": "object",
+        "properties": {
+          "clientToken": {
+            "type": "object",
+            "properties": {
+              "customerId": {
+                "type": "string",
+                "description": "Customer ID to associate with the client token for vault access"
+              },
+              "merchantAccountId": {
+                "type": "string",
+                "description": "Merchant account for currency selection"
+              },
+              "domains": {
+                "type": "array",
+                "description": "Allowed domains for tokenization",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "AcceptDisputeInput": {
+        "type": "object",
+        "required": ["disputeId"],
+        "properties": {
+          "disputeId": {
+            "type": "string",
+            "description": "ID of the dispute to accept"
+          }
+        }
+      },
+      "AddressInput": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "streetAddress": {
+            "type": "string"
+          },
+          "extendedAddress": {
+            "type": "string"
+          },
+          "locality": {
+            "type": "string",
+            "description": "City or locality"
+          },
+          "region": {
+            "type": "string",
+            "description": "State or province"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "countryCodeAlpha2": {
+            "type": "string",
+            "description": "Two-letter ISO country code",
+            "pattern": "^[A-Z]{2}$"
+          }
+        }
+      },
+      "TransactionPayload": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique transaction identifier"
+          },
+          "legacyId": {
+            "type": "string",
+            "description": "Legacy Braintree transaction ID"
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string",
+                "description": "Transaction amount"
+              },
+              "currencyCode": {
+                "type": "string",
+                "description": "ISO 4217 currency code"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Current transaction status",
+            "enum": ["AUTHORIZED", "AUTHORIZING", "AUTHORIZATION_EXPIRED", "FAILED", "GATEWAY_REJECTED", "PROCESSOR_DECLINED", "SETTLED", "SETTLING", "SETTLEMENT_CONFIRMED", "SETTLEMENT_DECLINED", "SETTLEMENT_PENDING", "SUBMITTED_FOR_SETTLEMENT", "VOIDED"]
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paymentMethodSnapshot": {
+            "type": "object",
+            "description": "Snapshot of the payment method used",
+            "properties": {
+              "brand": {
+                "type": "string"
+              },
+              "last4": {
+                "type": "string"
+              },
+              "expirationMonth": {
+                "type": "string"
+              },
+              "expirationYear": {
+                "type": "string"
+              }
+            }
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "RefundPayload": {
+        "type": "object",
+        "properties": {
+          "refund": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Refund transaction ID"
+              },
+              "amount": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "currencyCode": {
+                    "type": "string"
+                  }
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": ["SETTLED", "SETTLING", "SUBMITTED_FOR_SETTLEMENT"]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "originalTransaction": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CustomerPayload": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "legacyId": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "company": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "website": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "paymentMethods": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "usage": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TokenizePayload": {
+        "type": "object",
+        "properties": {
+          "paymentMethod": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Single-use payment method nonce"
+              },
+              "usage": {
+                "type": "string",
+                "enum": ["SINGLE_USE", "MULTI_USE"]
+              },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "brand": {
+                    "type": "string"
+                  },
+                  "last4": {
+                    "type": "string"
+                  },
+                  "expirationMonth": {
+                    "type": "string"
+                  },
+                  "expirationYear": {
+                    "type": "string"
+                  },
+                  "bin": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VaultPaymentMethodPayload": {
+        "type": "object",
+        "properties": {
+          "paymentMethod": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Vaulted payment method token"
+              },
+              "usage": {
+                "type": "string",
+                "enum": ["MULTI_USE"]
+              },
+              "customer": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "brand": {
+                    "type": "string"
+                  },
+                  "last4": {
+                    "type": "string"
+                  }
+                }
+              },
+              "verifications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "DeletePayload": {
+        "type": "object",
+        "properties": {
+          "clientMutationId": {
+            "type": "string",
+            "description": "Client-provided mutation ID for correlation"
+          }
+        }
+      },
+      "ClientTokenPayload": {
+        "type": "object",
+        "properties": {
+          "clientToken": {
+            "type": "string",
+            "description": "Base64-encoded client token for SDK initialization"
+          }
+        }
+      },
+      "DisputePayload": {
+        "type": "object",
+        "properties": {
+          "dispute": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ACCEPTED", "DISPUTED", "EXPIRED", "LOST", "OPEN", "WON"]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "currencyCode": {
+                    "type": "string"
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "transaction": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ClientConfigurationPayload": {
+        "type": "object",
+        "properties": {
+          "clientConfiguration": {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string",
+                "enum": ["PRODUCTION", "SANDBOX"]
+              },
+              "merchantId": {
+                "type": "string"
+              },
+              "supportedPaymentMethods": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["CREDIT_CARD", "PAYPAL", "VENMO", "APPLE_PAY", "GOOGLE_PAY", "SAMSUNG_PAY", "US_BANK_ACCOUNT"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Human-readable error message"
+                },
+                "extensions": {
+                  "type": "object",
+                  "properties": {
+                    "errorClass": {
+                      "type": "string",
+                      "description": "Error classification"
+                    },
+                    "errorType": {
+                      "type": "string",
+                      "description": "Error type"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "extensions": {
+                  "type": "object",
+                  "properties": {
+                    "errorClass": {
+                      "type": "string",
+                      "enum": ["VALIDATION"]
+                    },
+                    "legacyCode": {
+                      "type": "string",
+                      "description": "Legacy Braintree error code"
+                    },
+                    "inputPath": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

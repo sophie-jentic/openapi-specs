@@ -1,0 +1,512 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "MoneyBadger Wallet QR Scanner API",
+    "termsOfService": "https://moneybadger.co.za/terms",
+    "contact": {
+      "email": "info@moneybadger.co.za"
+    },
+    "license": {
+      "name": "MoneyBadger",
+      "url": "https://moneybadger.co.za/license"
+    },
+    "description": "# MoneyBadger Wallet QR Scanner API\nThis API enables a partner wallet to scan QR codes and receive a payment request. It provides several endpoints: one to retrieve the API swagger specification, another to report scanned QR codes, and a third to query the status of a payment request.\n\n# Example Usage\nThe following example demonstrates how to obtain a PaymentRequest containing a lightning invoice using the API:\n\n```bash\n    SCAN_ID=$(uuidgen) # Generates a unique scan identifier\n    USER_ID=$(uuidgen) # Generates a unique user identifier\n    DEVICE_ID=$(uuidgen) # Generates a unique device identifier\n    API_KEY=\"API KEY HERE\" # Replace with your actual API key\n    QR_DATA=$(curl -s -o /dev/null -D - 'https://staging.circuit.cryptoconvert.co.za/test/qr.png?amountCents=100&completion=confirm' | grep x-mpm-code | sed 's/x-mpm-code: //' | tr -d '\\r') # Fetches QR data\n    curl -X POST \"https://api.staging.cryptoqr.net/scanner/v1/scan\" \\\n    -H \"Content-Type: application/json\" \\\n    -H \"X-API-Key: $API_KEY\" \\\n    -d '{\n        \"scan_id\": \"'\"$SCAN_ID\"'\",\n        \"time\": \"'\"$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")\"'\",\n        \"device_id\": \"'\"$DEVICE_ID\"'\",\n        \"user_id\": \"'\"$USER_ID\"'\",\n        \"scan_data\": \"'\"$QR_DATA\"'\",\n        \"allowed_payment_methods\": [\"lightning\"],\n        \"payment_currencies\": [\"BTC\"]\n    }' | jq .\n```\n\n# Expected Workflow\n\n1. The wallet app scans the QR code.\n2. The wallet app sends the entire QR code payload to the /scan endpoint.\n3. The scan endpoint returns a payment request, which includes all necessary information for the wallet to complete the payment, e.g. a Lightning invoice.\n4. The wallet authorizes the payment, for example by making a Lightning invoice payment.\n5. The Point of Sale (POS) system will either CONFIRM or CANCEL the payment:\n  a. If CONFIRM, the wallet must finalize the transaction.\n  b. If CANCEL, the wallet must cancel the transaction and return funds to the user.\n\n# Testing the API\nTo test the API, you can use the following URL to obtain a QR code that can be scanned:\nhttps://staging.circuit.cryptoconvert.co.za/test/qr.png?amountCents=100&completion=confirm\n\n- The `amountCents` parameter allows you to set the amount for the payment request.\n- The `completion` parameter simulates the final advice behavior by the POS:\n  - Setting it to `confirm` will immediately confirm the payment request upon payment.\n  - Setting it to `cancel` will immediately cancel the payment request upon payment.\n\nA similar QR code can be used to test the production API by changing the host in the URL to `api.cryptoqr.net`, for example:\nhttps://api.cryptoqr.net/test/qr.png?amountCents=100&completion=confirm\n\nFor automation purposes, the test QR code includes a header `x-mpm-code` which contains the scan data.\n\n# Errors\nError responses are returned in cases of invalid input or other errors. The expected error codes include:\n  - UNKNOWN_CODE: The scanned code was not recognized.\n  - SMART_SHOPPER_SCANNED: The scanned code was a smart shopper code. Please ask the cashier to allow you to \"Pay with a QR code.\"\n  - AMOUNT_TOO_HIGH: The transaction amount exceeded the allowed limit.\n  - LIGHTNING_INVOICE_SCANNED: The transaction was a Lightning invoice rather than a recognized QR code.\n\n\n# Production Access\nTo access the production API, use the `api.cryptoqr.net` host. Production API keys are issued by MoneyBadger after the partner application has been reviewed and thoroughly tested in the staging environment.\n\n# Staging Access\nTo access the staging API, use the `api.staging.cryptoqr.net` host. Staging API keys are provided by MoneyBadger once the partner has signed the necessary agreements and completed the onboarding process.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/DUBEDIVINE/moneybadger-wallet-qr-scanner-api/1.0.0"
+  },
+  "host": "api.cryptoqr.net",
+  "basePath": "/scanner/v1/",
+  "security": [
+    {
+      "APIKeyHeader": []
+    }
+  ],
+  "paths": {
+    "/swagger.yaml": {
+      "get": {
+        "tags": [
+          "info"
+        ],
+        "summary": "Get API swagger spec",
+        "description": "Returns API swagger spec",
+        "security": [],
+        "operationId": "getSwaggerSpec",
+        "produces": [
+          "text/plain"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/scan": {
+      "get": {
+        "summary": "Get QR code information about a scanned QR code, this information can be used to tailor wallet UI and enhance user experience",
+        "operationId": "getQrInfo",
+        "parameters": [
+          {
+            "name": "payload",
+            "in": "query",
+            "description": "QR code payload",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/QrCodeInfo"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "reports that a QR code has been scanned by the partner app, obtain payment instructions specific to the wallet",
+        "operationId": "scanQr",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "QR Scan Details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Scan"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "scan has been successfully processed",
+            "schema": {
+              "$ref": "#/definitions/PaymentRequest"
+            }
+          },
+          "400": {
+            "description": "invalid input, object invalid",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "403": {
+            "description": "forbidden"
+          },
+          "409": {
+            "description": "an existing item already exists"
+          },
+          "500": {
+            "description": "internal server error"
+          },
+          "504": {
+            "description": "gateway timeout"
+          }
+        }
+      }
+    },
+    "/payment_requests/{id}": {
+      "get": {
+        "summary": "gets the latest payment request status",
+        "operationId": "getPaymentRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "type": "string",
+            "in": "path",
+            "required": true,
+            "description": "Payment request ID provided during /scan POST request (e.g. paymentRequestID-6c54-4b01-90e6-d701748f0851)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "payment request status has been successfully retrieved",
+            "schema": {
+              "$ref": "#/definitions/PaymentRequest"
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "404": {
+            "description": "payment request ID was not found"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "health check",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Health check message"
+                },
+                "build": {
+                  "type": "string",
+                  "description": "API build"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "APIKeyHeader": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "X-API-Key"
+    }
+  },
+  "definitions": {
+    "Scan": {
+      "type": "object",
+      "required": [
+        "device_id",
+        "user_id",
+        "scan_data",
+        "scan_id",
+        "time"
+      ],
+      "properties": {
+        "scan_id": {
+          "type": "string",
+          "description": "a unique ID for the scan, preferably a UUID",
+          "example": "scanId-6c54-4b01-90e6-d701748f0851"
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "(Optional) A unique ID for the transaction, preferably a UUID. This ID may be specified by the API consumer when calling the /scan endpoint. This ID must be the reference that the Value Store uses to identify the transaction. if provided, the transaction_id will used to query payment status on the value store.",
+          "example": "transactionId-6c54-4b01-90e6-d701748f0851"
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time of the message as recorded by the sender in ISO8601 format",
+          "example": "2023-03-08T13:37:00Z"
+        },
+        "device_id": {
+          "type": "string",
+          "description": "the device ID of the device that scanned the QR code, preferably a UUID",
+          "example": "deviceId-6c54-4b01-90e6-d701748f0851"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "the user ID of the user that scanned the QR code, preferably a UUID",
+          "example": "userId-6c54-4b01-90e6-d701748f0851"
+        },
+        "scan_data": {
+          "type": "string",
+          "example": "00020126530023za.co.electrum.picknpay0122fom7Ku0aQ9SvG+svh4xVPQ530371054041.23630428E5"
+        },
+        "allowed_payment_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "lightning"
+          }
+        },
+        "payment_currencies": {
+          "type": "array",
+          "description": "The currencies of the payment request that the receiver is able to to use for payment. optional, defaults to the default of the payment method",
+          "items": {
+            "type": "string",
+            "example": "BTC"
+          }
+        },
+        "payment_reference": {
+          "type": "string",
+          "description": "The customer-supplied reference for the payment request",
+          "example": "customer123"
+        },
+        "requested_payment_amount": {
+          "type": "object",
+          "required": [
+            "currency",
+            "denomination",
+            "amount"
+          ],
+          "properties": {
+            "currency": {
+              "type": "string",
+              "description": "The currency code (e.g. BTC, ZAR)",
+              "example": "BTC"
+            },
+            "denomination": {
+              "type": "string",
+              "description": "The denomination of the currency (e.g. cents, sats)",
+              "example": "sats"
+            },
+            "amount": {
+              "type": "number",
+              "description": "The payment amount in the specified denomination",
+              "example": 123.45
+            }
+          }
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "description": "Error response in case of invalid input or other errors\nExpected error codes:\n- UNKNOWN_CODE - the scanned code was not recognised\n- SMART_SHOPPER_SCANNED - the scanned code was a smart shopper code, please ask the cashier to allow you to \"Pay with a QR code\"\n- AMOUNT_TOO_HIGH - the transaction amount was too high\n- LIGHTNING_INVOICE_SCANNED - the transaction was a Lightning invoice rather than a known QR code\n",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "PaymentRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "paymentRequest-6c54-4b01-90e6-d701748f0851",
+          "description": "A unique ID that we assign to the payment request."
+        },
+        "transaction_id": {
+          "type": "string",
+          "description": "(Optional) The transaction ID that was specified by the API consumer on the /scan endpoint.",
+          "example": "transactionId-6c54-4b01-90e6-d701748f0851"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO8601 timestamp at which the payment request was created",
+          "example": "2023-03-08T13:37:00Z"
+        },
+        "amount_cents": {
+          "type": "integer",
+          "example": 100,
+          "description": "The amount of the payment request in the currency base unit (e.g. cents or sats)"
+        },
+        "currency": {
+          "type": "string",
+          "example": "ZAR",
+          "description": "The currency of the payment request that the receiver expects to receive"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the payment request",
+          "enum": [
+            "REQUESTED",
+            "AUTHORIZED",
+            "CONFIRMED",
+            "EXPIRED",
+            "CANCELLED",
+            "ERRORED"
+          ]
+        },
+        "payment_methods": {
+          "type": "object",
+          "description": "list of payment method types with payment instruction data the client can use to complete payment",
+          "example": {
+            "lightning": "lnbc901..."
+          }
+        },
+        "expiry_time": {
+          "type": "string",
+          "description": "ISO8601 timestamp at which the payment request will expire",
+          "example": "2023-03-08T13:37:00Z"
+        },
+        "merchant_name": {
+          "type": "string",
+          "description": "Merchant name",
+          "example": "Pick n Pay"
+        },
+        "merchant_code": {
+          "type": "string",
+          "description": "Merchant code",
+          "example": "pnp"
+        },
+        "merchant_category_code": {
+          "type": "string",
+          "description": "Merchant category code",
+          "example": 5411
+        },
+        "order_description": {
+          "type": "string",
+          "description": "Optional merchant provided order description",
+          "example": "Groceries"
+        },
+        "notification_url": {
+          "description": "A URL that must be called whenever the status of this payment request changes (paid, cancelled, etc) The notification_url must be called with a POST request with a JSON body. The details of the JSON body may be determined by the implementer, but MUST include a transaction_id The transaction_id must be the same as the transaction_id provided in the /scan request that we can use to query the status on the Value Store."
+        },
+        "merchant_info": {
+          "type": "object",
+          "description": "Additional merchant information, structure depends on specific merchant.",
+          "example": "order reference 1234567890"
+        },
+        "refund_info": {
+          "description": "Refund information related to this payment request",
+          "$ref": "#/definitions/RefundInfo"
+        }
+      }
+    },
+    "QrCodeInfo": {
+      "type": "object",
+      "description": "Information about the QR code to be displayed to the user or used to enhance wallet UI/UX. Use as follows:\n  - amountMin > 0 and amountMin == amountMax: The QR code is for a fixed amount payment, the wallet can immediately proceed to request payment instruction (scanQr)\n  - amountMin > 0 and amountMin != amountMax: The QR code is for a range payment, e.g a bill with a tip. If amountMax is 0, the wallet should allow any amount greater than amountMin.\n  - amountMin == 0 and amountMax == 0: The QR code is for an unspecified payment amount, the wallet should request that the user enter an amount.\n  - orderReferenceRequired == true: The QR code is for a payment that requires an order reference. The wallet should request that the user enter an order reference.",
+      "required": [
+        "amountMax",
+        "amountMin",
+        "amountDefault",
+        "tipEnabled",
+        "orderReferenceRequired",
+        "merchantName",
+        "currencyISOCode",
+        "denomination"
+      ],
+      "properties": {
+        "merchantName": {
+          "description": "Merchant name",
+          "type": "string",
+          "x-nullable": false
+        },
+        "amountMin": {
+          "description": "Minimum amount in cents, 0 for no minimum amount",
+          "type": "integer",
+          "x-nullable": false
+        },
+        "amountMax": {
+          "description": "Maximum amount in cents, 0 for no maximum amount",
+          "type": "integer",
+          "x-nullable": false
+        },
+        "amountDefault": {
+          "description": "Default amount in cents, 0 for no default amount. Show this as the default value in the amount input field.",
+          "type": "integer",
+          "x-nullable": false
+        },
+        "orderReferenceRequired": {
+          "description": "Whether an order reference is required. The order reference is a user-entered string that can be by the merchant to track the payment.",
+          "type": "boolean",
+          "x-nullable": false
+        },
+        "orderReferenceDefault": {
+          "description": "Default order reference, if orderReferenceRequired is true. Show this as the default value in the order reference input field.",
+          "type": "string"
+        },
+        "tipEnabled": {
+          "description": "Whether the currrent payment supports tipping. Wallet should allow a tip to be set and added to the payment amount.",
+          "type": "boolean",
+          "x-nullable": false
+        },
+        "currencyISOCode": {
+          "type": "string",
+          "x-nullable": false
+        },
+        "denomination": {
+          "description": "Denomination of the currency (usually cents)",
+          "type": "string",
+          "x-nullable": false
+        },
+        "createdAt": {
+          "description": "Timestamp of when the QR code was created (if available)",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "RefundInfo": {
+      "type": "object",
+      "description": "A summary of refunds for a payment request.",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "The overall refund status for the payment.",
+          "enum": [
+            "NONE",
+            "PARTIAL_REFUND",
+            "FULL_REFUND"
+          ]
+        },
+        "refunds": {
+          "type": "array",
+          "description": "A list of individual refund transactions.",
+          "items": {
+            "$ref": "#/definitions/Refund"
+          }
+        }
+      }
+    },
+    "Refund": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID is the id of the refund"
+        },
+        "invoice_id": {
+          "type": "string",
+          "description": "Invoice ID is the id of the invoice to refund"
+        },
+        "request_amount_cents": {
+          "type": "integer"
+        },
+        "request_currency": {
+          "type": "string"
+        },
+        "refund_amount": {
+          "type": "number"
+        },
+        "refund_currency": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status is the status of the refund",
+          "enum": [
+            "PENDING",
+            "COMPLETE",
+            "FAILED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

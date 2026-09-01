@@ -1,0 +1,742 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Where's My Water? OpenAPI 3.0",
+    "description": "This is the API documentation of the Large Project for COP4331 @ UCF. Our project is called \"Where's My Water?\"",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/COP4331-Team4/Wheres-My-Water/1.0.0"
+  },
+  "servers": [
+    {
+      "description": "Production",
+      "url": "https://4lokofridays.com/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "users",
+      "description": "Endpoints related to managing user accounts"
+    },
+    {
+      "name": "fountains",
+      "description": "Endpoints related to managing fountain data"
+    },
+    {
+      "name": "buildings",
+      "description": "Endpoints related to managing UCF building data"
+    },
+    {
+      "name": "votes",
+      "description": "Endpoints related to the voting system"
+    }
+  ],
+  "paths": {
+    "/users/register": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Register user",
+        "description": "Create a new user",
+        "operationId": "createUser",
+        "requestBody": {
+          "description": "Regsiter request object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Register success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/login/": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Login user",
+        "description": "Login user using either email or username",
+        "operationId": "loginUser",
+        "requestBody": {
+          "description": "Login request object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success"
+          }
+        }
+      }
+    },
+    "/users/refresh": {
+      "post": {
+        "summary": "Refresh access token",
+        "description": "Returns a new access token if a valid refresh token is provided via cookie (`jid`), request body (`refreshToken`), or header (`x-refresh-token`).\n",
+        "tags": [
+          "users"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTA5MGIwNDc2NTQwNTUwOWNiMzExNjMiLCJpYXQiOjE3NjMxNDg1MDcsImV4cCI6MTc2Mzc1MzMwN30.J22RaP7sKkEJcKLfkDwGKL6I8jcAeoNo85rkiyGIsMQ"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "x-refresh-token",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional refresh token if not provided via cookie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "New access token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No refresh token provided"
+          },
+          "403": {
+            "description": "Invalid refresh token"
+          }
+        }
+      }
+    },
+    "/fountains/create": {
+      "post": {
+        "tags": [
+          "fountains"
+        ],
+        "summary": "Initialize a fountain",
+        "description": "Initializes a fountain with coordinates, filter, and description",
+        "operationId": "initFountain",
+        "requestBody": {
+          "description": "Fountain initializer",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FountainInit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Building created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/buildings/create": {
+      "post": {
+        "tags": [
+          "buildings"
+        ],
+        "summary": "Initialize a building",
+        "description": "Initializes a building with coordinates",
+        "operationId": "initBuilding",
+        "requestBody": {
+          "description": "Building initializer",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuildingInit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fountain created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/votes/add": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "votes"
+        ],
+        "summary": "Upsert a user's vote",
+        "description": "Adds or updates a user's vote for a fountain's filter color. Update only happens if the vote is for a fountain the user has already voted for in the past 12 hours.",
+        "operationId": "upsertVote",
+        "requestBody": {
+          "description": "Vote request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vote upserted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/verify-email": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Verify user email",
+        "description": "Verifies a user's email address using a JWT token sent via email",
+        "operationId": "verifyEmail",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JWT token for email verification"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to success page on successful verification"
+          },
+          "400": {
+            "description": "Bad request - missing or invalid token"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/users/request-password-reset": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Request password reset",
+        "description": "Sends a password reset email to the user if the email exists",
+        "operationId": "requestPasswordReset",
+        "requestBody": {
+          "description": "Password reset request object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reset email sent (if account exists)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing email"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/users/reset-password": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Reset password",
+        "description": "Resets user password using the token from the reset email",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "description": "Password reset object with token and new password",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid or expired token"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/users/check-verification": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Check user verification status",
+        "description": "Checks if a user's email is verified",
+        "operationId": "checkVerification",
+        "requestBody": {
+          "description": "Email to check verification status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckVerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckVerificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing email"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "ident": {
+            "type": "string",
+            "example": "jlaure"
+          },
+          "password": {
+            "type": "string",
+            "example": "123"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Jason"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Laureano"
+          },
+          "user": {
+            "type": "string",
+            "example": "jlaure"
+          },
+          "email": {
+            "type": "string",
+            "example": "jlaure@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "123"
+          }
+        }
+      },
+      "FountainInit": {
+        "type": "object",
+        "required": [
+          "location",
+          "filter"
+        ],
+        "properties": {
+          "location": {
+            "type": "object",
+            "required": [
+              "building",
+              "description",
+              "coordinates"
+            ],
+            "properties": {
+              "building": {
+                "type": "string",
+                "example": "Business Administration I"
+              },
+              "description": {
+                "type": "string",
+                "example": "On the far right corner of the upper lower decker."
+              },
+              "coordinates": {
+                "type": "object",
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "properties": {
+                  "latitude": {
+                    "type": "number",
+                    "example": 100.10101
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "example": 100.10101
+                  }
+                }
+              }
+            }
+          },
+          "floor": {
+            "type": "integer",
+            "example": 1
+          },
+          "imgUrl": {
+            "type": "string",
+            "example": "https://imgur.com/a/GQfsLvw"
+          },
+          "filter": {
+            "type": "string",
+            "example": "green"
+          },
+          "lastUpdate": {
+            "type": "string",
+            "description": "Optional. Don't use if you want to set to the current date.",
+            "example": "2025-11-05T19:06:41.324+00:00"
+          },
+          "buildingId": {
+            "type": "string",
+            "description": "Optional. Use if you want to add this fountain's _id to the fountainIds list of the building",
+            "example": "69093b5ffc8e7162f1674b1d"
+          }
+        }
+      },
+      "BuildingInit": {
+        "type": "object",
+        "required": [
+          "name",
+          "pinCoords"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Business Administration I"
+          },
+          "pinCoords": {
+            "type": "object",
+            "required": [
+              "latitude",
+              "longitude"
+            ],
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "example": 100.10101
+              },
+              "longitude": {
+                "type": "number",
+                "example": 100.10101
+              }
+            }
+          },
+          "fountainIds": {
+            "type": "array",
+            "description": "Completely optional. Use if you've already made a bunch of fountains for a particular building without initializing the building",
+            "items": {
+              "type": "string",
+              "example": "690ba041129e8ef579d5c078"
+            }
+          }
+        }
+      },
+      "InitResponse": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "690ba041129e8ef579d5c078"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "VoteRequest": {
+        "type": "object",
+        "required": [
+          "fountainId",
+          "rating"
+        ],
+        "properties": {
+          "fountainId": {
+            "type": "string",
+            "example": "690ba041129e8ef579d5c078"
+          },
+          "rating": {
+            "type": "string",
+            "description": "Must be either 'red', 'yellow', or 'green'",
+            "example": "green"
+          }
+        }
+      },
+      "VoteResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "updatedVote": {
+            "type": "boolean",
+            "example": false
+          },
+          "filterChanged": {
+            "type": "boolean",
+            "description": "Whether the filter color was changed in the database",
+            "example": true
+          },
+          "newFilterColor": {
+            "type": "string",
+            "description": "Should only be non-empty if the filter changed",
+            "example": "green"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jlaure@gmail.com"
+          }
+        }
+      },
+      "PasswordResetResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "If account exists, reset email sent"
+          },
+          "error": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": [
+          "token",
+          "newPassword"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "newPassword": {
+            "type": "string",
+            "format": "password",
+            "example": "newSecurePassword123"
+          }
+        }
+      },
+      "ResetPasswordResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Password reset successfully"
+          },
+          "error": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "CheckVerificationRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "jlaure@gmail.com"
+          }
+        }
+      },
+      "CheckVerificationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "isVerified": {
+            "type": "boolean",
+            "example": true
+          },
+          "error": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "Schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    }
+  }
+}

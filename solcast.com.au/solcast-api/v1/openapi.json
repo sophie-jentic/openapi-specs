@@ -1,0 +1,1001 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Solcast API",
+    "description": "The Solcast API provides forecast, live and historical solar irradiance, PV power and weather data. It offers endpoints for advanced and rooftop PV power forecasting, estimated actuals, historical data, typical meteorological year (TMY) calculations, and geographic horizon angle data.",
+    "version": "v1",
+    "contact": {
+      "email": "support@solcast.com"
+    },
+    "termsOfService": "https://solcast.com/terms-of-use",
+    "x-jentic-source-url": "https://docs.solcast.com.au/"
+  },
+  "servers": [
+    {
+      "url": "https://api.solcast.com.au",
+      "description": "Solcast Production API"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/data/forecast/advanced_pv_power": {
+      "get": {
+        "operationId": "getForecastAdvancedPvPower",
+        "summary": "Get advanced PV power forecast",
+        "description": "Returns advanced PV power forecasts up to 14 days ahead.",
+        "tags": ["Forecast"],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "query",
+            "required": true,
+            "description": "Unique identifier for the PV power resource/site",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "description": "Number of hours to return",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "description": "Averaging period in ISO 8601 duration format",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated list of output fields to include",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Response format (json or csv)",
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          },
+          {
+            "name": "apply_availability",
+            "in": "query",
+            "required": false,
+            "description": "Percentage of site capacity available (0-100)",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "apply_constraint",
+            "in": "query",
+            "required": false,
+            "description": "AC production cap in MW",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "apply_dust_soiling",
+            "in": "query",
+            "required": false,
+            "description": "Dust loss override (0-1)",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "apply_snow_soiling",
+            "in": "query",
+            "required": false,
+            "description": "Snow loss override (0-1)",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "terrain_shading",
+            "in": "query",
+            "required": false,
+            "description": "Enable terrain elevation shading model",
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful forecast response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForecastsDataResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data/forecast/rooftop_pv_power": {
+      "get": {
+        "operationId": "getForecastRooftopPvPower",
+        "summary": "Get rooftop PV power forecast",
+        "description": "Returns rooftop PV power forecasts up to 14 days ahead.",
+        "tags": ["Forecast"],
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "description": "Latitude of the location",
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "description": "Longitude of the location",
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "capacity",
+            "in": "query",
+            "required": true,
+            "description": "System capacity in kW",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "tilt",
+            "in": "query",
+            "required": false,
+            "description": "Panel tilt angle in degrees",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "azimuth",
+            "in": "query",
+            "required": false,
+            "description": "Panel azimuth angle in degrees",
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "install_date",
+            "in": "query",
+            "required": false,
+            "description": "Installation date for aging calculations (YYYY-MM-DD)",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "loss_factor",
+            "in": "query",
+            "required": false,
+            "description": "System efficiency factor (default 0.90)",
+            "schema": { "type": "number", "default": 0.90 }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "description": "Number of hours to return",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "description": "Averaging period in ISO 8601 duration format",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Response format",
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful forecast response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForecastsDataResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data/forecast/aggregations": {
+      "get": {
+        "operationId": "getForecastAggregations",
+        "summary": "Get aggregation forecasts",
+        "description": "Returns forecast data for aggregations up to 14 days ahead.",
+        "tags": ["Forecast"],
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "query",
+            "required": true,
+            "description": "Aggregation collection identifier",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful aggregation forecast response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForecastAggregationResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/live/advanced_pv_power": {
+      "get": {
+        "operationId": "getLiveAdvancedPvPower",
+        "summary": "Get live advanced PV power data",
+        "description": "Returns live/estimated actuals for advanced PV power covering the last 7 days.",
+        "tags": ["Live"],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful live data response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EstimatedActualsDataResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/live/rooftop_pv_power": {
+      "get": {
+        "operationId": "getLiveRooftopPvPower",
+        "summary": "Get live rooftop PV power data",
+        "description": "Returns live/estimated actuals for rooftop PV power covering the last 7 days.",
+        "tags": ["Live"],
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "capacity",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful live data response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EstimatedActualsDataResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/live/aggregations": {
+      "get": {
+        "operationId": "getLiveAggregations",
+        "summary": "Get live aggregation data",
+        "description": "Returns live/estimated actuals for aggregations covering the last 7 days.",
+        "tags": ["Live"],
+        "parameters": [
+          {
+            "name": "collection_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful live aggregation response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LiveAggregationResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic/advanced_pv_power": {
+      "get": {
+        "operationId": "getHistoricAdvancedPvPower",
+        "summary": "Get historic advanced PV power data",
+        "description": "Returns historical advanced PV power data from 2007 to present, max 31 days per request.",
+        "tags": ["Historic"],
+        "parameters": [
+          {
+            "name": "resource_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "description": "Start date/time in ISO 8601 format",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "description": "End date/time in ISO 8601 format",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful historic data response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HistoricPvPowerResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic/rooftop_pv_power": {
+      "get": {
+        "operationId": "getHistoricRooftopPvPower",
+        "summary": "Get historic rooftop PV power data",
+        "description": "Returns historical rooftop PV power data, max 31 days per request.",
+        "tags": ["Historic"],
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "capacity",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricPvPowerResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic/radiation_and_weather": {
+      "get": {
+        "operationId": "getHistoricRadiationAndWeather",
+        "summary": "Get historic radiation and weather data",
+        "description": "Returns historical irradiance and weather data, max 31 days per request.",
+        "tags": ["Historic"],
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "output_parameters",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["json", "csv"] }
+          },
+          {
+            "name": "terrain_shading",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricRadiationAndWeatherResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic_forecast/advanced_pv_power": {
+      "get": {
+        "operationId": "getHistoricForecastAdvancedPvPower",
+        "summary": "Get historic forecast comparisons for advanced PV power",
+        "description": "Returns historical forecast data for advanced PV power for comparison purposes.",
+        "tags": ["Historic Forecast"],
+        "parameters": [
+          { "name": "resource_id", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "start", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "end", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricPvPowerResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic_forecast/rooftop_pv_power": {
+      "get": {
+        "operationId": "getHistoricForecastRooftopPvPower",
+        "summary": "Get historic forecast comparisons for rooftop PV power",
+        "description": "Returns historical forecast data for rooftop PV power.",
+        "tags": ["Historic Forecast"],
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "capacity", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "start", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "end", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricPvPowerResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/historic_forecast/radiation_and_weather": {
+      "get": {
+        "operationId": "getHistoricForecastRadiationAndWeather",
+        "summary": "Get historic forecast comparisons for radiation and weather",
+        "description": "Returns historical weather forecast data for comparison.",
+        "tags": ["Historic Forecast"],
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "start", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "end", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricRadiationAndWeatherResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/tmy/advanced_pv_power": {
+      "get": {
+        "operationId": "getTmyAdvancedPvPower",
+        "summary": "Get TMY advanced PV power data",
+        "description": "Returns Typical Meteorological Year data for advanced PV power based on 2007-2024 data.",
+        "tags": ["TMY"],
+        "parameters": [
+          { "name": "resource_id", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "period", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful TMY response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TmyAdvancedPvPowerResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/tmy/rooftop_pv_power": {
+      "get": {
+        "operationId": "getTmyRooftopPvPower",
+        "summary": "Get TMY rooftop PV power data",
+        "description": "Returns Typical Meteorological Year data for rooftop PV power.",
+        "tags": ["TMY"],
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "capacity", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "period", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful TMY response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TmyAdvancedPvPowerResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/tmy/radiation_and_weather": {
+      "get": {
+        "operationId": "getTmyRadiationAndWeather",
+        "summary": "Get TMY radiation and weather data",
+        "description": "Returns Typical Meteorological Year radiation and weather data.",
+        "tags": ["TMY"],
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "period", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "output_parameters", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful TMY response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HistoricRadiationAndWeatherResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/data/geographic/horizon_angle": {
+      "get": {
+        "operationId": "getGeographicHorizonAngle",
+        "summary": "Get terrain horizon angles",
+        "description": "Returns terrain horizon angles at a specified location.",
+        "tags": ["Geographic"],
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number", "format": "double" } },
+          { "name": "format", "in": "query", "required": false, "schema": { "type": "string", "enum": ["json", "csv"] } }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HorizonAngleResponse" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/resources/pv_power_sites": {
+      "get": {
+        "operationId": "listPvPowerSites",
+        "summary": "List PV power resources",
+        "description": "Returns a list of all PV power site resources.",
+        "tags": ["Resources"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/PvPowerResource" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    },
+    "/resources/pv_power_site": {
+      "get": {
+        "operationId": "getPvPowerSite",
+        "summary": "Get a PV power resource",
+        "description": "Retrieves details of a specific PV power site resource.",
+        "tags": ["Resources"],
+        "parameters": [
+          { "name": "resource_id", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PvPowerResource" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      },
+      "post": {
+        "operationId": "createPvPowerSite",
+        "summary": "Create a PV power resource",
+        "description": "Creates a new PV power site resource.",
+        "tags": ["Resources"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PvPowerResource" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Resource created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PvPowerResource" } } } },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key passed as Bearer token. Obtain from the Solcast API Toolkit."
+      }
+    },
+    "schemas": {
+      "ForecastsDataResponse": {
+        "type": "object",
+        "properties": {
+          "forecasts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number", "description": "PV power estimate in kW" },
+                "pv_estimate10": { "type": "number", "description": "10th percentile estimate" },
+                "pv_estimate90": { "type": "number", "description": "90th percentile estimate" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "EstimatedActualsDataResponse": {
+        "type": "object",
+        "properties": {
+          "estimated_actuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "ForecastAggregationResponse": {
+        "type": "object",
+        "properties": {
+          "forecasts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number" },
+                "pv_estimate10": { "type": "number" },
+                "pv_estimate90": { "type": "number" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "LiveAggregationResponse": {
+        "type": "object",
+        "properties": {
+          "estimated_actuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "HistoricPvPowerResponse": {
+        "type": "object",
+        "properties": {
+          "estimated_actuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "HistoricRadiationAndWeatherResponse": {
+        "type": "object",
+        "properties": {
+          "estimated_actuals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ghi": { "type": "number", "description": "Global horizontal irradiance (W/m2)" },
+                "dni": { "type": "number", "description": "Direct normal irradiance (W/m2)" },
+                "dhi": { "type": "number", "description": "Diffuse horizontal irradiance (W/m2)" },
+                "air_temp": { "type": "number", "description": "Air temperature (C)" },
+                "wind_speed_10m": { "type": "number", "description": "Wind speed at 10m (m/s)" },
+                "relative_humidity": { "type": "number", "description": "Relative humidity (%)" },
+                "cloud_opacity": { "type": "number", "description": "Cloud opacity (%)" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "TmyAdvancedPvPowerResponse": {
+        "type": "object",
+        "properties": {
+          "tmy_hourly": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pv_estimate": { "type": "number" },
+                "period_end": { "type": "string", "format": "date-time" },
+                "period": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "HorizonAngleResponse": {
+        "type": "object",
+        "properties": {
+          "horizon_angles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "angle": { "type": "number", "description": "Horizon angle in degrees" },
+                "direction": { "type": "number", "description": "Compass direction in degrees" }
+              }
+            }
+          }
+        }
+      },
+      "PvPowerResource": {
+        "type": "object",
+        "properties": {
+          "resource_id": { "type": "string" },
+          "name": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "capacity": { "type": "number", "description": "Capacity in MW" },
+          "capacity_dc": { "type": "number", "description": "DC capacity in MW" },
+          "tilt": { "type": "number" },
+          "azimuth": { "type": "number" },
+          "install_date": { "type": "string", "format": "date" },
+          "loss_factor": { "type": "number" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "response_status": {
+            "type": "object",
+            "properties": {
+              "error_code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
