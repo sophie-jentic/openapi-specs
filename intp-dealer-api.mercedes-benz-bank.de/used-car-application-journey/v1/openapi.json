@@ -1,0 +1,888 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Used car application journey",
+    "description": "This is the API for the used car proposal process. It is used by the dealer to create a deal for a given customer type. This data will prefill the data on the used car journey.",
+    "version": "v1",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/INFO_652/used-car-application-journey/v1"
+  },
+  "servers": [
+    {
+      "url": "https://intp-dealer-api.mercedes-benz-bank.de/mbb/dealer-api/used",
+      "description": "Testing - INTP - Continuous Development"
+    },
+    {
+      "url": "https://intm-dealer-api.mercedes-benz-bank.de/mbb/dealer-api/used",
+      "description": "Testing - INTM - Stable Development"
+    },
+    {
+      "url": "https://dealer-api.mercedes-benz-bank.de/mbb/dealer-api/used",
+      "description": "Production environment"
+    }
+  ],
+  "tags": [
+    {
+      "name": "dealer-api-v-1-controller",
+      "description": "Dealer API V1 Controller"
+    },
+    {
+      "name": "vin-controller",
+      "description": "VIN Controller"
+    }
+  ],
+  "security": [
+    {
+      "OAuth2Security": []
+    }
+  ],
+  "paths": {
+    "/v1/ping": {
+      "get": {
+        "tags": [
+          "dealer-api-v-1-controller"
+        ],
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/proposal/initialize": {
+      "post": {
+        "tags": [
+          "dealer-api-v-1-controller"
+        ],
+        "description": "Receives all necessary Data from the Dealer, and pre-fills the proposal",
+        "operationId": "initialize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitialDataRequestV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Returns a Proposal-Id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialDataResponseV1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - e.g. VIN on blacklist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialDataResponseV1"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error in Processing - e.g. VeDoc not available , Network-Issues, DB down...",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialDataResponseV1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/proposal/{proposalId}/state": {
+      "get": {
+        "tags": [
+          "dealer-api-v-1-controller"
+        ],
+        "description": "Fetches State-Data for specific proposal-id",
+        "operationId": "getState",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns State-Data for Proposal-Id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalMeta"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalMeta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No State found for given Proposal-Id",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalMeta"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/proposal/{proposalId}/calculation": {
+      "get": {
+        "tags": [
+          "dealer-api-v-1-controller"
+        ],
+        "description": "Fetches calculation Data for specific proposal-id",
+        "operationId": "getCalculation",
+        "parameters": [
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns Calculation-Data for Proposal-Id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Calculation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Calculation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No calculation found for given Proposal-Id",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Calculation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lookup/{fin}": {
+      "get": {
+        "tags": [
+          "vin-controller"
+        ],
+        "operationId": "lookup",
+        "parameters": [
+          {
+            "name": "fin",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Call to DataCard failed"
+          },
+          "422": {
+            "description": "Input Validation Error",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OAuth2Security": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://sso-int.mercedes-benz.com/as/token.oauth2?&token_type_hint=access_token"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "VinResponse": {
+        "type": "object",
+        "properties": {
+          "fin": {
+            "type": "string"
+          },
+          "vin": {
+            "type": "string"
+          }
+        }
+      },
+      "InitialDataResponseV1": {
+        "type": "object",
+        "properties": {
+          "redirectUrl": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string",
+            "description": "Street of the address",
+            "example": "Mercedesstra\u00dfe"
+          },
+          "streetNumber": {
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string",
+            "description": "Street number of the address",
+            "example": "12"
+          },
+          "postCode": {
+            "maxLength": 5,
+            "minLength": 5,
+            "type": "string",
+            "description": "Post code of the address",
+            "example": "71640"
+          },
+          "city": {
+            "maxLength": 60,
+            "minLength": 1,
+            "type": "string",
+            "description": "City of the address",
+            "example": "Stuttgart"
+          },
+          "country": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Country of the address",
+            "example": "DE"
+          }
+        }
+      },
+      "AuthorisedSignatory": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "maritalState": {
+            "type": "string",
+            "description": "MaritalState of the customer",
+            "example": "MARRIED",
+            "enum": [
+              "SINGLE",
+              "DIVORCED",
+              "MARRIED",
+              "SEPARATED",
+              "COHABITATION",
+              "OTHER",
+              "WIDOWED"
+            ]
+          },
+          "ident": {
+            "$ref": "#/components/schemas/Ident"
+          }
+        }
+      },
+      "BusinessCustomer": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/Company"
+          },
+          "authorisedSignatory": {
+            "$ref": "#/components/schemas/AuthorisedSignatory"
+          }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string",
+            "description": "Name of the company",
+            "example": "Mercedes-Benz Bank AG"
+          },
+          "ustId": {
+            "maxLength": 12,
+            "minLength": 9,
+            "type": "string",
+            "description": "Ust-Id of the company",
+            "example": "DE123456789"
+          },
+          "registrationNo": {
+            "type": "string",
+            "description": "Registration number of the company",
+            "example": "HRB 123456"
+          },
+          "legalForm": {
+            "type": "string",
+            "description": "Legal form of the company",
+            "example": "AG",
+            "enum": [
+              "AG",
+              "ANSTALTEN_D_OEFFENTL_RECHTS",
+              "BGB_GESELLSCHAFT_GBR",
+              "EIGENBETRIEBE_OEFFENTL_HAUSH",
+              "EINZELUNTERNEHMEN_IM_HR",
+              "FREIBERUFLER_GWERB",
+              "GENOSSENSCHAFT",
+              "GEWERBEBETRIEB",
+              "GMBH",
+              "GMBH_U_CO_KG",
+              "GMBH_U_CO_OHG",
+              "KG",
+              "KG_A_A",
+              "KOERP_D_OE_RECHTS",
+              "NICHT_RECHTSFAEHIGER_VEREIN",
+              "OHG",
+              "PARTNERGESELLSCHAFT",
+              "RECHTSFAEHIGER_VEREIN",
+              "SELBST_HANDWERKER_GEW",
+              "SONDERVERMOEGEN_DES_BUNDES",
+              "SONST_SELBSTAENDIGER_GEW",
+              "STIFTUNGEN_D_OEFFENTL_RECHTS",
+              "VERS_VEREIN_AUF_GGSEITIGKEIT",
+              "WIRT_SELBST_PRIVATPERSON"
+            ]
+          },
+          "foundingDate": {
+            "type": "string",
+            "description": "Founding date of the company",
+            "format": "date",
+            "example": "1952-01-01"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "mobileNumber": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Mobile number of the contact",
+            "example": "+491608661619"
+          },
+          "phoneNumber": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Phone number of the contact",
+            "example": "+4971123456789"
+          },
+          "email": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Email of the contact",
+            "example": "christian.c.scherer@mercedes-benz.com"
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Title of the customer",
+            "example": "DR",
+            "enum": [
+              "BARON",
+              "BARONESS",
+              "COUNT",
+              "COUNTESS",
+              "DAME",
+              "DR",
+              "DRDR",
+              "DRING",
+              "DRMED",
+              "PRINCE",
+              "PRINCESS",
+              "PROF",
+              "PROFDR",
+              "PROFDRDR",
+              "PROFDRHC",
+              "PROFHC",
+              "SIR",
+              "DRDRHC",
+              "DRHC",
+              "KNIGHT",
+              "NOBLE"
+            ]
+          },
+          "salutation": {
+            "type": "string",
+            "description": "Salutation of the customer",
+            "example": "MRS",
+            "enum": [
+              "MR",
+              "MRS",
+              "X"
+            ]
+          },
+          "firstname": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string",
+            "description": "Firstname of the customer",
+            "example": "John"
+          },
+          "lastname": {
+            "maxLength": 60,
+            "minLength": 2,
+            "type": "string",
+            "description": "Lastname of the customer",
+            "example": "Doe"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": "Date of birth of the customer",
+            "format": "date",
+            "example": "1980-01-01"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          }
+        }
+      },
+      "CustomerBackground": {
+        "type": "object",
+        "properties": {
+          "profession": {
+            "type": "string",
+            "description": "Profession of the customer",
+            "example": "ANGESTELLT",
+            "enum": [
+              "ANGESTELLT",
+              "ARBEITER",
+              "ARBEITSLOS",
+              "BEAMTER",
+              "IN_AUSBILDUNG",
+              "RENTNER",
+              "VERSORGUNGSEMPFAENGER",
+              "SELBSTSTAENDIG",
+              "SONSTIGE_PRIVATPERSON",
+              "HAUSFRAU"
+            ]
+          },
+          "netIncome": {
+            "minimum": 0,
+            "type": "number",
+            "description": "Net income of the customer",
+            "example": 3500.0
+          },
+          "occupiedSince": {
+            "type": "string",
+            "description": "Occupied since date of the customer",
+            "format": "date",
+            "example": "2015-01-01"
+          },
+          "employer": {
+            "maxLength": 512,
+            "minLength": 0,
+            "type": "string",
+            "description": "Employer of the customer",
+            "example": "Mercedes-Benz AG"
+          },
+          "maritalState": {
+            "type": "string",
+            "description": "Marital state of the customer",
+            "example": "MARRIED",
+            "enum": [
+              "SINGLE",
+              "DIVORCED",
+              "MARRIED",
+              "SEPARATED",
+              "COHABITATION",
+              "OTHER",
+              "WIDOWED"
+            ]
+          },
+          "numberOfChildren": {
+            "minimum": 0,
+            "type": "integer",
+            "description": "Number of children of the customer",
+            "format": "int32",
+            "example": 2
+          }
+        }
+      },
+      "Ident": {
+        "type": "object",
+        "properties": {
+          "placeOfBirth": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "Place of birth of the customer",
+            "example": "Stuttgart"
+          },
+          "nationality": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "Nationality of the customer",
+            "example": "DE"
+          },
+          "documentType": {
+            "type": "string",
+            "description": "Document type of the customer",
+            "example": "PASSPORT",
+            "enum": [
+              "ID_CARD",
+              "PASSPORT",
+              "EMBASSY_DOCUMENT",
+              "RESIDENCE_PERMIT"
+            ]
+          },
+          "identificationNumber": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "Identification number of the customer",
+            "example": "123456789"
+          },
+          "placeOfIssue": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "Place of issue of the document",
+            "example": "Landeshauptstadt Stuttgart"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Valid until date of the document",
+            "format": "date",
+            "example": "2025-01-01"
+          },
+          "dateOfIssue": {
+            "type": "string",
+            "description": "Date of issue of the document",
+            "format": "date",
+            "example": "2015-01-01"
+          },
+          "issuingCountry": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "Issuing country of the document",
+            "example": "DE"
+          }
+        }
+      },
+      "InitialDataRequestV1": {
+        "required": [
+          "mandatoryInitialData"
+        ],
+        "type": "object",
+        "properties": {
+          "mandatoryInitialData": {
+            "$ref": "#/components/schemas/MandatoryInitialData"
+          },
+          "optionalData": {
+            "$ref": "#/components/schemas/OptionalData"
+          }
+        }
+      },
+      "MandatoryInitialData": {
+        "required": [
+          "customerType",
+          "fin",
+          "retailerId"
+        ],
+        "type": "object",
+        "properties": {
+          "fin": {
+            "type": "string",
+            "description": "FIN or VIN of the vehicle",
+            "example": "WDD2132051A449443"
+          },
+          "customerType": {
+            "type": "string",
+            "description": "CustomerType of the customer",
+            "example": "PRIVATE",
+            "enum": [
+              "PRIVATE",
+              "SOLE_TRADER",
+              "BUSINESS"
+            ]
+          },
+          "retailerId": {
+            "type": "integer",
+            "description": "RetailerId of the retailer",
+            "format": "int64",
+            "example": 21000
+          }
+        }
+      },
+      "OptionalData": {
+        "type": "object",
+        "properties": {
+          "vehicle": {
+            "$ref": "#/components/schemas/Vehicle"
+          },
+          "privateCustomer": {
+            "$ref": "#/components/schemas/PrivateCustomer"
+          },
+          "businessCustomer": {
+            "$ref": "#/components/schemas/BusinessCustomer"
+          },
+          "iban": {
+            "maxLength": 64,
+            "minLength": 0,
+            "type": "string",
+            "description": "IBAN of the private/business customer",
+            "example": "DE79530501800020002223"
+          },
+          "contractNumber": {
+            "type": "string",
+            "description": "Defines that the proposal is an follow-up financing",
+            "example": "53435763"
+          }
+        }
+      },
+      "PrivateCustomer": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "ident": {
+            "$ref": "#/components/schemas/Ident"
+          },
+          "customerBackground": {
+            "$ref": "#/components/schemas/CustomerBackground"
+          }
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "number",
+            "description": "The price of the vehicle",
+            "example": 35600.98
+          },
+          "mileage": {
+            "maximum": 10000000,
+            "minimum": 0,
+            "type": "integer",
+            "description": "The mileage of the vehicle",
+            "format": "int64",
+            "example": 35006
+          },
+          "firstRegistrationDate": {
+            "type": "string",
+            "description": "The first registration date of the vehicle",
+            "format": "date",
+            "example": "2017-08-14"
+          },
+          "brand": {
+            "type": "string",
+            "description": "The brand of the vehicle",
+            "example": "BMW"
+          },
+          "model": {
+            "type": "string",
+            "description": "The model of the vehicle",
+            "example": "iX xDrive45"
+          },
+          "isJungerStern": {
+            "type": "boolean",
+            "description": "Defines that the vehicle is a Junge Stern vehicle",
+            "example": true
+          },
+          "isDrehschreibe": {
+            "type": "boolean",
+            "description": "Defines that the vehicle is from the Drehscheibe",
+            "example": false
+          },
+          "condition": {
+            "$ref": "#/components/schemas/VehicleCondition"
+          }
+        }
+      },
+      "VehicleCondition": {
+        "type": "string",
+        "description": "Defines the vehicle condition. Either normal used car or demo vehicle",
+        "example": "USED",
+        "enum": [
+          "DEMO",
+          "USED"
+        ]
+      },
+      "ProposalMeta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "proposalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "retailerId": {
+            "type": "string"
+          },
+          "processStep": {
+            "type": "string",
+            "enum": [
+              "FIN",
+              "VEHICLE",
+              "CALCULATE",
+              "CUSTOMER",
+              "IDENTITY",
+              "CREDIT",
+              "COMPANYSEARCH",
+              "COMPANY",
+              "SIGNATORY",
+              "START",
+              "CUSTOMERSEARCH",
+              "THANKYOU"
+            ]
+          }
+        }
+      },
+      "Calculation": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "string"
+          },
+          "purchasePrice": {
+            "type": "number"
+          },
+          "totalMileage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contractTerm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "specialPayment": {
+            "type": "number"
+          },
+          "totalInstallment": {
+            "type": "number"
+          },
+          "installment": {
+            "type": "number"
+          },
+          "totalLoanAmount": {
+            "type": "number"
+          },
+          "effectiveInterestRate": {
+            "type": "number"
+          },
+          "interestRate": {
+            "type": "number"
+          },
+          "totalAmount": {
+            "type": "number"
+          },
+          "dealerOptionsTotalInstalmentGross": {
+            "type": "number"
+          },
+          "dealerOptionsTotalAmountGross": {
+            "type": "number"
+          },
+          "dealerOptionsTotalDepositGross": {
+            "type": "number"
+          },
+          "finalPaymentVehicleGross": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

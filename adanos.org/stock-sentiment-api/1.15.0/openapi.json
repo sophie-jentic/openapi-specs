@@ -1,0 +1,5087 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Stock Sentiment API",
+    "description": "\nSocial media moves fast. This API helps you keep up.\n\nWe analyze **50+ Reddit communities** and **X/Twitter trending cashtags** to answer one question: *How hot is this stock right now?*\n\n<br/>\n\n### What You Get\n\n| Feature | Description |\n|---------|-------------|\n| **Buzz Score** | 0-100 score combining mentions, sentiment, engagement, and source diversity |\n| **Trend Detection** | `rising`, `falling`, or `stable` based on 24h activity |\n| **Sentiment** | Bullish/bearish breakdown from -1.0 to +1.0 |\n| **12,000+ Tickers** | Stocks and ETFs searchable by symbol or name |\n\n<br/>\n\n### Two Platforms, Same Endpoints\n\n| Platform | Base Path | Refresh Rate |\n|----------|-----------|--------------|\n| **Reddit** | `/reddit/stocks/v1` | Hourly (50+ subreddits) |\n| **X/Twitter** | `/x/stocks/v1` | Every 2h (Top 100 cashtags) |\n\n<br/>\n\n### Authentication\n\nAll endpoints require `X-API-Key` header. Response includes rate limit info via `X-RateLimit-*` headers.\n\n<br/>\n\n### Limitations\n\n| &nbsp; | Free | Hobby | Professional |\n|--------|------|-------|--------------|\n| **Requests/month** | 250 | Unlimited | Unlimited |\n| **Rate limit** | 100/min | 1,000/min | 1,000/min |\n| **Lookback window** | 30 days | 90 days | 90 days |\n| **Price** | $0 | $29/mo | $99/mo |\n        ",
+    "contact": {
+      "name": "API Support",
+      "url": "https://api.adanos.org/",
+      "email": "support@adanos.org"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "1.15.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/adanossoftware/stock-sentiment-api/1.15.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.adanos.org",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Development"
+    }
+  ],
+  "paths": {
+    "/reddit/stocks/v1/health": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint with scheduler status.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/stock/{ticker}": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get sentiment for a stock",
+        "description": "Returns detailed sentiment analysis for a specific stock ticker.\n\n**Includes:**\n- Buzz score (0-100)\n- Sentiment breakdown (positive/negative/neutral)\n- Daily trend data\n- Top mentions by upvotes\n- Top subreddits by mention count",
+        "operationId": "getStockSentiment",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\$?[A-Za-z]{1,10}$",
+              "description": "Stock ticker symbol (e.g., TSLA, aapl, $GME)",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol (e.g., TSLA, aapl, $GME)"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid)",
+              "default": 7,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockSentiment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No mentions found for ticker",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No mentions found for $XYZ in the last 7 days."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/stock/{ticker}/explain": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get AI explanation for trending stock",
+        "description": "Returns an AI-generated explanation for why a stock is trending on Reddit.\n\n**Features:**\n- Uses Groq API (Llama 3.1 8B) for fast explanations\n- Cached for 6 hours to reduce latency\n- Based on Reddit mention data and sentiment\n\n**Response includes:**\n- `explanation`: 1-2 sentence summary of why the stock is trending\n- `cached`: Whether this was served from cache\n- `generated_at`: When the explanation was generated\n- `model`: Which LLM model generated the explanation",
+        "operationId": "getStockExplanation",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\$?[A-Za-z]{1,10}$",
+              "description": "Stock ticker symbol (e.g., TSLA, aapl, $GME)",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol (e.g., TSLA, aapl, $GME)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockExplanationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No mentions found for ticker",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No mentions found for $XYZ in the last 7 days."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Explanation service unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Explanation service temporarily unavailable. Try again later."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/trending": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get trending stocks",
+        "description": "Returns stocks with highest buzz on Reddit, ranked by buzz score.\n\n**Buzz score** combines:\n- Mention volume\n- Sentiment score\n- Engagement (upvotes)\n- Trend direction (rising/falling/stable)\n\n**Trend calculation** uses a multi-factor weighted activity score:\n- **60% Mentions**: Primary activity indicator\n- **25% Upvotes**: Engagement quality signal\n- **15% Subreddit spread**: Discussion breadth indicator\n\nActivity score > 1.10 = rising, < 0.90 = falling, else stable.\n\n**History**: Each stock includes `trend_history` - daily buzz scores (oldest\u2192newest).\nLength matches `days` parameter (minimum 7). Missing days are filled with 0.0.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getTrendingStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid). The trend field uses rolling 24h windows: compares last 24h vs previous 24h.",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid). The trend field uses rolling 24h windows: compares last 24h vs previous 24h."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "examples": [
+                10
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "stock",
+                    "etf",
+                    "all"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by asset type. Omit or use 'all' for all assets.",
+              "examples": [
+                "stock"
+              ],
+              "title": "Type"
+            },
+            "description": "Filter by asset type. Omit or use 'all' for all assets."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrendingStock"
+                  },
+                  "title": "Response Gettrendingstocks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No trending stocks found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No trending stocks found."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/trending/sectors": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get trending sectors",
+        "description": "Returns sectors with highest aggregated buzz on Reddit, ranked by buzz score.\n\n**Aggregation**: Combines all stock mentions per sector from ticker_reference.\n\n**Buzz score** combines:\n- Total mention volume across all tickers in sector\n- Weighted average sentiment\n- Total engagement (upvotes)\n- Trend direction (rising/falling/stable)\n\n**Includes top 5 tickers** per sector by mention count.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getTrendingSectors",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid).",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "examples": [
+                10
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrendingSector"
+                  },
+                  "title": "Response Gettrendingsectors"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No trending sectors found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No trending sectors found."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/trending/countries": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get trending countries",
+        "description": "Returns countries with highest aggregated buzz on Reddit, ranked by buzz score.\n\n**Aggregation**: Combines all stock mentions per country from ticker_reference.\n\n**Buzz score** combines:\n- Total mention volume across all tickers from country\n- Weighted average sentiment\n- Total engagement (upvotes)\n- Trend direction (rising/falling/stable)\n\n**Includes top 5 tickers** per country by mention count.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getTrendingCountries",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid).",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "examples": [
+                10
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrendingCountry"
+                  },
+                  "title": "Response Gettrendingcountries"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No trending countries found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "No trending countries found."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/search": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Search for stocks",
+        "description": "Search for stocks by ticker symbol or company name. Results are sorted by mention_count descending (most discussed stocks first).",
+        "operationId": "searchStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search query (ticker or company name)",
+              "examples": [
+                "tesla"
+              ],
+              "title": "Q"
+            },
+            "description": "Search query (ticker or company name)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reddit/stocks/v1/stats": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Get database statistics",
+        "description": "Returns statistics about the sentiment database.",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                },
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/reddit/stocks/v1/compare": {
+      "get": {
+        "tags": [
+          "Reddit Stocks"
+        ],
+        "summary": "Compare multiple stocks",
+        "description": "Compare sentiment metrics for up to 10 stocks side by side.",
+        "operationId": "compareStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tickers",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of ticker symbols (e.g., TSLA,NVDA,AMD)",
+              "examples": [
+                "TSLA,NVDA,AMD"
+              ],
+              "title": "Tickers"
+            },
+            "description": "Comma-separated list of ticker symbols (e.g., TSLA,NVDA,AMD)"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid)",
+              "examples": [
+                7
+              ],
+              "default": 7,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Too many tickers",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Maximum 10 tickers allowed"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/health": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "X/Twitter service health check",
+        "description": "Returns X/Twitter API health status with comprehensive diagnostics.\n\n**Includes:**\n- Service version\n- Total mentions in database\n- Tickers tracked count\n- Worker/scheduler status (from worker_heartbeat table)\n- Last Grok fetch, tweet scrape, and aggregation timestamps",
+        "operationId": "getXHealth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/XHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/trending": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Get trending stocks on X/Twitter",
+        "description": "Returns stocks with highest buzz on X/Twitter, ranked by buzz score.\n\n**Buzz score** (V5.4) combines:\n- Mention volume (from tweets)\n- Sentiment score\n- Engagement (likes)\n- Author diversity (HHI-based)\n- Trend direction (rising/falling/stable)\n\n**Trend calculation** uses a multi-factor weighted activity score:\n- **60% Rank**: Grok ranking change (lower rank = better)\n- **25% Upvotes**: Engagement quality signal\n- **15% Author diversity**: Discussion breadth indicator\n\nActivity score > 1.10 = rising, < 0.90 = falling, else stable.\n\n**History**: Each stock includes `trend_history` - daily buzz scores (oldest\u2192newest).\nMinimum 7 days. Missing days are filled with 0.0.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getXTrendingStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days (1-30 free, 1-90 paid). Days=1 uses latest fetch, days>1 aggregates appearances.",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days (1-30 free, 1-90 paid). Days=1 uses latest fetch, days>1 aggregates appearances."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum stocks to return",
+              "examples": [
+                20
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum stocks to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "stock",
+                    "etf",
+                    "all"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by asset type. Omit or use 'all' for all assets.",
+              "examples": [
+                "stock"
+              ],
+              "title": "Type"
+            },
+            "description": "Filter by asset type. Omit or use 'all' for all assets."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/XTrendingStock"
+                  },
+                  "title": "Response Getxtrendingstocks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/trending/sectors": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Get trending sectors on X/Twitter",
+        "description": "Returns sectors with highest aggregated buzz on X/Twitter, ranked by buzz score.\n\n**Aggregation**: Combines all tweet mentions per sector from ticker_reference.\n\n**Buzz score** (V5.4) combines:\n- Total mention volume across all tickers in sector\n- Weighted average sentiment\n- Total engagement (likes)\n- Author diversity\n- Trend direction (rising/falling/stable)\n\n**Includes top 5 tickers** per sector by mention count.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getXTrendingSectors",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid).",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "examples": [
+                10
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/XTrendingSector"
+                  },
+                  "title": "Response Getxtrendingsectors"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/trending/countries": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Get trending countries on X/Twitter",
+        "description": "Returns countries with highest aggregated buzz on X/Twitter, ranked by buzz score.\n\n**Aggregation**: Combines all tweet mentions per country from ticker_reference.\n\n**Buzz score** (V5.4) combines:\n- Total mention volume across all tickers in country\n- Weighted average sentiment\n- Total engagement (likes)\n- Author diversity\n- Trend direction (rising/falling/stable)\n\n**Includes top 5 tickers** per country by mention count.\n\n**Pagination**: Use `offset` and `limit` to paginate through results.",
+        "operationId": "getXTrendingCountries",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid).",
+              "examples": [
+                7
+              ],
+              "default": 1,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results",
+              "examples": [
+                10
+              ],
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of items to skip for pagination",
+              "examples": [
+                0
+              ],
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of items to skip for pagination"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/XTrendingCountry"
+                  },
+                  "title": "Response Getxtrendingcountries"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/stock/{ticker}": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Get X/Twitter data for a specific stock",
+        "description": "Returns detailed X/Twitter data for a specific ticker.\n\n**Response includes:**\n- `buzz_score`: V5.4 score from tweet data (mentions, sentiment, likes, diversity)\n- `total_mentions`: Number of tweet mentions within period\n- `sentiment_score`: Average sentiment from tweet analysis (-1 to +1)\n- `positive_count`, `negative_count`, `neutral_count`: Sentiment breakdown\n- `total_upvotes`: Total likes across tweet mentions\n- `daily_trend`: Daily data with mentions, sentiment, and avg_rank\n- `is_validated`: Also trending on Reddit (cross-platform validation)\n\n**Note:** Returns `found: false` if ticker hasn't appeared in X trending.",
+        "operationId": "getXStockSentiment",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\$?[A-Za-z]{1,10}$",
+              "description": "Stock ticker symbol (e.g., TSLA, $AAPL)",
+              "examples": [
+                "TSLA"
+              ],
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol (e.g., TSLA, $AAPL)"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Days of history to analyze (1-30 free, 1-90 paid)",
+              "examples": [
+                7
+              ],
+              "default": 7,
+              "title": "Days"
+            },
+            "description": "Days of history to analyze (1-30 free, 1-90 paid)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/XStockDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/stats": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Get X/Twitter service statistics",
+        "description": "Returns statistics about the X/Twitter trending service.\n\n**Includes:**\n- Number of unique tickers in latest fetch\n- List of trending ticker symbols\n- Last fetch timestamp\n- Validation rate (% also on Reddit)\n- Supported tickers count (from ticker reference)",
+        "operationId": "getXStats",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/XStatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                },
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/x/stocks/v1/search": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Search for stocks",
+        "description": "Search for stocks by ticker symbol or company name. Results sorted by X mention_count descending.",
+        "operationId": "searchXStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Search query (ticker or company name)",
+              "examples": [
+                "tesla"
+              ],
+              "title": "Q"
+            },
+            "description": "Search query (ticker or company name)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x/stocks/v1/compare": {
+      "get": {
+        "tags": [
+          "X/Twitter Stocks"
+        ],
+        "summary": "Compare multiple stocks on X/Twitter",
+        "description": "Compare sentiment metrics for up to 10 stocks side by side using X/Twitter data.",
+        "operationId": "compareXStocks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tickers",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of ticker symbols (e.g., TSLA,NVDA,AMD)",
+              "examples": [
+                "TSLA,NVDA,AMD"
+              ],
+              "title": "Tickers"
+            },
+            "description": "Comma-separated list of ticker symbols (e.g., TSLA,NVDA,AMD)"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "description": "Time period in days to analyze (1-30 free, 1-90 paid)",
+              "examples": [
+                7
+              ],
+              "default": 7,
+              "title": "Days"
+            },
+            "description": "Time period in days to analyze (1-30 free, 1-90 paid)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Too many tickers",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Maximum 10 tickers allowed"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing": {
+                    "summary": "Missing API key",
+                    "value": {
+                      "detail": "Missing API key. Include 'X-API-Key' header."
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid API key",
+                    "value": {
+                      "detail": "Invalid API key."
+                    }
+                  },
+                  "revoked": {
+                    "summary": "Revoked API key",
+                    "value": {
+                      "detail": "API key has been revoked."
+                    }
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Historical data limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "error": "Historical data limit exceeded",
+                    "message": "Your free account is limited to 30 days of historical data. Upgrade to a paid plan for up to 90 days.",
+                    "requested_days": 60,
+                    "max_days": 30,
+                    "account_type": "free"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalLimitError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Rate limit exceeded: 100 per 1 minute (free tier) or 1000 per 1 minute (paid tiers)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompareResponse": {
+        "properties": {
+          "period_days": {
+            "type": "integer",
+            "title": "Period Days",
+            "description": "Analysis period in days",
+            "examples": [
+              7
+            ]
+          },
+          "stocks": {
+            "items": {
+              "$ref": "#/components/schemas/CompareStockItem"
+            },
+            "type": "array",
+            "title": "Stocks",
+            "description": "Stocks sorted by buzz_score descending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_days",
+          "stocks"
+        ],
+        "title": "CompareResponse",
+        "description": "Comparison of multiple stocks.",
+        "examples": [
+          {
+            "period_days": 7,
+            "stocks": [
+              {
+                "buzz_score": 87.5,
+                "company_name": "Tesla, Inc.",
+                "mentions": 342,
+                "sentiment": 0.23,
+                "ticker": "TSLA",
+                "upvotes": 15234
+              },
+              {
+                "buzz_score": 72.3,
+                "company_name": "NVIDIA Corporation",
+                "mentions": 189,
+                "sentiment": 0.45,
+                "ticker": "NVDA",
+                "upvotes": 8921
+              }
+            ]
+          }
+        ]
+      },
+      "CompareStockItem": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "TSLA"
+            ]
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference",
+            "examples": [
+              "Tesla, Inc."
+            ]
+          },
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Buzz Score (0-100). Asymptotic scaling above 50.",
+            "examples": [
+              87.5
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total mentions in period",
+            "examples": [
+              342
+            ]
+          },
+          "sentiment": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment",
+            "description": "Average sentiment (-1 to +1, null if no mentions)",
+            "examples": [
+              0.23
+            ]
+          },
+          "upvotes": {
+            "type": "integer",
+            "title": "Upvotes",
+            "description": "Total upvotes",
+            "examples": [
+              15234
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "buzz_score",
+          "mentions",
+          "upvotes"
+        ],
+        "title": "CompareStockItem",
+        "description": "Individual stock in comparison."
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Human-readable error message",
+            "examples": [
+              "Invalid API key."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standard error response.",
+        "examples": [
+          {
+            "detail": "Missing API key. Include 'X-API-Key' header."
+          },
+          {
+            "detail": "Invalid API key."
+          },
+          {
+            "detail": "API key has been revoked."
+          },
+          {
+            "detail": "Rate limit exceeded: 100 per 1 minute"
+          }
+        ]
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current health status",
+            "examples": [
+              "healthy"
+            ]
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service",
+            "description": "Service identifier",
+            "examples": [
+              "reddit-stocks"
+            ]
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version",
+            "description": "Service version",
+            "examples": [
+              "1.0.0"
+            ]
+          },
+          "total_mentions": {
+            "type": "integer",
+            "title": "Total Mentions",
+            "description": "Total stock mentions in database",
+            "default": 0,
+            "examples": [
+              12833
+            ]
+          },
+          "tickers_tracked": {
+            "type": "integer",
+            "title": "Tickers Tracked",
+            "description": "Number of unique tickers tracked",
+            "default": 0,
+            "examples": [
+              65
+            ]
+          },
+          "scheduler": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SchedulerStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scheduler status information"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if unhealthy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "description": "API health status.",
+        "examples": [
+          {
+            "scheduler": {
+              "error_count": 3,
+              "last_scrape": "2026-01-09T10:30:00Z",
+              "running": true,
+              "scrape_count": 142,
+              "success_rate": 0.979
+            },
+            "service": "reddit-stocks",
+            "status": "healthy",
+            "tickers_tracked": 65,
+            "total_mentions": 12833,
+            "version": "1.0.0"
+          },
+          {
+            "scheduler": {
+              "error_count": 2,
+              "last_scrape": "2026-01-09T08:15:00Z",
+              "note": "Worker may have crashed (last heartbeat: 2026-01-09T08:15:00Z)",
+              "running": false,
+              "scrape_count": 47,
+              "success_rate": 0.957
+            },
+            "service": "reddit-stocks",
+            "status": "healthy",
+            "tickers_tracked": 65,
+            "total_mentions": 12833,
+            "version": "1.0.0"
+          }
+        ]
+      },
+      "HistoricalLimitError": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/HistoricalLimitErrorDetail",
+            "description": "Structured error details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "HistoricalLimitError",
+        "description": "Error response for historical data limit exceeded (HTTP 403)."
+      },
+      "HistoricalLimitErrorDetail": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error type identifier"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "requested_days": {
+            "type": "integer",
+            "title": "Requested Days",
+            "description": "Number of days requested"
+          },
+          "max_days": {
+            "type": "integer",
+            "title": "Max Days",
+            "description": "Maximum days allowed for account tier"
+          },
+          "account_type": {
+            "type": "string",
+            "title": "Account Type",
+            "description": "User's account type (free, hobby, professional, premium)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "message",
+          "requested_days",
+          "max_days",
+          "account_type"
+        ],
+        "title": "HistoricalLimitErrorDetail",
+        "description": "Structured error detail for historical data limit exceeded."
+      },
+      "SchedulerStatus": {
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "title": "Running",
+            "description": "Whether worker is alive (based on heartbeat freshness)"
+          },
+          "last_scrape": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scrape",
+            "description": "ISO timestamp of last scrape (null if never run)"
+          },
+          "scrape_count": {
+            "type": "integer",
+            "title": "Scrape Count",
+            "description": "Total number of scrapes performed",
+            "default": 0
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count",
+            "description": "Total number of scrape errors/failures",
+            "default": 0
+          },
+          "success_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success Rate",
+            "description": "Scrape success rate (0.0-1.0)"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Additional info (e.g., worker heartbeat status)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "running"
+        ],
+        "title": "SchedulerStatus",
+        "description": "Scheduler status information."
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Original search query",
+            "examples": [
+              "tesla"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of results found",
+            "examples": [
+              1
+            ]
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultItem"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "List of matching stocks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "count",
+          "results"
+        ],
+        "title": "SearchResponse",
+        "description": "Search results for stocks.",
+        "examples": [
+          {
+            "count": 1,
+            "query": "tesla",
+            "results": [
+              {
+                "aliases": [
+                  "Tesla",
+                  "Elon"
+                ],
+                "country": "United States",
+                "exchange": "NASDAQ",
+                "mention_count": 342,
+                "name": "Tesla Inc.",
+                "sector": "Consumer Discretionary",
+                "ticker": "TSLA",
+                "type": "Stock"
+              }
+            ]
+          }
+        ]
+      },
+      "SearchResultItem": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "TSLA"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Company name",
+            "examples": [
+              "Tesla Inc."
+            ]
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type",
+            "description": "Asset type (Stock, ETF, etc.)",
+            "examples": [
+              "Stock"
+            ]
+          },
+          "exchange": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange",
+            "description": "Stock exchange (NYSE, NASDAQ, etc.)",
+            "examples": [
+              "NASDAQ"
+            ]
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector",
+            "description": "Industry sector",
+            "examples": [
+              "Consumer Discretionary"
+            ]
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country",
+            "description": "Country of headquarters",
+            "examples": [
+              "United States"
+            ]
+          },
+          "aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliases",
+            "description": "Alternative names/aliases",
+            "examples": [
+              [
+                "Tesla",
+                "Elon"
+              ]
+            ]
+          },
+          "mention_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mention Count",
+            "description": "Total mentions in database",
+            "examples": [
+              342
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "name"
+        ],
+        "title": "SearchResultItem",
+        "description": "Individual search result item."
+      },
+      "StatsResponse": {
+        "properties": {
+          "total_mentions": {
+            "type": "integer",
+            "title": "Total Mentions",
+            "description": "Total stock mentions in database",
+            "examples": [
+              12833
+            ]
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers with mentions",
+            "examples": [
+              65
+            ]
+          },
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tickers",
+            "description": "List of ticker symbols (first 50)",
+            "examples": [
+              [
+                "AAPL",
+                "AMD",
+                "GME",
+                "NVDA",
+                "TSLA"
+              ]
+            ]
+          },
+          "supported_tickers": {
+            "type": "integer",
+            "title": "Supported Tickers",
+            "description": "Number of supported ticker patterns (from ticker_reference)",
+            "examples": [
+              11800
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_mentions",
+          "unique_tickers",
+          "tickers",
+          "supported_tickers"
+        ],
+        "title": "StatsResponse",
+        "description": "Database statistics.",
+        "examples": [
+          {
+            "supported_tickers": 11800,
+            "tickers": [
+              "AAPL",
+              "AMD",
+              "GME",
+              "NVDA",
+              "TSLA"
+            ],
+            "total_mentions": 12833,
+            "unique_tickers": 65
+          }
+        ]
+      },
+      "StockExplanationResponse": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "GME"
+            ]
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference",
+            "examples": [
+              "Gamestop Corporation - Class A"
+            ]
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation",
+            "description": "AI-generated explanation of why this stock is trending",
+            "examples": [
+              "GME is trending due to viral GameStop social media activity and large position posts on r/Superstonk."
+            ]
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "description": "Whether the explanation was served from cache",
+            "examples": [
+              true
+            ]
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At",
+            "description": "ISO timestamp when explanation was generated",
+            "examples": [
+              "2026-01-13T14:30:00+00:00"
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "LLM model used for generation",
+            "examples": [
+              "llama-3.1-8b-instant"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "explanation",
+          "cached",
+          "generated_at"
+        ],
+        "title": "StockExplanationResponse",
+        "description": "AI-generated trend explanation for a stock.",
+        "examples": [
+          {
+            "cached": true,
+            "company_name": "Gamestop Corporation - Class A",
+            "explanation": "GME is trending due to viral GameStop social media activity and large position posts on r/Superstonk.",
+            "generated_at": "2026-01-13T14:30:00+00:00",
+            "model": "llama-3.1-8b-instant",
+            "ticker": "GME"
+          }
+        ]
+      },
+      "StockSentiment": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "TSLA"
+            ]
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference (null if not found)",
+            "examples": [
+              "Tesla, Inc."
+            ]
+          },
+          "found": {
+            "type": "boolean",
+            "title": "Found",
+            "description": "Whether mentions were found for this ticker"
+          },
+          "buzz_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buzz Score",
+            "description": "Buzz Score (0-100). Asymptotic scaling above 50.",
+            "examples": [
+              87.5
+            ]
+          },
+          "total_mentions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Mentions",
+            "description": "Total number of mentions",
+            "examples": [
+              342
+            ]
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Average sentiment score (-1 bearish to +1 bullish)",
+            "examples": [
+              0.23
+            ]
+          },
+          "positive_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positive Count",
+            "description": "Number of positive mentions",
+            "examples": [
+              154
+            ]
+          },
+          "negative_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative Count",
+            "description": "Number of negative mentions",
+            "examples": [
+              62
+            ]
+          },
+          "neutral_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Neutral Count",
+            "description": "Number of neutral mentions",
+            "examples": [
+              126
+            ]
+          },
+          "total_upvotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Upvotes",
+            "description": "Total upvotes across all mentions",
+            "examples": [
+              15234
+            ]
+          },
+          "unique_posts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unique Posts",
+            "description": "Number of unique posts",
+            "examples": [
+              45
+            ]
+          },
+          "subreddit_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subreddit Count",
+            "description": "Number of subreddits with mentions",
+            "examples": [
+              8
+            ]
+          },
+          "trend": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "rising",
+                  "falling",
+                  "stable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% subreddits_ratio. rising: >1.10, falling: <0.90, stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "bullish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              45
+            ]
+          },
+          "bearish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              18
+            ]
+          },
+          "period_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Days",
+            "description": "Analysis period in days",
+            "examples": [
+              7
+            ]
+          },
+          "top_subreddits": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Subreddits",
+            "description": "Top subreddits by mention count"
+          },
+          "daily_trend": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Trend",
+            "description": "Mentions per day with sentiment and buzz_score"
+          },
+          "top_mentions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Mentions",
+            "description": "Top mentions by upvotes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "found"
+        ],
+        "title": "StockSentiment",
+        "description": "Detailed sentiment analysis for a specific stock ticker.",
+        "examples": [
+          {
+            "bearish_pct": 18,
+            "bullish_pct": 45,
+            "buzz_score": 87.5,
+            "company_name": "Tesla, Inc.",
+            "daily_trend": [
+              {
+                "buzz_score": 42.8,
+                "date": "2025-12-28",
+                "mentions": 52,
+                "sentiment": 0.31
+              },
+              {
+                "buzz_score": 38.5,
+                "date": "2025-12-27",
+                "mentions": 48,
+                "sentiment": 0.18
+              }
+            ],
+            "found": true,
+            "negative_count": 62,
+            "neutral_count": 126,
+            "period_days": 7,
+            "positive_count": 154,
+            "sentiment_score": 0.23,
+            "subreddit_count": 8,
+            "ticker": "TSLA",
+            "top_mentions": [
+              {
+                "created_utc": "2025-12-28T10:30:00",
+                "sentiment_label": "positive",
+                "sentiment_score": 0.85,
+                "subreddit": "wallstreetbets",
+                "text_snippet": "TSLA looking strong after...",
+                "upvotes": 1234
+              }
+            ],
+            "top_subreddits": [
+              {
+                "count": 89,
+                "subreddit": "wallstreetbets"
+              },
+              {
+                "count": 67,
+                "subreddit": "stocks"
+              }
+            ],
+            "total_mentions": 342,
+            "total_upvotes": 15234,
+            "trend": "rising",
+            "unique_posts": 45
+          }
+        ]
+      },
+      "TrendingCountry": {
+        "properties": {
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Aggregated Buzz Score (0-100)",
+            "examples": [
+              78.4
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable"
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% subreddits_ratio. rising: >1.10 (+10%), falling: <0.90 (-10%), stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total mentions",
+            "examples": [
+              4523
+            ]
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers mentioned",
+            "examples": [
+              34
+            ]
+          },
+          "subreddit_count": {
+            "type": "integer",
+            "title": "Subreddit Count",
+            "description": "Number of subreddits with mentions",
+            "examples": [
+              15
+            ]
+          },
+          "sentiment_score": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": -1,
+            "title": "Sentiment Score",
+            "description": "Weighted average sentiment (-1 bearish to +1 bullish)",
+            "examples": [
+              0.28
+            ]
+          },
+          "bullish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              54
+            ]
+          },
+          "bearish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              22
+            ]
+          },
+          "total_upvotes": {
+            "type": "integer",
+            "title": "Total Upvotes",
+            "description": "Total upvotes across all mentions",
+            "examples": [
+              128450
+            ]
+          },
+          "top_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Top Tickers",
+            "description": "Top 5 tickers by mentions",
+            "examples": [
+              [
+                "NVDA",
+                "AAPL",
+                "MSFT",
+                "AMD",
+                "GOOGL"
+              ]
+            ]
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "description": "Country name",
+            "examples": [
+              "United States"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "buzz_score",
+          "trend",
+          "mentions",
+          "unique_tickers",
+          "subreddit_count",
+          "sentiment_score",
+          "bullish_pct",
+          "bearish_pct",
+          "total_upvotes",
+          "top_tickers",
+          "country"
+        ],
+        "title": "TrendingCountry",
+        "description": "Trending country with aggregated buzz metrics from Reddit.",
+        "examples": [
+          {
+            "bearish_pct": 26,
+            "bullish_pct": 48,
+            "buzz_score": 82.3,
+            "country": "United States",
+            "mentions": 8934,
+            "sentiment_score": 0.21,
+            "subreddit_count": 18,
+            "top_tickers": [
+              "NVDA",
+              "TSLA",
+              "AAPL",
+              "AMD",
+              "PLTR"
+            ],
+            "total_upvotes": 245000,
+            "trend": "stable",
+            "unique_tickers": 156
+          }
+        ]
+      },
+      "TrendingSector": {
+        "properties": {
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Aggregated Buzz Score (0-100)",
+            "examples": [
+              78.4
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable"
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% subreddits_ratio. rising: >1.10 (+10%), falling: <0.90 (-10%), stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total mentions",
+            "examples": [
+              4523
+            ]
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers mentioned",
+            "examples": [
+              34
+            ]
+          },
+          "subreddit_count": {
+            "type": "integer",
+            "title": "Subreddit Count",
+            "description": "Number of subreddits with mentions",
+            "examples": [
+              15
+            ]
+          },
+          "sentiment_score": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": -1,
+            "title": "Sentiment Score",
+            "description": "Weighted average sentiment (-1 bearish to +1 bullish)",
+            "examples": [
+              0.28
+            ]
+          },
+          "bullish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              54
+            ]
+          },
+          "bearish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              22
+            ]
+          },
+          "total_upvotes": {
+            "type": "integer",
+            "title": "Total Upvotes",
+            "description": "Total upvotes across all mentions",
+            "examples": [
+              128450
+            ]
+          },
+          "top_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Top Tickers",
+            "description": "Top 5 tickers by mentions",
+            "examples": [
+              [
+                "NVDA",
+                "AAPL",
+                "MSFT",
+                "AMD",
+                "GOOGL"
+              ]
+            ]
+          },
+          "sector": {
+            "type": "string",
+            "title": "Sector",
+            "description": "Industry sector name",
+            "examples": [
+              "Technology"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "buzz_score",
+          "trend",
+          "mentions",
+          "unique_tickers",
+          "subreddit_count",
+          "sentiment_score",
+          "bullish_pct",
+          "bearish_pct",
+          "total_upvotes",
+          "top_tickers",
+          "sector"
+        ],
+        "title": "TrendingSector",
+        "description": "Trending sector with aggregated buzz metrics from Reddit.",
+        "examples": [
+          {
+            "bearish_pct": 22,
+            "bullish_pct": 54,
+            "buzz_score": 78.4,
+            "mentions": 4523,
+            "sector": "Technology",
+            "sentiment_score": 0.28,
+            "subreddit_count": 15,
+            "top_tickers": [
+              "NVDA",
+              "AAPL",
+              "MSFT",
+              "AMD",
+              "GOOGL"
+            ],
+            "total_upvotes": 128450,
+            "trend": "rising",
+            "unique_tickers": 34
+          }
+        ]
+      },
+      "TrendingStock": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "TSLA"
+            ]
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference (null if not found)",
+            "examples": [
+              "Tesla, Inc."
+            ]
+          },
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Buzz Score (0-100). Asymptotic scaling above 50.",
+            "examples": [
+              87.5
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable"
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% subreddits_ratio. rising: >1.10 (+10%), falling: <0.90 (-10%), stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total number of mentions",
+            "examples": [
+              342
+            ]
+          },
+          "unique_posts": {
+            "type": "integer",
+            "title": "Unique Posts",
+            "description": "Number of unique posts",
+            "examples": [
+              45
+            ]
+          },
+          "subreddit_count": {
+            "type": "integer",
+            "title": "Subreddit Count",
+            "description": "Number of subreddits with mentions",
+            "examples": [
+              8
+            ]
+          },
+          "sentiment_score": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": -1,
+            "title": "Sentiment Score",
+            "description": "Average sentiment score (-1 bearish to +1 bullish)",
+            "examples": [
+              0.23
+            ]
+          },
+          "bullish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              45
+            ]
+          },
+          "bearish_pct": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              18
+            ]
+          },
+          "total_upvotes": {
+            "type": "integer",
+            "title": "Total Upvotes",
+            "description": "Total upvotes across all mentions",
+            "examples": [
+              15234
+            ]
+          },
+          "trend_history": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Trend History",
+            "description": "Daily buzz scores (oldest\u2192newest). Length = max(days, 7). Values 0-100.",
+            "default": [],
+            "examples": [
+              [
+                12.3,
+                15.2,
+                18.7,
+                22.1,
+                28.5,
+                35.2,
+                42.8
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "buzz_score",
+          "trend",
+          "mentions",
+          "unique_posts",
+          "subreddit_count",
+          "sentiment_score",
+          "bullish_pct",
+          "bearish_pct",
+          "total_upvotes"
+        ],
+        "title": "TrendingStock",
+        "description": "Trending stock with buzz metrics from Reddit.",
+        "examples": [
+          {
+            "bearish_pct": 18,
+            "bullish_pct": 45,
+            "buzz_score": 87.5,
+            "company_name": "Tesla, Inc.",
+            "mentions": 342,
+            "sentiment_score": 0.23,
+            "subreddit_count": 8,
+            "ticker": "TSLA",
+            "total_upvotes": 15234,
+            "trend": "rising",
+            "trend_history": [
+              45.2,
+              52.1,
+              48.7,
+              67.3,
+              72.1,
+              78.4,
+              87.5
+            ],
+            "unique_posts": 45
+          }
+        ]
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "XDailyTrendItem": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date",
+            "description": "Date in YYYY-MM-DD format",
+            "examples": [
+              "2025-12-28"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Number of tweet mentions on this date",
+            "examples": [
+              42
+            ]
+          },
+          "sentiment": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment",
+            "description": "Average sentiment score for the day",
+            "examples": [
+              0.15
+            ]
+          },
+          "avg_rank": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Rank",
+            "description": "Average X rank on this date (X-specific)",
+            "examples": [
+              3.5
+            ]
+          },
+          "buzz_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buzz Score",
+            "description": "Buzz score for this date (0-100)",
+            "examples": [
+              52.3
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "mentions"
+        ],
+        "title": "XDailyTrendItem",
+        "description": "Daily trend data point for X/Twitter."
+      },
+      "XHealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Current health status (healthy/unhealthy)",
+            "examples": [
+              "healthy"
+            ]
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "description": "Service identifier",
+            "examples": [
+              "x-stocks"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version from app/__init__.py",
+            "examples": [
+              "1.12.0"
+            ]
+          },
+          "total_mentions": {
+            "type": "integer",
+            "title": "Total Mentions",
+            "description": "Total rows in x_mentions table (all time)",
+            "examples": [
+              15420
+            ]
+          },
+          "tickers_tracked": {
+            "type": "integer",
+            "title": "Tickers Tracked",
+            "description": "Number of distinct tickers with X mentions",
+            "examples": [
+              247
+            ]
+          },
+          "scheduler": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/XSchedulerStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "X Worker status (from worker_heartbeat table)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if unhealthy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version",
+          "total_mentions",
+          "tickers_tracked"
+        ],
+        "title": "XHealthResponse",
+        "description": "X/Twitter service health status - aligned with Reddit health response.",
+        "examples": [
+          {
+            "scheduler": {
+              "error_count": 2,
+              "last_scrape": "2025-12-31T06:00:00Z",
+              "running": true,
+              "scrape_count": 42,
+              "success_rate": 0.95
+            },
+            "service": "x-stocks",
+            "status": "healthy",
+            "tickers_tracked": 247,
+            "total_mentions": 15420,
+            "version": "1.13.0"
+          }
+        ]
+      },
+      "XSchedulerStatus": {
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "title": "Running",
+            "description": "Whether worker is alive (heartbeat < 90 min old)",
+            "examples": [
+              true
+            ]
+          },
+          "last_scrape": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scrape",
+            "description": "ISO timestamp of last completed scrape cycle"
+          },
+          "scrape_count": {
+            "type": "integer",
+            "title": "Scrape Count",
+            "description": "Total completed scrape cycles since worker start",
+            "default": 0
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count",
+            "description": "Total failed scrape cycles",
+            "default": 0
+          },
+          "success_rate": {
+            "type": "number",
+            "title": "Success Rate",
+            "description": "Success rate (success_count / scrape_count)",
+            "default": 0,
+            "examples": [
+              0.95
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Additional status info (e.g., worker crash warning)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "running"
+        ],
+        "title": "XSchedulerStatus",
+        "description": "X Worker scheduler/scraper status (from worker_heartbeat table).",
+        "examples": [
+          {
+            "error_count": 2,
+            "last_scrape": "2025-12-31T06:00:00Z",
+            "running": true,
+            "scrape_count": 42,
+            "success_rate": 0.95
+          }
+        ]
+      },
+      "XStatsResponse": {
+        "properties": {
+          "total_appearances": {
+            "type": "integer",
+            "title": "Total Appearances",
+            "description": "Total appearances across all X trending fetches (all time)",
+            "default": 0
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers in latest fetch",
+            "default": 0
+          },
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tickers",
+            "description": "List of trending ticker symbols (first 100)"
+          },
+          "supported_tickers": {
+            "type": "integer",
+            "title": "Supported Tickers",
+            "description": "Total tickers in ticker_reference table",
+            "default": 0
+          },
+          "last_fetch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Fetch",
+            "description": "Timestamp of last Grok fetch"
+          },
+          "validation_rate": {
+            "type": "number",
+            "title": "Validation Rate",
+            "description": "Percentage of tickers also on Reddit",
+            "default": 0,
+            "examples": [
+              37.5
+            ]
+          }
+        },
+        "type": "object",
+        "title": "XStatsResponse",
+        "description": "X/Twitter service statistics.",
+        "examples": [
+          {
+            "last_fetch": "2025-12-31T06:00:00Z",
+            "supported_tickers": 11800,
+            "tickers": [
+              "TSLA",
+              "NVDA",
+              "AMD",
+              "AAPL",
+              "SPY"
+            ],
+            "total_appearances": 935,
+            "unique_tickers": 100,
+            "validation_rate": 37.5
+          }
+        ]
+      },
+      "XStockDetailResponse": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference"
+          },
+          "found": {
+            "type": "boolean",
+            "title": "Found",
+            "description": "Whether ticker was found in X trending",
+            "default": true
+          },
+          "buzz_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buzz Score",
+            "description": "V5.4 buzz score from real tweet data (null if not found)"
+          },
+          "total_mentions": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Mentions",
+            "description": "Total tweet mentions within period"
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Average sentiment score from tweet analysis (-1 to +1)"
+          },
+          "positive_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positive Count",
+            "description": "Bullish tweet mentions"
+          },
+          "negative_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative Count",
+            "description": "Bearish tweet mentions"
+          },
+          "neutral_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Neutral Count",
+            "description": "Neutral tweet mentions"
+          },
+          "total_upvotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Upvotes",
+            "description": "Total likes across all tweet mentions"
+          },
+          "unique_tweets": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unique Tweets",
+            "description": "Number of unique tweets (distinct tweet_id)"
+          },
+          "trend": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "rising",
+                  "falling",
+                  "stable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% rank_ratio + 25% upvotes_ratio + 15% authors_ratio. rising: >1.10, falling: <0.90, stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "bullish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish tweet mentions",
+            "examples": [
+              45
+            ]
+          },
+          "bearish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish tweet mentions",
+            "examples": [
+              12
+            ]
+          },
+          "period_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Days",
+            "description": "Analysis period in days"
+          },
+          "daily_trend": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/XDailyTrendItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Trend",
+            "description": "Daily trend data with avg_rank (X-specific)"
+          },
+          "top_tweets": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/XTopTweet"
+                },
+                "type": "array",
+                "maxItems": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Tweets",
+            "description": "Top 10 tweets by engagement (likes + retweets)"
+          },
+          "is_validated": {
+            "type": "boolean",
+            "title": "Is Validated",
+            "description": "Whether ticker is also trending on Reddit",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker"
+        ],
+        "title": "XStockDetailResponse",
+        "description": "Detailed X/Twitter data for a single stock - unified format matching Reddit API.\n\nV5.4: All metrics now available from real tweet data (x_mentions table).",
+        "examples": [
+          {
+            "bearish_pct": 12,
+            "bullish_pct": 45,
+            "buzz_score": 72.5,
+            "company_name": "Tesla, Inc.",
+            "daily_trend": [
+              {
+                "avg_rank": 3.5,
+                "buzz_score": 52.3,
+                "date": "2025-12-28",
+                "mentions": 42,
+                "sentiment": 0.15
+              },
+              {
+                "avg_rank": 5.2,
+                "buzz_score": 48.1,
+                "date": "2025-12-27",
+                "mentions": 38,
+                "sentiment": 0.22
+              }
+            ],
+            "found": true,
+            "is_validated": true,
+            "negative_count": 19,
+            "neutral_count": 67,
+            "period_days": 7,
+            "positive_count": 70,
+            "sentiment_score": 0.35,
+            "ticker": "TSLA",
+            "top_tweets": [
+              {
+                "author": "stockguru",
+                "created_at": "2025-12-28T14:32:00Z",
+                "likes": 1247,
+                "retweets": 89,
+                "sentiment_label": "positive",
+                "sentiment_score": 0.85,
+                "text_snippet": "$TSLA breaking out! \ud83d\ude80",
+                "views": 52340
+              }
+            ],
+            "total_mentions": 156,
+            "total_upvotes": 2847,
+            "trend": "rising",
+            "unique_tweets": 42
+          }
+        ]
+      },
+      "XTopTweet": {
+        "properties": {
+          "text_snippet": {
+            "type": "string",
+            "maxLength": 280,
+            "title": "Text Snippet",
+            "description": "Tweet text (truncated to 280 chars)",
+            "examples": [
+              "$TSLA breaking out! This is the move we've been waiting for \ud83d\ude80"
+            ]
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Sentiment score (-1 to +1)",
+            "examples": [
+              0.85
+            ]
+          },
+          "sentiment_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Label",
+            "description": "Sentiment label (positive/negative/neutral)",
+            "examples": [
+              "positive"
+            ]
+          },
+          "likes": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Likes",
+            "description": "Number of likes",
+            "examples": [
+              1247
+            ]
+          },
+          "retweets": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Retweets",
+            "description": "Number of retweets",
+            "examples": [
+              89
+            ]
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views",
+            "description": "Number of views",
+            "examples": [
+              52340
+            ]
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author",
+            "description": "Author username",
+            "examples": [
+              "elonmusk"
+            ]
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "Tweet creation time (ISO 8601)",
+            "examples": [
+              "2025-12-28T14:32:00Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "text_snippet",
+          "likes",
+          "retweets"
+        ],
+        "title": "XTopTweet",
+        "description": "Top tweet mention for a stock - highest engagement tweets.",
+        "examples": [
+          {
+            "author": "elonmusk",
+            "created_at": "2025-12-28T14:32:00Z",
+            "likes": 1247,
+            "retweets": 89,
+            "sentiment_label": "positive",
+            "sentiment_score": 0.85,
+            "text_snippet": "$TSLA breaking out! This is the move we've been waiting for \ud83d\ude80",
+            "views": 52340
+          }
+        ]
+      },
+      "XTrendingCountry": {
+        "properties": {
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Aggregated Buzz Score (0-100) from X mentions",
+            "examples": [
+              78.4
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable"
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% authors_ratio. rising: >1.10 (+10%), falling: <0.90 (-10%), stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total tweet mentions",
+            "examples": [
+              4523
+            ]
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers mentioned",
+            "examples": [
+              34
+            ]
+          },
+          "unique_authors": {
+            "type": "integer",
+            "title": "Unique Authors",
+            "description": "Number of unique authors (diversity metric)",
+            "examples": [
+              156
+            ]
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Weighted average sentiment (-1 bearish to +1 bullish)",
+            "examples": [
+              0.28
+            ]
+          },
+          "bullish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              54
+            ]
+          },
+          "bearish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              22
+            ]
+          },
+          "total_upvotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Upvotes",
+            "description": "Total likes across all mentions",
+            "examples": [
+              128450
+            ]
+          },
+          "top_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Top Tickers",
+            "description": "Top 5 tickers by mention count in this dimension",
+            "examples": [
+              [
+                "NVDA",
+                "AAPL",
+                "MSFT",
+                "AMD",
+                "GOOGL"
+              ]
+            ]
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "description": "Country name",
+            "examples": [
+              "United States"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "buzz_score",
+          "trend",
+          "mentions",
+          "unique_tickers",
+          "unique_authors",
+          "top_tickers",
+          "country"
+        ],
+        "title": "XTrendingCountry",
+        "description": "Trending country with aggregated buzz metrics from X/Twitter.",
+        "examples": [
+          {
+            "bearish_pct": 26,
+            "bullish_pct": 48,
+            "buzz_score": 82.3,
+            "country": "United States",
+            "mentions": 8934,
+            "sentiment_score": 0.21,
+            "top_tickers": [
+              "NVDA",
+              "TSLA",
+              "AAPL",
+              "AMD",
+              "PLTR"
+            ],
+            "total_upvotes": 245000,
+            "trend": "stable",
+            "unique_authors": 423,
+            "unique_tickers": 156
+          }
+        ]
+      },
+      "XTrendingSector": {
+        "properties": {
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "Aggregated Buzz Score (0-100) from X mentions",
+            "examples": [
+              78.4
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable"
+            ],
+            "title": "Trend",
+            "description": "Multi-factor activity trend using rolling 24h windows. Activity score = 60% mentions_ratio + 25% upvotes_ratio + 15% authors_ratio. rising: >1.10 (+10%), falling: <0.90 (-10%), stable: 0.90-1.10.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "title": "Mentions",
+            "description": "Total tweet mentions",
+            "examples": [
+              4523
+            ]
+          },
+          "unique_tickers": {
+            "type": "integer",
+            "title": "Unique Tickers",
+            "description": "Number of unique tickers mentioned",
+            "examples": [
+              34
+            ]
+          },
+          "unique_authors": {
+            "type": "integer",
+            "title": "Unique Authors",
+            "description": "Number of unique authors (diversity metric)",
+            "examples": [
+              156
+            ]
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Weighted average sentiment (-1 bearish to +1 bullish)",
+            "examples": [
+              0.28
+            ]
+          },
+          "bullish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish mentions",
+            "examples": [
+              54
+            ]
+          },
+          "bearish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish mentions",
+            "examples": [
+              22
+            ]
+          },
+          "total_upvotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Upvotes",
+            "description": "Total likes across all mentions",
+            "examples": [
+              128450
+            ]
+          },
+          "top_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Top Tickers",
+            "description": "Top 5 tickers by mention count in this dimension",
+            "examples": [
+              [
+                "NVDA",
+                "AAPL",
+                "MSFT",
+                "AMD",
+                "GOOGL"
+              ]
+            ]
+          },
+          "sector": {
+            "type": "string",
+            "title": "Sector",
+            "description": "Industry sector name",
+            "examples": [
+              "Technology"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "buzz_score",
+          "trend",
+          "mentions",
+          "unique_tickers",
+          "unique_authors",
+          "top_tickers",
+          "sector"
+        ],
+        "title": "XTrendingSector",
+        "description": "Trending sector with aggregated buzz metrics from X/Twitter.",
+        "examples": [
+          {
+            "bearish_pct": 22,
+            "bullish_pct": 54,
+            "buzz_score": 78.4,
+            "mentions": 4523,
+            "sector": "Technology",
+            "sentiment_score": 0.28,
+            "top_tickers": [
+              "NVDA",
+              "AAPL",
+              "MSFT",
+              "AMD",
+              "GOOGL"
+            ],
+            "total_upvotes": 128450,
+            "trend": "rising",
+            "unique_authors": 156,
+            "unique_tickers": 34
+          }
+        ]
+      },
+      "XTrendingStock": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol",
+            "examples": [
+              "TSLA"
+            ]
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name",
+            "description": "Company name from ticker_reference",
+            "examples": [
+              "Tesla, Inc."
+            ]
+          },
+          "buzz_score": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Buzz Score",
+            "description": "V5.4 buzz score from real tweet data. Components: mentions (20), sentiment (20), quality (10), author diversity (14, HHI-based), trend (-10 to +20). Asymptotic scaling caps at 100.",
+            "examples": [
+              72.5
+            ]
+          },
+          "trend": {
+            "type": "string",
+            "title": "Trend",
+            "description": "Multi-Factor Activity Score trend (24h vs previous 24h). 60% rank + 25% upvotes + 15% author diversity. rising: >10% improvement. falling: >10% decline. stable: \u00b110%.",
+            "examples": [
+              "rising"
+            ]
+          },
+          "mentions": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Mentions",
+            "description": "Number of tweet mentions from x_mentions table",
+            "examples": [
+              156
+            ]
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1,
+                "minimum": -1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score",
+            "description": "Average sentiment score from tweet analysis (-1 to +1)",
+            "examples": [
+              0.35
+            ]
+          },
+          "bullish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bullish Pct",
+            "description": "Percentage of bullish tweet mentions",
+            "examples": [
+              45
+            ]
+          },
+          "bearish_pct": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearish Pct",
+            "description": "Percentage of bearish tweet mentions",
+            "examples": [
+              12
+            ]
+          },
+          "total_upvotes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Upvotes",
+            "description": "Total likes across all tweet mentions",
+            "examples": [
+              2847
+            ]
+          },
+          "unique_tweets": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unique Tweets",
+            "description": "Number of unique tweets mentioning this ticker (distinct tweet_id)",
+            "examples": [
+              42
+            ]
+          },
+          "is_validated": {
+            "type": "boolean",
+            "title": "Is Validated",
+            "description": "Also trending on Reddit (cross-platform validation)",
+            "default": false,
+            "examples": [
+              true
+            ]
+          },
+          "trend_history": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Trend History",
+            "description": "Daily buzz scores for the last 7 days (oldest to newest). Last element is yesterday's score. Today's live score is in buzz_score.",
+            "examples": [
+              [
+                45.2,
+                48.1,
+                52.3,
+                55,
+                58.2,
+                61.5,
+                64.8
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "buzz_score",
+          "trend",
+          "mentions"
+        ],
+        "title": "XTrendingStock",
+        "description": "Trending stock on X/Twitter - unified format matching Reddit API structure.\n\nV5.4: Uses real tweet data from x_mentions (collected via twscrape).\nAll metrics now available - sentiment, upvotes, author diversity.",
+        "examples": [
+          {
+            "bearish_pct": 12,
+            "bullish_pct": 45,
+            "buzz_score": 72.5,
+            "company_name": "Tesla, Inc.",
+            "is_validated": true,
+            "mentions": 156,
+            "sentiment_score": 0.35,
+            "ticker": "TSLA",
+            "total_upvotes": 2847,
+            "trend": "rising",
+            "trend_history": [
+              45.2,
+              48.1,
+              52.3,
+              55,
+              58.2,
+              61.5,
+              64.8
+            ],
+            "unique_tweets": 42
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "description": "API key for authentication.\n\nObtain a key via `POST /auth/v1/register` or contact support.\n\nFormat: `sk_live_` followed by 32 hexadecimal characters.",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Status",
+      "description": "Health checks (no authentication required)"
+    },
+    {
+      "name": "Reddit Stocks",
+      "description": "Sentiment analysis and trending data from Reddit discussions"
+    },
+    {
+      "name": "X/Twitter Stocks",
+      "description": "Trending stocks and sentiment from X/Twitter"
+    }
+  ]
+}

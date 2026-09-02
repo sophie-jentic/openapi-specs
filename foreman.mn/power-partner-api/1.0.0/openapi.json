@@ -1,0 +1,1060 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Power Partner API",
+    "description": "The Power Partner API allows external power partners to manage curtailment dispatches\nthrough a secure, authenticated interface. This API provides endpoints for creating,\nviewing, and managing dispatch events.\n\n## Authentication\n\nPower Partners authenticate using JWT tokens obtained through a token exchange process.\n\n1. **API Token** \u2014 Long-lived token provided by Foreman staff.\n2. **JWT Token** \u2014 Short-lived token (24 hours) obtained by exchanging the API token.\n\nAfter receiving a JWT token, include it in API requests as:\n```\nAuthorization: Bearer <jwt_token>\n```\n\nJWT tokens do **not** support refresh. When your token expires, re-exchange your API\ntoken at `/auth-token/` to obtain a new JWT token.\n\n### Token Lifetimes\n| Token | Lifetime |\n|-------|----------|\n| API Token | Permanent (until revoked by Foreman staff) |\n| JWT Token | 24 hours (no refresh capability) |\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Foreman",
+      "url": "https://foreman.mn"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/foremanmining/foreman-power-partner-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.foreman.mn/v3/partners",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Obtain and manage JWT tokens"
+    },
+    {
+      "name": "Dispatches",
+      "description": "Create and manage curtailment dispatch events"
+    },
+    {
+      "name": "Telemetry",
+      "description": "Submit site load telemetry readings"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained by exchanging your API token at `/auth-token/`"
+      }
+    },
+    "schemas": {
+      "AuthTokenRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Your long-lived API token provided by Foreman staff",
+            "example": "your_api_token_here"
+          }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access": {
+            "type": "string",
+            "description": "JWT token, valid for 24 hours",
+            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+          }
+        }
+      },
+      "SetpointDispatchRequest": {
+        "type": "object",
+        "required": [
+          "startTime",
+          "type",
+          "setpointValue",
+          "setpointUnit"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Unique identifier for the dispatch event. If omitted, a UUID will be auto-generated.\n",
+            "example": "partner-dispatch-001"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the dispatch should begin (ISO 8601 format)",
+            "example": "2024-01-16T14:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the dispatch should end (ISO 8601 format)",
+            "example": "2024-01-16T16:00:00Z"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "setpoint"
+            ],
+            "description": "Curtails or ramps miners to achieve the desired setpoint value"
+          },
+          "setpointValue": {
+            "type": "integer",
+            "description": "Target setpoint value (must be >= 0)",
+            "example": 50
+          },
+          "setpointUnit": {
+            "type": "string",
+            "enum": [
+              "W",
+              "kW",
+              "MW"
+            ],
+            "description": "Unit of measure for the setpoint value",
+            "example": "MW"
+          }
+        }
+      },
+      "FullSiteDispatchRequest": {
+        "type": "object",
+        "required": [
+          "startTime",
+          "type"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Unique identifier for the dispatch event. If omitted, a UUID will be auto-generated.\n",
+            "example": "partner-dispatch-002"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the dispatch should begin (ISO 8601 format)",
+            "example": "2024-01-16T14:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the dispatch should end (ISO 8601 format)",
+            "example": "2024-01-16T16:00:00Z"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "full"
+            ],
+            "description": "Curtails the entire site"
+          }
+        }
+      },
+      "CreateDispatchRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SetpointDispatchRequest"
+          },
+          {
+            "$ref": "#/components/schemas/FullSiteDispatchRequest"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "setpoint": "#/components/schemas/SetpointDispatchRequest",
+            "full": "#/components/schemas/FullSiteDispatchRequest"
+          }
+        }
+      },
+      "UpdateDispatchRequest": {
+        "type": "object",
+        "description": "Only `startTime`, `endTime`, `setpointValue`, and `setpointUnit` can be updated. The `eventId`, `status`, and `type` fields are read-only.\n",
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-16T15:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-16T17:00:00Z"
+          },
+          "setpointValue": {
+            "type": "integer",
+            "example": 75
+          },
+          "setpointUnit": {
+            "type": "string",
+            "enum": [
+              "W",
+              "kW",
+              "MW"
+            ],
+            "example": "MW"
+          }
+        }
+      },
+      "DispatchResponse": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Unique identifier for the dispatch event",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-16T14:00:00Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-01-16T16:00:00Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "in-progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Computed status (read-only): - `scheduled` \u2014 future start time - `in-progress` \u2014 start time has passed, end time hasn't (or is null) - `completed` \u2014 past end time - `cancelled` \u2014 cancelled\n",
+            "example": "scheduled"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "full",
+              "setpoint"
+            ],
+            "example": "setpoint"
+          },
+          "setpointValue": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Present only for setpoint dispatches",
+            "example": 50
+          },
+          "setpointUnit": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "W",
+              "kW",
+              "MW"
+            ],
+            "description": "Present only for setpoint dispatches",
+            "example": "MW"
+          }
+        }
+      },
+      "PaginatedDispatchList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of dispatches",
+            "example": 2
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL of the next page, or null if on the last page",
+            "example": null
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL of the previous page, or null if on the first page",
+            "example": null
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DispatchResponse"
+            }
+          }
+        }
+      },
+      "TelemetryItem": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "type",
+          "value",
+          "units"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the telemetry reading was taken (ISO 8601, UTC recommended)",
+            "example": "2024-01-20T14:05:00Z"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "site-load"
+            ],
+            "description": "Must be `\"site-load\"`",
+            "example": "site-load"
+          },
+          "value": {
+            "type": "number",
+            "description": "Site load value \u2014 must be positive",
+            "example": 45.5
+          },
+          "units": {
+            "type": "string",
+            "enum": [
+              "W",
+              "kW",
+              "MW"
+            ],
+            "description": "Unit of measure",
+            "example": "MW"
+          }
+        }
+      },
+      "TelemetryRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TelemetryItem"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetryItem"
+            }
+          }
+        ]
+      },
+      "TelemetryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Error400": {
+        "type": "object",
+        "description": "Field-level validation errors",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "startTime": [
+            "This field is required."
+          ]
+        }
+      },
+      "Error401": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Authentication credentials were not provided."
+          }
+        }
+      },
+      "Error403": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "This endpoint is only available to Power Partners"
+          }
+        }
+      },
+      "Error404": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Dispatch not found"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth-token/": {
+      "post": {
+        "summary": "Exchange API Token for JWT",
+        "description": "Exchange a long-lived API token for a short-lived JWT token (valid for 24 hours).\n\nUse the returned JWT in the `Authorization: Bearer <token>` header for all\nsubsequent requests. JWT tokens do not support refresh \u2014 when one expires,\ncall this endpoint again.\n",
+        "operationId": "exchangeApiToken",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTokenRequest"
+              },
+              "example": {
+                "token": "your_api_token_here"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT token successfully issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                },
+                "example": {
+                  "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid API token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/dispatches/": {
+      "parameters": [
+        {
+          "name": "client_id",
+          "in": "path",
+          "required": true,
+          "description": "The client's unique identifier",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "List Dispatches",
+        "description": "Retrieve a paginated list of curtailment dispatches for a client.",
+        "operationId": "listDispatches",
+        "tags": [
+          "Dispatches"
+        ],
+        "parameters": [
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Field to sort results by",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "start_time",
+                "-start_time",
+                "end_time",
+                "-end_time"
+              ]
+            },
+            "example": "-start_time"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results per page (default 20, max 50)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Pagination offset",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of dispatches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedDispatchList"
+                },
+                "example": {
+                  "count": 2,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "eventId": "partner-dispatch-001",
+                      "startTime": "2024-01-15T14:00:00Z",
+                      "endTime": "2024-01-15T16:00:00Z",
+                      "status": "completed",
+                      "type": "setpoint",
+                      "setpointValue": 1000,
+                      "setpointUnit": "kW"
+                    },
+                    {
+                      "eventId": "partner-dispatch-002",
+                      "startTime": "2024-01-16T14:00:00Z",
+                      "endTime": "2024-01-16T16:00:00Z",
+                      "status": "scheduled",
+                      "type": "full",
+                      "setpointValue": null,
+                      "setpointUnit": null
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden \u2014 caller is not a Power Partner",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Dispatch",
+        "description": "Create a new curtailment dispatch for a client.\n\n**Dispatch types:**\n- `setpoint` \u2014 Curtails or ramps miners to achieve a desired power level.\n  Requires `setpointValue` and `setpointUnit`.\n- `full` \u2014 Curtails the entire site. No setpoint fields needed.\n\n`eventId` is optional. If omitted, a UUID will be auto-generated.\n",
+        "operationId": "createDispatch",
+        "tags": [
+          "Dispatches"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDispatchRequest"
+              },
+              "examples": {
+                "setpointWithEventId": {
+                  "summary": "Setpoint dispatch with custom event ID",
+                  "value": {
+                    "eventId": "partner-dispatch-001",
+                    "startTime": "2024-01-16T14:00:00Z",
+                    "endTime": "2024-01-16T16:00:00Z",
+                    "type": "setpoint",
+                    "setpointValue": 50,
+                    "setpointUnit": "MW"
+                  }
+                },
+                "fullSite": {
+                  "summary": "Full site dispatch",
+                  "value": {
+                    "eventId": "partner-dispatch-002",
+                    "startTime": "2024-01-16T14:00:00Z",
+                    "endTime": "2024-01-16T16:00:00Z",
+                    "type": "full"
+                  }
+                },
+                "setpointAutoId": {
+                  "summary": "Setpoint dispatch with auto-generated event ID",
+                  "value": {
+                    "startTime": "2024-01-16T14:00:00Z",
+                    "endTime": "2024-01-16T16:00:00Z",
+                    "type": "setpoint",
+                    "setpointValue": 50,
+                    "setpointUnit": "MW"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dispatch created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResponse"
+                },
+                "examples": {
+                  "setpointDispatch": {
+                    "summary": "Setpoint dispatch",
+                    "value": {
+                      "eventId": "partner-dispatch-001",
+                      "startTime": "2024-01-16T14:00:00Z",
+                      "endTime": "2024-01-16T16:00:00Z",
+                      "status": "scheduled",
+                      "type": "setpoint",
+                      "setpointValue": 50,
+                      "setpointUnit": "MW"
+                    }
+                  },
+                  "fullSiteDispatch": {
+                    "summary": "Full site dispatch",
+                    "value": {
+                      "eventId": "partner-dispatch-002",
+                      "startTime": "2024-01-16T14:00:00Z",
+                      "endTime": "2024-01-16T16:00:00Z",
+                      "status": "scheduled",
+                      "type": "full",
+                      "setpointValue": null,
+                      "setpointUnit": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                },
+                "examples": {
+                  "missingStartTime": {
+                    "summary": "Missing required field",
+                    "value": {
+                      "startTime": [
+                        "This field is required."
+                      ]
+                    }
+                  },
+                  "invalidSetpointValue": {
+                    "summary": "Invalid setpoint value",
+                    "value": {
+                      "setpointValue": [
+                        "Setpoint value must be >= 0."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/dispatches/{event_id}/": {
+      "parameters": [
+        {
+          "name": "client_id",
+          "in": "path",
+          "required": true,
+          "description": "The client's unique identifier",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "event_id",
+          "in": "path",
+          "required": true,
+          "description": "The dispatch event's unique identifier",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get Dispatch",
+        "description": "Retrieve a specific dispatch by its event ID.",
+        "operationId": "getDispatch",
+        "tags": [
+          "Dispatches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispatch details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResponse"
+                },
+                "example": {
+                  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+                  "startTime": "2024-01-15T14:00:00Z",
+                  "endTime": "2024-01-15T16:00:00Z",
+                  "status": "completed",
+                  "type": "setpoint",
+                  "setpointValue": 50,
+                  "setpointUnit": "MW"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dispatch not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Dispatch",
+        "description": "Partially update a dispatch. Only `startTime`, `endTime`, `setpointValue`, and\n`setpointUnit` can be modified. The `eventId`, `status`, and `type` fields are\nread-only.\n",
+        "operationId": "updateDispatch",
+        "tags": [
+          "Dispatches"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDispatchRequest"
+              },
+              "example": {
+                "startTime": "2024-01-16T15:00:00Z",
+                "endTime": "2024-01-16T17:00:00Z",
+                "setpointValue": 75,
+                "setpointUnit": "MW"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dispatch updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResponse"
+                },
+                "example": {
+                  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+                  "startTime": "2024-01-16T15:00:00Z",
+                  "endTime": "2024-01-16T17:00:00Z",
+                  "status": "completed",
+                  "type": "setpoint",
+                  "setpointValue": 75,
+                  "setpointUnit": "MW"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dispatch not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel Dispatch",
+        "description": "Cancel a dispatch. Returns the dispatch with its status set to `cancelled`.",
+        "operationId": "cancelDispatch",
+        "tags": [
+          "Dispatches"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dispatch cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResponse"
+                },
+                "example": {
+                  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+                  "startTime": "2024-01-15T14:00:00Z",
+                  "endTime": "2024-01-15T16:00:00Z",
+                  "status": "canceled",
+                  "type": "full",
+                  "setpointValue": null,
+                  "setpointUnit": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dispatch not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clients/{client_id}/telemetry/": {
+      "parameters": [
+        {
+          "name": "client_id",
+          "in": "path",
+          "required": true,
+          "description": "The client's unique identifier",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Submit Telemetry Data",
+        "description": "Submit site load telemetry readings for a client.\n\nAccepts either a **single** telemetry object or an **array** of telemetry objects.\n\n**Field requirements:**\n- `type` \u2014 Must be `\"site-load\"`\n- `units` \u2014 Must be one of: `\"W\"`, `\"kW\"`, or `\"MW\"`\n- `value` \u2014 Must be a positive number\n- `timestamp` \u2014 ISO 8601 format (UTC recommended)\n",
+        "operationId": "submitTelemetry",
+        "tags": [
+          "Telemetry"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryRequest"
+              },
+              "examples": {
+                "singlePoint": {
+                  "summary": "Single telemetry data point",
+                  "value": {
+                    "timestamp": "2024-01-20T14:05:00Z",
+                    "type": "site-load",
+                    "value": 45.5,
+                    "units": "MW"
+                  }
+                },
+                "multiplePoints": {
+                  "summary": "Multiple telemetry data points",
+                  "value": [
+                    {
+                      "timestamp": "2024-01-20T14:00:00Z",
+                      "type": "site-load",
+                      "value": 50.0,
+                      "units": "MW"
+                    },
+                    {
+                      "timestamp": "2024-01-20T14:05:00Z",
+                      "type": "site-load",
+                      "value": 45.5,
+                      "units": "MW"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Telemetry submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryResponse"
+                },
+                "example": {
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                },
+                "examples": {
+                  "missingFields": {
+                    "summary": "Missing required fields",
+                    "value": {
+                      "timestamp": [
+                        "This field is required."
+                      ],
+                      "type": [
+                        "This field is required."
+                      ],
+                      "value": [
+                        "This field is required."
+                      ],
+                      "units": [
+                        "This field is required."
+                      ]
+                    }
+                  },
+                  "invalidType": {
+                    "summary": "Invalid telemetry type",
+                    "value": {
+                      "type": [
+                        "Type must be 'site-load'."
+                      ]
+                    }
+                  },
+                  "invalidUnits": {
+                    "summary": "Invalid units",
+                    "value": {
+                      "units": [
+                        "Units must be one of: 'W', 'kW', 'MW'."
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

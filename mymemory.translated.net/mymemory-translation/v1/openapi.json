@@ -1,0 +1,439 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MyMemory Translation API",
+    "description": "MyMemory is the world's largest translation memory. It provides free translation via machine translation and collaborative translation memories. Supports contributing translations and importing TMX files.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://mymemory.translated.net/doc/spec.php",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://api.mymemory.translated.net"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/get": {
+      "get": {
+        "operationId": "translateText",
+        "summary": "Translate a text segment",
+        "description": "Searches the translation memory for the best translation of the given text segment. Returns machine translation and translation memory matches.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "The text to translate. Must be UTF-8 encoded, maximum 500 bytes.",
+            "schema": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "langpair",
+            "in": "query",
+            "required": true,
+            "description": "Language pair in the format 'source|target' (e.g., 'en|it')",
+            "schema": {
+              "type": "string",
+              "example": "en|it"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "description": "A valid email address. Using this parameter allows 10x more daily requests.",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "description": "API key for accessing private translation memories",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "onlyprivate",
+            "in": "query",
+            "description": "Set to 1 to return only matches from your private TM",
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "default": "0"
+            }
+          },
+          {
+            "name": "mt",
+            "in": "query",
+            "description": "Enable or disable machine translation. Set to 0 to disable.",
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "default": "1"
+            }
+          },
+          {
+            "name": "ip",
+            "in": "query",
+            "description": "The IP address of the end user making the request",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/set": {
+      "get": {
+        "operationId": "contributeTranslation",
+        "summary": "Contribute a translation to the memory",
+        "description": "Adds a translation segment to the collaborative translation memory.",
+        "parameters": [
+          {
+            "name": "seg",
+            "in": "query",
+            "required": true,
+            "description": "The source text segment",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tra",
+            "in": "query",
+            "required": true,
+            "description": "The target translation",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "langpair",
+            "in": "query",
+            "required": true,
+            "description": "Language pair in the format 'source|target' (e.g., 'en|it')",
+            "schema": {
+              "type": "string",
+              "example": "en|it"
+            }
+          },
+          {
+            "name": "de",
+            "in": "query",
+            "description": "A valid email address",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "description": "API key for contributing to a private translation memory",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contribution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "responseStatus": {
+                      "type": "integer",
+                      "description": "HTTP-style status code"
+                    },
+                    "responseDetails": {
+                      "type": "string",
+                      "description": "Details about the response"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/keygen": {
+      "get": {
+        "operationId": "generateApiKey",
+        "summary": "Generate an API key",
+        "description": "Generates an API key for a registered user, enabling access to private translation memories.",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "query",
+            "required": true,
+            "description": "The username",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pass",
+            "in": "query",
+            "required": true,
+            "description": "The user's password",
+            "schema": {
+              "type": "string",
+              "format": "password"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API key generation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "The generated API key"
+                    },
+                    "responseStatus": {
+                      "type": "integer"
+                    },
+                    "responseDetails": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subjects": {
+      "get": {
+        "operationId": "listSubjects",
+        "summary": "List available subjects",
+        "description": "Returns a list of available subject/domain categories for translation memories.",
+        "responses": {
+          "200": {
+            "description": "List of subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/tmx/import": {
+      "post": {
+        "operationId": "importTmx",
+        "summary": "Import a TMX file",
+        "description": "Uploads a TMX (Translation Memory eXchange) file to import translations into the memory.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["tmx"],
+                "properties": {
+                  "tmx": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The TMX file to import"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name for the translation memory"
+                  },
+                  "subj": {
+                    "type": "string",
+                    "description": "Subject/domain category"
+                  },
+                  "private": {
+                    "type": "string",
+                    "description": "Set to 1 to make the TM private",
+                    "enum": ["0", "1"]
+                  },
+                  "key": {
+                    "type": "string",
+                    "description": "API key for authentication"
+                  },
+                  "surl": {
+                    "type": "string",
+                    "description": "Source URL"
+                  },
+                  "turl": {
+                    "type": "string",
+                    "description": "Target URL"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uuid": {
+                      "type": "string",
+                      "description": "UUID to check import status"
+                    },
+                    "responseStatus": {
+                      "type": "integer"
+                    },
+                    "responseDetails": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/import/status": {
+      "get": {
+        "operationId": "getImportStatus",
+        "summary": "Check TMX import status",
+        "description": "Returns the status of a TMX import operation identified by its UUID.",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "query",
+            "required": true,
+            "description": "The UUID returned from the import request",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Current import status"
+                    },
+                    "responseStatus": {
+                      "type": "integer"
+                    },
+                    "responseDetails": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TranslationResponse": {
+        "type": "object",
+        "properties": {
+          "responseData": {
+            "type": "object",
+            "properties": {
+              "translatedText": {
+                "type": "string",
+                "description": "The best translation found"
+              },
+              "match": {
+                "type": "number",
+                "description": "Match quality score (0 to 1)"
+              }
+            }
+          },
+          "quotaFinished": {
+            "type": "boolean",
+            "description": "Whether the daily quota has been exhausted"
+          },
+          "responseDetails": {
+            "type": "string",
+            "description": "Additional response details"
+          },
+          "responseStatus": {
+            "type": "integer",
+            "description": "HTTP-style status code"
+          },
+          "matches": {
+            "type": "array",
+            "description": "All translation matches found",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "segment": {
+                  "type": "string"
+                },
+                "translation": {
+                  "type": "string"
+                },
+                "quality": {
+                  "type": "string"
+                },
+                "match": {
+                  "type": "number"
+                },
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "name": "key",
+        "in": "query",
+        "description": "Optional API key for accessing private translation memories. Generate via the /keygen endpoint."
+      }
+    }
+  }
+}

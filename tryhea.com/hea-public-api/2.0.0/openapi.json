@@ -1,0 +1,3945 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hea Public API",
+    "version": "2.0.0",
+    "description": "Hea REST API \u2014 Complete MVP specification aligned with Architecture Document v4.3.\n\n**Changes in v2.0:**\n- \u2705 Added /auth/request-otp endpoint (P0)\n- \u2705 Fixed WhatsApp webhook with GET verification (P0)\n- \u2705 Added Voice Service API complete (P0)\n- \u2705 Added health/ready/version endpoints (P0)\n- \u2705 Fixed User.locale syntax and added enum (P0)\n- \u2705 Added PATCH /users/me for profile updates (P1)\n- \u2705 Extended Consent schema with emergency contact (P1)\n- \u2705 Expanded Admin API (user management, escalation triage) (P1)\n- \u2705 Added specific error codes enum (P1)\n- \u2705 Enhanced Report schema (JSON export, metadata) (P1)\n- \u2705 Added /users/me/risk-profile endpoint (P1)\n- \u2705 Improved Page schema (total, hasMore) (P1)\n- \u2705 Added /news/personalized endpoint (P2)\n- \u2705 Added LLM sub-endpoints for debugging (P2)\n- \u2705 Added rate limit documentation (x-rate-limit)\n- \u2705 Added comprehensive examples\n\n**Standards:**\n- All endpoints use JSON\n- Time is ISO-8601 UTC\n- Idempotent writes support `Idempotency-Key`\n- JWT authentication via Bearer token\n- Cursor-based pagination for scalability\n\n**Contact:**\n- Email: api-support@hea.health\n- Docs: https://docs.tryhea.com\n",
+    "contact": {
+      "name": "Hea API Support",
+      "email": "api-support@hea.health",
+      "url": "https://docs.tryhea.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://hea.health/terms"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/heainc/hea-public-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.tryhea.com/v1",
+      "description": "Production"
+    },
+    {
+      "url": "https://staging.api.tryhea.com/v1",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:3000/v1",
+      "description": "Local Development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "System",
+      "description": "Health checks and system info"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication and authorization"
+    },
+    {
+      "name": "Users",
+      "description": "User profile management"
+    },
+    {
+      "name": "Consents",
+      "description": "GDPR consent management"
+    },
+    {
+      "name": "Onboarding",
+      "description": "User onboarding flow"
+    },
+    {
+      "name": "WhatsApp",
+      "description": "WhatsApp Business API integration"
+    },
+    {
+      "name": "Voice",
+      "description": "Voice call scheduling and transcripts"
+    },
+    {
+      "name": "LLM",
+      "description": "AI/LLM orchestration layer"
+    },
+    {
+      "name": "Reports",
+      "description": "Health report generation"
+    },
+    {
+      "name": "Newsfeed",
+      "description": "Personalized health news"
+    },
+    {
+      "name": "Escalations",
+      "description": "Medical escalation management"
+    },
+    {
+      "name": "Referral",
+      "description": "Referral program"
+    },
+    {
+      "name": "Promo",
+      "description": "Promotional codes"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative operations"
+    },
+    {
+      "name": "GDPR",
+      "description": "GDPR compliance (export/erasure)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained via /auth/login.\nFormat: `Authorization: Bearer <token>`\n"
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "example": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "description": "Client-supplied UUID for idempotent writes.\nPrevents duplicate operations within 24h window.\n"
+      },
+      "RequestId": {
+        "in": "header",
+        "name": "X-Request-Id",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Distributed tracing ID"
+      },
+      "PaginationLimit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        },
+        "description": "Number of items per page"
+      },
+      "PaginationCursor": {
+        "name": "cursor",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Opaque cursor for next page"
+      },
+      "UserId": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "EscalationId": {
+        "name": "escalationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Invalid or missing authentication token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Invalid authentication token",
+              "code": "UNAUTHORIZED",
+              "requestId": "req-xyz-123"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Insufficient permissions for this operation",
+              "code": "FORBIDDEN",
+              "requestId": "req-xyz-124"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Resource not found",
+              "code": "NOT_FOUND",
+              "requestId": "req-xyz-125"
+            }
+          }
+        }
+      },
+      "RateLimitExceeded": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Request limit per window"
+          },
+          "X-RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Remaining requests in window"
+          },
+          "X-RateLimit-Reset": {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Window reset time"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Rate limit exceeded",
+              "code": "RATE_LIMIT_EXCEEDED",
+              "details": {
+                "limit": 100,
+                "window": "1 minute",
+                "retryAfter": "30s"
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Validation failed",
+              "code": "VALIDATION_ERROR",
+              "details": {
+                "fields": {
+                  "phoneE164": "Invalid E.164 format"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "code",
+          "requestId"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "UNAUTHORIZED",
+              "FORBIDDEN",
+              "INVALID_OTP",
+              "OTP_EXPIRED",
+              "INVALID_REFRESH_TOKEN",
+              "SESSION_EXPIRED",
+              "USER_NOT_FOUND",
+              "USER_SUSPENDED",
+              "USER_DELETED",
+              "INVALID_PHONE_NUMBER",
+              "PHONE_ALREADY_REGISTERED",
+              "CONSENT_REQUIRED",
+              "CONSENT_WITHDRAWN",
+              "INVALID_CONSENT_TYPE",
+              "VALIDATION_ERROR",
+              "INVALID_REQUEST",
+              "MISSING_REQUIRED_FIELD",
+              "RATE_LIMIT_EXCEEDED",
+              "QUOTA_EXCEEDED",
+              "LLM_TIMEOUT",
+              "LLM_UNAVAILABLE",
+              "SAFETY_FLAG_TRIGGERED",
+              "CONTEXT_TOO_LARGE",
+              "INTERNAL_ERROR",
+              "SERVICE_UNAVAILABLE",
+              "DATABASE_ERROR",
+              "EXTERNAL_SERVICE_ERROR",
+              "NOT_FOUND",
+              "ALREADY_EXISTS",
+              "CONFLICT"
+            ],
+            "description": "Machine-readable error code"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional error context"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Request ID for support/debugging"
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "required": [
+          "items",
+          "hasMore"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for next page (null if no more pages)"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more pages exist"
+          },
+          "total": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total count (may be null for performance)"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "id",
+          "phoneE164",
+          "locale",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "phoneE164": {
+            "type": "string",
+            "pattern": "^\\+[1-9]\\d{1,14}$",
+            "example": "+447700900123",
+            "description": "Phone number in E.164 format"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": "user@example.com"
+          },
+          "givenName": {
+            "type": "string",
+            "nullable": true,
+            "example": "John"
+          },
+          "familyName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Smith"
+          },
+          "locale": {
+            "type": "string",
+            "default": "en-GB",
+            "enum": [
+              "en-GB",
+              "en-US",
+              "de-DE",
+              "es-ES",
+              "ru-RU"
+            ],
+            "description": "User's preferred locale for communications"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended",
+              "deleted"
+            ],
+            "default": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-15T14:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-10-27T09:15:00Z"
+          }
+        }
+      },
+      "UserRiskProfile": {
+        "type": "object",
+        "description": "Disease risk scores (0-100) across 8 categories",
+        "properties": {
+          "oncological": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 45
+          },
+          "cardiovascular": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 65
+          },
+          "neurodegenerative": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 30
+          },
+          "autoimmune": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 20
+          },
+          "respiratory": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 35
+          },
+          "metabolic": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 55
+          },
+          "mentalHealth": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 40
+          },
+          "infectious": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 15
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "methodology": {
+            "type": "string",
+            "description": "Risk calculation methodology version",
+            "example": "v1.2-WHO-2025"
+          }
+        }
+      },
+      "Consent": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "type",
+          "status",
+          "source",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "privacy",
+              "marketing",
+              "emergency",
+              "research"
+            ],
+            "description": "- privacy: Core service consent (required)\n- marketing: Marketing communications\n- emergency: Emergency contact sharing\n- research: Anonymous data for research\n"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "granted",
+              "denied",
+              "withdrawn"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "web",
+              "whatsapp",
+              "sms",
+              "admin"
+            ],
+            "description": "Channel where consent was captured"
+          },
+          "fhirReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference to FHIR Consent resource"
+          },
+          "emergencyContact": {
+            "type": "object",
+            "nullable": true,
+            "description": "Emergency contact details (only for type=emergency)",
+            "required": [
+              "name",
+              "phoneE164",
+              "relationship"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "Jane Smith"
+              },
+              "phoneE164": {
+                "type": "string",
+                "pattern": "^\\+[1-9]\\d{1,14}$",
+                "example": "+447700900456"
+              },
+              "relationship": {
+                "type": "string",
+                "enum": [
+                  "spouse",
+                  "partner",
+                  "parent",
+                  "child",
+                  "sibling",
+                  "friend",
+                  "other"
+                ],
+                "example": "spouse"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OnboardingSubmission": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "status",
+          "formVersion",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "validated"
+            ]
+          },
+          "formVersion": {
+            "type": "string",
+            "example": "1.0",
+            "description": "Typeform version for traceability"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Typeform responses (key-value pairs)",
+            "example": {
+              "age": 45,
+              "gender": "male",
+              "conditions": [
+                "hypertension",
+                "diabetes"
+              ]
+            }
+          },
+          "validationErrors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "Validation errors (if status=draft)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "status",
+          "modelId",
+          "promptVersion",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "ready",
+              "failed"
+            ]
+          },
+          "urlPdf": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://s3.amazonaws.com/hea-reports/user-123/report-456.pdf"
+          },
+          "urlJson": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://s3.amazonaws.com/hea-reports/user-123/report-456.json",
+            "description": "FHIR-formatted JSON export"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "NHS/NICE/WHO sources cited",
+            "example": [
+              "https://www.nhs.uk/conditions/high-blood-pressure"
+            ]
+          },
+          "modelId": {
+            "type": "string",
+            "example": "claude-sonnet-4-20250514"
+          },
+          "promptVersion": {
+            "type": "string",
+            "example": "1.3"
+          },
+          "costTrace": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Token usage and cost breakdown",
+            "example": {
+              "inputTokens": 1200,
+              "outputTokens": 800,
+              "totalCost": 0.032
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "generationTimeMs": {
+                "type": "integer",
+                "example": 12500
+              },
+              "dataPointsAnalyzed": {
+                "type": "integer",
+                "example": 45
+              },
+              "riskCategories": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "cardiovascular",
+                  "metabolic"
+                ]
+              }
+            }
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error details if status=failed"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NewsItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "body",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "New Study Links Sleep Quality to Heart Health"
+          },
+          "body": {
+            "type": "string",
+            "example": "Recent research from Imperial College..."
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "AI-generated summary (150 chars)"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "https://www.imperial.ac.uk/news/sleep-study"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "cardiovascular",
+              "sleep",
+              "research"
+            ]
+          },
+          "relevanceScore": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "description": "Personalization score (0-1)",
+            "example": 0.87
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Escalation": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "severity",
+          "status",
+          "message",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "- critical: Life-threatening (999 recommended)\n- high: Urgent medical attention needed (24h)\n- medium: Non-urgent GP appointment recommended\n- low: Informational/tracking\n"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "triage",
+              "actioned",
+              "closed"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "example": "Experiencing severe chest pain for 30 minutes"
+          },
+          "aiAssessment": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "riskScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "reasoning": {
+                "type": "string"
+              },
+              "recommendedAction": {
+                "type": "string"
+              }
+            }
+          },
+          "triageNotes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Admin triage notes"
+          },
+          "assignedTo": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Admin user ID"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReferralLink": {
+        "type": "object",
+        "required": [
+          "id",
+          "shortUrl",
+          "token",
+          "expiresAt",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shortUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://hea.link/r/abc123"
+          },
+          "token": {
+            "type": "string",
+            "example": "abc123def456",
+            "description": "URL token for tracking"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "visibleName": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether referrer name is visible to referee"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/ReferralStats"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReferralStats": {
+        "type": "object",
+        "properties": {
+          "opened": {
+            "type": "integer",
+            "description": "Link clicks",
+            "example": 15
+          },
+          "started": {
+            "type": "integer",
+            "description": "Onboarding started",
+            "example": 8
+          },
+          "converted": {
+            "type": "integer",
+            "description": "Completed onboarding + WhatsApp activation",
+            "example": 5
+          }
+        }
+      },
+      "PromoValidation": {
+        "type": "object",
+        "required": [
+          "valid"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "Code expired"
+          },
+          "discount": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "percent",
+                  "fixed"
+                ],
+                "example": "percent"
+              },
+              "value": {
+                "type": "number",
+                "example": 20
+              },
+              "description": {
+                "type": "string",
+                "example": "20% off first 3 months"
+              }
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "VoiceCall": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "in-progress",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "twilioCallSid": {
+            "type": "string",
+            "nullable": true
+          },
+          "recordingUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "transcriptUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "VoiceTranscript": {
+        "type": "object",
+        "required": [
+          "id",
+          "callId",
+          "text",
+          "confidence",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "callId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "description": "Full transcript from Deepgram STT"
+          },
+          "confidence": {
+            "type": "number",
+            "format": "float",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.94
+          },
+          "language": {
+            "type": "string",
+            "example": "en-GB"
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "number",
+                  "description": "Start time in seconds"
+                },
+                "end": {
+                  "type": "number",
+                  "description": "End time in seconds"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LlmSynthesizeRequest": {
+        "type": "object",
+        "required": [
+          "userId",
+          "inputs"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inputs": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "nullable": true,
+                "example": "I've been having headaches for the past week"
+              },
+              "audioUrl": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "Voice message URL (will be transcribed)"
+              },
+              "context": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Additional context (recent observations, risk profile)"
+              }
+            }
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to stream response (SSE)"
+          },
+          "intent": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "symptom_report",
+              "general_question",
+              "emergency",
+              "feedback"
+            ],
+            "description": "Pre-classified intent (optional, will auto-detect if null)"
+          },
+          "language": {
+            "type": "string",
+            "default": "en-GB",
+            "enum": [
+              "en-GB",
+              "en-US",
+              "de-DE",
+              "es-ES",
+              "ru-RU"
+            ]
+          }
+        }
+      },
+      "LlmSynthesizeResponse": {
+        "type": "object",
+        "required": [
+          "output",
+          "modelId",
+          "promptVersion",
+          "requestId"
+        ],
+        "properties": {
+          "output": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "nullable": true,
+                "example": "I'm sorry to hear about your headaches. Let me ask a few questions..."
+              },
+              "audioUrl": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "TTS audio URL (if voice output requested)"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "relevance": {
+                  "type": "number"
+                }
+              }
+            },
+            "example": [
+              {
+                "title": "NHS - Headaches",
+                "url": "https://www.nhs.uk/conditions/headaches/",
+                "relevance": 0.95
+              }
+            ]
+          },
+          "safetyFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Safety concerns detected",
+            "example": [
+              "requires_medical_attention"
+            ]
+          },
+          "riskAssessment": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "moderate",
+                  "high",
+                  "critical"
+                ]
+              },
+              "score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "category": {
+                "type": "string",
+                "example": "neurological"
+              },
+              "reasoning": {
+                "type": "string"
+              }
+            }
+          },
+          "followUpActions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "ask_questions",
+                    "schedule_check_in",
+                    "escalate",
+                    "recommend_gp"
+                  ]
+                },
+                "details": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "modelId": {
+            "type": "string",
+            "example": "claude-sonnet-4-20250514"
+          },
+          "promptVersion": {
+            "type": "string",
+            "example": "1.3"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "latencyMs": {
+                "type": "integer"
+              },
+              "tokens": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "integer"
+                  },
+                  "output": {
+                    "type": "integer"
+                  },
+                  "total": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SystemHealth": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unhealthy"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "example": "2.0.0"
+          },
+          "uptime": {
+            "type": "integer",
+            "description": "Uptime in seconds"
+          },
+          "services": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "up",
+                    "down",
+                    "degraded"
+                  ]
+                },
+                "latencyMs": {
+                  "type": "integer",
+                  "nullable": true
+                }
+              }
+            },
+            "example": {
+              "database": {
+                "status": "up",
+                "latencyMs": 12
+              },
+              "redis": {
+                "status": "up",
+                "latencyMs": 3
+              },
+              "llm": {
+                "status": "up",
+                "latencyMs": 250
+              }
+            }
+          }
+        }
+      },
+      "AuditLogEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "action",
+          "resource",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "User who performed action (null for system)"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "create",
+              "read",
+              "update",
+              "delete",
+              "login",
+              "logout",
+              "export",
+              "erase"
+            ]
+          },
+          "resource": {
+            "type": "string",
+            "example": "user:123:profile"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "ipAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "userAgent": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Liveness probe",
+        "description": "Returns 200 if service is alive (for k8s liveness checks)",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is alive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Readiness probe",
+        "description": "Returns 200 if service is ready to accept traffic (k8s readiness)",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealth"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service not ready"
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "API version info",
+        "description": "Returns API version and build metadata",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Version info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string",
+                      "example": "2.0.0"
+                    },
+                    "commit": {
+                      "type": "string",
+                      "example": "a1b2c3d"
+                    },
+                    "buildDate": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Request OTP code",
+        "description": "Request a one-time password to be sent via SMS or WhatsApp.\nOTP is valid for 5 minutes. Rate limited to 3 requests per 15 minutes per phone number.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phoneE164",
+                  "channel"
+                ],
+                "properties": {
+                  "phoneE164": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{1,14}$",
+                    "example": "+447700900123"
+                  },
+                  "channel": {
+                    "type": "string",
+                    "enum": [
+                      "sms",
+                      "whatsapp"
+                    ],
+                    "default": "whatsapp",
+                    "description": "Delivery channel preference"
+                  },
+                  "locale": {
+                    "type": "string",
+                    "default": "en-GB",
+                    "enum": [
+                      "en-GB",
+                      "en-US",
+                      "de-DE",
+                      "es-ES",
+                      "ru-RU"
+                    ],
+                    "description": "Message language"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2025-10-27T10:05:00Z"
+                    },
+                    "channel": {
+                      "type": "string",
+                      "example": "whatsapp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 3,
+          "window": "15 minutes",
+          "key": "phoneE164"
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Exchange OTP for JWT",
+        "description": "Verify OTP and obtain JWT access + refresh tokens.\nIf user doesn't exist, creates new user record.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phoneE164",
+                  "otp"
+                ],
+                "properties": {
+                  "phoneE164": {
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{1,14}$",
+                    "example": "+447700900123"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "description": "JWT access token (15 min expiry)"
+                    },
+                    "refreshToken": {
+                      "type": "string",
+                      "example": "550e8400-e29b-41d4-a716-446655440000",
+                      "description": "Refresh token (30 day expiry)"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 5,
+          "window": "5 minutes"
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token",
+        "description": "Exchange refresh token for new access token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refreshToken"
+                ],
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout (invalidate tokens)",
+        "description": "Invalidates current refresh token",
+        "responses": {
+          "204": {
+            "description": "Logged out successfully"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get current user profile",
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user profile",
+        "description": "Update user profile fields. Only provided fields are updated.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "givenName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "familyName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "en-GB",
+                      "en-US",
+                      "de-DE",
+                      "es-ES",
+                      "ru-RU"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 10,
+          "window": "1 hour"
+        }
+      }
+    },
+    "/users/me/risk-profile": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get user's disease risk profile",
+        "description": "Returns calculated risk scores (0-100) across 8 disease categories.\nScores based on onboarding data, family history, and ongoing monitoring.\n",
+        "responses": {
+          "200": {
+            "description": "Risk profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRiskProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Risk profile not yet calculated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consents": {
+      "get": {
+        "tags": [
+          "Consents"
+        ],
+        "summary": "List user consents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "privacy",
+                "marketing",
+                "emergency",
+                "research"
+              ]
+            },
+            "description": "Filter by consent type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consent list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Consents"
+        ],
+        "summary": "Grant or update consent",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "status"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "privacy",
+                      "marketing",
+                      "emergency",
+                      "research"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "granted",
+                      "denied",
+                      "withdrawn"
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "web",
+                      "whatsapp",
+                      "sms",
+                      "admin"
+                    ],
+                    "default": "web"
+                  },
+                  "emergencyContact": {
+                    "type": "object",
+                    "description": "Required if type=emergency and status=granted",
+                    "required": [
+                      "name",
+                      "phoneE164",
+                      "relationship"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "phoneE164": {
+                        "type": "string",
+                        "pattern": "^\\+[1-9]\\d{1,14}$"
+                      },
+                      "relationship": {
+                        "type": "string",
+                        "enum": [
+                          "spouse",
+                          "partner",
+                          "parent",
+                          "child",
+                          "sibling",
+                          "friend",
+                          "other"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consent recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consent"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/onboarding/submissions": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Get user's onboarding submissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Submit onboarding form",
+        "description": "Submit Typeform responses for risk assessment.\nStatus will be 'validated' if all required fields present, otherwise 'draft'.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "formVersion",
+                  "answers"
+                ],
+                "properties": {
+                  "formVersion": {
+                    "type": "string",
+                    "example": "1.0"
+                  },
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "example": {
+                      "age": 45,
+                      "gender": "male",
+                      "conditions": [
+                        "hypertension"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Submission created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingSubmission"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/whatsapp/webhook": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "WhatsApp webhook verification",
+        "description": "Meta/WhatsApp webhook verification challenge.\nCalled by Meta to verify webhook URL during setup.\n",
+        "security": [],
+        "parameters": [
+          {
+            "name": "hub.mode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "subscribe"
+              ]
+            }
+          },
+          {
+            "name": "hub.verify_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Shared secret from Meta Business"
+          },
+          {
+            "name": "hub.challenge",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Challenge string to echo back"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification successful",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Echo of hub.challenge"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid verify_token"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Receive WhatsApp messages",
+        "description": "Webhook for incoming WhatsApp messages and status updates.\nSupports text, voice messages, and delivery receipts.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "object",
+                  "entry"
+                ],
+                "properties": {
+                  "object": {
+                    "type": "string",
+                    "enum": [
+                      "whatsapp_business_account"
+                    ]
+                  },
+                  "entry": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "changes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "type": "object",
+                                "properties": {
+                                  "messaging_product": {
+                                    "type": "string",
+                                    "enum": [
+                                      "whatsapp"
+                                    ]
+                                  },
+                                  "messages": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "from": {
+                                          "type": "string"
+                                        },
+                                        "id": {
+                                          "type": "string"
+                                        },
+                                        "timestamp": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "text",
+                                            "voice",
+                                            "audio",
+                                            "image",
+                                            "document"
+                                          ]
+                                        },
+                                        "text": {
+                                          "type": "object",
+                                          "properties": {
+                                            "body": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        },
+                                        "voice": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string"
+                                            },
+                                            "mime_type": {
+                                              "type": "string"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "statuses": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "description": "Delivery status updates"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook accepted"
+          },
+          "202": {
+            "description": "Webhook queued for processing"
+          }
+        }
+      }
+    },
+    "/voice/schedule": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Schedule voice check-in",
+        "description": "Schedule a monthly voice check-in call.\nTwilio will initiate outbound call at scheduled time.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "scheduledAt"
+                ],
+                "properties": {
+                  "scheduledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Must be at least 1 hour in future"
+                  },
+                  "locale": {
+                    "type": "string",
+                    "default": "en-GB",
+                    "description": "Voice language"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Call scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCall"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 5,
+          "window": "1 day"
+        }
+      }
+    },
+    "/voice/calls": {
+      "get": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "List user's voice calls",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "scheduled",
+                "in-progress",
+                "completed",
+                "failed",
+                "cancelled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Call list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/VoiceCall"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice/calls/{callId}": {
+      "get": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Get voice call details",
+        "parameters": [
+          {
+            "name": "callId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Call details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceCall"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/voice/transcripts": {
+      "get": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "List voice transcripts",
+        "description": "Get transcripts of completed voice calls (via Deepgram STT)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcript list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/VoiceTranscript"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voice/webhook": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Twilio webhook for call events",
+        "description": "Webhook for Twilio call status updates.\nUsed to track call lifecycle (ringing, answered, completed, failed).\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "CallSid": {
+                    "type": "string"
+                  },
+                  "CallStatus": {
+                    "type": "string",
+                    "enum": [
+                      "queued",
+                      "ringing",
+                      "in-progress",
+                      "completed",
+                      "busy",
+                      "failed",
+                      "no-answer",
+                      "canceled"
+                    ]
+                  },
+                  "Direction": {
+                    "type": "string"
+                  },
+                  "From": {
+                    "type": "string"
+                  },
+                  "To": {
+                    "type": "string"
+                  },
+                  "RecordingUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string",
+                  "description": "TwiML response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/llm/synthesize": {
+      "post": {
+        "tags": [
+          "LLM"
+        ],
+        "summary": "Orchestrate LLM response",
+        "description": "Main LLM endpoint for text/voice message processing.\nHandles: intent classification, NER, PII scrubbing, RAG retrieval, \nresponse generation, risk assessment.\n\nRate limits:\n- 100 req/min per authenticated user\n- 20 req/min per individual user\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LlmSynthesizeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "LLM response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmSynthesizeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "503": {
+            "description": "LLM service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "authenticated": 100,
+          "per-user": 20,
+          "window": "1 minute"
+        }
+      }
+    },
+    "/llm/classify-intent": {
+      "post": {
+        "tags": [
+          "LLM"
+        ],
+        "summary": "Classify user intent (debugging)",
+        "description": "Standalone intent classification for testing/debugging.\nReturns detected intent without full LLM processing.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "example": "I've been feeling tired lately"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Intent classification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "intent": {
+                      "type": "string",
+                      "enum": [
+                        "symptom_report",
+                        "general_question",
+                        "emergency",
+                        "feedback",
+                        "chat"
+                      ]
+                    },
+                    "confidence": {
+                      "type": "number",
+                      "format": "float",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "limit": 50,
+          "window": "1 minute"
+        }
+      }
+    },
+    "/llm/extract-entities": {
+      "post": {
+        "tags": [
+          "LLM"
+        ],
+        "summary": "Extract medical entities (NER)",
+        "description": "Standalone NER for testing/debugging.\nExtracts symptoms, conditions, medications, etc.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "example": "Patient has hypertension and takes lisinopril"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Extracted entities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "symptom",
+                              "condition",
+                              "medication",
+                              "body_part",
+                              "temporal"
+                            ]
+                          },
+                          "confidence": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "limit": 50,
+          "window": "1 minute"
+        }
+      }
+    },
+    "/reports": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "List user reports",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "ready",
+                "failed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Report"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Create new report generation job",
+        "description": "Trigger monthly health report generation.\nReport includes: symptom analysis, risk trends, recommendations.\nGeneration takes 30-60 seconds. Use status field to track progress.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "includeJson": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to include FHIR JSON export"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Report generation started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit (max 1 report per day)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "limit": 1,
+          "window": "1 day"
+        }
+      }
+    },
+    "/reports/{reportId}": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Get report details",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/news": {
+      "get": {
+        "tags": [
+          "Newsfeed"
+        ],
+        "summary": "List newsfeed items",
+        "description": "Generic newsfeed (all users see same content)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Filter by tags (comma-separated)",
+            "example": "cardiovascular,research"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "News list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/NewsItem"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/news/personalized": {
+      "get": {
+        "tags": [
+          "Newsfeed"
+        ],
+        "summary": "Personalized newsfeed",
+        "description": "AI-filtered news based on user's risk profile and interests.\nItems sorted by relevanceScore (highest first).\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personalized news",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/NewsItem"
+                          }
+                        },
+                        "personalizationMetadata": {
+                          "type": "object",
+                          "properties": {
+                            "riskProfileUsed": {
+                              "type": "boolean"
+                            },
+                            "topInterests": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/escalations": {
+      "get": {
+        "tags": [
+          "Escalations"
+        ],
+        "summary": "List user escalations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "triage",
+                "actioned",
+                "closed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escalation list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Escalation"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Escalations"
+        ],
+        "summary": "Create escalation (user-initiated)",
+        "description": "User reports concerning symptoms for medical review.\nHigh/critical severity triggers immediate admin notification.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "severity",
+                  "message"
+                ],
+                "properties": {
+                  "severity": {
+                    "type": "string",
+                    "enum": [
+                      "critical",
+                      "high",
+                      "medium",
+                      "low"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Escalation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escalation"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/referral/links": {
+      "get": {
+        "tags": [
+          "Referral"
+        ],
+        "summary": "List user referral links",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral link list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ReferralLink"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Referral"
+        ],
+        "summary": "Create referral link",
+        "description": "Generate shareable referral link.\nExpires in 90 days. Max 10 active links per user.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visibleName": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show referrer name to referee"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Link created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralLink"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Max active links reached"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 10,
+          "window": "90 days"
+        }
+      }
+    },
+    "/referral/accept": {
+      "post": {
+        "tags": [
+          "Referral"
+        ],
+        "summary": "Accept referral after onboarding",
+        "description": "Called after user completes onboarding + WhatsApp activation.\nCredits both referrer and referee.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "linkToken",
+                  "onboardingId"
+                ],
+                "properties": {
+                  "linkToken": {
+                    "type": "string",
+                    "description": "Token from referral URL"
+                  },
+                  "onboardingId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Completed onboarding submission ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Referral accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "reward": {
+                      "type": "object",
+                      "description": "Referral reward details"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid/expired link or onboarding not completed"
+          }
+        }
+      }
+    },
+    "/referral/stats": {
+      "get": {
+        "tags": [
+          "Referral"
+        ],
+        "summary": "Referral statistics (anonymized)",
+        "description": "Get aggregated referral performance",
+        "responses": {
+          "200": {
+            "description": "Stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/promo/validate": {
+      "post": {
+        "tags": [
+          "Promo"
+        ],
+        "summary": "Validate promo code",
+        "description": "Check if promo code is valid without redeeming",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{6,12}$",
+                    "example": "WELCOME2025"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoValidation"
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "limit": 10,
+          "window": "1 minute"
+        }
+      }
+    },
+    "/promo/redeem": {
+      "post": {
+        "tags": [
+          "Promo"
+        ],
+        "summary": "Redeem promo code",
+        "description": "Apply promo code to user account.\nOne-time use per user. Validates before applying.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{6,12}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Code redeemed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "discount": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid/expired/already used code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-rate-limit": {
+          "limit": 5,
+          "window": "1 hour"
+        }
+      }
+    },
+    "/gdpr/export": {
+      "post": {
+        "tags": [
+          "GDPR"
+        ],
+        "summary": "Request user data export",
+        "description": "GDPR Article 15 - Right to access.\nGenerates FHIR bundle + PDF with all user data.\nEmail sent when ready (typically 5-10 minutes).\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "fhir-json",
+                      "pdf",
+                      "both"
+                    ],
+                    "default": "both"
+                  },
+                  "includeAuditLog": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Export request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "estimatedCompletionAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Max 1 export per 24 hours"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 1,
+          "window": "24 hours"
+        }
+      }
+    },
+    "/gdpr/erase": {
+      "post": {
+        "tags": [
+          "GDPR"
+        ],
+        "summary": "Request account erasure",
+        "description": "GDPR Article 17 - Right to erasure.\nSoft delete with 7-day grace period, then hard delete.\nEmail confirmation required (sent to registered email).\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Optional reason for deletion"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Erasure request accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "confirmationRequired": {
+                      "type": "boolean"
+                    },
+                    "gracePeriodEndsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Hard delete date (7 days from now)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Max 1 request per 24 hours"
+          }
+        },
+        "x-rate-limit": {
+          "limit": 1,
+          "window": "24 hours"
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Search users (admin-only)",
+        "description": "Admin user search and management.\nRequires admin role in JWT.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by name, email, or phone"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "suspended",
+                "deleted"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/users/{userId}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get user details (admin)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "metadata": {
+                          "type": "object",
+                          "description": "Admin-only metadata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update user (admin)",
+        "description": "Admin user management (suspend, reactivate, etc)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "suspended"
+                    ]
+                  },
+                  "adminNotes": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/escalations": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List all escalations for triage (admin)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "triage",
+                "actioned",
+                "closed"
+              ]
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "critical",
+                "high",
+                "medium",
+                "low"
+              ]
+            }
+          },
+          {
+            "name": "assignedTo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by assigned admin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Escalation list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/escalations/{escalationId}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update escalation (triage)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EscalationId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "triage",
+                      "actioned",
+                      "closed"
+                    ]
+                  },
+                  "triageNotes": {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  "assignedTo": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Escalation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Escalation"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/admin/system/health": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Detailed system health (admin)",
+        "description": "Extended health check with service-level details",
+        "responses": {
+          "200": {
+            "description": "System health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealth"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List audit trail (admin-only)",
+        "description": "GDPR audit log - all user data access tracked.\nRetention: 2 years.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaginationLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PaginationCursor"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Filter by user"
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "create",
+                "read",
+                "update",
+                "delete",
+                "login",
+                "logout",
+                "export",
+                "erase"
+              ]
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Page"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AuditLogEntry"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    }
+  }
+}

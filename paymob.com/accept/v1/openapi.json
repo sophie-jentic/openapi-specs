@@ -1,0 +1,736 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Paymob Accept Payment API",
+    "description": "Paymob Accept is an Egyptian/MENA payment processing platform that enables merchants to accept online payments via cards, mobile wallets, and various local payment methods. The API follows a multi-step payment flow: authenticate, register order, generate payment key, then process payment through the appropriate channel.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://developers.paymob.com/egypt/api-reference"
+  },
+  "servers": [
+    {
+      "url": "https://accept.paymob.com/api",
+      "description": "Production API server"
+    }
+  ],
+  "paths": {
+    "/auth/tokens": {
+      "post": {
+        "operationId": "authenticateUser",
+        "summary": "Authenticate and obtain auth token",
+        "description": "Authenticates the merchant using their API key and returns an authentication token required for all subsequent API calls.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["api_key"],
+                "properties": {
+                  "api_key": {
+                    "type": "string",
+                    "description": "The merchant's API key obtained from the Paymob dashboard"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "Authentication token valid for a limited time"
+                    },
+                    "profile": { "$ref": "#/components/schemas/MerchantProfile" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/ecommerce/orders": {
+      "post": {
+        "operationId": "registerOrder",
+        "summary": "Register an order",
+        "description": "Registers a new order with the total amount and optional items. The order ID returned is required for the subsequent payment key generation step.",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterOrderRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order registered successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/ecommerce/orders/{order_id}": {
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Retrieve an order",
+        "description": "Returns the details of a specific order including its current status and associated transactions.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "The unique identifier of the order"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acceptance/payment_keys": {
+      "post": {
+        "operationId": "generatePaymentKey",
+        "summary": "Generate a payment key",
+        "description": "Generates a payment key (token) that is used to authenticate the payment request. This key encodes the payment details and is passed to the payment iframe, mobile SDK, or API call.",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PaymentKeyRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment key generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "The payment key token to use in the payment step"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/payments/pay": {
+      "post": {
+        "operationId": "processCardPayment",
+        "summary": "Process a card payment",
+        "description": "Processes a card payment using the generated payment key and card details or a saved card token. For 3D Secure-enrolled cards, a redirect URL is returned for customer authentication.",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CardPaymentRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment processed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/payments/{transaction_id}": {
+      "get": {
+        "operationId": "getTransaction",
+        "summary": "Retrieve a transaction",
+        "description": "Returns the details and current status of a specific payment transaction.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "The unique identifier of the transaction"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acceptance/void_refund/void": {
+      "post": {
+        "operationId": "voidTransaction",
+        "summary": "Void a transaction",
+        "description": "Voids an authorized transaction that has not been captured or settled.",
+        "tags": ["Refunds"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["transaction_id"],
+                "properties": {
+                  "transaction_id": {
+                    "type": "integer",
+                    "description": "The ID of the transaction to void"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction voided successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/void_refund/refund": {
+      "post": {
+        "operationId": "refundTransaction",
+        "summary": "Refund a transaction",
+        "description": "Processes a full or partial refund for a settled transaction.",
+        "tags": ["Refunds"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["transaction_id", "amount_cents"],
+                "properties": {
+                  "transaction_id": {
+                    "type": "integer",
+                    "description": "The ID of the transaction to refund"
+                  },
+                  "amount_cents": {
+                    "type": "integer",
+                    "description": "Refund amount in cents"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refund processed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/capture": {
+      "post": {
+        "operationId": "captureTransaction",
+        "summary": "Capture an authorized transaction",
+        "description": "Captures a previously authorized transaction, finalizing the charge.",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["transaction_id", "amount_cents"],
+                "properties": {
+                  "transaction_id": {
+                    "type": "integer",
+                    "description": "The ID of the authorized transaction"
+                  },
+                  "amount_cents": {
+                    "type": "integer",
+                    "description": "Amount to capture in cents"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction captured successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/wallets/pay": {
+      "post": {
+        "operationId": "processWalletPayment",
+        "summary": "Process a mobile wallet payment",
+        "description": "Initiates a mobile wallet payment (e.g., Vodafone Cash, Etisalat Cash, Orange Money) using the customer's phone number.",
+        "tags": ["Payments"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["source", "payment_token"],
+                "properties": {
+                  "source": {
+                    "type": "object",
+                    "required": ["identifier", "subtype"],
+                    "properties": {
+                      "identifier": {
+                        "type": "string",
+                        "description": "Customer's mobile phone number"
+                      },
+                      "subtype": {
+                        "type": "string",
+                        "enum": ["WALLET"],
+                        "description": "Payment source subtype"
+                      }
+                    }
+                  },
+                  "payment_token": {
+                    "type": "string",
+                    "description": "The payment key token"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wallet payment initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "redirect_url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "URL to redirect the customer for wallet authorization"
+                    },
+                    "id": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/acceptance/iframes/{iframe_id}": {
+      "get": {
+        "operationId": "getIframe",
+        "summary": "Retrieve iframe configuration",
+        "description": "Returns the configuration details of a payment iframe.",
+        "tags": ["Configuration"],
+        "parameters": [
+          {
+            "name": "iframe_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "The ID of the iframe"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Iframe configuration retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "url": { "type": "string", "format": "uri" },
+                    "is_live": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/acceptance/transactions/{transaction_id}/inquiry": {
+      "get": {
+        "operationId": "inquireTransaction",
+        "summary": "Inquire about a transaction",
+        "description": "Queries the payment processor for the latest status of a transaction.",
+        "tags": ["Payments"],
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "The unique identifier of the transaction"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction inquiry result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "authToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Authentication token obtained from POST /auth/tokens. Pass as 'Token {auth_token}' or 'Bearer {auth_token}'."
+      }
+    },
+    "schemas": {
+      "RegisterOrderRequest": {
+        "type": "object",
+        "required": ["auth_token", "delivery_needed", "amount_cents", "currency", "items"],
+        "properties": {
+          "auth_token": {
+            "type": "string",
+            "description": "Authentication token from the auth step"
+          },
+          "delivery_needed": {
+            "type": "boolean",
+            "description": "Whether delivery is needed for this order"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "description": "Total order amount in cents"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (e.g., EGP, SAR, AED)"
+          },
+          "merchant_order_id": {
+            "type": "string",
+            "description": "Merchant's own order reference"
+          },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrderItem" }
+          },
+          "shipping_data": { "$ref": "#/components/schemas/ShippingData" },
+          "shipping_details": { "$ref": "#/components/schemas/ShippingDetails" }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "required": ["name", "amount_cents", "quantity"],
+        "properties": {
+          "name": { "type": "string" },
+          "amount_cents": { "type": "integer" },
+          "description": { "type": "string" },
+          "quantity": { "type": "integer" }
+        }
+      },
+      "ShippingData": {
+        "type": "object",
+        "properties": {
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "phone_number": { "type": "string" },
+          "street": { "type": "string" },
+          "building": { "type": "string" },
+          "floor": { "type": "string" },
+          "apartment": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" },
+          "postal_code": { "type": "string" }
+        }
+      },
+      "ShippingDetails": {
+        "type": "object",
+        "properties": {
+          "notes": { "type": "string" },
+          "number_of_packages": { "type": "integer" },
+          "weight": { "type": "number" },
+          "weight_unit": { "type": "string" },
+          "length": { "type": "number" },
+          "width": { "type": "number" },
+          "height": { "type": "number" },
+          "contents": { "type": "string" }
+        }
+      },
+      "PaymentKeyRequest": {
+        "type": "object",
+        "required": ["auth_token", "amount_cents", "expiration", "order_id", "billing_data", "currency", "integration_id"],
+        "properties": {
+          "auth_token": {
+            "type": "string",
+            "description": "Authentication token"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "description": "Amount in cents"
+          },
+          "expiration": {
+            "type": "integer",
+            "description": "Payment key expiration in seconds (default 3600)"
+          },
+          "order_id": {
+            "type": "integer",
+            "description": "The registered order ID"
+          },
+          "billing_data": { "$ref": "#/components/schemas/ShippingData" },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code"
+          },
+          "integration_id": {
+            "type": "integer",
+            "description": "The payment integration ID from the dashboard"
+          },
+          "lock_order_when_paid": {
+            "type": "boolean",
+            "description": "Lock the order after successful payment"
+          }
+        }
+      },
+      "CardPaymentRequest": {
+        "type": "object",
+        "required": ["source", "payment_token"],
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": ["identifier", "subtype"],
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "description": "Card number or card token"
+              },
+              "sourceholder_name": {
+                "type": "string",
+                "description": "Cardholder name"
+              },
+              "subtype": {
+                "type": "string",
+                "enum": ["CARD", "TOKEN"],
+                "description": "Payment source type"
+              },
+              "expiry_month": { "type": "string" },
+              "expiry_year": { "type": "string" },
+              "cvn": { "type": "string" }
+            }
+          },
+          "payment_token": {
+            "type": "string",
+            "description": "Payment key token from the payment_keys step"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "delivery_needed": { "type": "boolean" },
+          "merchant": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "company_name": { "type": "string" }
+            }
+          },
+          "amount_cents": { "type": "integer" },
+          "currency": { "type": "string" },
+          "is_payment_locked": { "type": "boolean" },
+          "is_return": { "type": "boolean" },
+          "is_cancel": { "type": "boolean" },
+          "is_returned": { "type": "boolean" },
+          "is_cancelled": { "type": "boolean" },
+          "merchant_order_id": { "type": "string" },
+          "paid_amount_cents": { "type": "integer" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrderItem" }
+          },
+          "shipping_data": { "$ref": "#/components/schemas/ShippingData" }
+        }
+      },
+      "TransactionResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "pending": { "type": "boolean" },
+          "amount_cents": { "type": "integer" },
+          "success": { "type": "boolean" },
+          "is_auth": { "type": "boolean" },
+          "is_capture": { "type": "boolean" },
+          "is_standalone_payment": { "type": "boolean" },
+          "is_voided": { "type": "boolean" },
+          "is_refunded": { "type": "boolean" },
+          "is_3d_secure": { "type": "boolean" },
+          "integration_id": { "type": "integer" },
+          "has_parent_transaction": { "type": "boolean" },
+          "order": { "$ref": "#/components/schemas/Order" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "currency": { "type": "string" },
+          "source_data": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "pan": { "type": "string", "description": "Masked card number" },
+              "sub_type": { "type": "string" }
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "txn_response_code": { "type": "string" },
+              "redirect_url": { "type": "string", "format": "uri" }
+            }
+          },
+          "merchant_commission": { "type": "integer" },
+          "refunded_amount_cents": { "type": "integer" },
+          "captured_amount": { "type": "integer" }
+        }
+      },
+      "MerchantProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "username": { "type": "string" },
+              "first_name": { "type": "string" },
+              "last_name": { "type": "string" },
+              "email": { "type": "string", "format": "email" }
+            }
+          },
+          "company_name": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" },
+          "city": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "detail": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - invalid parameters or missing required fields",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - invalid or expired authentication token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,965 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "VodafoneZiggo Helix Integration API",
+    "version": "1.0.0",
+    "description": "VodafoneZiggo BMC Helix.\n\nArchitecture:\n- Staging Interface APIs (POST): Create/ingest records into Helix staging interface forms (Incident/Problem/Change).\n- Generic Form APIs (GET): Read records from Helix forms (staging or operational) using AR System REST semantics.",
+    "contact": {
+      "name": "Helix Technical Platform Lead",
+      "email": "jordy.heer@vodafoneziggo.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/VZ_Helix/vodafoneziggo-helix-integration-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://vz-qa-restapi.onbmc.com:443/api",
+      "description": "UAT / Non-Production"
+    },
+    {
+      "url": "https://vz-restapi.onbmc.com:443/api",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Incident Interface",
+      "description": "Inbound create/modify into incident staging interface form (VZ:API:IncidentInterface_Staging)."
+    },
+    {
+      "name": "Problem Interface",
+      "description": "Inbound create/modify into problem staging interface form (VZ:API:ProblemInterface_Staging)."
+    },
+    {
+      "name": "Change Interface",
+      "description": "Inbound create/modify into change staging interface form (VZ:API:ChangeInterface_Staging)."
+    },
+    {
+      "name": "Generic Form Read",
+      "description": "Generic GET operations to read data from Helix forms (staging, operational or foundation)."
+    }
+  ],
+  "security": [
+    {
+      "Layer7Auth": []
+    }
+  ],
+  "paths": {
+    "/arsys/v1.0/entry/VZ:API:IncidentInterface_Staging": {
+      "post": {
+        "tags": [
+          "Incident Interface"
+        ],
+        "summary": "Create Incident record via staging interface",
+        "operationId": "createIncidentViaStaging",
+        "description": "Creates an incident record by submitting a payload to the Helix staging interface form VZ:API:IncidentInterface_Staging.\n\nUse-cases are represented as schemas in the request body (oneOf). Select the schema that matches your integration.\n\nImportant: Helix validation is enforced via server-side filters. Responses may contain validation messages in VZ_Return Message.",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "values(VZ_TicketNumber,VZ_Return Code,VZ_Return Status,VZ_Return Message,EXT_TicketNumber)"
+            },
+            "description": "Helix AR query parameter limiting returned response fields."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DFN_FTTH_IncidentCreateRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SAM_HFC_IncidentCreateRequest"
+                  }
+                ]
+              },
+              "examples": {
+                "DFN_ADT": {
+                  "summary": "DFN FTTH ticket (ADT)",
+                  "value": {
+                    "values": {
+                      "VZ_Action": "CREATE",
+                      "VZ_Template": "ADT-NaxOS",
+                      "EXT_TicketNumber": "20260304143028",
+                      "VZ_Summary": "Customer connectivity issue",
+                      "VZ_Notes": "Customer reports connectivity issue on FTTO connection. Diagnostics collected.",
+                      "VZ_DFN_TicketType": "ticket",
+                      "VZ_DFN_Connection_Ticket_Type": "ftto_p2p",
+                      "VZ_DFN_connection_Been_active": "yes",
+                      "VZ_DFN_Zip_Code": "1433DC",
+                      "VZ_DFN_Home_nr": 23,
+                      "VZ_DFN_WSO_Department": "backoffice",
+                      "VZ_DFN_WSO_Phone_Number": "0612345678",
+                      "VZ_DFN_WSO_Ticket_Type": "performance",
+                      "VZ_DFN_Lookingglass_rx_value": 1,
+                      "VZ_DFN_Lookingglass_tx_value": 2,
+                      "VZ_DFN_Bus_Switch_First_Link_Light": "on",
+                      "VZ_DFN_Bus_Switch_Last_Link_Light": "on",
+                      "VZ_DFN_Business_Switch_Light_1": "on",
+                      "VZ_DFN_FTTO_V_Lan_ID": "6",
+                      "VZ_DFN_Switch_Gate": "4",
+                      "VZ_DFN_FTTO_Linename": "123"
+                    }
+                  }
+                },
+                "SAM_HFC": {
+                  "summary": "SAM Monitoring HFC outage incident",
+                  "value": {
+                    "values": {
+                      "VZ_Source System": "SAM",
+                      "EXT_TicketNumber": "28455/185450614_000196",
+                      "VZ_Action": "CREATE",
+                      "VZ_Summary": "RT14.6005004A.005.008.01.3 - NOC-HFC - Outage on NODE - 0 #CUST",
+                      "EXT_TypeField1": "MP-LC0001.RNW-0005-1A",
+                      "EXT_TypeField3": "SAM_DNOC-HFC_FO-TECH-NL",
+                      "EXT_TypeField4": "yes",
+                      "EXT_TypeField16": "2026-03-03T13:51:35",
+                      "EXT_Priority": "Low",
+                      "EXT_Service": "HFC Cabling Service NL",
+                      "EXT_ServiceType": "User Service Restoration",
+                      "EXT_OpCat1": "",
+                      "VZ_ImpactB2B": 0,
+                      "VZ_ImpactB2C": 0,
+                      "VZ_ImpactInternalIT": 0,
+                      "VZ_WorkLog_Notes": "Trigger: SAM HFC monitoring\nCreated by: uat_tester\nSymptoms: Outage...\nAction: Assign a field engineer",
+                      "VZ_Notes": "Trigger: SAM HFC monitoring\nCreated by: uat_tester\nSymptoms: Outage...\nAction: Assign a field engineer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created (Helix accepted the entry creation request).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelixCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/arsys/v1.0/entry/VZ:API:ProblemInterface_Staging": {
+      "post": {
+        "tags": [
+          "Problem Interface"
+        ],
+        "summary": "Create Problem record via staging interface",
+        "operationId": "createProblemViaStaging",
+        "description": "Creates a problem record by submitting a payload to the Helix staging interface form VZ:API:ProblemInterface_Staging.\n\nPlaceholder operation: add dedicated use-case schemas later (oneOf) similar to Incident.",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "values(VZ_TicketNumber,VZ_Return Code,VZ_Return Status,VZ_Return Message,EXT_TicketNumber)"
+            },
+            "description": "Helix AR query parameter limiting returned response fields."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericHelixValuesEnvelope"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created (Helix accepted the entry creation request).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelixCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/arsys/v1.0/entry/VZ:API:ChangeInterface_Staging": {
+      "post": {
+        "tags": [
+          "Change Interface"
+        ],
+        "summary": "Create Change record via staging interface",
+        "operationId": "createChangeViaStaging",
+        "description": "Creates a change record by submitting a payload to the Helix staging interface form VZ:API:ChangeInterface_Staging.\n\nPlaceholder operation: add dedicated use-case schemas later (oneOf) similar to Incident.",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "values(VZ_TicketNumber,VZ_Return Code,VZ_Return Status,VZ_Return Message,EXT_TicketNumber)"
+            },
+            "description": "Helix AR query parameter limiting returned response fields."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenericHelixValuesEnvelope"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created (Helix accepted the entry creation request).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelixCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/arsys/v1.0/entry/{formName}": {
+      "get": {
+        "tags": [
+          "Generic Form Read"
+        ],
+        "summary": "Query entries from a Helix form",
+        "operationId": "queryFormEntries",
+        "description": "Generic read operation for Helix forms. Supports common AR System REST query parameters such as q and fields.\n\nUse this for reading staging or operational forms (Incident/Problem/Change etc).",
+        "parameters": [
+          {
+            "name": "formName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Helix form name (e.g., HPD:Help Desk, VZ:API:IncidentInterface_Staging)."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AR System qualification query (URL-encoded)."
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Field selection (e.g., values(Field1,Field2))."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "description": "Maximum number of entries to return."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Offset for paging."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelixQueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/arsys/v1.0/entry/{formName}/{entryId}": {
+      "get": {
+        "tags": [
+          "Generic Form Read"
+        ],
+        "summary": "Get a single Helix entry by ID",
+        "operationId": "getFormEntryById",
+        "description": "Reads a single entry from a Helix form by its AR System Entry ID.",
+        "parameters": [
+          {
+            "name": "formName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Helix form name (e.g., HPD:Help Desk, VZ:API:IncidentInterface_Staging)."
+          },
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "AR System Entry ID."
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Field selection (e.g., values(Field1,Field2))."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entry details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelixEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Layer7Auth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Authentication is enforced by VodafoneZiggo Layer7 API Gateway. The concrete mechanism depends on the assigned client profile."
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request (invalid syntax / missing required request parts).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication failed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Not authorized to perform this operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotAcceptable": {
+        "description": "Not acceptable (e.g., content negotiation or validation mapped to 406 by gateway).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Validation error in request payload (recommended for functional validation failures).",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "GenericHelixValuesEnvelope": {
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "properties": {
+          "values": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Helix AR System values object. Extend with use-case specific fields."
+          }
+        }
+      },
+      "HelixCreateResponse": {
+        "type": "object",
+        "description": "Generic Helix create response (field selection depends on fields= query parameter).",
+        "properties": {
+          "values": {
+            "type": "object",
+            "properties": {
+              "VZ_TicketNumber": {
+                "type": "string",
+                "nullable": true
+              },
+              "VZ_Return Code": {
+                "type": "string",
+                "nullable": true
+              },
+              "VZ_Return Status": {
+                "type": "string",
+                "nullable": true
+              },
+              "VZ_Return Message": {
+                "type": "string",
+                "nullable": true
+              },
+              "EXT_TicketNumber": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": true
+          },
+          "_links": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "HelixQueryResponse": {
+        "type": "object",
+        "description": "Generic query response for Helix form entries.",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HelixEntryResponse"
+            }
+          },
+          "_links": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "HelixEntryResponse": {
+        "type": "object",
+        "description": "Generic Helix entry response. Content depends on requested form and selected fields.",
+        "properties": {
+          "values": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "_links": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error envelope for Layer7 / Helix integration responses.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code (gateway or Helix)."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable error message."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Optional details for troubleshooting."
+          }
+        }
+      },
+      "DFN_FTTH_IncidentCreateRequest": {
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "properties": {
+          "values": {
+            "$ref": "#/components/schemas/DFN_FTTH_IncidentValues"
+          }
+        },
+        "description": "DFN FTTH individual incident reporting (ADT / FieldTool) via VZ:API:IncidentInterface_Staging."
+      },
+      "DFN_FTTH_IncidentValues": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "VZ_Action",
+          "VZ_Template",
+          "EXT_TicketNumber",
+          "VZ_Summary",
+          "VZ_Notes",
+          "VZ_DFN_TicketType",
+          "VZ_DFN_Connection_Ticket_Type",
+          "VZ_DFN_connection_Been_active",
+          "VZ_DFN_Zip_Code",
+          "VZ_DFN_Home_nr",
+          "VZ_DFN_WSO_Department",
+          "VZ_DFN_WSO_Phone_Number",
+          "VZ_DFN_WSO_Ticket_Type",
+          "VZ_DFN_Lookingglass_rx_value",
+          "VZ_DFN_Lookingglass_tx_value",
+          "VZ_DFN_Bus_Switch_First_Link_Light",
+          "VZ_DFN_Bus_Switch_Last_Link_Light",
+          "VZ_DFN_Business_Switch_Light_1",
+          "VZ_DFN_FTTO_V_Lan_ID",
+          "VZ_DFN_Switch_Gate"
+        ],
+        "properties": {
+          "VZ_Action": {
+            "type": "string",
+            "enum": [
+              "CREATE"
+            ],
+            "default": "CREATE",
+            "maxLength": 40,
+            "description": "Action executed on the Helix staging form."
+          },
+          "VZ_Template": {
+            "type": "string",
+            "enum": [
+              "ADT-NaxOS",
+              "FieldTool-NaxOS"
+            ],
+            "maxLength": 40,
+            "description": "Template used for routing/processing in Helix. ADT must use ADT-NaxOS; FieldTool must use FieldTool-NaxOS."
+          },
+          "EXT_TicketNumber": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "External ticket identifier from the API consumer. Must be unique per consumer/use-case."
+          },
+          "VZ_Summary": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "Short summary of the customer incident."
+          },
+          "VZ_Notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "Detailed description / notes for the incident."
+          },
+          "VZ_DFN_TicketType": {
+            "type": "string",
+            "enum": [
+              "ticket"
+            ],
+            "default": "ticket",
+            "maxLength": 40,
+            "description": "DFN ticket type. For this use-case only ticket is supported."
+          },
+          "VZ_DFN_Connection_Ticket_Type": {
+            "type": "string",
+            "enum": [
+              "ftto_p2p"
+            ],
+            "maxLength": 40,
+            "description": "Connection ticket type for DFN. For ticket_type ticket, DFN requires ftto_p2p."
+          },
+          "VZ_DFN_connection_Been_active": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no"
+            ],
+            "maxLength": 40,
+            "description": "Indicates whether the connection has been active before."
+          },
+          "VZ_DFN_Zip_Code": {
+            "type": "string",
+            "maxLength": 10,
+            "pattern": "^[1-9][0-9]{3}( ?)(?!SA|SD|SS)[A-Z]{2}$",
+            "description": "Dutch postal code (e.g., 1433DC). Uppercase recommended."
+          },
+          "VZ_DFN_Home_nr": {
+            "type": "integer",
+            "description": "House number. Must be an integer (no quotes in JSON)."
+          },
+          "VZ_DFN_SearchCode": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Optional search code (e.g., zipcode+home_nr+addition+room)."
+          },
+          "VZ_DFN_WSO_Department": {
+            "type": "string",
+            "enum": [
+              "backoffice",
+              "kcc"
+            ],
+            "maxLength": 40,
+            "description": "Wholesale department. Allowed values: backoffice, kcc."
+          },
+          "VZ_DFN_WSO_Phone_Number": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^([0]|\\+[0-9]{1,5})?([0-9]{10})$",
+            "description": "Contact phone number (NL)."
+          },
+          "VZ_DFN_WSO_Ticket_Type": {
+            "type": "string",
+            "maxLength": 40,
+            "enum": [
+              "signal_no_data",
+              "no_signal",
+              "performance",
+              "service_interruption",
+              "iptv"
+            ],
+            "description": "WSO ticket type for DFN ticket_type ticket."
+          },
+          "VZ_DFN_Lookingglass_rx_value": {
+            "type": "integer",
+            "description": "Looking glass RX value (integer)."
+          },
+          "VZ_DFN_Lookingglass_tx_value": {
+            "type": "integer",
+            "description": "Looking glass TX value (integer)."
+          },
+          "VZ_DFN_Bus_Switch_First_Link_Light": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "blinking",
+              "unknown"
+            ],
+            "maxLength": 40,
+            "description": "Business switch first link light status."
+          },
+          "VZ_DFN_Bus_Switch_Last_Link_Light": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "blinking",
+              "unknown"
+            ],
+            "maxLength": 40,
+            "description": "Business switch last link light status."
+          },
+          "VZ_DFN_Business_Switch_Light_1": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off",
+              "blinking",
+              "unknown"
+            ],
+            "maxLength": 40,
+            "description": "Business switch light 1 status."
+          },
+          "VZ_DFN_FTTO_V_Lan_ID": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "FTTO VLAN ID."
+          },
+          "VZ_DFN_Switch_Gate": {
+            "type": "string",
+            "maxLength": 63,
+            "description": "FTTO switch gate / port identifier."
+          },
+          "VZ_DFN_FTTO_Linename": {
+            "type": "string",
+            "maxLength": 63,
+            "description": "FTTO line name identifier (field may be introduced later; keep for forward compatibility)."
+          },
+          "VZ_DFN_Customer_Email": {
+            "type": "string",
+            "maxLength": 60,
+            "format": "email",
+            "description": "Optional customer email. If provided, should be a valid email address."
+          },
+          "VZ_DFN_Customer_Phone": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^([0]|\\+[0-9]{1,5})?([0-9]{10})$",
+            "description": "Optional customer phone. If provided, should match NL phone format."
+          }
+        }
+      },
+      "SAM_HFC_IncidentCreateRequest": {
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "properties": {
+          "values": {
+            "$ref": "#/components/schemas/SAM_HFC_IncidentValues"
+          }
+        },
+        "description": "SAM Monitoring inbound create for HFC network outage incidents via VZ:API:IncidentInterface_Staging."
+      },
+      "SAM_HFC_IncidentValues": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "VZ_Source System",
+          "VZ_Action",
+          "EXT_TicketNumber",
+          "VZ_Summary",
+          "VZ_Notes"
+        ],
+        "properties": {
+          "VZ_Source System": {
+            "type": "string",
+            "maxLength": 60,
+            "default": "SAM",
+            "description": "Source system identifier. For this use-case: SAM."
+          },
+          "VZ_Action": {
+            "type": "string",
+            "enum": [
+              "CREATE"
+            ],
+            "default": "CREATE",
+            "maxLength": 40,
+            "description": "Action executed on the Helix staging form."
+          },
+          "EXT_TicketNumber": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "External correlation identifier from SAM."
+          },
+          "VZ_Summary": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Short summary/title for the outage incident."
+          },
+          "VZ_Notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "Detailed notes/description."
+          },
+          "VZ_WorkLog_Notes": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "Optional worklog notes. If present, may be used to populate WorkLog."
+          },
+          "EXT_TypeField1": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Integration specific field (e.g., network object identifier)."
+          },
+          "EXT_TypeField3": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Integration specific field (e.g., assignment profile)."
+          },
+          "EXT_TypeField4": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no",
+              "Yes",
+              "No"
+            ],
+            "maxLength": 10,
+            "description": "If set to yes, Helix creates a parent incident and enables customer communications via K2V."
+          },
+          "EXT_TypeField16": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Timestamp from SAM (ISO-8601 recommended, e.g., 2026-03-03T13:51:35)."
+          },
+          "EXT_Priority": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Priority from SAM (e.g., Low, Medium, High)."
+          },
+          "EXT_Service": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Service name."
+          },
+          "EXT_ServiceType": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Service type (e.g., User Service Restoration)."
+          },
+          "EXT_OpCat1": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Operational category 1."
+          },
+          "VZ_ImpactB2B": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Impact count for B2B customers."
+          },
+          "VZ_ImpactB2C": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Impact count for B2C customers."
+          },
+          "VZ_ImpactInternalIT": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Impact count for Internal IT."
+          }
+        }
+      }
+    }
+  }
+}
