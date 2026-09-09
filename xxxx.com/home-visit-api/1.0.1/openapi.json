@@ -1,0 +1,557 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Home Visit API",
+    "version": "1.0.1",
+    "description": "API for querying clinician availability and creating home visit appointments.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/sirkka-8c8/hv-booking/1.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://xxxx.com/web-server/business",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Clinicians"
+    },
+    {
+      "name": "Appointments"
+    }
+  ],
+  "paths": {
+    "/api/v1/home-visits/clinicians": {
+      "get": {
+        "tags": [
+          "Clinicians"
+        ],
+        "summary": "Get available clinicians",
+        "description": "Returns a paginated list of clinicians that match the supplied filters.\n",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requesting_location",
+            "in": "query",
+            "description": "Requesting location for the home visit. Can be either a UK postcode (e.g. SW1A 1AA) or a full UK address (e.g. 10 Downing Street, London, SW1A 2AA).\n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "SW1A 1AA"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "description": "Exact city name filter.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "London"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of clinicians to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of records to skip for pagination.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "User-Email",
+            "in": "header",
+            "description": "User email required for authentication.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "example": "user@example.com"
+          },
+          {
+            "name": "User-Password",
+            "in": "header",
+            "description": "User password required for authentication.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-secret-password"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available clinicians",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Optional informational message.",
+                      "example": "No available clinicians found"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HomeVisitClinician"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "example": 45
+                        },
+                        "returned": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "meta"
+                  ]
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Clinicians with availability",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "full_name": "K. H.",
+                          "nurse_profile_id": 122,
+                          "city": "London",
+                          "youngest_age_phlebotomy": "1.00",
+                          "consent_name_with_clients": null,
+                          "availability": [
+                            {
+                              "date": "2025-12-18",
+                              "intervals": [
+                                "07:00",
+                                "08:00",
+                                "09:00",
+                                "10:00",
+                                "11:00",
+                                "12:00",
+                                "13:00",
+                                "14:00",
+                                "15:00",
+                                "16:00"
+                              ]
+                            }
+                          ],
+                          "longitude": -0.09647,
+                          "latitude": 51.53576,
+                          "distance": 1.4980638073649886
+                        }
+                      ],
+                      "meta": {
+                        "total": 45,
+                        "returned": 4
+                      }
+                    }
+                  },
+                  "noClinicians": {
+                    "summary": "No clinicians found",
+                    "value": {
+                      "success": true,
+                      "message": "No available clinicians found",
+                      "data": [],
+                      "meta": {
+                        "total": 45,
+                        "returned": 0
+                      }
+                    }
+                  },
+                  "geocodeFailed": {
+                    "summary": "Could not geocode requesting_location",
+                    "value": {
+                      "success": true,
+                      "message": "Could not geocode the home visit location. Please try again",
+                      "data": [],
+                      "meta": {
+                        "total": 0,
+                        "returned": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid requesting_location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Missing or invalid 'requesting_location'. This is required for home visits."
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to fetch clinicians and availability"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/home-visits/appointments": {
+      "post": {
+        "tags": [
+          "Appointments"
+        ],
+        "summary": "Create home visit appointment",
+        "description": "Creates a new home visit appointment for a selected clinician and patient. This is placeholder documentation; request and response schemas should be updated.\n",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "User-Email",
+            "in": "header",
+            "description": "User email required for authentication.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "example": "user@example.com"
+          },
+          {
+            "name": "User-Password",
+            "in": "header",
+            "description": "User password required for authentication.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-secret-password"
+          }
+        ],
+        "requestBody": {
+          "description": "Placeholder appointment request body. Replace with the actual fields required to create an appointment.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeVisitAppointmentRequest"
+              },
+              "example": {
+                "clinician_id": 123,
+                "patient_id": "patient-uuid-placeholder",
+                "scheduled_at": "2026-01-07T09:00:00Z",
+                "location": {
+                  "address_line_1": "10 Downing Street",
+                  "city": "London",
+                  "postcode": "SW1A 2AA"
+                },
+                "notes": "Optional appointment notes"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Home visit appointment created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeVisitappointmentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "appointment_id": "appointment-uuid-placeholder",
+                    "status": "confirmed"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid appointment payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "HomeVisitClinician": {
+        "type": "object",
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "example": "K. H."
+          },
+          "nurse_profile_id": {
+            "type": "integer",
+            "format": "int32",
+            "example": 122
+          },
+          "city": {
+            "type": "string",
+            "example": "London"
+          },
+          "youngest_age_phlebotomy": {
+            "type": "string",
+            "description": "Youngest patient age (in years) accepted for phlebotomy.",
+            "example": "1.00"
+          },
+          "consent_name_with_clients": {
+            "type": "string",
+            "nullable": true,
+            "description": "Display/consent name to use with clients, if different from full_name.",
+            "example": null
+          },
+          "availability": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityDay"
+            }
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "example": -0.09647
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "example": 51.53576
+          },
+          "distance": {
+            "type": "number",
+            "format": "double",
+            "description": "Distance in kilometres between the clinician and the requesting location.",
+            "example": 1.4980638073649886
+          }
+        },
+        "required": [
+          "full_name",
+          "nurse_profile_id",
+          "city",
+          "youngest_age_phlebotomy",
+          "availability",
+          "longitude",
+          "latitude",
+          "distance"
+        ]
+      },
+      "HomeVisitAppointmentRequest": {
+        "type": "object",
+        "description": "Placeholder schema for creating a home visit appointment. Replace properties with your actual appointment fields.\n",
+        "properties": {
+          "clinician_id": {
+            "type": "integer",
+            "description": "Placeholder clinician identifier."
+          },
+          "patient_id": {
+            "type": "string",
+            "description": "Placeholder patient identifier."
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Placeholder scheduled date and time of the visit."
+          },
+          "location": {
+            "type": "object",
+            "description": "Placeholder location details for the visit.",
+            "properties": {
+              "address_line_1": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "postcode": {
+                "type": "string"
+              }
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Placeholder free-text notes for the appointment."
+          }
+        },
+        "required": [
+          "clinician_id",
+          "patient_id",
+          "scheduled_at",
+          "location"
+        ]
+      },
+      "HomeVisitappointmentResponse": {
+        "type": "object",
+        "description": "Placeholder response schema for a created home visit appointment.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "appointment_id": {
+                "type": "string",
+                "example": "appointment-uuid-placeholder"
+              },
+              "status": {
+                "type": "string",
+                "example": "confirmed"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "AvailabilityDay": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-12-18"
+          },
+          "intervals": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "07:00"
+            },
+            "description": "List of available 60-minute slot start times in HH:mm format."
+          }
+        },
+        "required": [
+          "date",
+          "intervals"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response format.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "Failed to process request"
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      }
+    }
+  }
+}
