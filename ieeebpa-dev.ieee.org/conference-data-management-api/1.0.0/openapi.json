@@ -1,0 +1,738 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Conference Data Management API",
+    "version": "1.0.0",
+    "description": "API for updating and retrieving conference data and related records.\n- `/webapi/conferences/{conferenceRecNum}` manages the main conference record.\n- `/webapi/conferences/chairs/{conferenceRecNum}` manages 1:M chair records.\n- `/webapi/conferences/publicationOwners/{conferenceRecNum}` manages 1:M publication owner records.\n- `/webapi/conferences/expectedMedia/{conferenceRecNum}` upsert a single expected media for a given conference.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/AARONAPPLEMAN_1/conference-data-management-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://ieeebpa-dev.ieee.org/suite",
+      "description": "Development environment"
+    },
+    {
+      "url": "https://ieeebpa-qa.ieee.org/suite",
+      "description": "QA environment"
+    },
+    {
+      "url": "https://ieeebpa.ieee.org/suite",
+      "description": "Production environment"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Conferences",
+      "description": "Endpoints for managing conference data and its related child records."
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "OAuth2ClientCredentials": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "{baseUrl}/authorization/oauth/token",
+            "scopes": {}
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "example": "INVALID_INPUT"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid conference data"
+          },
+          "details": {
+            "type": "string",
+            "example": "Missing required field 'title'"
+          }
+        }
+      },
+      "Empty": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid input provided.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized \u2014 missing or invalid OAuth token.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Empty"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden \u2014 insufficient privileges.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Empty"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Empty"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2ClientCredentials": []
+    }
+  ],
+  "paths": {
+    "/webapi/conferences/{conferenceRecNum}": {
+      "parameters": [
+        {
+          "name": "conferenceRecNum",
+          "in": "path",
+          "required": true,
+          "description": "Unique identifier for the conference.",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Conferences"
+        ],
+        "summary": "Retrieve a single conference record with aggregated mapping data",
+        "description": "Retrieves a view of a conference identified by `conferenceRecNum` containing all requested fields.\n",
+        "security": [
+          {
+            "OAuth2ClientCredentials": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the conference record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conferenceRecNum": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "acronym": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "publicationName": {
+                      "type": "string"
+                    },
+                    "normalizePublicationName": {
+                      "type": "string"
+                    },
+                    "willIeeeHoldCopyright": {
+                      "type": "boolean"
+                    },
+                    "startDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "endDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "city": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "state": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "country": {
+                      "type": "string"
+                    },
+                    "website": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "xploreParentPuNumber": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "contacts": {
+                      "type": "array",
+                      "description": "List of contacts such as publication chairs.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string",
+                            "format": "email"
+                          },
+                          "contactTypeRefCode": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "expectedMedia": {
+                      "type": "array",
+                      "description": "List of expected media and their associated ISBN/ISSN formats.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "mediaTypeRefCode": {
+                            "type": "string"
+                          },
+                          "isbn": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "onlineIssn": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "printIssn": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "partNumber": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "conferenceRecNum": 98765,
+                  "title": "2026 IEEE International Conference on Advanced Communications",
+                  "acronym": "ICAC",
+                  "publicationName": "2026 IEEE International Conference on Advanced Communications (ICAC)",
+                  "normalizePublicationName": "IEEE International Conference on Advanced Communications",
+                  "willIeeeHoldCopyright": true,
+                  "startDate": "2026-10-12",
+                  "endDate": "2026-10-15",
+                  "city": "Austin",
+                  "state": "Texas",
+                  "country": "United States",
+                  "website": "https://www.icac2026.org",
+                  "xploreParentPuNumber": "PU84756",
+                  "contacts": [
+                    {
+                      "firstName": "Ada",
+                      "lastName": "Lovelace",
+                      "email": "ada.lovelace@example.com",
+                      "contactTypeRefCode": "CONTACT_TYPE_PUBLICATION_CHAIR"
+                    },
+                    {
+                      "firstName": "Alan",
+                      "lastName": "Turing",
+                      "email": "alan.turing@example.com",
+                      "contactTypeRefCode": "CONTACT_TYPE_CONFERENCE_CHAIR"
+                    }
+                  ],
+                  "expectedMedia": [
+                    {
+                      "mediaTypeRefCode": "MEDIA_TYPE_ART",
+                      "isbn": "978-1-5386-1234-5",
+                      "onlineIssn": "2155-5555",
+                      "printIssn": null,
+                      "partNumber": "ART987"
+                    },
+                    {
+                      "mediaTypeRefCode": "MEDIA_TYPE_USB",
+                      "isbn": "978-1-5386-1234-6",
+                      "onlineIssn": null,
+                      "printIssn": null,
+                      "partNumber": "USB987"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Conferences"
+        ],
+        "summary": "Update a single conference record",
+        "description": "Updates an existing conference record identified by `conferenceRecNum`.\nThe request body must contain the updated field values for the conference.\n",
+        "security": [
+          {
+            "OAuth2ClientCredentials": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "acronym": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "statusRefCode": {
+                    "type": "string",
+                    "enum": [
+                      "CONFERENCE_STATUS_NOT_STARTED",
+                      "CONFERENCE_STATUS_IN_PROGRESS",
+                      "CONFERENCE_STATUS_COMPLETED",
+                      "CONFERENCE_STATUS_CANCELED",
+                      "CONFERENCE_STATUS_CONTENT_INTAKE",
+                      "CONFERENCE_STATUS_APPROVED"
+                    ]
+                  },
+                  "typeRefCode": {
+                    "type": "string",
+                    "enum": [
+                      "CONFERENCE_TYPE_ACADEMIC_RESEARCH",
+                      "CONFERENCE_TYPE_WORKSHOP",
+                      "CONFERENCE_TYPE_FINANCIALLY_SPONSORED",
+                      "CONFERENCE_TYPE_TECHNICALLY_SPONSORED",
+                      "CONFERENCE_TYPE_NOMINEE_SPONSERED",
+                      "CONFERENCE_TYPE_NOT_APPLICABLE"
+                    ]
+                  },
+                  "needsTpicReview": {
+                    "type": "boolean"
+                  },
+                  "willIeeeHoldCopyright": {
+                    "type": "boolean"
+                  },
+                  "copyrightOwnerOther": {
+                    "type": "string"
+                  },
+                  "productionVendor": {
+                    "type": "string"
+                  },
+                  "productionVendorOther": {
+                    "type": "string"
+                  },
+                  "loaSentDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "publicationName": {
+                    "type": "string"
+                  },
+                  "normalizePublicationName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated the conference record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conferenceRecNum": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "updated"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/webapi/conferencesContacts/{conferenceRecNum}": {
+      "parameters": [
+        {
+          "name": "conferenceRecNum",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Unique identifier for the conference."
+        }
+      ],
+      "put": {
+        "tags": [
+          "Conferences"
+        ],
+        "summary": "Replace all chair records for a given conference",
+        "description": "Replaces all conference and publication chair records associated with a given conference.\nThe payload is an array of chair objects.\n",
+        "security": [
+          {
+            "OAuth2ClientCredentials": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "contactTypeRefCode",
+                    "firstName",
+                    "lastName",
+                    "email"
+                  ],
+                  "properties": {
+                    "contactTypeRefCode": {
+                      "type": "string",
+                      "enum": [
+                        "CONTACT_TYPE_CONFERENCE_CHAIR",
+                        "CONTACT_TYPE_SUBMITTER",
+                        "CONTACT_TYPE_PUBLICATION_CHAIR"
+                      ]
+                    },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "membershipNumber": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated or replaced chair records for the conference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conferenceRecNum": {
+                      "type": "integer"
+                    },
+                    "updatedCount": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/webapi/conferencePublicationOwners/{conferenceRecNum}": {
+      "parameters": [
+        {
+          "name": "conferenceRecNum",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Unique identifier for the conference."
+        }
+      ],
+      "put": {
+        "tags": [
+          "Conferences"
+        ],
+        "summary": "Replace all publication owners for a given conference",
+        "description": "Replaces all publication owner records linked to a specific conference.\nThe payload is an array of publication owner objects.\n",
+        "security": [
+          {
+            "OAuth2ClientCredentials": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "pubOwnerName"
+                  ],
+                  "properties": {
+                    "pubOwnerName": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated or replaced publication owner records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conferenceRecNum": {
+                      "type": "integer"
+                    },
+                    "updatedCount": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/webapi/expectedMedia/{conferenceRecNum}": {
+      "parameters": [
+        {
+          "name": "conferenceRecNum",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Unique identifier for the conference."
+        }
+      ],
+      "post": {
+        "tags": [
+          "Conferences"
+        ],
+        "summary": "Insert or update an expected media record for a given conference",
+        "description": "Insert or update an expected media record for a given conference.",
+        "security": [
+          {
+            "OAuth2ClientCredentials": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "partNumber"
+                ],
+                "properties": {
+                  "mediaTypeRefCode": {
+                    "type": "string",
+                    "nullable": false,
+                    "enum": [
+                      "MEDIA_TYPE_USB",
+                      "MEDIA_TYPE_ART",
+                      "MEDIA_TYPE_CDR",
+                      "MEDIA_TYPE_DVD",
+                      "MEDIA_TYPE_PRINT"
+                    ]
+                  },
+                  "isbn": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "onlineIssn": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "partNumber": {
+                    "type": "string",
+                    "nullable": false
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated or inserted expected media.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conferenceRecNum": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "updated"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  }
+}

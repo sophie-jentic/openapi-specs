@@ -1,0 +1,548 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Paysera Checkout & Wallet Payments API",
+    "description": "Paysera payment processing platform API providing checkout-based payment collection, wallet management, and transfer operations. Supports payment initiation via redirect-based checkout flow with callbacks, as well as RESTful wallet and transfer management endpoints. Lithuanian fintech platform supporting EUR and multi-currency payments across Europe.",
+    "version": "1.9.0",
+    "x-jentic-source-url": "https://developers.paysera.com/en/payments/current"
+  },
+  "servers": [
+    {
+      "url": "https://www.paysera.com",
+      "description": "Paysera Checkout Production Server"
+    },
+    {
+      "url": "https://wallet.paysera.com",
+      "description": "Paysera Wallet API Production Server"
+    },
+    {
+      "url": "https://sandbox.paysera.com",
+      "description": "Paysera Sandbox Server"
+    }
+  ],
+  "paths": {
+    "/pay/": {
+      "post": {
+        "operationId": "initiateCheckoutPayment",
+        "summary": "Initiate a checkout payment",
+        "description": "Initiates a payment request by sending encoded payment parameters to Paysera. The customer is redirected to Paysera to select a payment method and complete the payment. Parameters must be base64-encoded and signed with MD5.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "data",
+                  "sign"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "string",
+                    "description": "URL-safe base64-encoded payment parameters string. Encode all parameters, then base64 encode, replacing / with _ and + with -."
+                  },
+                  "sign": {
+                    "type": "string",
+                    "description": "MD5 hash of the data parameter concatenated with the sign_password: md5(data + sign_password)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirect to Paysera payment page where customer selects payment method"
+          },
+          "400": {
+            "description": "Invalid payment parameters or signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid project ID or signature verification failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/v1/server": {
+      "get": {
+        "operationId": "getServerTime",
+        "summary": "Get server time",
+        "description": "Returns the current server time as a UNIX timestamp. Does not require authentication.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server time retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "time": {
+                      "type": "integer",
+                      "description": "Current server time as UNIX timestamp",
+                      "example": 1383116734
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/v1/configuration": {
+      "get": {
+        "operationId": "getServerConfiguration",
+        "summary": "Get server configuration",
+        "description": "Returns server configuration details such as minimum password length. Does not require authentication.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server configuration retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "minimum_password_length": {
+                      "type": "integer",
+                      "description": "Minimum allowed password length",
+                      "example": 8
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/v1/payment/{paymentId}": {
+      "get": {
+        "operationId": "getPaymentDetails",
+        "summary": "Get payment details",
+        "description": "Retrieves the details and status of a specific payment by its ID.",
+        "security": [
+          {
+            "macAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "description": "Unique payment identifier",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payment ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid MAC credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transfer/rest/v1/transfers/{transferId}": {
+      "get": {
+        "operationId": "getTransferDetails",
+        "summary": "Get transfer details",
+        "description": "Retrieves the details and status of a specific money transfer by its ID.",
+        "security": [
+          {
+            "macAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "transferId",
+            "in": "path",
+            "required": true,
+            "description": "Unique transfer identifier",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transfer ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid MAC or SSL credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "macAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "MAC Access Authentication using OAuth 2.0 MAC tokens with HMAC-SHA256. Format: MAC id=\"{mac_id}\", ts=\"{timestamp}\", nonce=\"{nonce}\", mac=\"{mac_signature}\", ext=\"{extra_data}\""
+      },
+      "checkoutSignature": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "sign",
+        "description": "MD5 signature of base64-encoded payment data concatenated with sign_password. Used with project_id for checkout payment initiation."
+      }
+    },
+    "schemas": {
+      "CheckoutPaymentParameters": {
+        "type": "object",
+        "required": [
+          "projectid",
+          "orderid",
+          "accepturl",
+          "cancelurl",
+          "callbackurl",
+          "version"
+        ],
+        "description": "Parameters that are base64-encoded into the data field for checkout payment initiation",
+        "properties": {
+          "projectid": {
+            "type": "string",
+            "maxLength": 11,
+            "description": "Unique project number. Only activated projects can accept payments."
+          },
+          "orderid": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Order identifier from merchant system"
+          },
+          "accepturl": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "uri",
+            "description": "Redirect URL after successful payment"
+          },
+          "cancelurl": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "uri",
+            "description": "Redirect URL when user cancels payment"
+          },
+          "callbackurl": {
+            "type": "string",
+            "maxLength": 255,
+            "format": "uri",
+            "description": "URL where Paysera sends payment confirmation. Script must return OK text."
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 9,
+            "description": "API specification version (e.g. 1.9)"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Payment amount in cents (e.g. 1000 for 10.00 EUR)"
+          },
+          "currency": {
+            "type": "string",
+            "maxLength": 3,
+            "description": "ISO 4217 currency code (USD, EUR, etc.)"
+          },
+          "payment": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Payment method type"
+          },
+          "lang": {
+            "type": "string",
+            "maxLength": 3,
+            "description": "ISO 639-2/B language code"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "description": "ISO 3166-1 alpha-2 country code"
+          },
+          "test": {
+            "type": "integer",
+            "enum": [0, 1],
+            "description": "Enable test mode (1) or production mode (0)"
+          },
+          "p_firstname": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer first name"
+          },
+          "p_lastname": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer last name"
+          },
+          "p_email": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer email address"
+          },
+          "p_street": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer street address"
+          },
+          "p_city": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer city"
+          },
+          "p_state": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Payer state/region"
+          },
+          "p_zip": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Payer postal code"
+          },
+          "p_countrycode": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "Payer country code"
+          },
+          "beneficiary_iban": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Beneficiary IBAN for payment initiation services"
+          },
+          "beneficiary_bic": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Beneficiary BIC/SWIFT code"
+          },
+          "beneficiary_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Beneficiary name"
+          },
+          "periodic_payments_frequency": {
+            "type": "string",
+            "enum": ["daily", "every_working_day", "weekly", "monthly", "quarterly", "semiannual", "annual"],
+            "description": "Frequency for recurring/periodic payments"
+          },
+          "periodic_payments_start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date for periodic payments (yyyy-mm-dd)"
+          },
+          "periodic_payments_end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "End date for periodic payments (yyyy-mm-dd)"
+          }
+        }
+      },
+      "PaymentDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique payment identifier"
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Payment amount in cents"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code"
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Merchant order identifier"
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Creation time as UNIX timestamp"
+          }
+        }
+      },
+      "TransferDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique transfer identifier"
+          },
+          "status": {
+            "type": "string",
+            "description": "Transfer status"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Transfer amount in cents"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code"
+          },
+          "beneficiary": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "iban": {
+                "type": "string"
+              },
+              "bic": {
+                "type": "string"
+              }
+            }
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Creation time as UNIX timestamp"
+          }
+        }
+      },
+      "CheckoutError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable error description"
+          }
+        }
+      },
+      "WalletError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code identifier"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable error description"
+          },
+          "error_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI with more information about the error"
+          }
+        }
+      }
+    }
+  }
+}

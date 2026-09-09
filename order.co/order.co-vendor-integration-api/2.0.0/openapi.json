@@ -1,0 +1,1393 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Order.co Vendor Integration API",
+    "description": "This specification documents the API endpoints for vendor integrations with Order.co.\n\n## Overview\n\nThe Vendor API consists of two categories of endpoints:\n\n### 1. Order Placement (Vendor-Implemented)\nVendors must implement an HTTP endpoint to receive order placement requests from Order.co.\nWhen Order.co places an order with a vendor, it sends a POST request to the vendor's\nconfigured webhook URL with the order details.\n\n### 2. Callback Endpoints (Order.co-Implemented)\nOrder.co provides three endpoints for vendors to send updates back:\n- **Order Confirmation** - Confirm receipt and acceptance of orders\n- **Tracking Information** - Provide shipment tracking details\n- **Invoices** - Submit invoice data for orders\n\n## Authentication\n\nAll API requests use the `X-API-Key` header for authentication:\n- **Order Placement**: Order.co sends the vendor's API key in the `X-API-Key` header\n- **Callback Endpoints**: Vendors must send their API key in the `X-API-Key` header\n\n## Order Identifier Format\n\nOrders are identified using a `purchase_order_number` in the format `PO#####VO#####` (e.g., `PO12345VO67890`).\n\n## Sequence and Timing of Operations\n1. **Order Placement**: Order.co sends the order to the vendor's webhook URL.\n2. **Order Confirmation**: Vendor sends order confirmation to Order.co via the `/orders` endpoint.\n   - Should be sent as soon as possible after receiving the order, ideally within a couple minutes to two hours.\n3. **Tracking Information**: Vendor sends shipment tracking details via the `/tracking_information` endpoint.\n   - Should be sent as soon as possible, ideally within 24 hours of shipment.\n",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Order.co Support",
+      "email": "support@order.co"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/orderco-01c/vendor-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://app.order.co/api/vendor/v2",
+      "description": "Order.co Vendor API V2"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Order Placement",
+      "description": "Endpoint that vendors must implement to receive orders from Order.co.\nThis is NOT hosted by Order.co - vendors must set up their own endpoint.\n"
+    },
+    {
+      "name": "Order Confirmation",
+      "description": "Endpoint for vendors to confirm order receipt and status"
+    },
+    {
+      "name": "Tracking Information",
+      "description": "Endpoint for vendors to submit shipment tracking details"
+    },
+    {
+      "name": "Invoices",
+      "description": "Endpoint for vendors to submit invoice data"
+    }
+  ],
+  "paths": {
+    "/vendor-webhook-url": {
+      "post": {
+        "tags": [
+          "Order Placement"
+        ],
+        "summary": "Receive order from Order.co (Vendor-Implemented)",
+        "description": "**This endpoint must be implemented by the vendor.**\n\nWhen Order.co places an order, it sends a POST request to the vendor's configured\nwebhook URL with the complete order details.\n\n## Expected Behavior\n\n1. Return HTTP 2xx status code to indicate successful receipt\n2. Process the order asynchronously if needed\n3. Send order confirmation via the callback URL provided in the payload\n4. Send tracking information when available\n5. Send invoice data when the order is invoiced\n",
+        "operationId": "receiveOrder",
+        "parameters": [
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "description": "Vendor's API key for authentication",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "vendor_api_key_here"
+            }
+          },
+          {
+            "name": "User-Agent",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Order.co Vendor API/2.0.0"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderPlacementRequest"
+              },
+              "example": {
+                "purchase_order_number": "PO12345VO67890",
+                "order_placed_at": "2024-02-01T10:30:00Z",
+                "currency": "USD",
+                "user_name": "John Smith",
+                "user_email": "john.smith@company.com",
+                "organization_name": "Acme Corporation",
+                "location": {
+                  "name": "NYC Headquarters",
+                  "description": "Main office in New York City"
+                },
+                "cost_center": {
+                  "name": "NYC-HQ",
+                  "description": "New York City Headquarters cost center"
+                },
+                "address": {
+                  "name": "Acme Corporation",
+                  "line_1": "123 Main Street",
+                  "line_2": "Suite 400",
+                  "city": "New York",
+                  "state": "NY",
+                  "zipcode": "10001",
+                  "attn_to": "John Smith",
+                  "country": "US",
+                  "phone_number": "2125551234"
+                },
+                "products": [
+                  {
+                    "sku": "WIDGET-001",
+                    "product_id": 98765,
+                    "line_number": 1,
+                    "name": "Premium Widget",
+                    "quantity": 10,
+                    "unit_price_cents": 1500,
+                    "unit_of_measure": "EA",
+                    "requested_delivery": {
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-05",
+                      "start_time": "09:00 -05:00",
+                      "end_time": "17:00 -05:00"
+                    },
+                    "extra_data": {
+                      "requested_delivery_date": "2024-02-01",
+                      "secondary_identifier": "ALT-SKU-001"
+                    },
+                    "url": "https://vendor.com/products/widget-001",
+                    "max_unit_price_cents": 1875
+                  }
+                ],
+                "callback_urls": {
+                  "shipment_tracking_update": "https://app.order.co/api/vendor/v2/tracking_information",
+                  "invoice_issued": "https://app.order.co/api/vendor/v2/invoices",
+                  "order_placed": "https://app.order.co/api/vendor/v2/orders"
+                },
+                "extra_data": {},
+                "payment": {
+                  "type": "credit_card",
+                  "card_number": "4111111111111111",
+                  "cvv": "123",
+                  "expiry_month": "12",
+                  "expiry_year": "2025",
+                  "institution_name": "Chase",
+                  "address": {
+                    "name": "Acme Corporation",
+                    "line_1": "123 Main Street",
+                    "line_2": "Suite 400",
+                    "city": "New York",
+                    "state": "NY",
+                    "zipcode": "10001",
+                    "country": "US",
+                    "phone_number": "2125551234"
+                  }
+                },
+                "max_shipping_cost_cents": 2500
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order received successfully"
+          },
+          "201": {
+            "description": "Order received and created successfully"
+          },
+          "204": {
+            "description": "Order received successfully (no content)"
+          },
+          "400": {
+            "description": "Bad request - invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": [
+          "Order Confirmation"
+        ],
+        "summary": "Submit order confirmation",
+        "description": "Vendors use this endpoint to confirm receipt of an order and provide status updates.\n\n## Status Values\n\n- `success` - Order accepted and will be fulfilled as requested\n- `partial` - Order partially accepted (some items may be rejected or modified)\n- `error` - Order could not be processed\n",
+        "operationId": "confirmOrder",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderConfirmationRequest"
+              },
+              "example": {
+                "purchase_order_number": "PO12345VO67890",
+                "vendor_order_number": "VENDOR-ORD-2024-001",
+                "status": "success",
+                "subtotal_cents": 15000,
+                "total_cents": 17250,
+                "tax_cents": 1500,
+                "shipping_cents": 750,
+                "discount_cents": 0,
+                "tax_estimate_required": false,
+                "estimated_delivery": {
+                  "start_date": "2024-02-01",
+                  "end_date": "2024-02-05",
+                  "start_time": "09:00 -05:00",
+                  "end_time": "17:00 -05:00"
+                },
+                "products": [
+                  {
+                    "sku": "WIDGET-001",
+                    "product_id": 98765,
+                    "line_number": 1,
+                    "quantity_fulfilled": 10,
+                    "quantity_rejected": 0,
+                    "unit_price_fulfilled_cents": 1500,
+                    "unit_of_measure_fulfilled": "EA",
+                    "estimated_delivery": {
+                      "start_date": "2024-02-01",
+                      "end_date": "2024-02-05"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order confirmation accepted successfully. Returns a JSON body with message when status is \"error\", empty body otherwise.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Accepted order with known errors"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Order not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tracking_information": {
+      "post": {
+        "tags": [
+          "Tracking Information"
+        ],
+        "summary": "Submit shipment tracking information",
+        "description": "Vendors use this endpoint to provide tracking numbers and shipment details for orders.\n\nMultiple tracking entries can be submitted in a single request to handle split shipments.\n\n## Order Identification\n\nEither `vendor_order_number` or `purchase_order_number` must be provided to identify the order.\n\n## Product Association\n\nThe optional `products` array within each tracking entry allows associating specific\nproducts with specific tracking numbers for split shipments. Each product must include\nat least one identifier (`sku`, `product_id`, or `line_number`) and a `quantity`.\n",
+        "operationId": "submitTrackingInfo",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackingInformationRequest"
+              },
+              "example": {
+                "purchase_order_number": "PO12345VO67890",
+                "vendor_order_number": "VENDOR-ORD-2024-001",
+                "tracking_information": [
+                  {
+                    "number": "1Z999AA10123456784",
+                    "courier": "UPS",
+                    "products": [
+                      {
+                        "product_id": 98765,
+                        "line_number": 1,
+                        "sku": "WIDGET-001",
+                        "quantity": 5
+                      }
+                    ]
+                  },
+                  {
+                    "number": "1Z999AA10123456785",
+                    "courier": "UPS",
+                    "products": [
+                      {
+                        "product_id": 98765,
+                        "line_number": 1,
+                        "sku": "WIDGET-001",
+                        "quantity": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tracking information created successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": [
+                    "Order not found"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error or missing required parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "unknown_product": {
+                    "summary": "Unknown product ID in tracking",
+                    "value": {
+                      "message": [
+                        "unknown product with id 98765"
+                      ]
+                    }
+                  },
+                  "missing_order_id": {
+                    "summary": "Missing order identifier",
+                    "value": {
+                      "message": [
+                        "Neither vendor_order_number nor purchase_order_number were found"
+                      ]
+                    }
+                  },
+                  "missing_tracking": {
+                    "summary": "Missing tracking information",
+                    "value": {
+                      "message": [
+                        "Tracking information was not found"
+                      ]
+                    }
+                  },
+                  "missing_number_courier": {
+                    "summary": "Missing number or courier",
+                    "value": {
+                      "message": [
+                        "Either tracking information number or courier was not found"
+                      ]
+                    }
+                  },
+                  "missing_product_fields": {
+                    "summary": "Missing product fields",
+                    "value": {
+                      "message": [
+                        "At least one of product_id, sku, or line_number is required, and quantity is required for all products"
+                      ]
+                    }
+                  },
+                  "multiple_errors": {
+                    "summary": "Multiple validation errors",
+                    "value": {
+                      "message": [
+                        "Neither vendor_order_number nor purchase_order_number were found",
+                        "Tracking information was not found"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Submit invoice data",
+        "description": "Vendors use this endpoint to submit invoice information for fulfilled orders.\n\n## Required Fields\n\n- `invoice_number` - Unique invoice identifier from the vendor\n- `subtotal_cents` - Subtotal amount in cents\n- `total_cents` - Total amount in cents\n- `line_items` - Array of invoice line items\n- Either `purchase_order_number` OR `vendor_order_number` to identify the order\n\n## Line Item Requirements\n\nEach line item must include at least one identifier (`sku`, `product_id`, or `line_number`) and a `quantity`.\nEach line item's `product_id` must be unique across the invoice.\n",
+        "operationId": "submitInvoice",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceRequest"
+              },
+              "example": {
+                "invoice_number": "INV-2024-001234",
+                "purchase_order_number": "PO12345VO67890",
+                "vendor_order_number": "VENDOR-ORD-2024-001",
+                "subtotal_cents": 15000,
+                "total_cents": 17250,
+                "tax_cents": 1500,
+                "shipping_cents": 750,
+                "discount_cents": 0,
+                "line_items": [
+                  {
+                    "sku": "WIDGET-001",
+                    "product_id": 98765,
+                    "line_number": 1,
+                    "quantity": 10,
+                    "description": "Premium Widget",
+                    "unit_of_measure": "EA",
+                    "unit_price_cents": 1500,
+                    "subtotal_cents": 15000,
+                    "total_cents": 16500,
+                    "tax_cents": 1500,
+                    "shipping_cents": 0,
+                    "discount_cents": 0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invoice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                },
+                "example": {
+                  "total_billed_cents": 17250,
+                  "line_items_ingested": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Required parameter missing: invoice_number"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Order not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing_order_id": {
+                    "summary": "Missing order identifier",
+                    "value": {
+                      "message": "neither purchase_order_number nor vendor_order_number were provided"
+                    }
+                  },
+                  "duplicate_product_id": {
+                    "summary": "Duplicate product_id across SKUs",
+                    "value": {
+                      "message": "Product id's appearing across multiple SKUs. Each SKU requires a unique product_id: product_id 98765 appearing on SKUs [WIDGET-001, WIDGET-001-ALT]"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ApiKey": {
+        "name": "X-API-Key",
+        "in": "header",
+        "description": "Vendor's API key for authentication",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "your_vendor_api_key"
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Authentication failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "not_configured": {
+                "summary": "Vendor not configured",
+                "value": {
+                  "message": "Vendor Name has not been configured to use this endpoint. Please reach out to support@order.co."
+                }
+              },
+              "invalid_key": {
+                "summary": "Invalid API key",
+                "value": {
+                  "message": "You are not authorized to access this endpoint."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "OrderPlacementRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "purchase_order_number",
+          "user_name",
+          "user_email",
+          "organization_name",
+          "location",
+          "cost_center",
+          "address",
+          "products",
+          "callback_urls",
+          "payment"
+        ],
+        "properties": {
+          "purchase_order_number": {
+            "type": "string",
+            "description": "Purchase order number in the format `PO#####VO#####`",
+            "example": "PO12345VO67890"
+          },
+          "order_placed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the order was placed (ISO 8601 format)",
+            "example": "2024-02-01T10:30:00Z"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code for all monetary values in this order",
+            "example": "USD"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "Full name of the user who placed the order",
+            "example": "John Smith"
+          },
+          "user_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address of the user who placed the order",
+            "example": "john.smith@company.com"
+          },
+          "organization_identifier": {
+            "type": "string",
+            "description": "External identifier for the organization in the vendor's system.\nMay fall back to linked account secondary info if not present.\n",
+            "example": "ORG-12345"
+          },
+          "organization_name": {
+            "type": "string",
+            "description": "Name of the organization placing the order",
+            "example": "Acme Corporation"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "cost_center": {
+            "$ref": "#/components/schemas/CostCenter"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "products": {
+            "type": "array",
+            "description": "Array of line items to be fulfilled",
+            "items": {
+              "$ref": "#/components/schemas/OrderProduct"
+            },
+            "minItems": 1
+          },
+          "callback_urls": {
+            "$ref": "#/components/schemas/CallbackUrls"
+          },
+          "extra_data": {
+            "type": "object",
+            "description": "Additional order-level metadata from custom fields",
+            "additionalProperties": true
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Payment"
+          },
+          "max_shipping_cost_cents": {
+            "type": "integer",
+            "description": "Maximum allowable shipping cost in cents",
+            "example": 2500
+          }
+        }
+      },
+      "Location": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Location name",
+            "example": "NYC Headquarters"
+          },
+          "description": {
+            "type": "string",
+            "description": "Location description or additional details",
+            "example": "Main office in New York City"
+          }
+        }
+      },
+      "CostCenter": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Cost center name",
+            "example": "NYC-HQ"
+          },
+          "description": {
+            "type": "string",
+            "description": "Cost center description or additional details",
+            "example": "New York City Headquarters cost center"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "line_1",
+          "city",
+          "state",
+          "zipcode",
+          "country",
+          "phone_number"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Business name for delivery. Falls back to organization name.",
+            "example": "Acme Corporation"
+          },
+          "line_1": {
+            "type": "string",
+            "description": "First line of street address",
+            "example": "123 Main Street"
+          },
+          "line_2": {
+            "type": "string",
+            "description": "Second line of street address (suite, unit, etc.)",
+            "example": "Suite 400"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name",
+            "example": "New York"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province code",
+            "example": "NY"
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "Postal/ZIP code",
+            "example": "10001"
+          },
+          "attn_to": {
+            "type": "string",
+            "description": "Attention line for the recipient",
+            "example": "John Smith"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country code (defaults to \"US\")",
+            "example": "US",
+            "default": "US"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number for delivery (10 digits).\nFalls back to Order.co default if invalid.\n",
+            "example": "2125551234"
+          }
+        }
+      },
+      "OrderProduct": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sku",
+          "product_id",
+          "name",
+          "quantity",
+          "unit_price_cents",
+          "unit_of_measure"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Vendor SKU identifier for the product",
+            "example": "WIDGET-001"
+          },
+          "product_id": {
+            "type": "integer",
+            "description": "Internal Order.co product identifier",
+            "example": 98765
+          },
+          "line_number": {
+            "type": "integer",
+            "description": "Line number within the order, unique but not guaranteed to start at 1 or be sequential",
+            "minimum": 1,
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Product name",
+            "example": "Premium Widget"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity to be fulfilled",
+            "minimum": 1,
+            "example": 10
+          },
+          "unit_price_cents": {
+            "type": "integer",
+            "description": "Price per unit in cents",
+            "example": 1500
+          },
+          "unit_of_measure": {
+            "type": "string",
+            "description": "Unit of measure (e.g., \"EA\", \"CS\", \"BX\")",
+            "example": "EA"
+          },
+          "requested_delivery": {
+            "$ref": "#/components/schemas/RequestedDelivery"
+          },
+          "extra_data": {
+            "type": "object",
+            "description": "Additional product-level metadata. May include:\n- `requested_delivery_date`: Formatted as \"YYYY-MM-DD\"\n- `secondary_identifier`: Secondary vendor identifier\n- Custom fields from order data\n",
+            "properties": {
+              "requested_delivery_date": {
+                "type": "string",
+                "format": "date",
+                "example": "2024-02-01"
+              },
+              "secondary_identifier": {
+                "type": "string",
+                "example": "ALT-SKU-001"
+              }
+            },
+            "additionalProperties": true
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the product page or additional information",
+            "example": "https://vendor.com/products/widget-001"
+          },
+          "max_unit_price_cents": {
+            "type": "integer",
+            "description": "Maximum allowable price per unit in cents",
+            "example": 1875
+          }
+        }
+      },
+      "RequestedDelivery": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Requested delivery window information",
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of delivery window (YYYY-MM-DD)",
+            "example": "2024-02-01"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of delivery window (YYYY-MM-DD)",
+            "example": "2024-02-05"
+          },
+          "start_time": {
+            "type": "string",
+            "description": "Start time with timezone offset (HH:MM +HH:MM)",
+            "example": "09:00 -05:00"
+          },
+          "end_time": {
+            "type": "string",
+            "description": "End time with timezone offset (HH:MM +HH:MM)",
+            "example": "17:00 -05:00"
+          }
+        }
+      },
+      "CallbackUrls": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shipment_tracking_update",
+          "invoice_issued",
+          "order_placed"
+        ],
+        "description": "URLs for vendor to send status updates back to Order.co",
+        "properties": {
+          "shipment_tracking_update": {
+            "type": "string",
+            "format": "uri",
+            "description": "Endpoint for tracking number and shipment updates",
+            "example": "https://app.order.co/api/vendor/v2/tracking_information"
+          },
+          "invoice_issued": {
+            "type": "string",
+            "format": "uri",
+            "description": "Endpoint for invoice information",
+            "example": "https://app.order.co/api/vendor/v2/invoices"
+          },
+          "order_placed": {
+            "type": "string",
+            "format": "uri",
+            "description": "Endpoint for order confirmation",
+            "example": "https://app.order.co/api/vendor/v2/orders"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "description": "Payment method details. Structure varies by payment type:\n- `default`: No payment details (net terms, $0 orders)\n- `credit_card`: Full card details for stored or ghost cards\n",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Payment type:\n- `default`: Net terms payment or $0 order\n- `credit_card`: Stored card or ghost card payment\n",
+            "enum": [
+              "default",
+              "credit_card"
+            ],
+            "example": "credit_card"
+          },
+          "card_number": {
+            "type": "string",
+            "description": "Card number (15-16 digits). Only for credit_card type.",
+            "example": "4111111111111111"
+          },
+          "cvv": {
+            "type": "string",
+            "description": "Card verification value (3-4 digits). Only for credit_card type.",
+            "example": "123"
+          },
+          "expiry_month": {
+            "type": "string",
+            "description": "Expiration month (2 digits, 01-12). Only for credit_card type.",
+            "example": "12"
+          },
+          "expiry_year": {
+            "type": "string",
+            "description": "Expiration year (4 digits). Only for credit_card type.",
+            "example": "2025"
+          },
+          "institution_name": {
+            "type": "string",
+            "description": "Bank/card issuer name. Only for credit_card type.",
+            "example": "Chase"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "OrderConfirmationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "purchase_order_number",
+          "vendor_order_number",
+          "status",
+          "subtotal_cents",
+          "total_cents",
+          "products"
+        ],
+        "properties": {
+          "purchase_order_number": {
+            "type": "string",
+            "description": "Purchase order number in the format `PO#####VO#####`",
+            "example": "PO12345VO67890"
+          },
+          "vendor_order_number": {
+            "type": "string",
+            "description": "Vendor's internal order identifier",
+            "example": "VENDOR-ORD-2024-001"
+          },
+          "status": {
+            "type": "string",
+            "description": "Order status",
+            "enum": [
+              "success",
+              "partial",
+              "error"
+            ],
+            "example": "success"
+          },
+          "subtotal_cents": {
+            "type": "integer",
+            "description": "Order subtotal in cents",
+            "example": 15000
+          },
+          "total_cents": {
+            "type": "integer",
+            "description": "Order total in cents",
+            "example": 17250
+          },
+          "tax_cents": {
+            "type": "integer",
+            "description": "Tax amount in cents",
+            "example": 1500
+          },
+          "shipping_cents": {
+            "type": "integer",
+            "description": "Shipping cost in cents",
+            "example": 750
+          },
+          "discount_cents": {
+            "type": "integer",
+            "description": "Discount amount in cents",
+            "example": 0
+          },
+          "tax_estimate_required": {
+            "type": "boolean",
+            "description": "Whether tax estimation is required",
+            "example": false
+          },
+          "estimated_delivery": {
+            "$ref": "#/components/schemas/RequestedDelivery"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Order-level error messages",
+            "items": {
+              "$ref": "#/components/schemas/OrderError"
+            }
+          },
+          "products": {
+            "type": "array",
+            "description": "Product-level confirmation details",
+            "items": {
+              "$ref": "#/components/schemas/OrderConfirmationProduct"
+            }
+          }
+        }
+      },
+      "OrderConfirmationProduct": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sku",
+          "product_id",
+          "quantity_fulfilled",
+          "quantity_rejected",
+          "unit_of_measure_fulfilled",
+          "unit_price_fulfilled_cents"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Vendor SKU identifier",
+            "example": "WIDGET-001"
+          },
+          "product_id": {
+            "type": "integer",
+            "description": "Order.co product identifier",
+            "example": 98765
+          },
+          "line_number": {
+            "type": "integer",
+            "description": "Line number within the order",
+            "minimum": 1,
+            "example": 1
+          },
+          "quantity_fulfilled": {
+            "type": "integer",
+            "description": "Quantity being fulfilled",
+            "example": 10
+          },
+          "quantity_rejected": {
+            "type": "integer",
+            "description": "Quantity rejected/unavailable",
+            "example": 0
+          },
+          "unit_of_measure_fulfilled": {
+            "type": "string",
+            "description": "Actual unit of measure",
+            "example": "EA"
+          },
+          "unit_price_fulfilled_cents": {
+            "type": "integer",
+            "description": "Actual unit price in cents",
+            "example": 1500
+          },
+          "estimated_delivery": {
+            "$ref": "#/components/schemas/RequestedDelivery"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Product-level error messages",
+            "items": {
+              "$ref": "#/components/schemas/OrderError"
+            }
+          }
+        }
+      },
+      "OrderError": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message with optional error code",
+            "example": "Item out of stock [Error code: 010-006]"
+          }
+        }
+      },
+      "TrackingInformationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tracking_information"
+        ],
+        "properties": {
+          "purchase_order_number": {
+            "type": "string",
+            "description": "Purchase order number in the format `PO#####VO#####`.\nEither this or `vendor_order_number` is required.\n",
+            "example": "PO12345VO67890"
+          },
+          "vendor_order_number": {
+            "type": "string",
+            "description": "Vendor's internal order identifier.\nEither this or `purchase_order_number` is required.\n",
+            "example": "VENDOR-ORD-2024-001"
+          },
+          "tracking_information": {
+            "type": "array",
+            "description": "Array of tracking entries (for split shipments)",
+            "items": {
+              "$ref": "#/components/schemas/TrackingEntry"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "TrackingEntry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "number",
+          "courier"
+        ],
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Tracking number",
+            "example": "1Z999AA10123456784"
+          },
+          "courier": {
+            "type": "string",
+            "description": "Shipping carrier name",
+            "example": "UPS"
+          },
+          "products": {
+            "type": "array",
+            "description": "Products associated with this tracking number.\nOptional - use for split shipments to associate specific\nproducts with specific tracking numbers.\n",
+            "items": {
+              "$ref": "#/components/schemas/TrackingProduct"
+            }
+          }
+        }
+      },
+      "TrackingProduct": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Product associated with a tracking number.\nAt least one of `sku`, `product_id`, or `line_number` must be provided to identify the product.\n`quantity` is required.\n",
+        "required": [
+          "quantity"
+        ],
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "description": "Order.co product identifier (one of sku, product_id, or line_number required)",
+            "example": 98765
+          },
+          "line_number": {
+            "type": "integer",
+            "description": "Line number within the order, 1-indexed (one of sku, product_id, or line_number required)",
+            "minimum": 1,
+            "example": 1
+          },
+          "sku": {
+            "type": "string",
+            "description": "Vendor SKU identifier (one of sku, product_id, or line_number required)",
+            "example": "WIDGET-001"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity in this shipment",
+            "minimum": 1,
+            "example": 5
+          }
+        }
+      },
+      "InvoiceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "invoice_number",
+          "subtotal_cents",
+          "total_cents",
+          "line_items"
+        ],
+        "properties": {
+          "invoice_number": {
+            "type": "string",
+            "description": "Unique invoice identifier from the vendor",
+            "example": "INV-2024-001234"
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "Purchase order number in the format `PO#####VO#####`.\nEither this or `vendor_order_number` is required.\n",
+            "example": "PO12345VO67890"
+          },
+          "vendor_order_number": {
+            "type": "string",
+            "description": "Vendor's internal order identifier.\nEither this or `purchase_order_number` is required.\n",
+            "example": "VENDOR-ORD-2024-001"
+          },
+          "subtotal_cents": {
+            "type": "integer",
+            "description": "Invoice subtotal in cents",
+            "example": 15000
+          },
+          "total_cents": {
+            "type": "integer",
+            "description": "Invoice total in cents",
+            "example": 17250
+          },
+          "tax_cents": {
+            "type": "integer",
+            "description": "Tax amount in cents",
+            "example": 1500
+          },
+          "shipping_cents": {
+            "type": "integer",
+            "description": "Shipping cost in cents",
+            "example": 750
+          },
+          "discount_cents": {
+            "type": "integer",
+            "description": "Discount amount in cents",
+            "example": 0
+          },
+          "line_items": {
+            "type": "array",
+            "description": "Invoice line items.\nEach `product_id` must be unique across the invoice.\n",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineItem"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "InvoiceLineItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Invoice line item.\nAt least one of `sku`, `product_id`, or `line_number` must be provided to identify the product.\n`quantity` is required.\n",
+        "required": [
+          "quantity"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Vendor SKU identifier (one of sku, product_id, or line_number required)",
+            "example": "WIDGET-001"
+          },
+          "substituted_for_sku": {
+            "type": "string",
+            "description": "Original SKU if this item is a substitution",
+            "example": "WIDGET-001-OLD"
+          },
+          "product_id": {
+            "type": "integer",
+            "description": "Order.co product identifier (one of sku, product_id, or line_number required).\nMust be unique across all line items in the invoice.\n",
+            "example": 98765
+          },
+          "line_number": {
+            "type": "integer",
+            "description": "Line number within the order, 1-indexed (one of sku, product_id, or line_number required)",
+            "minimum": 1,
+            "example": 1
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity invoiced",
+            "minimum": 1,
+            "example": 10
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description",
+            "example": "Premium Widget"
+          },
+          "unit_of_measure": {
+            "type": "string",
+            "description": "Unit of measure",
+            "example": "EA"
+          },
+          "unit_price_cents": {
+            "type": "integer",
+            "description": "Unit price in cents",
+            "example": 1500
+          },
+          "subtotal_cents": {
+            "type": "integer",
+            "description": "Line item subtotal in cents",
+            "example": 15000
+          },
+          "total_cents": {
+            "type": "integer",
+            "description": "Line item total in cents",
+            "example": 16500
+          },
+          "tax_cents": {
+            "type": "integer",
+            "description": "Line item tax in cents",
+            "example": 1500
+          },
+          "shipping_cents": {
+            "type": "integer",
+            "description": "Line item shipping in cents",
+            "example": 0
+          },
+          "discount_cents": {
+            "type": "integer",
+            "description": "Line item discount in cents",
+            "example": 0
+          }
+        }
+      },
+      "InvoiceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total_billed_cents": {
+            "type": "integer",
+            "description": "Total amount billed in cents",
+            "example": 17250
+          },
+          "line_items_ingested": {
+            "type": "integer",
+            "description": "Number of line items processed",
+            "example": 1
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Single error message",
+                "example": "An error occurred"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Multiple error messages",
+                "example": [
+                  "Error 1",
+                  "Error 2"
+                ]
+              }
+            ],
+            "description": "Error message or array of error messages"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "VendorApiKey": {
+        "type": "apiKey",
+        "name": "X-API-Key",
+        "in": "header",
+        "description": "Vendor's API key for authenticating with Order.co endpoints"
+      }
+    }
+  },
+  "security": [
+    {
+      "VendorApiKey": []
+    }
+  ]
+}

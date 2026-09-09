@@ -1,0 +1,2045 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "\n# Introduction\n[Sterling Volunteers](https://www.sterlingvolunteers.com/ \"Sterling Volunteers\") is one of the only background screening service providers focused exclusively on serving the nonprofit sector. Backed by the power of [Sterling](https://www.sterlingcheck.com/ \"Sterling\"), Sterling Volunteers provides thousands of nonprofit partners with fast, accurate results they can trust. Education, Healthcare, Faith-based, Sports, Social & Human Services and Youth Development organizations are all using Sterling Volunteers to serve a critical role in their organizations - ensuring the safety of staff, other volunteers, and of course those they serve.\n\nThe Sterling Volunteers Ordering API makes the screening process even easier by allowing integrations with existing volunteer management solutions and workflows. This means that background screening can be introduced into existing workflows and completed without leaving the known software ecosystem.\nDevelopers using this guide can get their system integration up and running quickly, and code with the confidence provided by a Sterling backed system. By leveraging this API documentation along with the resources available in the[ Sterling Volunteers Partner Portal](https://partners.sterlingvolunteers.com/ \" Sterling Volunteers Partner Portal\"), you will be able to:\n  * Determine the best integration workflow for your use case\n  * Request access to the Sterling Volunteers Ordering API\n  * Make your first order request \n  * Fetch and/or respond to order update notifications\n  * Avoid common pitfalls and effectively debug your implementation\n  * Tailor your application to best suit the needs of your organization(s) \n## Steps to integration\nThe following steps must be completed by all partners prior to releasing an integration with Sterling Volunteers:\n  1.\tReview the [workflow overview documentation](https://sterlingcheck.my.salesforce.com/sfc/p/36000000Iv90/a/1Q000000Y7hi/inq9KNED9OZCBP4Nu_gfxTYIacMQmZc4xnzw3cxaC_g \"workflow overview documentation\") to determine which integration workflow option is right for you.\n  2.  Determine the constraints of your internal project plan. Consider the following questions:\n    - When do you need this functionality by?\n    - How do you plan to test this integration?\n    - How will you ensure the integration fits the needs of your users?\n    - How will you roll it out to your organization(s)?\n  3. Reach out to [The Advocates](mailto:TheAdvocates@sterlingvolunteers.com \"The Advocates\") or the partner team with any questions, or to schedule a kickoff call with the Sterling Volunteers implementation team.\n  4.\tNail down an implementation timeframe and strategy with the help of the Sterling Volunteers implementation team.\n    - ***NOTE***: *For Technology partners, it is also important identify potential mutual customers to use as \"Beta\" candidates for your integration.*\n  5.\tSign a mutually agreed Description of Service document.\n  6.\tReceive your test API User credentials and package IDs.\n  7.\tBuild out your integration.\n  8.\tTest your integration.\n  9.\tComplete a walkthrough demonstration of your integration with the integration team for final sign off.\n  10.\tClone your integration to your production account using Sterling Volunteers supplied production credentials and package IDs.\n    - This includes implementing \"Beta\" customers for technology partner solutions.\n## Ordering workflow\nOrders can be submitted and managed using these three easy steps:\n1. Create a new order request using the [Create a new order](https://developer.sterlingvolunteers.com/documentation/ordering/index.html#operation/POST-api-packageorder-order) endpoint.\n2. Allow the volunteer to complete and submit the order. ***NOTE***: *This step is skipped if using the Seamless integration workflow.*\n3. Capture notifications sent to your callback endpoint.\n\t*- Alternatively, if notifications can't be received, poll for results using the [Fetch order details by ID](https://developer.sterlingvolunteers.com/documentation/ordering/index.html#operation/GET-OrderStatus_order) or [Fetch list of order statuses](https://developer.sterlingvolunteers.com/documentation/ordering/index.html#operation/GET-OrderStatus_AggregateOrderStatus) endpoints.*\n4. *(optional)* Capture monthly update notifications in the event of a new hit.\n# Authentication\nTo make requests to the Sterling Volunteers API, a Sterling Volunteers API User Account is required. This is a limited rights user account that will be able to send and receive API requests, but will not be granted access to the Sterling Volunteers dashboard. For most integrations, two API User Accounts are created -- one for initiating requests in the test environment, and the other for production. In both test and production scenarios, these credentials are then used as basic auth headers for every Sterling Volunteers API request.\n\nThe test account credentials are supplied after both parties have signed the Description of Services document supplied by the Sterling Volunteers implementation team. \n\nFollowing the final walkthrough demonstration and sign off of the integration, production credentials will also be supplied by the implementation team. \n\nBecause basic authorization is used, if you think your API user account credentials have been compromised for either your test or production accounts, please contact [The Advocates ](mailto:TheAdvocates@sterlingvolunteers.com \"The Advocates \")to reset the password or create a new API user account for your organization.\n# FAQ\n## Why XML? \nWhen the Sterling Volunteers API was originally created, XML was the defacto data transfer model, particularly within the HR, hiring, and specifically background check space. This is largely because background screening requests and results were seen as being more in line with document definitions than the plain data transfer that technologies like JSON was designed to support. To that end, the Sterling Volunteers API originally adopted the HR-XML standard, as defined by the [HR Open Standards Consortium](https://www.hropenstandards.org/). The HR Open Standards Consortium is the only independent, non-profit, volunteer-led organization dedicated to the development and promotion of a standard suite of industry standard specifications to enable e-business and the automation of human resources-related data exchanges. \n\nAlthough the times have changed and there is now a JSON equivalent available from the HR Open Standards Consortium, Sterling Volunteers has chosen not to adopt it directly and instead intends to build a JSON interface to our platform that is more directly inspired by the [Sterling API](https://api.sterlingtalentsolutions.com/), largely due to a continued focus on customer use cases, ease of use, and consistency across the Sterling suite of products. Therefore, you will see our new endpoints rolling out with a JSON interface, as well as longer term investment to convert our core ordering workflows to match that endpoint structure.\n## If it is an XML interface, does that mean it relies on SOAP?\nNo. Although XML is used as the data definition and transfer language, our endpoints are still RESTful.\n## What are the minimum required fields for ordering?\nRequired fields are specified in our standard documentation by expanding the request bodies in the center column. However, there are some required fields that differ depending on the workflow that you are using. This list can therefore be used at a glance, but the standard documentation should still be consulted directly for additional context.\n### Redirect and Invitation Workflows\nRedirect and invitation workflows share required fields.\n\n|Field name|Validation Requirements  |\n|----------|-------------------------|\n| API Candidate ID | Maximum of 50 characters. Full non-whitespace ASCII range is allowed, including punctuation. |\n| Package ID | The package ID defines the content of the screening package to be run. Because the package contains both the screening features and payment options, any given customer or integration will likely have more than one package available. These 7 character unique identifiers are supplied at the beginning of the integration, or can be fetched on demand using the [Fetch list of packages](https://developer.sterlingvolunteers.com/documentation/ordering/index.html#operation/GET-Packages) endpoint. |\n| GivenName | Maximum of 30 characters. Only extended ASCII alphabet and limited punctuation is supported. |\n| FamilyName | Maximum of 40 characters. Only extended ASCII alphabet and limited punctuation is supported. |\n| Email Address | Standard email address validation rules apply. |\n| Address CountrySubdivisionCode | For US orders, 2 character state abbreviation is required. For international ordering, a fully spelled out region or province name is expected, such as Ontario or Kyoto. |\n| Address CountryCode | ISO-3166-1 alpha-3 standard supported; defaults to USA if no value is provided. |\n| Address PostalCode | For US orders, 5 character numeric zip codes are expected and validated against the supplied state. For international ordering, up to 10 alphanumeric characters can be supplied. |\n| FreeFormBirthDate | Expected formatting is YYYY-MM-DD. Unless the package is explicitly enabled for minors, the volunteer must be over 18 years old. |\n\n### Seamless workflow\nBecause seamless ordering happens behind the scenes, additional information is required. This is because volunteers will not be able to enter their own information directly on Sterling Volunteers as part of the ordering workflow. Because of this, all fields that are required for the Redirect and Invitation workflows are still required, plus these additional fields:\n\n|Field name|Validation Requirements  |\n|----------|-------------------------|\n| Address LineOne | Maximum of 100 characters. Full non-whitespace ASCII range is allowed, including punctuation. |\n| Address CityName | Maximum of 30 characters. Only extended ASCII alphabet and limited punctuation is supported. |\n| Phone Number | A 3 character area code and 7 character dial number are required. This phone number is used to get in contact with the volunteer if additional information is required for fulfillment. |\n| Social Security Number | The volunteer's social security number is required if the package contains either the Complete criminal history search, or the Locator Select ala carte option. It is also recommended to always supply social security numbers, when available, to improve the accuracy and completeness of results. | \n| Gender | For seamless orders, a gender code must be supplied. This helps with differentiating results for gender neutral names. |  \n| Driver's License Information | If a Motor Vehicle Report (MVR) is included in the package, all DL fields in the UserArea must be supplied as part of the initial order. | \n\n## What notifications should I expect? \nSterling Volunteers sends notifications for all Status updates that occur on the order. When consuming these notifications, it is important to consume both the ChangeStatus.Code and the ReportResult returned. The following combinations can be used to determine the order's current state to pivot your code and resulting workflows accordingly: \n\n| Change Status | Report Result | Notes | \n|---------------|---------------|-----------------------|\n| InProgress |  | Typically the first notification. Sent when Volunteer completes & submits the vendor\u2019s screening form. This status is skipped when a volunteer has an existing order to share to the client. |\n| Complete | Clear | Sent when an order has completed, and the result is Clear. A candidate will remain in this status until client takes action in SV in two specific scenarios. 1) An existing background check has been shared in response to the API order invitation, or 2) A client chooses NOT to enable \u201cautoadjudication\u201d to move all clear background checks automatically to Eligible (does not apply to Shared orders) |\n| Complete | Consider | Sent when a report contains adverse information that requires review in the Sterling Volunteers dashboard. | \n| Adjudicated | Eligible | The final notification for the order workflow. Sent when a report is reviewed/adjudicated favorably. ***NOTE***: It is important to wait for the Adjudicated status notification instead of relying on the Complete notification. |\n| Adjudicated | Ineligible | Sent when a report is reviewed/adjudicated unfavorably. This indicates that the volunteer was rejected due to the contents of their background screening. |\n| *New* |  | Newly submitted order waiting on Volunteer input. This status is only returned via our synchronous Acknowledge message. We will never actively notify you of this status, but it can be fetched by using the [fetch order status by ID endpoint](https://developer.sterlingvolunteers.com/documentation/ordering/index.html#operation/GET-OrderStatus_order).|\n| *Hold* |  | Sent when a client has the \u201cHold Queue\u201d feature enabled. For the hold queue, the client sets a cost threshold, and if the order totals more than that the order is queued and client must review and either cancel or submit the order. |\n| *Canceled* | | Sent when a client cancels an order that was previously queued. |\n\n## How are monthly updates handled?\nReceiving free monthly updates on every order if a a new hit is found within the first year is a unique Sterling Volunteers feature, and has corresponding API notifications.\n\nMonthly update notifications will go through the standard notification workflow, and will contain the following pieces of information:\n * The API Candidate ID associated with the original order\n * A new Order ID\n * A Complete status\n\nBecause monthly update notifications are only sent when a new hit is found, it is recommended that they are captured and the associated volunteer record is flagged for re-review.\n## How are shares handled?\nMuch like monthly updates, the ability to share previously completed background screening results with additional nonprofit recipients is a unique Sterling Volunteers feature. Sharing saves the time and costs associated with background screening for both the volunteer and receiving organization. This reduces the overall time to impact for the volunteer, and time to value for the organization.\n\n### Steps for receiving shares via the API:\n 1. Initiate a standard new order request.\n 2. If the volunteer has completed a screening with Sterling Volunteers before, they will be prompted to log into their existing account.\n 3. Upon logging in, if the volunteer has an existing and valid background screening request, they will be prompted to share that report instead of completing a new order.\n\t - ***NOTE**: Only existing screenings of equal or greater quality than the original request may be shared. As an example, this means that an Advanced criminal history package result may be shared to a request for a Basic package, but not the reverse.* \n 4. When the share is complete, a Complete notification will be sent with the original API Candidate ID, a different Order ID than was received in the original Acknowledge response for the initial order, and an EffectiveDate that is in the past.\n 5. This order is now ready for adjudication and will appear on the Sterling Volunteers dashboard with a grey background to indicate it was a shared report.\n\n### Sharing limitations\nIn addition to the actual notifications that are sent, there are some noteworthy limitations to shared orders:\n* Shared orders cannot be scored using our Custom Matrix Application (CMA)\n* Shared orders cannot be auto-adjudicated to eligible even if they are Clear. This means that all shares must be reviewed and adjudicated via the Sterling Volunteers dashboard to determine volunteer eligibility.\n* By default, volunteers may opt to share an existing report for up to 1 year after the original order for clear background screenings, or up to 30 days after a non-clear background check is originally completed.\n\t*\tOrganizations may also set their desired maximum report age for sharing. Contact [The Advocates](mailto:TheAdvocates@sterlingvolunteers.com \"The Advocates\") or a member of the implementation team for more information.\n* To receive API notifications related to a share, there must be a preceding associated API order request for the sharing volunteer. Organic shares that occur via the \"Find organizations and share\" workflow within Sterling Volunteers portal will not result in an API notification.\n\n## What are the limitations for seamless ordering?\nThe standard seamless ordering workflow does not support the following Sterling Volunteers products and features:\n* FCRA compliant consent, disclosure, and agreement management\n* ID verification ala carte product \n* Education Verification ala carte product \n* Reference Check ala carte product\n* Volunteer payment contributions \n* Order sharing\n\nFor more information about the different workflows available on Sterling Volunteers, please reference our [Workflow Overview documentation](https://sterlingcheck.my.salesforce.com/sfc/p/36000000Iv90/a/1Q000000Y7hi/inq9KNED9OZCBP4Nu_gfxTYIacMQmZc4xnzw3cxaC_g) available in the [Partner Portal](https://partners.sterlingvolunteers.com/).\n## What are the requirements for my notification endpoint? \nAll notification endpoints must support the HTTPS protocol for notification requests. Additionally, all notifications will include basic auth headers. \n\nIf your endpoint does not require auth, we will supply dummy values that can be ignored. \nIf your endpoint expects an auth token, we can provide secret values as the username and password, but will be unable to perform refreshes on these values. \n\nFor more information about notification requirements and authorization options, please contact your implementation project manager directly.\n# Notify Callback\nIf you are utilizing the callback workflow to receive NotifyPackageScreening updates, credentials for your callback endpoint must also be supplied. Contact [The Advocates](mailto:TheAdvocates@sterlingvolunteers.com \"The Advocates\") or a member of the implementation team to share the desired callback endpoint and basic auth credentials expected by your system to connect the Notify Callback workflow.\n\nRemember, when sharing any credentials with The Advocates, utilizing encrypted email or sharing via the phone is encouraged.",
+    "version": "v1",
+    "title": "Sterling Volunteers Ordering",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/Galvin-Tech/sterling-volunteers-ordering/v1"
+  },
+  "paths": {
+    "/api/notification": {
+      "parameters": [],
+      "post": {
+        "summary": "Notify callback",
+        "operationId": "POST-NotifyApiPackageOrder",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {}
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Sends text/xml"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Accept",
+            "description": "Expects text/xml response"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "NotifyScreeningPackageOrder": {
+                    "$ref": "#/components/schemas/notifyscreeningpackageorder"
+                  }
+                }
+              },
+              "examples": {
+                "xmlRequest": {
+                  "value": "<NotifyScreeningPackageOrder xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.hr-xml.org/3\">\r\n  <ApplicationArea xmlns=\"http://www.openapplications.org/oagis/9\"/>\r\n  <DataArea>\r\n    <Notify xmlns=\"http://www.openapplications.org/oagis/9\">\r\n      <ActionCriteria>\r\n        <ActionExpression actioncode=\"Modified\">/NotifyScreeningPackageOrder/DataArea/ScreeningPackageOrder</ActionExpression>\r\n        <ChangeStatus>\r\n          <Code>Adjudicated</Code>\r\n        </ChangeStatus>\r\n      </ActionCriteria>\r\n    </Notify>\r\n    <ScreeningPackageOrder>\r\n      <DocumentID schemeID=\"OrderID\">654321</DocumentID>\r\n      <PackageOrder>\r\n        <ScreeningSubject>\r\n          <ScreeningSubjectID schemeID=\"Candidate ID\">987654321</ScreeningSubjectID>\r\n          <ScreeningSubjectName>\r\n            <ScreeningPersonName>\r\n              <PersonName nameTypeCode=\"CurrentName\">\r\n                <GivenName xmlns=\"http://www.openapplications.org/oagis/9\">Sue</GivenName>\r\n                <MiddleName>A</MiddleName>\r\n                <FamilyName>Johnson</FamilyName>\r\n              </PersonName>\r\n            </ScreeningPersonName>\r\n          </ScreeningSubjectName>\r\n          <Communication>\r\n            <ChannelCode listName=\"Telephone\" />\r\n            <AreaDialing xmlns=\"http://www.openapplications.org/oagis/9\">919</AreaDialing>\r\n            <DialNumber xmlns=\"http://www.openapplications.org/oagis/9\">555-1212</DialNumber>\r\n          </Communication>\r\n          <Communication>\r\n            <Address>\r\n              <LineOne xmlns=\"http://www.openapplications.org/oagis/9\">123 Elm Street</LineOne>\r\n              <LineTwo xmlns=\"http://www.openapplications.org/oagis/9\">Apt 202</LineTwo>\r\n              <CityName xmlns=\"http://www.openapplications.org/oagis/9\">Marietta</CityName>\r\n              <CountrySubDivisionCode xmlns=\"http://www.openapplications.org/oagis/9\" >GA</CountrySubDivisionCode>\r\n              <CountryCode>USA</CountryCode>\r\n              <PostalCode xmlns=\"http://www.openapplications.org/oagis/9\">30068</PostalCode>\r\n            </Address>\r\n          </Communication>\r\n        </ScreeningSubject>\r\n        <UserArea>\r\n          <EffectiveDate xmlns=\"\">2015-12-17</EffectiveDate>\r\n        </UserArea>\r\n      </PackageOrder>\r\n      <UserArea>\r\n        <CMARulesetName>CMA Rule One</CMARulesetName>\r\n        <CMAResult>Tier 1</CMAResult>\r\n        <CMARulesetApplied>true</CMARulesetApplied>\r\n        <ReportResult xmlns=\"\">Eligible</ReportResult>\r\n        <ReportURL xmlns=\"https://www.verifiedvolunteers.com/\">https://app.verifiedvolunteers.com/Adjudicate/{uniqueReportCode}</ReportURL>\r\n        <Restriction xmlns=\"https://www.verifiedvolunteers.com/\">RestrictionName</Restriction>\r\n        <HasConsider>True</HasConsider>\r\n        <HasUnperformable>False</HasUnperformable>\r\n      </UserArea>\r\n    </ScreeningPackageOrder>\r\n  </DataArea>\r\n</NotifyScreeningPackageOrder>"
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Expected POST request body sent to specified callback endpoints. This request is sent every time there is an update to the order, such as a change in status."
+      }
+    },
+    "/api/ChangeOrder/changeOrder": {
+      "post": {
+        "summary": "Update an existing order",
+        "operationId": "Post-ChangeScreeningPackageOrder",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeScreeningPackageOrder"
+                },
+                "examples": {
+                  "xmlResponseTest": {
+                    "value": "<ChangeScreeningPackageOrder xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:oa=\"http://www.openapplications.org/oagis/9\" xmlns=\"http://www.hr-xml.org/3\" xsi:schemaLocation=\"http://www.hr-xml.org/3 ../Developer/BODs/ProcessScreeningPackageOrder.xsd\">\r\n  <DataArea>\r\n    <oa:Change>\r\n      <oa:ActionCriteria>\r\n        <oa:ActionExpression actionCode=\"Modified\">/ChangeScreeningPackageOrder/DataArea/ScreeningPackageOrder</oa:ActionExpression>\r\n        <oa:ChangeStatus>\r\n          <oa:Code>Change</oa:Code>\r\n        </oa:ChangeStatus>\r\n      </oa:ActionCriteria>\r\n    </oa:Change>\r\n    <ScreeningPackageOrder>\r\n      <DocumentID schemeID=\"OrderID\">960736</DocumentID>\r\n      <PackageOrder>\r\n        <ScreeningSubject>\r\n          <ScreeningSubjectID schemeID=\"Candidate ID\">200008696</ScreeningSubjectID>\r\n        </ScreeningSubject>\r\n      </PackageOrder>\r\n      <UserArea>\r\n        <ConsentHTML xmlns=\"https://www.verifiedvolunteers.com/\">HTML</ConsentHTML>\r\n        <SSN xmlns=\"https://www.verifiedvolunteers.com/\">SocialSecurityNumber</SSN>\r\n        <DLNumber>1234567</DLNumber>\r\n        <DLStateCode>AK</DLStateCode>\r\n        <DLFirstName>Firstname</DLFirstName>\r\n        <DLMiddleName>Middle</DLMiddleName>\r\n        <DLLastName>Lastname</DLLastName>\r\n      </UserArea>\r\n    </ScreeningPackageOrder>\r\n  </DataArea>\r\n</ChangeScreeningPackageOrder>"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "description": "Edit or add additional information to an existing screening package order, such as appending sensitive information like SSN, MVR information, and volunteer consent after the original order request is submitted. This endpoint is only used for seamless enhanced integrations.",
+        "requestBody": {
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeScreeningPackageOrder"
+              },
+              "examples": {
+                "xmlRequest": {
+                  "value": "<ChangeScreeningPackageOrder xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:oa=\"http://www.openapplications.org/oagis/9\" xmlns=\"http://www.hr-xml.org/3\" xsi:schemaLocation=\"http://www.hr-xml.org/3 ../Developer/BODs/ProcessScreeningPackageOrder.xsd\">\r\n  <DataArea>\r\n    <oa:Change>\r\n      <oa:ActionCriteria>\r\n        <oa:ActionExpression actionCode=\"Modified\">/ChangeScreeningPackageOrder/DataArea/ScreeningPackageOrder</oa:ActionExpression>\r\n        <oa:ChangeStatus>\r\n          <oa:Code>Change</oa:Code>\r\n        </oa:ChangeStatus>\r\n      </oa:ActionCriteria>\r\n    </oa:Change>\r\n    <ScreeningPackageOrder>\r\n      <DocumentID schemeID=\"OrderID\">960736</DocumentID>\r\n      <PackageOrder>\r\n        <ScreeningSubject>\r\n          <ScreeningSubjectID schemeID=\"Candidate ID\">200008696</ScreeningSubjectID>\r\n        </ScreeningSubject>\r\n      </PackageOrder>\r\n      <UserArea>\r\n        <ConsentHTML xmlns=\"https://www.verifiedvolunteers.com/\">HTML</ConsentHTML>\r\n        <SSN xmlns=\"https://www.verifiedvolunteers.com/\">SocialSecurityNumber</SSN>\r\n        <DLNumber>1234567</DLNumber>\r\n        <DLStateCode>AK</DLStateCode>\r\n        <DLFirstName>Firstname</DLFirstName>\r\n        <DLMiddleName>Middle</DLMiddleName>\r\n        <DLLastName>Lastname</DLLastName>\r\n      </UserArea>\r\n    </ScreeningPackageOrder>\r\n  </DataArea>\r\n</ChangeScreeningPackageOrder>"
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "default": "application/xml"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Accepts Only application/xml"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "default": "application/xml"
+            },
+            "in": "header",
+            "name": "Accept",
+            "description": "Accepts Only application/xml"
+          }
+        ]
+      },
+      "parameters": []
+    },
+    "/api/PackageOrder/order": {
+      "parameters": [],
+      "post": {
+        "summary": "Create a new order",
+        "operationId": "POST-api-packageorder-order",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "BusinessObjectDocumentType": {
+                      "type": "object",
+                      "description": "Document root node. Contains two children nodes:\n1.\tApplicationArea\n2.\tDataArea",
+                      "properties": {
+                        "ApplicationArea": {
+                          "type": "object",
+                          "description": "The ApplicationArea carries information that an application may need to know in order to communicate in an integration of two or more business applications.",
+                          "properties": {
+                            "UserArea": {
+                              "type": "object",
+                              "description": "Contains information specific to the Sterling Volunteers system. On success, the UserArea will contain information related to the successful order, such as the redirect URL and the email invite sent status.",
+                              "properties": {
+                                "VolunteerUrl": {
+                                  "type": "string",
+                                  "description": "The unique URL that allows the volunteer to claim and proceed with their order."
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "q1:DataArea": {
+                          "type": "object",
+                          "description": "The DataArea contains the business information necessary to execute the request to place an order.",
+                          "properties": {
+                            "Acknowledge": {
+                              "type": "object",
+                              "description": "This element contains information related to a successful order request.",
+                              "properties": {
+                                "OriginalApplicationArea": {
+                                  "type": "object",
+                                  "description": "This element contains the identification details for the volunteer from the original screening request.",
+                                  "properties": {
+                                    "BODID": {
+                                      "type": "string",
+                                      "description": "This element/attribute provides the specific identification number assigned to the volunteer from the original screening request. It needs to be included in all inbound transactions and will be returned in all outbound requests."
+                                    }
+                                  }
+                                },
+                                "ResponseCriteria": {
+                                  "type": "object",
+                                  "description": "Container element for information related to the state of the order, including if it successfully started a new order or failed due to validation or processing errors.",
+                                  "properties": {
+                                    "ResponseExpression": {
+                                      "type": "string",
+                                      "description": "This element identifies a pointer to the Component being provided as a response to a request"
+                                    },
+                                    "ChangeStatus": {
+                                      "type": "object",
+                                      "description": "This element includes the information regarding the current status of the original screening order request.",
+                                      "properties": {
+                                        "Code": {
+                                          "type": "string",
+                                          "description": "This element includes the information regarding the current status of the original screening order request."
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "q1:ScreeningPackageOrder": {
+                              "type": "object",
+                              "description": "Container element for information related to the state of the order, including if it successfully started a new order or failed due to validation or processing errors. Container element for details related to the submitted package order, including the OrderId.",
+                              "properties": {
+                                "q1:DocumentId": {
+                                  "type": "string",
+                                  "description": "This element/attribute is designated to provide the order number generated in the Verified Volunteers system from the original screening order request."
+                                },
+                                "q1:UserArea": {
+                                  "type": "object",
+                                  "description": "Contains information specific to the Sterling Volunteers system. If using a Seamless Enhanced workflow, this element will contain the information needed to populate the consents and/or payment workflow volunteers need to complete."
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": "<BusinessObjectDocumentType xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:q1=\"http://www.hr-xml.org/3\" xsi:type=\"q1:AcknowledgeScreeningPackageOrderType\">\r\n  <ApplicationArea xmlns=\"http://www.openapplications.org/oagis/9\">\r\n    <UserArea>\r\n      <VolunteerUrl xmlns=\"https://www.verifiedvolunteers.com/\">https://qapp.sterlingvolunteers.com/verify?id=AAAAAAAAAAAAA</VolunteerUrl>\r\n    </UserArea>\r\n  </ApplicationArea>\r\n  <q1:DataArea>\r\n    <Acknowledge xmlns=\"http://www.openapplications.org/oagis/9\">\r\n      <OriginalApplicationArea>\r\n        <BODID schemeID=\"CandidateID\">1234567890</BODID>\r\n      </OriginalApplicationArea>\r\n      <ResponseCriteria>\r\n        <ResponseExpression actionCode=\"Modified\">/AcknowledgeScreeningPackageOrder/DataArea/ScreeningPackageOrder</ResponseExpression>\r\n        <ChangeStatus>\r\n          <Code>New</Code>\r\n        </ChangeStatus>\r\n      </ResponseCriteria>\r\n    </Acknowledge>\r\n    <q1:ScreeningPackageOrder>\r\n      <q1:DocumentID schemeID=\"OrderID\">270001</q1:DocumentID>\r\n      <q1:UserArea />\r\n    </q1:ScreeningPackageOrder>\r\n  </q1:DataArea>\r\n</BusinessObjectDocumentType>"
+                  },
+                  "Failed": {
+                    "value": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<BusinessObjectDocumentType xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:q1=\"http://www.openapplications.org/oagis/9\" xsi:type=\"q1:ConfirmBODType\">\"\r\n  <q1:DataArea>\r\n    <q1:Confirm>\r\n      <q1:OriginalApplicationArea>\r\n        <q1:BODID schemeName=\"CandidateID\">1234567890</q1:BODID>\r\n      </q1:OriginalApplicationArea>\r\n      <q1:ResponseCriteria>\r\n        <q1:ResponseExpression actionCode=\"Reported\">/ConfirmBOD/DataArea/BOD/ResponseExpression</q1:ResponseExpression>\r\n        <q1:ChangeStatus>\r\n          <q1:Code listID=\"Screening Error\">Failed</q1:Code>\r\n        </q1:ChangeStatus>\r\n      </q1:ResponseCriteria>\r\n    </q1:Confirm>\r\n    <q1:BOD>\r\n      <q1:BODFailureMessage>\r\n        <q1:NounFailureMessage>\r\n          <q1:ErrorProcessMessage>\r\n            <q1:ID>b9f31ce8-11c1-4912-90c3-68e17c165090</q1:ID>\r\n            <q1:Description>A recent request was received for Candidate(270001) jamesr@sterlingvolunteers.com less than 1 minute earlier</q1:Description>\r\n            <q1:Type>Fatal</q1:Type>\r\n          </q1:ErrorProcessMessage>\r\n        </q1:NounFailureMessage>\r\n      </q1:BODFailureMessage>\r\n    </q1:BOD>\r\n  </q1:DataArea>\r\n</BusinessObjectDocumentType>"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": {
+                      "type": "object",
+                      "properties": {
+                        "Message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "CreateNew-405xmlExample": {
+                    "value": "<Error>\r\n  <Message>The requested resource does not support http method'{HTTP Verb}'.</Message>\r\n</Error>"
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": {
+                      "type": "object",
+                      "properties": {
+                        "Message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "xmlExample": {
+                    "value": "<Error>\r\n  <Message>The request entity's media type'{Content-Type}' is not supported for this resource.</Message>\r\n</Error>"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "description": "Requests a background check order using the provided package for the specified volunteer through Sterling Volunteers.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Accepts only application/xml"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Accept",
+            "description": "Accepts only application/xml"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/processscreeningpackageorder"
+              },
+              "examples": {
+                "CreateNew-XmlRequest": {
+                  "value": "<ProcessScreeningPackageOrder xmlns:oa=\"http://www.openapplications.org/oagis/9\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://www.hr-xml.org/3\" xsi:schemaLocation=\"http://www.hr-xml.org/3 ../Developer/BODs/ProcessScreeningPackageOrder.xsd\">\r\n  <DataArea>\r\n    <ScreeningPackageOrder>\r\n      <PackageOrder>\r\n        <PackageID>abc1234</PackageID>\r\n        <ScreeningSubject>\r\n          <ScreeningSubjectID schemeID=\"Candidate ID\">1234567890</ScreeningSubjectID>\r\n          <PersonLegalID schemeID=\"SSN\">123456789</PersonLegalID>\r\n          <ScreeningSubjectName>\r\n            <ScreeningPersonName>\r\n              <PersonName nameTypeCode=\"CurrentName\">\r\n                <oa:GivenName>James</oa:GivenName>\r\n                <MiddleName>Roger</MiddleName>\r\n                <FamilyName>Smith</FamilyName>\r\n              </PersonName>\r\n            </ScreeningPersonName>\r\n          </ScreeningSubjectName>\r\n          <Communication>\r\n            <ChannelCode>Telephone</ChannelCode>\r\n            <oa:AreaDialing>999</oa:AreaDialing>\r\n            <oa:DialNumber>555-4956</oa:DialNumber>\r\n          </Communication>\r\n          <Communication>\r\n            <ChannelCode>Email</ChannelCode>\r\n            <oa:URI>jamesr@sterlingvolunteers.com</oa:URI>\r\n          </Communication>\r\n          <Communication>\r\n            <Address currentAddressIndicator=\"true\">\r\n              <oa:LineOne>911 Main Street</oa:LineOne>\r\n              <oa:CityName>Dallas</oa:CityName>\r\n              <oa:CountrySubDivisionCode>TX</oa:CountrySubDivisionCode>\r\n              <CountryCode>USA</CountryCode>\r\n              <oa:PostalCode>75078</oa:PostalCode>\r\n            </Address>\r\n          </Communication>\r\n          <GenderCode>Male</GenderCode>\r\n          <FreeFormBirthDate>\r\n            <FormattedDateTime>1973-12-17</FormattedDateTime>\r\n          </FreeFormBirthDate>\r\n        </ScreeningSubject>\r\n      </PackageOrder>\r\n\t<UserArea>\r\n        <Custom1>1234567</Custom1>\r\n        <Custom2>abcdefg</Custom2>\r\n        <Custom3>123abc</Custom3>\r\n        <ClientView>ClientView1;ClientView2</ClientView>\r\n\t<DLNumber>1234567</DLNumber>\r\n\t<DLStateCode>TX</DLStateCode>\r\n\t<DLFirstName>James</DLFirstName>\r\n\t<DLMiddleName>Roger</DLMiddleName>\r\n\t<DLLastName>Smith</DLLastName>\r\n      </UserArea>\r\n    </ScreeningPackageOrder>\r\n  </DataArea>\r\n</ProcessScreeningPackageOrder>"
+                }
+              }
+            }
+          },
+          "description": "If placing a seamless order, please note that additional elements may be required in order to place an order such as: PersonLegalId, Communication (Telephone), ChannelCode, GenderCode, DLNumber, DLStateCode, DLFirstName, DLMiddleName, DLLastName"
+        }
+      }
+    },
+    "/api/OrderStatus/order/{id}": {
+      "parameters": [
+        {
+          "type": "string",
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Order id received when submitting the order.\n\nNote: The Order Id is returned from the ProcessScreeningpackage call",
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Fetch order details by ID",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "BusinessObjectDocumentType": {
+                      "$ref": "#/components/schemas/notifyscreeningpackageorder"
+                    }
+                  }
+                },
+                "examples": {
+                  "Success": {
+                    "value": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<BusinessObjectDocumentType xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:q1=\"http://www.hr-xml.org/3\" xsi:type=\"q1:NotifyScreeningPackageOrderType\">\r\n    <ApplicationArea xmlns=\"http://www.openapplications.org/oagis/9\" />\r\n    <q1:DataArea>\r\n        <Notify xmlns=\"http://www.openapplications.org/oagis/9\">\r\n            <ActionCriteria>\r\n                <ActionExpression actionCode=\"Modified\">/NotifyScreeningPackageOrder/DataArea/ScreeningPackageOrder</ActionExpression>\r\n                <ChangeStatus>\r\n                    <Code>InProgress</Code>\r\n                </ChangeStatus>\r\n            </ActionCriteria>\r\n        </Notify>\r\n        <q1:ScreeningPackageOrder>\r\n            <q1:DocumentID schemeID=\"OrderID\">654321</q1:DocumentID>\r\n            <q1:PackageOrder>\r\n                <q1:ScreeningSubject>\r\n                    <q1:ScreeningSubjectID schemeID=\"Candidate ID\">987654321</q1:ScreeningSubjectID>\r\n                    <q1:ScreeningSubjectName>\r\n                        <q1:ScreeningPersonName>\r\n                            <q1:PersonName nameTypeCode=\"CurrentName\">\r\n                                <GivenName xmlns=\"http://www.openapplications.org/oagis/9\">Sue</GivenName>\r\n                                <q1:MiddleName>A</q1:MiddleName>\r\n                                <q1:FamilyName>Johnson</q1:FamilyName>\r\n                            </q1:PersonName>\r\n                        </q1:ScreeningPersonName>\r\n                    </q1:ScreeningSubjectName>\r\n                    <q1:Communication>\r\n                        <q1:ChannelCode listName=\"Telephone\" />\r\n                        <AreaDialing xmlns=\"http://www.openapplications.org/oagis/9\">919</AreaDialing>\r\n                        <DialNumber xmlns=\"http://www.openapplications.org/oagis/9\">5551212</DialNumber>\r\n                    </q1:Communication>\r\n                    <q1:Communication>\r\n                        <q1:Address>\r\n                            <LineOne xmlns=\"http://www.openapplications.org/oagis/9\">123 Elm Street</LineOne>\r\n                            <LineTwo xmlns=\"http://www.openapplications.org/oagis/9\">Apt 202</LineTwo>\r\n                            <CityName xmlns=\"http://www.openapplications.org/oagis/9\">Marietta</CityName>\r\n                            <CountrySubDivisionCode xmlns=\"http://www.openapplications.org/oagis/9\">GA</CountrySubDivisionCode>\r\n                            <q1:CountryCode>USA</q1:CountryCode>\r\n                            <PostalCode xmlns=\"http://www.openapplications.org/oagis/9\">30068</PostalCode>\r\n                        </q1:Address>\r\n                    </q1:Communication>\r\n                </q1:ScreeningSubject>\r\n                <q1:UserArea>\r\n                    <EffectiveDate>2020-02-12</EffectiveDate>\r\n                </q1:UserArea>\r\n            </q1:PackageOrder>\r\n            <q1:UserArea>\r\n                <ReportResult></ReportResult>\r\n                <ReportURL xmlns=\"https://www.verifiedvolunteers.com/\">https://app.sterlingvolunteers.com/Adjudicate/{uniqueReportCode}</ReportURL>\r\n            </q1:UserArea>\r\n        </q1:ScreeningPackageOrder>\r\n    </q1:DataArea>\r\n</BusinessObjectDocumentType>"
+                  },
+                  "Failed": {
+                    "value": "<BusinessObjectDocumentType xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:q1=\"http://www.openapplications.org/oagis/9\" xsi:type=\"q1:ConfirmBODType\">\r\n  <q1:DataArea>\r\n    <q1:Confirm>\r\n      <q1:OriginalApplicationArea>\r\n        <q1:BODID schemeName=\"OrderID\">270001</q1:BODID>\r\n      </q1:OriginalApplicationArea>\r\n      <q1:ResponseCriteria>\r\n        <q1:ResponseExpression actionCode=\"Reported\">/ConfirmBOD/DataArea/BOD/ResponseExpression</q1:ResponseExpression>\r\n        <q1:ChangeStatus>\r\n          <q1:Code listID=\"Screening Error\">Failed</q1:Code>\r\n        </q1:ChangeStatus>\r\n      </q1:ResponseCriteria>\r\n    </q1:Confirm>\r\n    <q1:BOD>\r\n      <q1:BODFailureMessage>\r\n        <q1:NounFailureMessage>\r\n          <q1:ErrorProcessMessage>\r\n            <q1:ID>5da18d19-007d-43d5-8e91-75e19a8d1061</q1:ID>\r\n            <q1:Description>OrderId (270001) not found or invalid</q1:Description>\r\n            <q1:Type>Fatal</q1:Type>\r\n          </q1:ErrorProcessMessage>\r\n        </q1:NounFailureMessage>\r\n      </q1:BODFailureMessage>\r\n    </q1:BOD>\r\n  </q1:DataArea>\r\n</BusinessObjectDocumentType>"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": {
+                      "type": "object",
+                      "properties": {
+                        "Message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "FetchDetails-400xmlResponse": {
+                    "value": "<Error>\r\n  <Message>The request is invalid'.</Message>\r\n</Error>"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": {
+                      "type": "object",
+                      "properties": {
+                        "Message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "xmlResponse": {
+                    "value": "<Error>\r\n  <Message>The requested resource does not support http method '{HTTP Verb}'.</Message>\r\n</Error>"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "operationId": "GET-OrderStatus_order",
+        "description": "This method is used to retrieve the order status information for a submitted order.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Accepts only application/xml"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Accept",
+            "description": "Accepts only application/xml"
+          }
+        ],
+        "requestBody": {
+          "description": ""
+        }
+      }
+    },
+    "/japi/AggregateOrderStatusV2": {
+      "get": {
+        "summary": "Fetch list of order statuses (Beta)",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "AggregateOrderStatus": {
+                      "$ref": "#/components/schemas/aggregateOrderStatusCollection"
+                    }
+                  }
+                },
+                "examples": {
+                  "AggregateList-200xmlResponse": {
+                    "value": "<AggregateOrderStatus xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\r\n <CollectionMetaData>\r\n  <PageSize>299</PageSize>\r\n  <LastSeen>GHRSEGQHKPMSNMNECAF-STPQJRGOLBLNJPTCKGH</LastSeen>\r\n  <NextLink>https://qapp.sterlingvolunteers.com/ja/aggregateorderstatusv2?lastSeen=GHRSEGQHKPMSNMNECAF-STPQJRGOLBLNJPTCKGH&amp;limit=500</NextLink>\r\n  </CollectionMetaData>\r\n  <Collection>\r\n  <ApiOrderStatus>\r\n    <orderId>270001</orderId>\r\n    <apiCandidateId>1234abcd</apiCandidateId>\r\n    <packageId>abc1234</packageId>\r\n    <orderingAccountId>1234</orderingAccountId>\r\n    <associatedAccountId>5678</associatedAccountId>\r\n    <associatedOrderIds>270002</associatedOrderIds>\r\n    <completedDate>2020-01-16 10:19:00.000</completedDate>\r\n    <modifiedDate>2020-01-16 10:19:26.873</modifiedDate>\r\n    <createdDate>2020-01-13 08:59:13.993</createdDate>\r\n    <status>Complete</status>\r\n    <result>Clear</result>\r\n    <hasClear>true</hasClear>\r\n    <hasUnperformable>false</hasUnperformable>\r\n    <hasConsider>false</hasConsider>\r\n    <reportUrl>https://qapp.sterlingvolunteers.com/Adjudicate/JPJOQTOMBQKBHPCPBOR</reportUrl>\r\n  </ApiOrderStatus>  \r\n</Collection>  \r\n</AggregateOrderStatus>"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "operationId": "GET-OrderStatus_AggregateOrderStatus",
+        "description": "This schema returns an abbreviated list of order statuses and will return all orders for the previous 12 months",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Only Accepts application/xml"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Accept",
+            "description": "Only Accepts application/xml"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "2020-02-25",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "modifiedDate",
+            "description": "Filters the results to only include records that have changed since the date specified. This changes the default sort order to be modifiedDate asc, starting from the date provided. "
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "lastSeen",
+            "description": "An encoded pointer to the last record seen. This value is returned as part of the collection response and can be used indefintiely to pick up where the update was last left off."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 500,
+              "example": 250
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "The desired page size. Default page size is 500. Page sizes up to 1000 can be specified."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "offset",
+            "description": "The number of records to skip before starting the collection."
+          }
+        ],
+        "requestBody": {}
+      },
+      "parameters": []
+    },
+    "/japi/ApiOrderEligibilityStatus": {
+      "parameters": [],
+      "post": {
+        "summary": "Check volunteer eligibility",
+        "operationId": "post-japi-ApiOrderEligibilityStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "description": "Eligible or ineligible as a result depending on the adjudication of the order.",
+                      "enum": [
+                        "Eligible",
+                        "Ineligible"
+                      ]
+                    },
+                    "orderDate": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The date the order was submitted."
+                    },
+                    "orgName": {
+                      "type": "string",
+                      "description": "Name of the organization associated with the order."
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3,
+                      "description": "Indicates the level of the criminal history order. 1 = Basic, 2 = Advanced, and 3 = Complete."
+                    },
+                    "mvr": {
+                      "type": "boolean",
+                      "description": "Indicates whether or not the order contained a motor vehicle record."
+                    }
+                  }
+                },
+                "examples": {
+                  "200xmlResponse": {
+                    "value": "<ApiOrderEligibilityStatusResultsModel xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> \r\n <status>eligible</status> \r\n <orderDate>2020-03-17</orderDate> \r\n <orgName>Dungeons &amp; Doggos</orgName> \r\n <level>2</level> \r\n <mvr>false</mvr> \r\n <submittedDate>2020-03-17T15:55:30.4</submittedDate> \r\n <eligibleStatus>1</eligibleStatus> \r\n </ApiOrderEligibilityStatusResultsModel> \r\n "
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "415EligibilityError": {
+                    "value": "<Error><Message>The requested resource does not support http method '{HttpVerb}'.</Message></Error>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This schema returns the most recent eligibility status for the specified volunteer. The results will use the most recent order submitted for the given volunteer.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Accept"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 30
+                  },
+                  "lastname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "firstname",
+                  "lastname",
+                  "email"
+                ]
+              },
+              "examples": {
+                "Json Request Example": {
+                  "value": {
+                    "firstName": "Joe",
+                    "lastName": "Smith",
+                    "email": "joe.smith@email.com"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/japi/Packages": {
+      "get": {
+        "summary": "Fetch list of packages (Beta)",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "The collection of packages available to the requesting user account.",
+                  "items": {
+                    "$ref": "#/components/schemas/package"
+                  }
+                },
+                "examples": {
+                  "products-example": {
+                    "value": [
+                      {
+                        "id": "vjq825j",
+                        "clientId": "1157",
+                        "title": "Basic Criminal Locator Search - Volunteer Pays All",
+                        "products": [
+                          {
+                            "id": 1,
+                            "name": "Level 1: Basic Criminal History Record Locator Search",
+                            "price": 13,
+                            "isAlaCartProduct": false,
+                            "isCrimProduct": true,
+                            "isOrderProduct": true,
+                            "isPayer": 1,
+                            "altProductPrice": null
+                          }
+                        ]
+                      },
+                      {
+                        "id": "dsr9zdh",
+                        "clientId": "1157",
+                        "title": "Advanced Criminal Locator Search + MVR - Client Pays All",
+                        "products": [
+                          {
+                            "id": 2,
+                            "name": "Level 2: Advanced Criminal History Record Locator Search",
+                            "price": 25,
+                            "isAlaCartProduct": false,
+                            "isCrimProduct": true,
+                            "isOrderProduct": true,
+                            "isPayer": 1,
+                            "altProductPrice": null
+                          },
+                          {
+                            "id": 4,
+                            "name": "Motor Vehicle Record Check",
+                            "price": 7.5,
+                            "isAlaCartProduct": true,
+                            "isCrimProduct": false,
+                            "isOrderProduct": false,
+                            "isPayer": 1,
+                            "altProductPrice": null
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "headers": {}
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "\"No data found\"",
+                  "description": "Error message."
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "No data found"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "operationId": "GET-Packages",
+        "description": "Returns the collection of packages available to the requesting user. This includes packages for all child accounts within hierarchical accounts.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": "",
+              "maximum": "",
+              "example": 1,
+              "enum": [
+                0,
+                1
+              ]
+            },
+            "in": "query",
+            "name": "workflow",
+            "description": "Filters the package results to only those that are supported by the specified workflow.\n\nAvailable values:\n0=none; 1=seamless"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "example": 1068
+            },
+            "in": "query",
+            "name": "clientId",
+            "description": "The Sterling Volunteers client id. This value can be used to filter the available packages to a specific child within a hierarchy."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "swu36g7,swtwnww"
+            },
+            "in": "query",
+            "name": "packageId",
+            "description": "A comma delimited list of known package IDs to filter the list to. This can be used to fetch human readable package information and helpful metadata for known packages."
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": "false"
+            },
+            "in": "query",
+            "name": "onlyVisible",
+            "description": "Filters the list of packages to only include package listings that are visible for Sterling Volunteers dashboard ordering workflows. Default value is false."
+          }
+        ]
+      },
+      "parameters": []
+    },
+    "/japi/basicorder": {
+      "post": {
+        "summary": "Create a basic order (Beta)",
+        "operationId": "post-japi-basicorder",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": {
+                      "type": "integer",
+                      "description": "The specific identification number assigned to the volunteer from the original screening request. It needs to be included in all inbound transactions and will be returned in all outbound requests."
+                    },
+                    "volunteerUrl": {
+                      "type": "string",
+                      "description": "The unique URL that allows the volunteer to claim and proceed with their order."
+                    },
+                    "emailSent": {
+                      "type": "boolean",
+                      "description": "Indicates if the email has been sent if using the email invitation workflow."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Any error messages that are returned during the ordering process. Otherwise, \"Success\" will be returned."
+                    }
+                  }
+                },
+                "examples": {
+                  "BasicSentSuccess": {
+                    "value": {
+                      "orderId": 12345,
+                      "volunteerUrl": "https://qapp.sterlingvolunteers.com/basicRegistration?id=LNLFPHNJQTJPKKDAKQTT",
+                      "emailSent": false,
+                      "message": "Success"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 30,
+                    "description": "The given or first name of the volunteer.",
+                    "example": "\"Abeline\""
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 40,
+                    "description": "The last or family name of the volunteer.",
+                    "example": "\"Hamilton\""
+                  },
+                  "emailAddress": {
+                    "type": "string",
+                    "description": "The primary email address for the person to be screened. This is where the invitation will be sent for the invitation workflow.",
+                    "maxLength": 250,
+                    "example": "volunteer@npo.org",
+                    "format": "email"
+                  },
+                  "packageId": {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 7,
+                    "description": "The PackageId (or GOOD DEED code) defines the screening package to be run on the volunteer and determines what additional information may be required in the request due to the criminal history screening level or additional ala carte options included in the package, such as a Motor Vehicle Report (MVR).",
+                    "example": "a1b2c3d"
+                  },
+                  "apiCandidateId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "description": "This is a custom identifier for the volunteer, typically used to store a foreign identifier to link the volunteer to an external system, such as the requesting volunteer management system.",
+                    "example": "externalId123"
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "emailAddress",
+                  "packageId",
+                  "apiCandidateId"
+                ]
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Submit an API order request with limited volunteer information. In this workflow, only volunteer name and email address is required. They will enter the rest of their information on the Sterling Volunteers platform directly. This endpoint is only available to organizations using the redirect and email invitation workflows."
+      }
+    },
+    "/api/order/notifications/resend/{id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Resend callback notification",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "responseDetails": {
+                      "type": "array",
+                      "description": "The details of the notification callback response. If there are multiple organizations in the hierarchy with different callback information, all child accounts will be attempted and responses recorded here.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "clientId": {
+                            "type": "integer",
+                            "description": "The Sterling Volunteers customer ID. This can be used to differentiate members of a hierarchy within Sterling Volunteers."
+                          },
+                          "callbackEndpoint": {
+                            "type": "string",
+                            "description": "The callback endpoint the notification was sent to."
+                          },
+                          "returnedNotificationHttpStatusCode": {
+                            "type": "integer",
+                            "description": "The http status code returned by the callback endpoint."
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "The message returned by the callback endpoint."
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "Notification Resend Response": {
+                    "value": {
+                      "responseDetails": [
+                        {
+                          "clientId": 1234,
+                          "callbackEndpoint": "https://www.example.nonprofit.org/parentEndpoint",
+                          "returnedNotificationHttpStatusCode": 200,
+                          "message": "A detailed response message goes here."
+                        },
+                        {
+                          "clientId": 5678,
+                          "callbackEndpoint": "https://www.example.nonprofit.org/childEndpoint",
+                          "returnedNotificationHttpStatusCode": 500,
+                          "message": "A detailed response message goes here."
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-api-order-notifications-resend-id",
+        "description": "Allows API notifications to be resent on demand. Only the notification matching the current status are currently able to be resent.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "InProgress",
+                "Complete",
+                "Adjudicated",
+                "Queued"
+              ],
+              "example": "Complete"
+            },
+            "in": "query",
+            "name": "notificationType",
+            "description": "The type of notification that should be resent. Only previously completed statuses are available for resend. For example, an order that is currently Complete can have the InProgress or Complete notifications resent, but an Adjudicated notification cannot be requested. If a notificationType is not provided, the notification for the order's current status will be resent."
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChangeScreeningPackageOrder": {
+        "title": "ChangeScreeningPackageOrder",
+        "type": "object",
+        "properties": {
+          "DataArea": {
+            "$ref": "#/components/schemas/DataArea-ChangeOrder"
+          }
+        },
+        "description": "Document root node. Contains on child nodes:\n1.DataArea"
+      },
+      "DataArea-ChangeOrder": {
+        "title": "DataArea",
+        "type": "object",
+        "description": "The DataArea contains the business information necessary to execute the change request to complete and place an order.",
+        "properties": {
+          "oa:Change": {
+            "$ref": "#/components/schemas/oa-change"
+          },
+          "ScreeningPackageOrder": {
+            "$ref": "#/components/schemas/screeningpackageorder-changescreeningpackageorder"
+          }
+        }
+      },
+      "oa-change": {
+        "title": "oa:Change",
+        "type": "object",
+        "properties": {
+          "ActionCriteria": {
+            "$ref": "#/components/schemas/ActionCriteria-ChangeOrder"
+          }
+        },
+        "description": "This element contains a set of information necessary to submit a change to a screening order request. This will include the information necessary for placing the originally requested order with the HTML Consent and Encrypted SSN."
+      },
+      "ActionCriteria-ChangeOrder": {
+        "title": "ActionCriteria-ChangeOrder",
+        "type": "object",
+        "description": "Container element to indicate the type of action to be taken with this request.",
+        "properties": {
+          "oa:ActionExpression": {
+            "description": "This element indicates the type of action to be taken on the change request.\n\nRequired Value: \"/ChangeScreeningPackageOrder/DataArea/ScreeningPackage\"\n\nRequired Attribute:\n  - actioncode=\"Modified\"",
+            "type": "string"
+          },
+          "oa:ChangeStatus": {
+            "$ref": "#/components/schemas/oa-changestatus"
+          }
+        },
+        "required": [
+          "oa:ActionExpression"
+        ]
+      },
+      "oa-changestatus": {
+        "title": "oa:ChangeStatus",
+        "type": "object",
+        "x-examples": {},
+        "description": "This element will provide the specific value provided related to the original screening request.",
+        "properties": {
+          "oa:Code": {
+            "type": "string",
+            "default": "Change",
+            "description": "Indicates the action to be taken on the order.\n\nValid Value: \"Change\" ",
+            "enum": [
+              "Change"
+            ]
+          }
+        },
+        "required": [
+          "oa:Code"
+        ]
+      },
+      "screeningpackageorder-changescreeningpackageorder": {
+        "title": "ScreeningPackageOrder",
+        "type": "object",
+        "userarea-changescreeningpackageorder": null,
+        "description": "Container element for indicating a screening package.",
+        "properties": {
+          "DocumentId": {
+            "type": "string",
+            "description": "The order ID returned by the Create a New Order Acknowledge response.\n\nRequired Attribute\n - schemeID = \"OrderId\"",
+            "example": "6546"
+          },
+          "PackageOrder": {
+            "$ref": "#/components/schemas/packageorder-changeOrder"
+          },
+          "UserArea": {
+            "$ref": "#/components/schemas/userarea-changescreeningpackageorder"
+          }
+        }
+      },
+      "userarea-changescreeningpackageorder": {
+        "title": "UserArea",
+        "type": "object",
+        "description": "Container element for workflow specific information about the order, such as submitting collected MVR information or returning a completed consent form for seamless enhanced orders. The UserArea element indicates Sterling Volunteers specific information outside the scope of HR XML.",
+        "properties": {
+          "ConsentHTML": {
+            "type": "string",
+            "description": "This element must contain the HTML for the accepted and completed consent from the volunteer, as well as the system verified electronic signature. The incomplete consent HTML is supplied on the acknowledge response returned after successfully creating a new order. This returned HTML block must match the elements provided in that response.\n\nThis is utilized and required for the Seamless Enhanced workflows.\n\nRequired Attribute\n  - xmlns = \"https://www.verifiedvolunteers.com/\""
+          },
+          "SSN": {
+            "type": "string",
+            "description": "The volunteer's social security number.\n\nRequired for Seamless Integration if the specified package requires SSN, such as those including the Locator Select ala carte product or a Complete criminal history report.",
+            "example": "223195784",
+            "minLength": 9,
+            "maxLength": 9,
+            "pattern": "^[0-9]*$"
+          },
+          "DLNumber": {
+            "type": "string",
+            "description": "This element contains the Driver's License Number. Note: the DL Number is validated for format for the DL State. Format information can be found here: https://ntsi.com/drivers-license-format/\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product."
+          },
+          "DLStateCode": {
+            "type": "string",
+            "description": "This element contains the Driver's License State. Note: the DL Number is validated against the format for the designated DL State.\n\nRequired for Seamless orders where the package includes the MVR ala carte product.",
+            "maxLength": 2
+          },
+          "DLFirstName": {
+            "type": "string",
+            "description": "The volunteer's first name, as it appears on their driver's license.\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product.",
+            "maxLength": 30
+          },
+          "DLMiddleName": {
+            "type": "string",
+            "description": "The volunteer's middle name or middle initial, as it appears on their driver's license.",
+            "maxLength": 30
+          },
+          "DLLastName": {
+            "type": "string",
+            "description": "The volunteer's first name, as it appears on their driver's license.\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product.",
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "ConsentHTML"
+        ]
+      },
+      "packageorder-changeOrder": {
+        "title": "PackageOrder",
+        "type": "object",
+        "properties": {
+          "ScreeningSubject": {
+            "$ref": "#/components/schemas/screeningsubject-ChangeOrder"
+          }
+        },
+        "description": "Container element for specifying modifications or identifying information related to the previously submitted ScreeningPackageOrder."
+      },
+      "screeningsubject-ChangeOrder": {
+        "title": "ScreeningSubject",
+        "type": "object",
+        "description": "Container element for information for information related to the volunteer, as specified by HR XML. This includes specifying the Candidate ID to be modified.",
+        "properties": {
+          "ScreeningSubjectId": {
+            "type": "string",
+            "description": "This element provides the foreign identifier assigned to the volunteer from the original screening request. It needs to be included in all inbound and outbound transactions. \n\nRequired Attribute\n - schemeID = \"Candidate ID\"",
+            "example": "46456",
+            "maxLength": 50
+          }
+        }
+      },
+      "notifyscreeningpackageorder": {
+        "title": "NotifyScreeningPackageOrder",
+        "type": "object",
+        "description": "Expected POST request body sent to specified callback endpoints. This request is sent every time there is an update to the order, such as a change in status.",
+        "properties": {
+          "ApplicationArea": {
+            "type": "string",
+            "description": "The ApplicationArea carries information that an application may need to know in order to communicate in an integration of two or more business applications.\n\nRequired Attribute\n - xmlns = \"http://www.openapplications.org/oagis/9\""
+          },
+          "DataArea": {
+            "$ref": "#/components/schemas/dataarea-notifyscreeningpackageorder"
+          }
+        },
+        "required": [
+          "ApplicationArea"
+        ]
+      },
+      "dataarea-notifyscreeningpackageorder": {
+        "title": "DataArea",
+        "type": "object",
+        "description": "Container element for all data being sent as part of the NotifyScreeningPackageOrder request.",
+        "properties": {
+          "Notify": {
+            "type": "object",
+            "description": "Required Attribute\n - xmlns = \"http://www.openapplications.org/oagis/9\"",
+            "properties": {
+              "ActionCriteria": {
+                "$ref": "#/components/schemas/actioncriteria-notifyscreeningpackageorder"
+              }
+            }
+          },
+          "ScreeningPackageOrder": {
+            "$ref": "#/components/schemas/screeningpackageorder-NotifyScreeningPackageOrder"
+          }
+        }
+      },
+      "actioncriteria-notifyscreeningpackageorder": {
+        "title": "ActionCriteria",
+        "type": "object",
+        "description": "This element includes the details surrounding the current state of the requested screening order.",
+        "properties": {
+          "ActionExpression": {
+            "type": "string",
+            "description": "This element indicates that a change has occurred in the order.\n\nRequired Attribute:\n - actioncode=\"Modified\""
+          },
+          "ChangeStatus": {
+            "$ref": "#/components/schemas/changestatus-notifyscreeningpackageorder"
+          }
+        }
+      },
+      "changestatus-notifyscreeningpackageorder": {
+        "title": "ChangeStatus",
+        "type": "object",
+        "description": "This element defines the current status of the requested screening order.\n\nCode definitions:\n*New:* The draft order has been submitted and is awaiting additional actions from the volunteer (applies to all workflows except Seamless).\n*InProgress:* The order has been submitted to Sterling Volunteers for fulfillment.\n*Complete:* The order has been completed by Sterling Volunteers and is awaiting an adjudication decision from the organization.\n*Adjudicated:* The order results have been adjudicated and the volunteer has been deemed either eligible or ineligible for volunteering at the organization based on their screening results.\n*Hold:* Orders may be placed in the hold queue if the organization has a pricing threshold configured.\n*Canceled:* Clients may decide to cancel an order that has previously been placed on Hold.",
+        "properties": {
+          "Code": {
+            "type": "string",
+            "enum": [
+              "New",
+              "InProgress",
+              "Hold",
+              "Canceled",
+              "Complete",
+              "Adjudicated"
+            ],
+            "description": "The current state of the order."
+          }
+        },
+        "required": [
+          "Code"
+        ]
+      },
+      "screeningpackageorder-NotifyScreeningPackageOrder": {
+        "title": "ScreeningPackageOrder",
+        "type": "object",
+        "description": "Container element for package order details, including the OrderId.",
+        "properties": {
+          "DocumentId": {
+            "type": "string",
+            "description": "This element provides the identification number for the order created from the original screening request.\n\nOnly one instance of this required element is permitted.  \n\nRequired Attribute\n - schemeID = \"OrderID\"\n - This element/attribute is designated to provide the order number generated in the Verified Volunteers system from the original screening order request.",
+            "example": "6546"
+          },
+          "PackageOrder": {
+            "$ref": "#/components/schemas/packageorder-NotifyScreeningPackageOrder"
+          },
+          "UserArea": {
+            "$ref": "#/components/schemas/userarea-NotifyScreeningPackageOrder"
+          }
+        },
+        "required": [
+          "DocumentId"
+        ]
+      },
+      "packageorder-NotifyScreeningPackageOrder": {
+        "title": "PackageOrder",
+        "type": "object",
+        "description": "Container element for information included in the package order, such as volunteer information.",
+        "properties": {
+          "ScreeningSubject": {
+            "type": "object",
+            "description": "The element includes all of the details regarding the volunteer to be screened",
+            "properties": {
+              "ScreeningSubjectID": {
+                "type": "string",
+                "description": "The custom identifier assigned to the volunteer from the original screening request. This is typically the foreign identifier that represents the volunteer in the requesting system. It is included in all inbound and outbound API transactions.\n\nRequired Attribute\n - schemeId = \"CandidateID\"",
+                "example": "\"46456\""
+              },
+              "ScreeningSubjectName": {
+                "type": "object",
+                "description": "Container element for the name of the person to be screened.",
+                "required": [
+                  "ScreeningPersonName"
+                ],
+                "properties": {
+                  "ScreeningPersonName": {
+                    "type": "object",
+                    "description": "Container element for the name of the person to be screened.",
+                    "required": [
+                      "PersonName"
+                    ],
+                    "properties": {
+                      "PersonName": {
+                        "type": "object",
+                        "description": "Container element for the name of the person to be screened.\n\nRequired Attribute\n - nameTypeCode = \"CurrentName\" ",
+                        "required": [
+                          "GivenName",
+                          "FamilyName"
+                        ],
+                        "properties": {
+                          "GivenName": {
+                            "type": "string",
+                            "description": "The first name of the volunteer being screened.",
+                            "example": "\"Samuel\"",
+                            "maxLength": 30
+                          },
+                          "MiddleName": {
+                            "type": "string",
+                            "description": "The middle name of the volunteer being screened.",
+                            "example": "'A' or 'Rutherford'",
+                            "maxLength": 40
+                          },
+                          "FamilyName": {
+                            "type": "string",
+                            "description": "The last name of the volunteer being screened.",
+                            "example": "\"Smith\"",
+                            "maxLength": 40
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "Communication": {
+                "$ref": "#/components/schemas/communication-telephone"
+              },
+              "communication": {
+                "$ref": "#/components/schemas/communication-address"
+              }
+            },
+            "required": [
+              "ScreeningSubjectName"
+            ]
+          },
+          "UserArea": {
+            "type": "object",
+            "properties": {
+              "EffectiveDate": {
+                "type": "string",
+                "description": "Date reflecting the most recent impactful status update for the order. This date will be updated when the order is first submitted to Sterling Volunteers for fulfillment (InProgress), and updated again when the order is completed (Complete).  If the order has not been submitted (New or Hold), this value will return \u201c0001-01-01\u201d\n\nValid Format: yyyy-mm-dd",
+                "format": "date",
+                "example": "2015-12-17"
+              }
+            },
+            "required": [
+              "EffectiveDate"
+            ]
+          }
+        }
+      },
+      "communication-telephone": {
+        "title": "Communication (Telephone)",
+        "type": "object",
+        "description": "This element will define the type of communication data to be provided for the person to be screened.\n\nRequired for the Seamless integration workflow.",
+        "properties": {
+          "ChannelCode": {
+            "type": "string",
+            "default": "telephone",
+            "description": "This element defines the type of communication information being provided.\n\nRequired for the Seamless integration workflow."
+          },
+          "oa:AreaDialing": {
+            "type": "string",
+            "description": "The voluntee's area code.\n\nRequired for the Seamless integration workflow.\n\nValid Format: XXX",
+            "example": "803",
+            "maxLength": 3,
+            "pattern": "^[0-9]*$"
+          },
+          "oa:DialNumber": {
+            "type": "string",
+            "description": "The volunteer's phone number.\n\nRequired for the Seamless integration workflow.\n\nValid Format: XXX-XXXX",
+            "example": "555-1212",
+            "maxLength": 8,
+            "pattern": "^[0-9-]*$"
+          }
+        }
+      },
+      "communication-email": {
+        "title": "Communication (Email)",
+        "type": "object",
+        "description": "This element will define the type of communication data to be provided for the person to be screened.",
+        "properties": {
+          "oa:URI": {
+            "type": "string",
+            "description": "The primary email address for the person to be screened. This is where the invitation will be sent for the invitation workflow. This value is also used to allow the volunteer to claim their account in other workflows.",
+            "format": "email",
+            "example": "volunteer@npo.org",
+            "maxLength": 250
+          },
+          "ChannelCode": {
+            "type": "string",
+            "default": "Email",
+            "description": "This element defines the type of communication information being provided."
+          }
+        },
+        "required": [
+          "oa:URI",
+          "ChannelCode"
+        ]
+      },
+      "address": {
+        "title": "Address",
+        "type": "object",
+        "description": "The volunteer's current address.\n\nNOTE: International addresses are only supported for a limited set of ala carte products, one of which must be included in the specified package to allow international addresses to be supplied. If the specified package does not include an international ala carte product, US address validation rules will automatically be applied. ",
+        "properties": {
+          "oa:LineOne": {
+            "type": "string",
+            "description": "The street address for the person to be screened.",
+            "maxLength": 100
+          },
+          "oa:LineTwo": {
+            "type": "string",
+            "description": "The additional address details for the person to be screened, such as an apartment or unit number.",
+            "maxLength": 100
+          },
+          "oa:CityName": {
+            "type": "string",
+            "description": "The city name for the address for the person to be screened. ",
+            "maxLength": 30
+          },
+          "oa:CountrySubDivisionCode": {
+            "type": "string",
+            "description": "The state or country sub-division code for the address for the person to be screened. For US addresses, a valid two character state abbreviation is required.\n\nInternational addresses will allow up to 20 characters, and a fully written out region or province, such as Ontario or Kyoto, is expected.",
+            "minLength": 2,
+            "maxLength": 20
+          },
+          "CountryCode": {
+            "type": "string",
+            "default": "USA",
+            "description": "The ISO-3 country code for international orders.\n\nDefaults to USA if no value is provided.",
+            "example": "USA",
+            "maxLength": 3,
+            "pattern": "^[A-Za-z]+$"
+          },
+          "oa:PostalCode": {
+            "type": "string",
+            "description": "The zip code for the address for the person to be screened.  The API will allow a 9-digit zip code to be passed in, but will truncate any detail over 5 digits for US zip codes.  This is to facilitate the claiming process.\n\nAlphanumeric international postal codes are supported and will not be truncated, but will be trimmed of white space and punctuation. ",
+            "example": "28557",
+            "maxLength": 9
+          }
+        },
+        "required": [
+          "oa:LineOne",
+          "oa:CityName",
+          "oa:CountrySubDivisionCode",
+          "oa:PostalCode"
+        ]
+      },
+      "communication-address": {
+        "title": "Communication (Address)",
+        "type": "object",
+        "properties": {
+          "Address": {
+            "$ref": "#/components/schemas/address"
+          }
+        },
+        "description": "Container element for the volunteer's primary address."
+      },
+      "userarea-NotifyScreeningPackageOrder": {
+        "title": "UserArea",
+        "type": "object",
+        "description": "Container element for specifying result information for the order. The UserArea element indicates Sterling Volunteers specific information outside the scope of HR XML.",
+        "properties": {
+          "ReportResult": {
+            "type": "string",
+            "description": "This element will provide details regarding the background check results.\n\nIf ChangeStatus/Code = New, InProgress, Hold, or Cancel, the /UserArea/ReportResult will not be sent.  \nIf ChangeStatus/Code = Complete, valid values would be Clear, Consider.  \nIf ChangeStatus/Code = Adjudicated, valid values would be Eligible, Ineligible.",
+            "enum": [
+              "Clear",
+              "Consider",
+              "Eligible",
+              "Ineligible"
+            ]
+          },
+          "ReportURL": {
+            "type": "string",
+            "description": "This element will provide the URL to access the background check report and adjudication functionality within the Verified Volunteers system.\n\nThis element is passed for the following ChangeStatus/Code values: Complete, Adjudicated,Hold\n\nIt will not be passed when the ChangeStatus/Code = InProgress"
+          },
+          "Restriction": {
+            "type": "string",
+            "description": "This element will provide the name of the restriction assigned to the results.  If rating restrictions are enabled and chosen when adjudicating this order, the results are sent back in this field."
+          },
+          "HasConsider": {
+            "type": "boolean",
+            "description": "This element is configurable and you must request it be enabled.  If the order contains any searches that have been scored as consider, this will return true.  If there are no consider results, it will return false."
+          },
+          "HasUnperformable": {
+            "type": "boolean",
+            "description": "This element is configurable and you must request it be enabled.  If the order contains any searches that were unperformable, this will return true.  If there are no unperformable results, it will return false."
+          },
+          "CMARulesetApplied": {
+            "type": "boolean",
+            "description": "If the CMA feature is enabled, this field will indicate if CMA rules were applied to the given order."
+          },
+          "CMAResult": {
+            "type": "string",
+            "description": "If the CMA feature is enabled, this field will return the calculated summary result of the screening."
+          },
+          "CMARulesetName": {
+            "type": "string",
+            "description": "If the CMA feature is enabled, this field will return the name of the rulset applied to the report."
+          }
+        },
+        "required": [
+          "ReportResult",
+          "ReportURL"
+        ]
+      },
+      "processscreeningpackageorder": {
+        "title": "ProcessScreeningPackageOrder",
+        "type": "object",
+        "properties": {
+          "DataArea": {
+            "$ref": "#/components/schemas/DataArea-ProcessScreeningPackageOrder"
+          }
+        },
+        "description": "Expected request body for the order endpoint. Specifies the complete set of data required to submit an order on Sterling Volunteers. Required elements may change depending on API workflow and components included in the desired package."
+      },
+      "DataArea-ProcessScreeningPackageOrder": {
+        "title": "DataArea",
+        "type": "object",
+        "properties": {
+          "ScreeningPackageOrder": {
+            "$ref": "#/components/schemas/screeningpackageorder-ProcessScreeningPackageOrder"
+          }
+        },
+        "description": "Container element for all data being sent as part of the ProcessScreeningPackageOrder request."
+      },
+      "screeningpackageorder-ProcessScreeningPackageOrder": {
+        "title": "ScreeningPackageOrder",
+        "type": "object",
+        "properties": {
+          "PackageOrder": {
+            "$ref": "#/components/schemas/PackageOrder-ProcessScreeningPackageOrder"
+          },
+          "UserArea": {
+            "$ref": "#/components/schemas/userarea-ProcessScreeningPackageOrder"
+          }
+        },
+        "description": "Container element for package order details."
+      },
+      "userarea-ProcessScreeningPackageOrder": {
+        "title": "UserArea",
+        "type": "object",
+        "description": "Container element for specifying add-on information for the order, such as custom fields or MVR information. The UserArea element indicates Sterling Volunteers specific information outside the scope of HR XML.",
+        "properties": {
+          "Custom1": {
+            "type": "string",
+            "description": "This element will include any custom data that will be populated to user-defined column 1.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "Custom2": {
+            "type": "string",
+            "description": "This element will include any custom data that will be populated to user-defined column 2.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "Custom3": {
+            "type": "string",
+            "description": "This element will include any custom data that will be populated to user-defined column 3.",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "ClientView": {
+            "type": "string",
+            "description": "This is a semi-colon delimited list of ClientViews to associate the volunteer with.  These are validated and must match the client views configured for the client.\n\nClientViews control visibility of the volunteer within the associated client dashboard. Views are typically used to restrict access and visibility to certain volunteers and background screening results, such as for celebrity applicants and/or high level volunteer positions such as board members."
+          },
+          "DLNumber": {
+            "type": "string",
+            "description": "This element contains the Driver's License Number. Note: the DL Number is validated for format for the DL State. Format information can be found here: https://ntsi.com/drivers-license-format/\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product."
+          },
+          "DLStateCode": {
+            "type": "string",
+            "description": "This element contains the Driver's License State. Note: the DL Number is validated against the format for the designated DL State.\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product.",
+            "maxLength": 2
+          },
+          "DLFirstName": {
+            "type": "string",
+            "description": "The volunteer's first name, as it appears on their driver's license.\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product.",
+            "maxLength": 30
+          },
+          "DLMiddleName": {
+            "type": "string",
+            "description": "The volunteer's middle name or middle initial, as it appears on their driver's license.",
+            "maxLength": 30
+          },
+          "DLLastName": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "The volunteer's last name, as it appears on their driver's license.\n\nRequired for Seamless orders where the package includes the Motor Vehicle Report (MVR) ala carte product."
+          }
+        }
+      },
+      "PackageOrder-ProcessScreeningPackageOrder": {
+        "title": "PackageOrder",
+        "type": "object",
+        "description": "Container element for information included in the package order, such as volunteer information and the ID of the package to be run.",
+        "properties": {
+          "PackageId": {
+            "type": "string",
+            "description": "The PackageId (or GOOD DEED code) defines the screening package to be run on the volunteer and determines what additional information may be required in the request due to the criminal history screening level or additional ala carte options included in the package, such as a Motor Vehicle Report (MVR).\n\nNOTE: The organization may have one or multiple available packages available in Sterling Volunteers based on the position the volunteer is applying for. Therefore, the correct PackageId must be determined by the requesting application prior to submitting the new order request.",
+            "example": "a1b2c3d",
+            "minLength": 7,
+            "maxLength": 7,
+            "pattern": "^[a-zA-Z0-9]*$"
+          },
+          "ScreeningSubject": {
+            "$ref": "#/components/schemas/screeningsubject"
+          }
+        },
+        "required": [
+          "PackageId"
+        ]
+      },
+      "screeningsubject": {
+        "title": "ScreeningSubject",
+        "type": "object",
+        "description": "Container element for information related to the volunteer, as specified by HR XML.",
+        "properties": {
+          "ScreeningSubjectID": {
+            "type": "string",
+            "description": "This is a custom identifier for the volunteer, typically used to store a foreign identifier to link the volunteer to an external system, such as the requesting volunteer management system.\u00a0\n\nThis unique key is used in tandem with the requesting client ID to identify the volunteer between Sterling Volunteers customers. The matching logic will first look to see if the value matches a previous entry and update the information with the latest request. The secondary matching logic will next match on First Name, Last Name, and Email. In that case, this value will overwrite the existing information.\n\nRequired Attributes\n - schemeID = \"Candidate ID\"\n ",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "PersonLegalID": {
+            "type": "string",
+            "description": "A US social security number may optionally be supplied on most orders. If supplied, it must be a 9-digit number, including leading zeros where present, and should not contain hyphens. The validation for the SSN is subject to change and we do accept clearly fake values.\n\nThis value is required for Seamless workflow when products on the order include a Complete criminal history search, or the Locator Select ala carte product.\n\nRequired Attributes\n  - schemeID = \"SSN\"",
+            "example": "222991111",
+            "maxLength": 9
+          },
+          "ScreeningSubjectName": {
+            "$ref": "#/components/schemas/screeningsubjectname"
+          },
+          "Communication": {
+            "$ref": "#/components/schemas/communication-telephone"
+          },
+          "Communication ": {
+            "$ref": "#/components/schemas/communication-email"
+          },
+          "Communication   ": {
+            "$ref": "#/components/schemas/communication-address"
+          },
+          "GenderCode": {
+            "type": "string",
+            "enum": [
+              "Male",
+              "Female",
+              "NotSpecified",
+              "NotKnown"
+            ],
+            "description": "The gender of the person to be screened. If a GenderCode is not received Sterling Volunteers will default the value to NotKnown.\n\nRequired for Seamless integration workflows."
+          },
+          "FreeFormBirthDate": {
+            "$ref": "#/components/schemas/freeformbirthdate"
+          }
+        },
+        "required": [
+          "ScreeningSubjectID"
+        ]
+      },
+      "screeningsubjectname": {
+        "title": "ScreeningSubjectName",
+        "type": "object",
+        "properties": {
+          "ScreeningPersonName": {
+            "$ref": "#/components/schemas/screeningpersonname"
+          }
+        },
+        "description": "Container element for volunteer's name."
+      },
+      "screeningpersonname": {
+        "title": "ScreeningPersonName",
+        "type": "object",
+        "properties": {
+          "PersonName": {
+            "$ref": "#/components/schemas/personname"
+          }
+        },
+        "description": "Container element for the name of the person to be screened."
+      },
+      "personname": {
+        "title": "PersonName",
+        "type": "object",
+        "description": "This element will include the name of the volunteer entered during the creation of the order.\n\nNOTE: For redirect and invitation workflows, there is an option to prevent volunteers from modifying this data when completing their order. If these values are changed during the ordering process, the original order will be cancelled and recreated with a new OrderId.\n\nRequired Attribute\n- nameTypeCode = \"CurrentName\"",
+        "properties": {
+          "oa:GivenName": {
+            "type": "string",
+            "description": "The given name or first name of the person to be screened.\n\nNOTE: There is an option to prevent volunteers from modifying this value when completing their order. If this value is changed during the ordering process, the original order will be cancelled and recreated with a new OrderId.",
+            "example": "\"Samuel\"",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "MiddleName": {
+            "type": "string",
+            "description": "The middle name or middle initial of the person to be screened. \n\nNOTE: There is an option to prevent volunteers from modifying this value when completing their order. If this value is changed during the ordering process, the original order will be cancelled and recreated with a new OrderId.",
+            "example": "'A' or 'Rutherford'",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "FamilyName": {
+            "type": "string",
+            "description": "The family name or last name of the person to be screened.\n\nNOTE: There is an option to prevent volunteers from modifying this value when completing their order. If this value is changed during the ordering process, the original order will be cancelled and recreated with a new OrderId.",
+            "example": "\"Smith\"",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "oa:GivenName",
+          "FamilyName"
+        ]
+      },
+      "freeformbirthdate": {
+        "title": "FreeFormBirthDate",
+        "type": "object",
+        "description": "Container element for the volunteer's date of birth.",
+        "properties": {
+          "FormattedDateTime": {
+            "type": "string",
+            "description": "The birth date of the person to be screened. The full date (year, month, day) is required.  The date of birth will be validated to confirm the candidate is not under 18 years of age, as well as to increase the accuracy of screening results returned. This value will also be used in the volunteer account claiming process.\n\nValid Format: YYYY-MM-DD\nMust be >18 years of age unless the supplied package explicitly allows screening minors.\nDates prior to 1900 are considered invalid.",
+            "format": "date",
+            "example": "1987-05-03"
+          }
+        },
+        "required": [
+          "FormattedDateTime"
+        ]
+      },
+      "ErrorResponse": {
+        "title": "ErrorResponse",
+        "type": "object",
+        "description": "The detailed error message returned on error states.",
+        "properties": {
+          "Error": {
+            "type": "object",
+            "description": "The error message container element.",
+            "properties": {
+              "Message": {
+                "type": "string",
+                "description": "The detailed error message."
+              }
+            }
+          }
+        },
+        "x-examples": {
+          "ErrorResponseExample": {}
+        },
+        "value": "<Error><Message>The requested resource does not support http method '{HttpVerb}'.</Message></Error>"
+      },
+      "product": {
+        "title": "product",
+        "type": "object",
+        "x-examples": {
+          "advanced-package": {
+            "id": 2,
+            "name": "Level 2: Advanced Criminal History Record Locator Search",
+            "price": 25,
+            "isAlaCartProduct": false,
+            "isCrimProduct": true,
+            "isOrderProduct": true,
+            "isPayer": 1,
+            "altProductPrice": null
+          },
+          "mvr-example": {
+            "id": 4,
+            "name": "Motor Vehicle Record Check",
+            "price": 13.5,
+            "isAlaCartProduct": true,
+            "isCrimProduct": false,
+            "isOrderProduct": false,
+            "isPayer": 1,
+            "altProductPrice": null
+          }
+        },
+        "description": "Product metadata. ",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique identifier of the product."
+          },
+          "name": {
+            "type": "string",
+            "description": "The human readable name of the product."
+          },
+          "price": {
+            "type": "number",
+            "description": "The base price for the product. This price does not include applicable access fees, which are calculated per order based on the volunteer's location."
+          },
+          "isAlaCartProduct": {
+            "type": "boolean",
+            "description": "Indicates if the product is an optional add-on product, such as a Motor Vehicle Report (MVR)."
+          },
+          "isCrimProduct": {
+            "type": "boolean",
+            "description": "Indicates if the product is one of the core Sterling Volunteers criminal history search products."
+          },
+          "isOrderProduct": {
+            "type": "boolean",
+            "description": ""
+          },
+          "isPayer": {
+            "type": "boolean"
+          },
+          "altProductPrice": {
+            "type": "string",
+            "description": "This field is used if there is an alternative pricing option for the product, such as discount for optionally reusing an existing PA Abuse search. The alternative price is calculated and used at the time of ordering, where applicable."
+          }
+        }
+      },
+      "package": {
+        "title": "package",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The seven character unique identifier for the package. This value is used for all incoming order requests.",
+            "minLength": 7,
+            "maxLength": 7
+          },
+          "clientId": {
+            "description": "The unqiue identifier of the Sterling Volunteers client associated with the package. This field can be used to differentiate available packages within a hierarchy.",
+            "type": "integer"
+          },
+          "title": {
+            "type": "string",
+            "description": "The human readable package/position name."
+          },
+          "products": {
+            "type": "array",
+            "description": "The list of products that will be run as part of the package.",
+            "items": {
+              "$ref": "#/components/schemas/product"
+            }
+          }
+        },
+        "description": "The package (or position) definition. This object contains metadata about the package of products that will ultimately run on volunteers when an order is submitted."
+      },
+      "aggregateOrderDetails": {
+        "title": "aggregateOrderDetails",
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "description": "The unique identifier associated with the order. This value is returned as part of the AcknowledgeScreeningPackageOrder response to the initial Create a new order request, and can be used to request specific order details using the Fetch order details by ID endpoint."
+          },
+          "apiCandidateId": {
+            "type": "string",
+            "description": "The unique identifier that ties the volunteer to the external system. This identifier is set during the original order request.",
+            "maxLength": 50
+          },
+          "packageId": {
+            "type": "string",
+            "description": "The package or GoodDeedCode that was utilized for the order.",
+            "minLength": 7,
+            "maxLength": 7
+          },
+          "orderingAccountId": {
+            "type": "integer",
+            "description": "The Sterling Volunteers account that actually submitted the order. In the case of hierarchical accounts, this is often the parent account."
+          },
+          "associatedAccountIds": {
+            "type": "integer",
+            "description": "The Sterling Volunteers account that owns the package being run on the volunteer. In the case of hierarchical accounts, this is often the child account."
+          },
+          "completedDate": {
+            "type": "string",
+            "description": "The date the order was completed. This field will not be populated until the order has completed processing.",
+            "example": "2020-05-18 15:42:00.430"
+          },
+          "modifiedDate": {
+            "type": "string",
+            "example": "2020-06-05 09:51:25.330",
+            "description": "The date the order was last updated. This includes all status updates, such as transitioning from New to InProgress."
+          },
+          "createdDate": {
+            "type": "string",
+            "description": "The date the order was successfully created.",
+            "example": "2020-05-18 15:40:43.867"
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the order.",
+            "enum": [
+              "Error",
+              "InProgress",
+              "New",
+              "Adjudicated",
+              "Complete",
+              "Hold",
+              "Canceled"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of the Complete or Adjudicated report.",
+            "enum": [
+              "Clear",
+              "Consider",
+              "Eligible",
+              "Ineligible"
+            ]
+          },
+          "hasClear": {
+            "type": "boolean",
+            "description": "Indicates if the results of the screening were all clear for a complete report."
+          },
+          "hasUnperformable": {
+            "type": "boolean",
+            "description": "Indicates if there are any search results included in the screening that were unperformable."
+          },
+          "hasConsider": {
+            "type": "boolean",
+            "description": "Indicates that one or more hits were found on the screening."
+          },
+          "associatedOrderIds": {
+            "type": "string",
+            "description": "A comma delimited list of other orders associated with the candidate in the given hierarchy. This may include additional packages for the same account, or the presence of the volunteer at multiple branches of the hierarchy."
+          },
+          "reportUrl": {
+            "type": "string",
+            "description": "A direct link to view and adjudicate the completed report.",
+            "format": "uri",
+            "example": "https://qapp.sterlingvolunteers.com/Adjudicate/JPJOQTOMBQKBHPCPBOR"
+          }
+        },
+        "x-examples": {
+          "example-1": {}
+        }
+      },
+      "aggregateCollectionMetadata": {
+        "title": "aggregateCollectionMetadata",
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "type": "integer",
+            "description": "The current page size. A PageSize less than the specified limit indicates the end of the collection."
+          },
+          "LastSeen": {
+            "type": "string",
+            "example": "BLBDPHGTRLDPKINGGROR-LRPSLTDCGEHETJDATDNA",
+            "description": "A pointer to the last record seen when iterating through the list. This value can be used in subsequent requests to ensure a stable sort and that no records are missed."
+          },
+          "NextLink": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://qapp.sterlingvolunteers.com/ja/aggregateorderstatusv2?limit=500&amp;offset=500",
+            "description": "The URL for the next page of results. The NextLink can be used to blindly call the next page until the collection is complete."
+          }
+        }
+      },
+      "aggregateOrderStatusCollection": {
+        "title": "aggregateOrderStatusCollection",
+        "type": "object",
+        "properties": {
+          "CollectionMetaData": {
+            "$ref": "#/components/schemas/aggregateCollectionMetadata"
+          },
+          "Collection": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/aggregateApiOrderStatus"
+            }
+          }
+        }
+      },
+      "aggregateApiOrderStatus": {
+        "title": "aggregateApiOrderStatus",
+        "type": "object",
+        "properties": {
+          "ApiOrderStatus": {
+            "$ref": "#/components/schemas/aggregateOrderDetails"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Username": {
+        "type": "http",
+        "scheme": "Basic"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://qapp.sterlingvolunteers.com"
+    }
+  ]
+}

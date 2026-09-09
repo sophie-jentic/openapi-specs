@@ -1,0 +1,1077 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GenZform Zapier Integration API",
+    "description": "API endpoints used by the GenZform Zapier integration app. Includes OAuth 2.0\nauthentication, form listing, webhook management, and form response triggers.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "GenZform",
+      "url": "https://genzform.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/gogosoon/genzform-zapier-integration-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://genzform.com",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "OAuth",
+      "description": "OAuth 2.0 authorization and token management"
+    },
+    {
+      "name": "Integration",
+      "description": "Integration endpoints for Zapier triggers and actions"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/api/oauth/authorize",
+            "tokenUrl": "/api/oauth/token",
+            "refreshUrl": "/api/oauth/token",
+            "scopes": {
+              "forms:read": "Read access to forms",
+              "forms:write": "Write access to forms"
+            }
+          }
+        }
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "OAuth 2.0 access token (format gzf_at_<hex>)"
+      }
+    },
+    "schemas": {
+      "OAuthServerMetadata": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "example": "https://genzform.com"
+          },
+          "authorization_endpoint": {
+            "type": "string",
+            "example": "https://genzform.com/api/oauth/authorize"
+          },
+          "token_endpoint": {
+            "type": "string",
+            "example": "https://genzform.com/api/oauth/token"
+          },
+          "revocation_endpoint": {
+            "type": "string",
+            "example": "https://genzform.com/api/oauth/revoke"
+          },
+          "scopes_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "forms:read",
+              "forms:write"
+            ]
+          },
+          "response_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "code"
+            ]
+          },
+          "grant_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "authorization_code",
+              "refresh_token"
+            ]
+          },
+          "token_endpoint_auth_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "client_secret_post",
+              "client_secret_basic"
+            ]
+          }
+        }
+      },
+      "ClientInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Zapier Integration"
+          },
+          "description": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "ClientRegistrationRequest": {
+        "type": "object",
+        "required": [
+          "redirect_uris"
+        ],
+        "properties": {
+          "client_name": {
+            "type": "string",
+            "example": "GenZform Zapier"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": [
+              "https://zapier.com/callback"
+            ]
+          },
+          "grant_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "authorization_code",
+                "refresh_token"
+              ]
+            },
+            "default": [
+              "authorization_code",
+              "refresh_token"
+            ]
+          },
+          "response_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "code"
+              ]
+            },
+            "default": [
+              "code"
+            ]
+          },
+          "token_endpoint_auth_method": {
+            "type": "string",
+            "enum": [
+              "client_secret_basic",
+              "client_secret_post",
+              "none"
+            ],
+            "default": "client_secret_post"
+          },
+          "client_uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "logo_uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "scope": {
+            "type": "string",
+            "example": "forms:read forms:write"
+          }
+        }
+      },
+      "ClientRegistrationResponse": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "example": "gzf_abc123"
+          },
+          "client_secret": {
+            "type": "string",
+            "example": "gzf_secret_xyz789"
+          },
+          "client_secret_expires_at": {
+            "type": "integer",
+            "example": 0
+          },
+          "client_name": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grant_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "response_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_endpoint_auth_method": {
+            "type": "string"
+          },
+          "client_uri": {
+            "type": "string"
+          },
+          "logo_uri": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeConsentRequest": {
+        "type": "object",
+        "required": [
+          "client_id",
+          "redirect_uri"
+        ],
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "state": {
+            "type": "string"
+          },
+          "code_challenge": {
+            "type": "string"
+          },
+          "code_challenge_method": {
+            "type": "string",
+            "enum": [
+              "S256",
+              "plain"
+            ]
+          },
+          "resource": {
+            "type": "string",
+            "format": "uri"
+          },
+          "scope": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizeConsentResponse": {
+        "type": "object",
+        "properties": {
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://zapier.com/callback?code=abc123&state=xyz"
+          }
+        }
+      },
+      "TokenRequest": {
+        "type": "object",
+        "required": [
+          "grant_type"
+        ],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": [
+              "authorization_code",
+              "refresh_token"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Required for authorization_code grant"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "Required for authorization_code grant"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "Required for refresh_token grant"
+          },
+          "code_verifier": {
+            "type": "string",
+            "description": "PKCE code verifier (if code_challenge was used)"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "gzf_at_abcdef1234567890"
+          },
+          "refresh_token": {
+            "type": "string",
+            "example": "gzf_rt_abcdef1234567890"
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 3600
+          },
+          "scope": {
+            "type": "string",
+            "example": "forms:read forms:write"
+          }
+        }
+      },
+      "RevokeRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "FormDropdownItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "frm_219b5626-44b4-7cc5-a914-0c4262adde7c"
+          },
+          "label": {
+            "type": "string",
+            "example": "Contact Form"
+          }
+        }
+      },
+      "FormResponse": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "example": "frm_219b5626-44b4-7cc5-a914-0c4262adde7c"
+          },
+          "form_name": {
+            "type": "string",
+            "example": "Contact Form"
+          },
+          "form_url_code": {
+            "type": "string",
+            "example": "contact-form"
+          },
+          "response_id": {
+            "type": "string",
+            "example": "fr_019b5676-4ab4-75c5-a914-0c4262adde7c"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Dynamic key-value pairs where keys are field IDs and values are response answers",
+            "example": {
+              "field_1": "John Doe",
+              "field_2": "john@example.com",
+              "field_3": "I have a question"
+            }
+          }
+        }
+      },
+      "WebhookSubscribeRequest": {
+        "type": "object",
+        "required": [
+          "hookUrl"
+        ],
+        "properties": {
+          "hookUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://hooks.zapier.com/hooks/catch/12345/abcde/"
+          },
+          "form_id": {
+            "type": "string",
+            "description": "Optional. Filter to specific form. Omit to trigger on all forms.",
+            "example": "frm_219b5626-44b4-7cc5-a914-0c4262adde7c"
+          }
+        }
+      },
+      "WebhookSubscribeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "fi_abc123"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/.well-known/oauth-authorization-server": {
+      "get": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "getOAuthMetadata",
+        "summary": "OAuth 2.0 Authorization Server Metadata",
+        "description": "Returns OAuth 2.0 server metadata per RFC 8414.",
+        "responses": {
+          "200": {
+            "description": "Server metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthServerMetadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "getOpenIDConfiguration",
+        "summary": "OpenID Connect Discovery",
+        "description": "Returns OpenID Connect metadata for MCP client discovery.",
+        "responses": {
+          "200": {
+            "description": "OpenID configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthServerMetadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/oauth/client-info": {
+      "get": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "getClientInfo",
+        "summary": "Get OAuth client info",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "OAuth client ID or Client ID Metadata Document URL"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing client_id"
+          },
+          "404": {
+            "description": "Client not found"
+          }
+        }
+      }
+    },
+    "/api/oauth/register": {
+      "post": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "registerClient",
+        "summary": "Dynamic Client Registration",
+        "description": "Register a new OAuth client per RFC 7591.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientRegistrationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientRegistrationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid registration parameters"
+          }
+        }
+      }
+    },
+    "/api/oauth/authorize": {
+      "get": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "authorize",
+        "summary": "Start OAuth authorization flow",
+        "description": "Redirects user to the authorization consent page.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code"
+              ]
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "PKCE S256 challenge"
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "S256",
+                "plain"
+              ]
+            }
+          },
+          {
+            "name": "resource",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Resource/audience identifier (RFC 8707)"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Space-separated list of requested scopes"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to authorization consent page"
+          },
+          "400": {
+            "description": "Invalid parameters"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "authorizeConsent",
+        "summary": "Submit authorization consent",
+        "description": "Called by the web app after user grants consent. Generates an authorization code.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeConsentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization code generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizeConsentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/oauth/token": {
+      "post": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "exchangeToken",
+        "summary": "Exchange authorization code or refresh token",
+        "description": "Supports two grant types:\n- `authorization_code`: Exchange auth code for access + refresh tokens\n- `refresh_token`: Get a new access token using a refresh token\n\nClient credentials can be passed via request body or HTTP Basic auth.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid grant or parameters"
+          },
+          "401": {
+            "description": "Invalid client credentials"
+          }
+        }
+      }
+    },
+    "/api/oauth/revoke": {
+      "post": {
+        "tags": [
+          "OAuth"
+        ],
+        "operationId": "revokeToken",
+        "summary": "Revoke a token",
+        "description": "Revoke an access or refresh token per RFC 7009. Always returns 200.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token revoked (or was already invalid)"
+          }
+        }
+      }
+    },
+    "/api/integration/me": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "getMe",
+        "summary": "Test authentication",
+        "description": "Verify OAuth credentials are valid. Used by Zapier's authentication test.",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authenticated user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token"
+          }
+        }
+      }
+    },
+    "/api/integration/forms/dropdown": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "getFormsDropdown",
+        "summary": "List forms for dropdown",
+        "description": "Returns paginated list of user's forms for dynamic field mapping in Zapier.",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter forms by name (LIKE pattern)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Page number (20 items per page)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of forms",
+            "headers": {
+              "Link": {
+                "description": "Pagination link header for next page (when more results exist)",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormDropdownItem"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/integration/triggers/new-response": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "getNewResponses",
+        "summary": "Poll for new form responses",
+        "description": "Returns newest form responses. Used as polling fallback for the Zapier trigger.",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter to specific form. Omit to get responses from all forms."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Number of responses to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of form responses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/integration/hooks/subscribe/new-response": {
+      "post": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "subscribeWebhook",
+        "summary": "Subscribe to new response webhook",
+        "description": "Creates a webhook subscription for form response events. Called by Zapier\nwhen a user enables a Zap with the \"New Form Response\" trigger.\n",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookSubscribeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook subscription created or reactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSubscribeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing hookUrl"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/integration/hooks/unsubscribe/{webhookId}": {
+      "delete": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "unsubscribeWebhook",
+        "summary": "Unsubscribe from webhook",
+        "description": "Deactivates a webhook subscription. Called by Zapier when a user disables\na Zap. Performs a soft delete (marks as inactive).\n",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Webhook subscription ID from the subscribe response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Webhook not found"
+          }
+        }
+      }
+    },
+    "/api/integration/hooks/sample/new-response": {
+      "get": {
+        "tags": [
+          "Integration"
+        ],
+        "operationId": "getSampleResponse",
+        "summary": "Get sample webhook payload",
+        "description": "Returns sample form response data for field mapping in Zapier's Zap editor.\nUses placeholder data to avoid exposing real user data.\n",
+        "security": [
+          {
+            "oauth2": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "form_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Get sample from specific form. Omit to use most recent form."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sample form response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  }
+}

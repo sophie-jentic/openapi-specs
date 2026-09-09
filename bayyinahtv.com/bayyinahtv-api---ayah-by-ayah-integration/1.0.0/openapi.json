@@ -1,0 +1,1247 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BayyinahTV API - Ayah by Ayah Integration",
+    "description": "API documentation for integrating Ayah by Ayah with BayyinahTV authentication system.\n\n## Authentication\nAll authenticated endpoints require a JWT token in the `Authorization` header:\n```\nAuthorization: Bearer <token>\n```\n\n## Application Identifiers\n| App | Platform | Bundle/Package ID |\n|-----|----------|-------------------|\n| Bayyinah TV | iOS | com.bayyinahapp.btv |\n| Bayyinah TV | Android | com.zombiesoup.bayyinah |\n\nExample for Ayah by Ayah: `com.bayyinah.ayah_by_ayah`\n\n## Device Limits\nUsers have a maximum number of devices they can be logged in on simultaneously.\nThe limit varies per user (e.g. based on subscription plan). When a login or register\nrequest causes the user to exceed their device limit, the response will include a\n`device_cleanup` object at the top level with `requires_cleanup: true`. The client\nshould then prompt the user to remove devices before proceeding.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Bayyinah Team"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/altinmaloku/bayyinahtv-api-ayah-by-ayah-integration/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.bayyinahtv.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://dev.api.bayyinahtv.com",
+      "description": "Development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication endpoints (register, login, logout, profile)"
+    }
+  ],
+  "paths": {
+    "/v1/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register a new user",
+        "description": "Creates a new user account and returns a JWT token for immediate authentication.\n\nThe `app_id` and `platform` fields are used to associate the created token with a\nspecific application. This is used for device tracking and cleanup.\n",
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "first_name": "John",
+                "last_name": "Doe",
+                "phone_country_code": "+1",
+                "phone_number": "1234567890",
+                "email": "user@example.com",
+                "password": "password123",
+                "app_id": "com.bayyinah.ayah_by_ayah",
+                "platform": "ios",
+                "device_name": "iPhone 14",
+                "device_identifier": "a1b2c3d4-e5f6-7890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSuccessResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                    "user": {
+                      "id": 12345,
+                      "first_name": "John",
+                      "last_name": "Doe",
+                      "full_name": "John Doe",
+                      "email": "user@example.com",
+                      "phone_country_code": "+1",
+                      "phone_number": "1234567890",
+                      "phone": "+1 1234567890",
+                      "pending_email": null,
+                      "social_providers": [],
+                      "active": true,
+                      "has_affiliate": false,
+                      "trial_ends_at": null,
+                      "allow_older_versions": false,
+                      "block_commenting_until": null,
+                      "can_comment": true,
+                      "verified": false,
+                      "email_verified_at": null,
+                      "completed": false,
+                      "birthday": null,
+                      "address": null,
+                      "state": null,
+                      "country": null,
+                      "timezone": null,
+                      "post_code": null,
+                      "lat": null,
+                      "lng": null,
+                      "avatar": null,
+                      "last_login_at": null,
+                      "last_login_ip": null,
+                      "roles": [],
+                      "permissions": [],
+                      "subscribed": false,
+                      "device_limit": 5,
+                      "subscription": null,
+                      "shared_subscription": null,
+                      "settings": {
+                        "autoplay": true,
+                        "notifications": true
+                      },
+                      "active_promo_code": null,
+                      "prompt_dismissed_at": null
+                    }
+                  },
+                  "message": "",
+                  "device_cleanup": {
+                    "requires_cleanup": false,
+                    "limit": 5,
+                    "active_count": 1,
+                    "current_device_id": 101,
+                    "devices": [
+                      {
+                        "id": 101,
+                        "name": "iPhone 14",
+                        "device_name": "iPhone 14",
+                        "device_identifier": "a1b2c3d4-e5f6-7890",
+                        "user_agent": "AyahByAyah/1.0 iOS/17.0",
+                        "login_ip": "203.0.113.1",
+                        "is_current": true,
+                        "is_expired": false,
+                        "requires_cleanup": false,
+                        "last_used_at": "2024-01-15T10:30:00+00:00",
+                        "created_at": "2024-01-15T10:30:00+00:00",
+                        "expires_at": "2024-02-14T10:30:00+00:00",
+                        "application": {
+                          "id": 3,
+                          "name": "Ayah by Ayah",
+                          "platform": "ios"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "data": {},
+                  "message": "The given data was invalid.",
+                  "code": 422,
+                  "errors": {
+                    "email": [
+                      "The email has already been taken."
+                    ],
+                    "phone_country_code": [
+                      "The phone country code field is required."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login an existing user",
+        "description": "Authenticates a user with email and password, returns a JWT token.\n\nThe `app_id` and `platform` fields are used to associate the created token with a\nspecific application. This is used for device tracking and cleanup.\n\n**Device Limits:** Users have a configurable limit on simultaneous logged-in devices.\nWhen this limit is exceeded, the `device_cleanup` object in the response will have\n`requires_cleanup: true` along with the list of active devices. The client should\nprompt the user to revoke sessions from other devices.\n",
+        "operationId": "loginUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "password123",
+                "app_id": "com.bayyinah.ayah_by_ayah",
+                "platform": "ios",
+                "device_name": "iPhone 14",
+                "device_identifier": "a1b2c3d4-e5f6-7890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User authenticated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSuccessResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+                    "user": {
+                      "id": 12345,
+                      "first_name": "John",
+                      "last_name": "Doe",
+                      "full_name": "John Doe",
+                      "email": "user@example.com",
+                      "phone_country_code": "+1",
+                      "phone_number": "1234567890",
+                      "phone": "+1 1234567890",
+                      "pending_email": null,
+                      "social_providers": [],
+                      "active": true,
+                      "has_affiliate": false,
+                      "trial_ends_at": null,
+                      "allow_older_versions": false,
+                      "block_commenting_until": null,
+                      "can_comment": true,
+                      "verified": true,
+                      "email_verified_at": "2024-01-15T10:30:00.000000Z",
+                      "completed": true,
+                      "birthday": "1990-05-15",
+                      "address": null,
+                      "state": null,
+                      "country": {
+                        "id": 1,
+                        "name": "United States",
+                        "code": "US"
+                      },
+                      "timezone": "America/New_York",
+                      "post_code": null,
+                      "lat": null,
+                      "lng": null,
+                      "avatar": "https://api.bayyinahtv.com/storage/avatars/12345.jpg",
+                      "last_login_at": "2024-06-01T08:00:00.000000Z",
+                      "last_login_ip": "203.0.113.1",
+                      "roles": [
+                        "user"
+                      ],
+                      "permissions": [
+                        "view-courses"
+                      ],
+                      "subscribed": true,
+                      "device_limit": 5,
+                      "subscription": {
+                        "id": 789,
+                        "active": true,
+                        "subscription_type": "stripe",
+                        "subscription_id": "sub_1234567890",
+                        "title": "Annual Plan",
+                        "details": "Bayyinah TV Annual Subscription",
+                        "has_actions": true,
+                        "next_payment_at": "15 Jan 2025",
+                        "subscription_canceled": false,
+                        "canceled_at": null,
+                        "ends_at": null,
+                        "plan": {
+                          "id": 2,
+                          "description": "Annual"
+                        }
+                      },
+                      "shared_subscription": null,
+                      "settings": {
+                        "autoplay": true,
+                        "notifications": true
+                      },
+                      "active_promo_code": null,
+                      "prompt_dismissed_at": null
+                    }
+                  },
+                  "message": "",
+                  "device_cleanup": {
+                    "requires_cleanup": false,
+                    "limit": 5,
+                    "active_count": 2,
+                    "current_device_id": 101,
+                    "devices": [
+                      {
+                        "id": 101,
+                        "name": "iPhone 14",
+                        "device_name": "iPhone 14",
+                        "device_identifier": "a1b2c3d4-e5f6-7890",
+                        "user_agent": "AyahByAyah/1.0 iOS/17.0",
+                        "login_ip": "203.0.113.1",
+                        "is_current": true,
+                        "is_expired": false,
+                        "requires_cleanup": false,
+                        "last_used_at": "2024-06-15T10:30:00+00:00",
+                        "created_at": "2024-01-15T10:30:00+00:00",
+                        "expires_at": "2024-07-15T10:30:00+00:00",
+                        "application": {
+                          "id": 3,
+                          "name": "Ayah by Ayah",
+                          "platform": "ios"
+                        }
+                      },
+                      {
+                        "id": 85,
+                        "name": "Samsung Galaxy S24",
+                        "device_name": "Samsung Galaxy S24",
+                        "device_identifier": "x9y8z7w6-v5u4-3210",
+                        "user_agent": "BayyinahTV/3.0 Android/14",
+                        "login_ip": "198.51.100.42",
+                        "is_current": false,
+                        "is_expired": false,
+                        "requires_cleanup": false,
+                        "last_used_at": "2024-06-10T14:22:00+00:00",
+                        "created_at": "2024-03-01T09:00:00+00:00",
+                        "expires_at": "2024-07-10T14:22:00+00:00",
+                        "application": {
+                          "id": 2,
+                          "name": "Bayyinah TV",
+                          "platform": "android"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "data": {},
+                  "message": "Your account has been deactivated.",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials (wrong email or password)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get current authenticated user",
+        "description": "Returns the full profile of the currently authenticated user, including subscription, roles, permissions, and settings.",
+        "operationId": "getCurrentUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_id",
+            "in": "query",
+            "description": "Application bundle/package ID (used to update token's application association)",
+            "schema": {
+              "type": "string",
+              "example": "com.bayyinah.ayah_by_ayah"
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "description": "Platform identifier: ios or android",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ios",
+                "android"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": 12345,
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "full_name": "John Doe",
+                    "email": "user@example.com",
+                    "phone_country_code": "+1",
+                    "phone_number": "1234567890",
+                    "phone": "+1 1234567890",
+                    "pending_email": null,
+                    "social_providers": [],
+                    "active": true,
+                    "has_affiliate": false,
+                    "trial_ends_at": null,
+                    "allow_older_versions": false,
+                    "block_commenting_until": null,
+                    "can_comment": true,
+                    "verified": true,
+                    "email_verified_at": "2024-01-15T10:30:00.000000Z",
+                    "completed": true,
+                    "birthday": "1990-05-15",
+                    "address": null,
+                    "state": null,
+                    "country": {
+                      "id": 1,
+                      "name": "United States",
+                      "code": "US"
+                    },
+                    "timezone": "America/New_York",
+                    "post_code": null,
+                    "lat": null,
+                    "lng": null,
+                    "avatar": "https://api.bayyinahtv.com/storage/avatars/12345.jpg",
+                    "last_login_at": "2024-06-01T08:00:00.000000Z",
+                    "last_login_ip": "203.0.113.1",
+                    "roles": [
+                      "user"
+                    ],
+                    "permissions": [
+                      "view-courses"
+                    ],
+                    "subscribed": true,
+                    "device_limit": 5,
+                    "subscription": {
+                      "id": 789,
+                      "active": true,
+                      "subscription_type": "stripe",
+                      "subscription_id": "sub_1234567890",
+                      "title": "Annual Plan",
+                      "details": "Bayyinah TV Annual Subscription",
+                      "has_actions": true,
+                      "next_payment_at": "15 Jan 2025",
+                      "subscription_canceled": false,
+                      "canceled_at": null,
+                      "ends_at": null,
+                      "plan": {
+                        "id": 2,
+                        "description": "Annual"
+                      }
+                    },
+                    "shared_subscription": null,
+                    "settings": {
+                      "autoplay": true,
+                      "notifications": true
+                    },
+                    "active_promo_code": null,
+                    "prompt_dismissed_at": null
+                  },
+                  "message": ""
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated - invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/logout": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout the current user",
+        "description": "Invalidates the current JWT token (deletes the personal access token) and logs the user out.",
+        "operationId": "logoutUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoutResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": [],
+                  "message": "You have been logged out successfully."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated - invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from the login or register endpoint."
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": [
+          "phone_country_code",
+          "phone_number",
+          "email",
+          "password"
+        ],
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "User's first name",
+            "example": "John"
+          },
+          "last_name": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "User's last name",
+            "example": "Doe"
+          },
+          "phone_country_code": {
+            "type": "string",
+            "maxLength": 8,
+            "pattern": "^\\+[1-9]\\d{0,3}$",
+            "description": "Phone country code (format: +X to +XXXX)",
+            "example": "+1"
+          },
+          "phone_number": {
+            "type": "string",
+            "pattern": "^\\d{6,15}$",
+            "description": "Phone number (6-15 digits, no separators)",
+            "example": "1234567890"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address (must be unique)",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "description": "User's password (minimum 8 characters)",
+            "example": "password123"
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "User's date of birth (format: YYYY-MM-DD, must be at least 3 years ago)",
+            "example": "1990-05-15"
+          },
+          "promo_code": {
+            "type": "string",
+            "maxLength": 50,
+            "nullable": true,
+            "description": "Optional promotional/coupon code (alphanumeric)",
+            "example": "LAUNCH2024"
+          },
+          "app_id": {
+            "type": "string",
+            "description": "Application bundle/package ID used for device token tracking",
+            "example": "com.bayyinah.ayah_by_ayah"
+          },
+          "platform": {
+            "type": "string",
+            "description": "Platform identifier: ios or android",
+            "enum": [
+              "ios",
+              "android"
+            ],
+            "example": "ios"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "Human-readable name of the device",
+            "example": "iPhone 14"
+          },
+          "device_identifier": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "Unique identifier for the device (used to reuse existing token on same device)",
+            "example": "a1b2c3d4-e5f6-7890"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "User's password",
+            "example": "password123"
+          },
+          "app_id": {
+            "type": "string",
+            "description": "Application bundle/package ID used for device token tracking",
+            "example": "com.bayyinah.ayah_by_ayah"
+          },
+          "platform": {
+            "type": "string",
+            "description": "Platform identifier: ios or android",
+            "enum": [
+              "ios",
+              "android"
+            ],
+            "example": "ios"
+          },
+          "device_name": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "Human-readable name of the device",
+            "example": "iPhone 14"
+          },
+          "device_identifier": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true,
+            "description": "Unique identifier for the device (used to reuse existing token on same device)",
+            "example": "a1b2c3d4-e5f6-7890"
+          }
+        }
+      },
+      "UserObject": {
+        "type": "object",
+        "description": "Full user profile object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "User ID (auto-increment BIGINT)",
+            "example": 12345
+          },
+          "first_name": {
+            "type": "string",
+            "nullable": true,
+            "example": "John"
+          },
+          "last_name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Doe"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "Computed full name",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "phone_country_code": {
+            "type": "string",
+            "nullable": true,
+            "example": "+1"
+          },
+          "phone_number": {
+            "type": "string",
+            "nullable": true,
+            "example": "1234567890"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Formatted phone (country code + number)",
+            "example": "+1 1234567890"
+          },
+          "pending_email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email address pending verification (if user requested email change)"
+          },
+          "social_providers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of linked social login providers"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "has_affiliate": {
+            "type": "boolean",
+            "example": false
+          },
+          "trial_ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "allow_older_versions": {
+            "type": "boolean",
+            "description": "Whether to allow older app versions (false in production)",
+            "example": false
+          },
+          "block_commenting_until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "If set, user is blocked from commenting until this date"
+          },
+          "can_comment": {
+            "type": "boolean",
+            "example": true
+          },
+          "verified": {
+            "type": "boolean",
+            "example": true
+          },
+          "email_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-01-15T10:30:00.000000Z"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the user has completed their profile",
+            "example": true
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "1990-05-15"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "$ref": "#/components/schemas/CountryObject"
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true,
+            "example": "America/New_York"
+          },
+          "post_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "lat": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "lng": {
+            "type": "number",
+            "format": "float",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL to user's avatar image",
+            "example": "https://api.bayyinahtv.com/storage/avatars/12345.jpg"
+          },
+          "last_login_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "last_login_ip": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Role labels assigned to the user",
+            "example": [
+              "user"
+            ]
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions derived from user roles",
+            "example": [
+              "view-courses"
+            ]
+          },
+          "subscribed": {
+            "type": "boolean",
+            "description": "Whether the user has an active subscription",
+            "example": true
+          },
+          "device_limit": {
+            "type": "integer",
+            "description": "Maximum number of simultaneous devices allowed for this user (varies per user/plan)",
+            "example": 5
+          },
+          "subscription": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionObject"
+              }
+            ]
+          },
+          "shared_subscription": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SharedSubscriptionObject"
+              }
+            ]
+          },
+          "settings": {
+            "$ref": "#/components/schemas/SettingsObject"
+          },
+          "active_promo_code": {
+            "type": "object",
+            "nullable": true,
+            "description": "Currently active promotional code applied to the user"
+          },
+          "prompt_dismissed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "circle_sso_token": {
+            "type": "string",
+            "description": "Circle community SSO token (only present when applicable)"
+          }
+        }
+      },
+      "SubscriptionObject": {
+        "type": "object",
+        "description": "User's subscription details",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 789
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "subscription_type": {
+            "type": "string",
+            "description": "Payment provider (e.g. stripe, apple, google)",
+            "example": "stripe"
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "Provider's subscription ID",
+            "example": "sub_1234567890"
+          },
+          "title": {
+            "type": "string",
+            "example": "Annual Plan"
+          },
+          "details": {
+            "type": "string",
+            "example": "Bayyinah TV Annual Subscription"
+          },
+          "has_actions": {
+            "type": "boolean",
+            "description": "Whether the subscription has available actions (cancel, resume, etc.)",
+            "example": true
+          },
+          "next_payment_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Next billing date (format: DD MMM YYYY)",
+            "example": "15 Jan 2025"
+          },
+          "subscription_canceled": {
+            "type": "boolean",
+            "example": false
+          },
+          "canceled_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cancellation date (format: DD MMM YYYY)"
+          },
+          "ends_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Subscription end date (format: DD MMM YYYY)"
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 2
+              },
+              "description": {
+                "type": "string",
+                "example": "Annual"
+              }
+            }
+          }
+        }
+      },
+      "SharedSubscriptionObject": {
+        "type": "object",
+        "nullable": true,
+        "description": "Shared/family subscription details (if user is on a shared plan)"
+      },
+      "CountryObject": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "United States"
+          },
+          "code": {
+            "type": "string",
+            "example": "US"
+          }
+        }
+      },
+      "SettingsObject": {
+        "type": "object",
+        "description": "User's app settings/preferences"
+      },
+      "DeviceCleanupObject": {
+        "type": "object",
+        "description": "Device cleanup information. Users have a maximum number of devices they can\nbe logged in on simultaneously. The limit varies per user (based on subscription\nplan, admin overrides, etc.). When `requires_cleanup` is true, the user has\nexceeded their device limit and must remove one or more devices before continuing.\n",
+        "properties": {
+          "requires_cleanup": {
+            "type": "boolean",
+            "description": "Whether the user needs to remove devices (exceeded device limit)",
+            "example": false
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of simultaneous devices for this user",
+            "example": 5
+          },
+          "active_count": {
+            "type": "integer",
+            "description": "Current number of active devices/sessions",
+            "example": 2
+          },
+          "current_device_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The personal access token ID for the current session",
+            "example": 101
+          },
+          "devices": {
+            "type": "array",
+            "description": "List of all active device sessions",
+            "items": {
+              "$ref": "#/components/schemas/DeviceObject"
+            }
+          }
+        }
+      },
+      "DeviceObject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Personal access token ID (use this to revoke a session)",
+            "example": 101
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the device",
+            "example": "iPhone 14"
+          },
+          "device_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Device name as provided during login",
+            "example": "iPhone 14"
+          },
+          "device_identifier": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unique device identifier",
+            "example": "a1b2c3d4-e5f6-7890"
+          },
+          "user_agent": {
+            "type": "string",
+            "nullable": true,
+            "example": "AyahByAyah/1.0 iOS/17.0"
+          },
+          "login_ip": {
+            "type": "string",
+            "nullable": true,
+            "example": "203.0.113.1"
+          },
+          "is_current": {
+            "type": "boolean",
+            "description": "Whether this is the device making the current request",
+            "example": true
+          },
+          "is_expired": {
+            "type": "boolean",
+            "description": "Whether this token has expired",
+            "example": false
+          },
+          "requires_cleanup": {
+            "type": "boolean",
+            "description": "Whether this specific token is flagged for cleanup",
+            "example": false
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-06-15T10:30:00+00:00"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-01-15T10:30:00+00:00"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-07-15T10:30:00+00:00"
+          },
+          "application": {
+            "type": "object",
+            "nullable": true,
+            "description": "The application this token is associated with",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 3
+              },
+              "name": {
+                "type": "string",
+                "example": "Ayah by Ayah"
+              },
+              "platform": {
+                "type": "string",
+                "example": "ios"
+              }
+            }
+          }
+        }
+      },
+      "AuthSuccessResponse": {
+        "type": "object",
+        "description": "Response for login and register endpoints",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "JWT authentication token",
+                "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+              },
+              "user": {
+                "$ref": "#/components/schemas/UserObject"
+              }
+            }
+          },
+          "message": {
+            "type": "string",
+            "example": ""
+          },
+          "device_cleanup": {
+            "$ref": "#/components/schemas/DeviceCleanupObject"
+          }
+        }
+      },
+      "UserProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserObject"
+          },
+          "message": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "LogoutResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "array",
+            "items": {},
+            "example": []
+          },
+          "message": {
+            "type": "string",
+            "example": "You have been logged out successfully."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid credentials."
+          },
+          "code": {
+            "type": "integer",
+            "example": 401
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "example": "The given data was invalid."
+          },
+          "code": {
+            "type": "integer",
+            "example": 422
+          },
+          "errors": {
+            "type": "object",
+            "description": "Field-level validation errors (field name -> array of error messages)",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "email": [
+                "The email has already been taken."
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

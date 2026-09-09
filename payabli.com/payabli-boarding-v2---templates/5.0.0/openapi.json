@@ -1,0 +1,1849 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "5.0.0",
+    "title": "Payabli Boarding v2 - Templates",
+    "description": "# Template Architecture\n\nTemplates define the onboarding experience for merchant boarding applications. They control which fields are collected, how they behave conditionally, which configuration profiles are assigned, and what features are enabled in the hosted boarding UI.\n\n## What Templates Do\n\n1. **Field Configuration**: Define which fields are visible, required, readonly, or recommended \u2014 with conditional rules that dynamically adjust field behavior based on applicant input\n2. **Configuration Profile Assignment**: Reference the billing, funding, risk, underwriting, monitoring, and theme profiles that will be initially assigned to the paypoint upon boarding\n3. **Feature Flags**: Control hosted boarding UI capabilities (guided tour, prefill, signing methods, bank verification, AI chat, etc.)\n\n## What Templates Do NOT Do\n\n- **Service configuration**: Connector, gateway, and processor settings are defined at the parent organization level and resolved implicitly via the org hierarchy. Templates do not reference service configuration profiles. See the Organization Service Configuration Settings API.\n- **Service selection**: Which services to provision for a paypoint is determined by the service request, not the template.\n\n## Relationship to Other Entities\n\n```\nTemplate (this API)\n\u251c\u2500\u2500 fieldConfigurations[]     \u2192 controls the boarding form\n\u251c\u2500\u2500 conditionalRules[]        \u2192 dynamic field behavior\n\u251c\u2500\u2500 configurations            \u2192 profile references (initial assignment)\n\u2502   \u251c\u2500\u2500 portalTheme           \u2192 UI theme\n\u2502   \u251c\u2500\u2500 payinBilling          \u2192 pay-in billing profile\n\u2502   \u251c\u2500\u2500 payoutBilling         \u2192 pay-out billing profile\n\u2502   \u251c\u2500\u2500 payinFunding          \u2192 pay-in funding profile\n\u2502   \u251c\u2500\u2500 payoutFunding         \u2192 pay-out funding profile\n\u2502   \u251c\u2500\u2500 underwritingPolicy    \u2192 underwriting risk policy\n\u2502   \u251c\u2500\u2500 ongoingMonitoringPolicy \u2192 ongoing monitoring policy\n\u2502   \u251c\u2500\u2500 payinAuthorizationRisk  \u2192 pay-in authorization risk policy\n\u2502   \u251c\u2500\u2500 payinCaptureRisk        \u2192 pay-in capture risk policy\n\u2502   \u251c\u2500\u2500 payoutAuthorizationRisk \u2192 pay-out authorization risk policy\n\u2502   \u2514\u2500\u2500 payoutCaptureRisk       \u2192 pay-out capture risk policy\n\u2514\u2500\u2500 feature flags             \u2192 UI behavior toggles\n```\n\nWhen a request (application) is created using a template:\n- The template's `configurations` are copied to the request as the initial profile assignments\n- The template's field configurations and rules govern the boarding form\n- Upon approval, the referenced profiles are assigned to the new paypoint\n\n## Key Changes from v4\n\n- **Renamed**: \"Requests Profiles\" \u2192 \"Templates\" throughout\n- **Expanded configurations**: Full set of billing, funding, risk, and theme profile references\n- **Removed service config references**: `payinServices` and `payoutServices` removed \u2014 service configuration is now org-level\n- **New signing flags**: Control checkbox, typed digital, and written digital signature methods\n- **Real-time bank verification**: Toggle for instant bank account validation\n- **Multi-owner e-sign**: Support for multiple beneficial owner electronic signatures\n",
+    "termsOfService": "https://www.payabli.com/terms-and-conditions/",
+    "contact": {
+      "name": "Support",
+      "url": "https://www.payabli.com",
+      "email": "support@payabli.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ADRIAN_31/payabli-boarding-v2-templates/5.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.payabli.com",
+      "description": "Production server"
+    },
+    {
+      "url": "https://sandbox-api.payabli.com",
+      "description": "Sandbox server"
+    }
+  ],
+  "paths": {
+    "/v2/templates": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "List Templates",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Retrieve all templates available to the organization for managing onboarding flows.\n\n**Use Case:** Partners listing available onboarding configurations to select for new merchants.\n\n**Access:** Organization admins, partner administrators",
+        "operationId": "listTemplates",
+        "parameters": [
+          {
+            "name": "orgId",
+            "in": "query",
+            "description": "Organization ID to filter templates",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^org_[a-zA-Z0-9]+$"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by template status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "inactive",
+                "draft"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Templates retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemplateSummary"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Successful template list",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "tmpl_standard_001",
+                          "name": "Standard Merchant Onboarding",
+                          "description": "Default onboarding flow for most merchants",
+                          "status": "active",
+                          "version": 3,
+                          "fieldCount": 45,
+                          "ruleCount": 8,
+                          "lastUpdated": "2025-12-01T10:30:00Z"
+                        },
+                        {
+                          "id": "tmpl_highrisk_002",
+                          "name": "High-Risk Merchant Onboarding",
+                          "description": "Enhanced verification for high-risk categories",
+                          "status": "active",
+                          "version": 2,
+                          "fieldCount": 67,
+                          "ruleCount": 15,
+                          "lastUpdated": "2025-11-28T14:20:00Z"
+                        }
+                      ],
+                      "pagination": {
+                        "total": 2,
+                        "limit": 50,
+                        "offset": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:read"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Create Template",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Create a new template with field configurations, conditional rules, configuration profile references, and feature flags.\n\n**Use Case:** Partner creating customized onboarding flow with specific field requirements, profile assignments, and conditional logic.\n\n**Access:** Organization admins, partner administrators\n\n**Validation Rules:**\n- Field paths must reference valid schema fields\n- Rule expressions must be valid Microsoft Rules Engine syntax\n- Conditional rules are validated before template creation\n- At least one field configuration required\n- Configuration profile references must be valid and accessible to the org\n\n**Feature Flags:**\n\n*UI Experience:*\n- `allowGuidedTour`: Enable interactive guided tour for applicants\n- `allowBusinessPrefill`: Enable automatic business data prefill from external sources\n- `allowPeoplePrefill`: Enable automatic person/owner data prefill\n- `allowUserCreation`: Allow applicant to create user account during application\n- `allowSaveForLater`: Allow applicant to save progress and return later\n- `allowAmigoChat`: Enable Amigo AI chat assistant for applicants\n\n*Services & Banking:*\n- `allowServiceSelection`: Enable payment service selection (PayIn, PayOut)\n- `allowDeviceSelection`: Enable payment device/terminal selection\n- `allowMultipleBanks`: Enable configuration of multiple settlement bank accounts\n- `allowFundingConfiguration`: Allow funding settings configuration during onboarding\n- `allowRealTimeBankVerification`: Enable instant bank account validation during onboarding\n\n*Signing & E-Sign:*\n- `allowCheckboxSigning`: Enable checkbox-based agreement acceptance\n- `allowTypedSignature`: Enable typed digital signature (applicant types their name)\n- `allowWrittenSignature`: Enable drawn/written digital signature (applicant draws signature)\n- `allowMultiOwnerEsign`: Enable electronic signature collection from multiple beneficial owners",
+        "operationId": "createTemplate",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              },
+              "examples": {
+                "basic_template": {
+                  "summary": "Basic template with configuration profiles and field customization",
+                  "value": {
+                    "orgId": "org_xyz789",
+                    "name": "Property Management Onboarding",
+                    "description": "Streamlined flow for property management companies",
+                    "configurations": {
+                      "portalTheme": "theme_21u39gdb92dbg2duio2db2",
+                      "payinBilling": "billing_payin_standard_001",
+                      "payoutBilling": "billing_payout_standard_001",
+                      "payinFunding": "funding_payin_standard_001",
+                      "underwritingPolicy": "policy_uw_standard_001",
+                      "ongoingMonitoringPolicy": "policy_mon_standard_001",
+                      "payinAuthorizationRisk": "policy_auth_payin_standard_001",
+                      "payinCaptureRisk": "policy_cap_payin_standard_001",
+                      "payoutAuthorizationRisk": "policy_auth_payout_standard_001",
+                      "payoutCaptureRisk": "policy_cap_payout_standard_001"
+                    },
+                    "fieldConfigurations": [
+                      {
+                        "fieldPath": "business.legalName",
+                        "label": "Company Legal Name",
+                        "hint": "Enter as shown on incorporation documents",
+                        "attributes": [
+                          "required",
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "business.annualRevenue",
+                        "label": "Annual Gross Revenue",
+                        "hint": "Estimated total annual revenue in USD",
+                        "attributes": [
+                          "required",
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "documents.bankStatement",
+                        "label": "Bank Statement",
+                        "hint": "Upload statement from last 3 months",
+                        "attributes": [
+                          "visible"
+                        ]
+                      }
+                    ],
+                    "conditionalRules": [],
+                    "allowGuidedTour": true,
+                    "allowBusinessPrefill": true,
+                    "allowSaveForLater": true,
+                    "allowUserCreation": true,
+                    "allowMultipleBanks": false,
+                    "allowFundingConfiguration": false,
+                    "allowServiceSelection": false,
+                    "allowDeviceSelection": false,
+                    "allowAmigoChat": true,
+                    "allowRealTimeBankVerification": true,
+                    "allowCheckboxSigning": true,
+                    "allowTypedSignature": true,
+                    "allowWrittenSignature": false,
+                    "allowMultiOwnerEsign": false
+                  }
+                },
+                "with_conditional_rules": {
+                  "summary": "Template with conditional document requirements",
+                  "value": {
+                    "orgId": "org_xyz789",
+                    "name": "High-Revenue Merchant Verification",
+                    "description": "Additional verification for high-revenue merchants",
+                    "configurations": {
+                      "portalTheme": "theme_21u39gdb92dbg2duio2db2",
+                      "payinBilling": "billing_payin_enhanced_001",
+                      "payinFunding": "funding_payin_standard_001",
+                      "underwritingPolicy": "policy_uw_enhanced_001",
+                      "ongoingMonitoringPolicy": "policy_mon_enhanced_001",
+                      "payinAuthorizationRisk": "policy_auth_payin_enhanced_001",
+                      "payinCaptureRisk": "policy_cap_payin_enhanced_001",
+                      "payoutAuthorizationRisk": "policy_auth_payout_enhanced_001",
+                      "payoutCaptureRisk": "policy_cap_payout_enhanced_001"
+                    },
+                    "fieldConfigurations": [
+                      {
+                        "fieldPath": "business.annualRevenue",
+                        "label": "Annual Revenue (USD)",
+                        "attributes": [
+                          "required",
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "documents.bankStatement",
+                        "label": "Recent Bank Statement",
+                        "attributes": [
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "documents.financialStatements",
+                        "label": "Financial Statements",
+                        "attributes": [
+                          "visible"
+                        ]
+                      }
+                    ],
+                    "conditionalRules": [
+                      {
+                        "ruleName": "require_bank_statement",
+                        "description": "Require bank statement for revenue over $500K",
+                        "expression": "business.annualRevenue > 500000",
+                        "actions": [
+                          {
+                            "actionType": "SetFieldAttributes",
+                            "fieldPath": "documents.bankStatement",
+                            "attributes": [
+                              "required",
+                              "visible"
+                            ]
+                          }
+                        ],
+                        "enabled": true
+                      },
+                      {
+                        "ruleName": "require_financial_statements",
+                        "description": "Require full financials for revenue over $1M",
+                        "expression": "business.annualRevenue > 1000000",
+                        "actions": [
+                          {
+                            "actionType": "SetFieldAttributes",
+                            "fieldPath": "documents.financialStatements",
+                            "attributes": [
+                              "required",
+                              "visible"
+                            ]
+                          },
+                          {
+                            "actionType": "SetFieldHint",
+                            "fieldPath": "documents.financialStatements",
+                            "hint": "Upload audited financial statements for last 2 years"
+                          }
+                        ],
+                        "enabled": true
+                      }
+                    ],
+                    "allowRealTimeBankVerification": true,
+                    "allowCheckboxSigning": false,
+                    "allowTypedSignature": true,
+                    "allowWrittenSignature": true,
+                    "allowMultiOwnerEsign": true
+                  }
+                },
+                "full_featured_template": {
+                  "summary": "Full-featured template with all options enabled",
+                  "value": {
+                    "orgId": "org_xyz789",
+                    "name": "Premium Onboarding Experience",
+                    "description": "Full-featured onboarding with all capabilities enabled",
+                    "configurations": {
+                      "portalTheme": "theme_premium_001",
+                      "payinBilling": "billing_payin_premium_001",
+                      "payoutBilling": "billing_payout_premium_001",
+                      "payinFunding": "funding_payin_premium_001",
+                      "payoutFunding": "funding_payout_premium_001",
+                      "underwritingPolicy": "policy_uw_premium_001",
+                      "ongoingMonitoringPolicy": "policy_mon_premium_001",
+                      "payinAuthorizationRisk": "policy_auth_payin_premium_001",
+                      "payinCaptureRisk": "policy_cap_payin_premium_001",
+                      "payoutAuthorizationRisk": "policy_auth_payout_premium_001",
+                      "payoutCaptureRisk": "policy_cap_payout_premium_001"
+                    },
+                    "contactSupport": {
+                      "enabled": true,
+                      "email": "support@partner.com",
+                      "phone": "+1-555-0100",
+                      "hours": "Mon-Fri 9AM-5PM EST"
+                    },
+                    "allowGuidedTour": true,
+                    "allowBusinessPrefill": true,
+                    "allowPeoplePrefill": true,
+                    "allowUserCreation": true,
+                    "allowSaveForLater": true,
+                    "allowMultipleBanks": true,
+                    "allowFundingConfiguration": true,
+                    "allowServiceSelection": true,
+                    "allowDeviceSelection": true,
+                    "allowAmigoChat": true,
+                    "allowRealTimeBankVerification": true,
+                    "allowCheckboxSigning": true,
+                    "allowTypedSignature": true,
+                    "allowWrittenSignature": true,
+                    "allowMultiOwnerEsign": true,
+                    "fieldConfigurations": [
+                      {
+                        "fieldPath": "business.legalName",
+                        "label": "Business Legal Name",
+                        "hint": "Enter exactly as shown on tax documents",
+                        "attributes": [
+                          "required",
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "business.dba",
+                        "label": "Doing Business As (DBA)",
+                        "hint": "Optional: Enter if different from legal name",
+                        "attributes": [
+                          "visible"
+                        ]
+                      },
+                      {
+                        "fieldPath": "business.annualRevenue",
+                        "label": "Annual Gross Revenue",
+                        "hint": "Estimated annual revenue in USD",
+                        "attributes": [
+                          "required",
+                          "visible"
+                        ]
+                      }
+                    ],
+                    "conditionalRules": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Template created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTemplateResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "success": true,
+                      "message": "Template created successfully",
+                      "id": "tmpl_abc123def456",
+                      "created": "2025-12-01T22:00:00Z",
+                      "traceId": "trace_create_abc123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalid_field_path": {
+                    "summary": "Invalid field path in configuration",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "INVALID_FIELD_PATH",
+                        "message": "Field path validation failed",
+                        "traceId": "trace_error_abc123",
+                        "invalidFields": [
+                          {
+                            "fieldPath": "business.invalidField",
+                            "error": "Field does not exist in schema",
+                            "suggestion": "Did you mean 'business.annualRevenue'?"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "invalid_config_reference": {
+                    "summary": "Invalid configuration profile reference",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "INVALID_CONFIGURATION_REFERENCE",
+                        "message": "Configuration profile reference not found",
+                        "traceId": "trace_error_cfg456",
+                        "invalidConfigurations": [
+                          {
+                            "field": "payinBilling",
+                            "reference": "billing_nonexistent_001",
+                            "error": "Billing profile not found or not accessible to this organization"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "invalid_rule_expression": {
+                    "summary": "Invalid rule expression syntax",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "INVALID_RULE_EXPRESSION",
+                        "message": "Rule expression validation failed",
+                        "traceId": "trace_error_def456",
+                        "ruleErrors": [
+                          {
+                            "ruleName": "require_bank_statement",
+                            "error": "Syntax error in expression",
+                            "expression": "business.annualRevenue >> 500000",
+                            "detail": "Unexpected operator '>>'. Did you mean '>'?"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:write"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      }
+    },
+    "/v2/templates/{templateId}": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Get Template Details",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Retrieve complete template configuration including all field configurations, conditional rules, configuration profile references, and feature flags.\n\n**Use Case:** Loading template for editing or form rendering.\n\n**Access:** Organization admins, partner administrators, form renderer",
+        "operationId": "getTemplate",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^tmpl_[a-zA-Z0-9]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:read"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Update Template",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Modify existing template configuration, field settings, conditional rules, configuration profile references, or feature flags.\n\n**Use Case:** Partner updating onboarding flow requirements based on business needs.\n\n**Access:** Organization admins, partner administrators\n\n**Important:**\n- Partial updates supported \u2014 include only fields to change\n- Version auto-incremented on save\n- Changes affect all new applications using this template\n- Existing applications continue with their snapshot of rules and configurations",
+        "operationId": "updateTemplate",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^tmpl_[a-zA-Z0-9]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:write"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Delete Template",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Remove unused template configuration.\n\n**Use Case:** Deprecating old onboarding flows.\n\n**Access:** Organization admins only\n\n**Important:**\n- Cannot delete templates with active applications\n- Soft delete \u2014 template marked inactive, not removed from database\n- Historical applications retain their snapshot",
+        "operationId": "deleteTemplate",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^tmpl_[a-zA-Z0-9]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Cannot delete template with active applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:write"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      }
+    },
+    "/v2/templates/validate-rules": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Validate Conditional Rules",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Validate rule expressions and actions before saving to template.\n\n**Use Case:** Partner testing rule syntax while building template configuration.\n\n**Access:** Organization admins, partner administrators\n\n**Validation Checks:**\n- Rule expression syntax (Microsoft Rules Engine format)\n- Field paths exist in schema\n- Action types are valid\n- Attribute names are supported\n- No circular dependencies between rules",
+        "operationId": "validateRules",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conditionalRules": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ConditionalRule"
+                    }
+                  }
+                },
+                "required": [
+                  "conditionalRules"
+                ]
+              },
+              "examples": {
+                "valid_rules": {
+                  "summary": "Valid rule set",
+                  "value": {
+                    "conditionalRules": [
+                      {
+                        "ruleName": "high_revenue_check",
+                        "expression": "business.annualRevenue > 500000",
+                        "actions": [
+                          {
+                            "actionType": "SetFieldAttributes",
+                            "fieldPath": "documents.bankStatement",
+                            "attributes": [
+                              "required",
+                              "visible"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "invalid_rules": {
+                  "summary": "Rules with errors",
+                  "value": {
+                    "conditionalRules": [
+                      {
+                        "ruleName": "bad_rule",
+                        "expression": "business.invalidField > 100",
+                        "actions": [
+                          {
+                            "actionType": "SetFieldAttributes",
+                            "fieldPath": "nonexistent.field",
+                            "attributes": [
+                              "required"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation completed (may contain errors)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "valid": {
+                      "type": "boolean"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ruleName": {
+                            "type": "string"
+                          },
+                          "errorType": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "suggestion": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "all_valid": {
+                    "summary": "All rules valid",
+                    "value": {
+                      "success": true,
+                      "valid": true,
+                      "errors": []
+                    }
+                  },
+                  "validation_errors": {
+                    "summary": "Validation errors found",
+                    "value": {
+                      "success": true,
+                      "valid": false,
+                      "errors": [
+                        {
+                          "ruleName": "bad_rule",
+                          "errorType": "INVALID_FIELD_PATH",
+                          "message": "Field 'business.invalidField' does not exist",
+                          "suggestion": "Available fields: business.annualRevenue, business.legalName, business.entityType"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:write"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      }
+    },
+    "/v2/templates/{templateId}/test-rules": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Test Rules with Sample Data",
+        "description": "**Business Context:** PayOps\n\n**Purpose:** Test how rules evaluate with specific input data before deploying template.\n\n**Use Case:** Partner testing rule behavior with different merchant scenarios.\n\n**Access:** Organization admins, partner administrators\n\n**Returns:**\n- Which rules evaluated to true/false\n- What actions were executed (with before/after attribute states)\n- Final field states after all rules applied\n- Rule evaluation trace for debugging",
+        "operationId": "testRules",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^tmpl_[a-zA-Z0-9]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "testData": {
+                    "type": "object",
+                    "description": "Sample form data to evaluate rules against"
+                  }
+                },
+                "required": [
+                  "testData"
+                ]
+              },
+              "examples": {
+                "high_revenue_merchant": {
+                  "summary": "Test with high-revenue merchant data",
+                  "value": {
+                    "testData": {
+                      "business": {
+                        "legalName": "Acme Property Management LLC",
+                        "annualRevenue": 750000,
+                        "entityType": "llc"
+                      }
+                    }
+                  }
+                },
+                "low_revenue_merchant": {
+                  "summary": "Test with low-revenue merchant data",
+                  "value": {
+                    "testData": {
+                      "business": {
+                        "legalName": "Small Business Inc",
+                        "annualRevenue": 250000,
+                        "entityType": "corporation"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rule test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "evaluationResults": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ruleName": {
+                            "type": "string"
+                          },
+                          "evaluated": {
+                            "type": "boolean"
+                          },
+                          "result": {
+                            "type": "boolean"
+                          },
+                          "executedActions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "actionType": {
+                                  "type": "string"
+                                },
+                                "fieldPath": {
+                                  "type": "string"
+                                },
+                                "attributes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "hint": {
+                                  "type": "string"
+                                },
+                                "before": {},
+                                "after": {}
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "finalFieldStates": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "attributes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "hint": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "rules_triggered": {
+                    "summary": "Rules evaluated and triggered",
+                    "value": {
+                      "success": true,
+                      "evaluationResults": [
+                        {
+                          "ruleName": "require_bank_statement",
+                          "evaluated": true,
+                          "result": true,
+                          "executedActions": [
+                            {
+                              "actionType": "SetFieldAttributes",
+                              "fieldPath": "documents.bankStatement",
+                              "attributes": [
+                                "required",
+                                "visible"
+                              ],
+                              "before": [
+                                "visible"
+                              ],
+                              "after": [
+                                "required",
+                                "visible"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "ruleName": "require_financial_statements",
+                          "evaluated": true,
+                          "result": false,
+                          "executedActions": []
+                        }
+                      ],
+                      "finalFieldStates": {
+                        "documents.bankStatement": {
+                          "attributes": [
+                            "required",
+                            "visible"
+                          ],
+                          "label": "Recent Bank Statement",
+                          "hint": "Upload statement from last 3 months"
+                        },
+                        "documents.financialStatements": {
+                          "attributes": [
+                            "visible"
+                          ],
+                          "label": "Financial Statements"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2": [
+              "templates:read"
+            ]
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "servers": [
+          {
+            "url": "https://api.payabli.com",
+            "description": "Production server"
+          },
+          {
+            "url": "https://sandbox-api.payabli.com",
+            "description": "Sandbox server"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "scopes": {
+              "templates:read": "Read templates",
+              "templates:write": "Create and modify templates"
+            },
+            "tokenUrl": "https://api.payabli.com/oauth/token"
+          }
+        }
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "TemplateSummary": {
+        "type": "object",
+        "description": "Summary view of a template",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^tmpl_[a-zA-Z0-9]+$",
+            "example": "tmpl_standard_001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Standard Merchant Onboarding"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "draft"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "example": 3
+          },
+          "fieldCount": {
+            "type": "integer",
+            "example": 45
+          },
+          "ruleCount": {
+            "type": "integer",
+            "example": 8
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "features": {
+            "type": "object",
+            "description": "Summary of enabled features",
+            "properties": {
+              "guidedTour": {
+                "type": "boolean"
+              },
+              "businessPrefill": {
+                "type": "boolean"
+              },
+              "saveForLater": {
+                "type": "boolean"
+              },
+              "multipleBanks": {
+                "type": "boolean"
+              },
+              "realTimeBankVerification": {
+                "type": "boolean"
+              },
+              "multiOwnerEsign": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "traceId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      },
+      "CreateTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "pattern": "^org_[a-zA-Z0-9]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "contactSupport": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "hours": {
+                "type": "string"
+              }
+            }
+          },
+          "configurations": {
+            "$ref": "#/components/schemas/TemplateConfigurations"
+          },
+          "fieldConfigurations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/FieldConfiguration"
+            }
+          },
+          "conditionalRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionalRule"
+            }
+          },
+          "allowGuidedTour": {
+            "type": "boolean",
+            "description": "Enable guided tour for applicants",
+            "default": false
+          },
+          "allowBusinessPrefill": {
+            "type": "boolean",
+            "description": "Allow business data prefill from external sources",
+            "default": false
+          },
+          "allowPeoplePrefill": {
+            "type": "boolean",
+            "description": "Allow person/owner data prefill",
+            "default": false
+          },
+          "allowUserCreation": {
+            "type": "boolean",
+            "description": "Allow user account creation during application",
+            "default": false
+          },
+          "allowSaveForLater": {
+            "type": "boolean",
+            "description": "Allow saving progress and returning later",
+            "default": true
+          },
+          "allowAmigoChat": {
+            "type": "boolean",
+            "description": "Enable Amigo AI chat assistant",
+            "default": false
+          },
+          "allowServiceSelection": {
+            "type": "boolean",
+            "description": "Enable payment service selection (PayIn, PayOut)",
+            "default": false
+          },
+          "allowDeviceSelection": {
+            "type": "boolean",
+            "description": "Enable payment device/terminal selection",
+            "default": false
+          },
+          "allowMultipleBanks": {
+            "type": "boolean",
+            "description": "Allow multiple settlement bank accounts",
+            "default": false
+          },
+          "allowFundingConfiguration": {
+            "type": "boolean",
+            "description": "Allow funding settings configuration",
+            "default": false
+          },
+          "allowRealTimeBankVerification": {
+            "type": "boolean",
+            "description": "Enable instant bank account validation during onboarding",
+            "default": false
+          },
+          "allowCheckboxSigning": {
+            "type": "boolean",
+            "description": "Enable checkbox-based agreement acceptance",
+            "default": true
+          },
+          "allowTypedSignature": {
+            "type": "boolean",
+            "description": "Enable typed digital signature (applicant types their name)",
+            "default": false
+          },
+          "allowWrittenSignature": {
+            "type": "boolean",
+            "description": "Enable drawn/written digital signature (applicant draws signature)",
+            "default": false
+          },
+          "allowMultiOwnerEsign": {
+            "type": "boolean",
+            "description": "Enable electronic signature collection from multiple beneficial owners",
+            "default": false
+          }
+        },
+        "required": [
+          "orgId",
+          "name",
+          "fieldConfigurations"
+        ]
+      },
+      "TemplateConfigurations": {
+        "type": "object",
+        "description": "References to configuration profiles that will be initially assigned to the paypoint upon boarding. These are copied to the request at creation time and assigned to the paypoint upon approval.\n\n**Note:** Service configuration (connectors, gateways, processors) is NOT included here. Service settings are defined at the parent organization level and resolved implicitly via the org hierarchy at provisioning time.\n",
+        "properties": {
+          "portalTheme": {
+            "type": "string",
+            "description": "Portal/UI theme profile reference",
+            "example": "theme_21u39gdb92dbg2duio2db2"
+          },
+          "payinBilling": {
+            "type": "string",
+            "description": "Pay-in billing profile reference (fee schedules, billing cycle)",
+            "example": "billing_payin_standard_001"
+          },
+          "payoutBilling": {
+            "type": "string",
+            "description": "Pay-out billing profile reference",
+            "example": "billing_payout_standard_001"
+          },
+          "payinFunding": {
+            "type": "string",
+            "description": "Pay-in funding profile reference (settlement timing, funding rules)",
+            "example": "funding_payin_standard_001"
+          },
+          "payoutFunding": {
+            "type": "string",
+            "description": "Pay-out funding profile reference",
+            "example": "funding_payout_standard_001"
+          },
+          "underwritingPolicy": {
+            "type": "string",
+            "description": "Underwriting risk policy reference (KYB/KYC rules, approval criteria)",
+            "example": "policy_uw_standard_001"
+          },
+          "ongoingMonitoringPolicy": {
+            "type": "string",
+            "description": "Ongoing monitoring policy reference (transaction monitoring, periodic reviews)",
+            "example": "policy_mon_standard_001"
+          },
+          "payinAuthorizationRisk": {
+            "type": "string",
+            "description": "Pay-in authorization-time risk policy reference (real-time fraud checks)",
+            "example": "policy_auth_payin_standard_001"
+          },
+          "payinCaptureRisk": {
+            "type": "string",
+            "description": "Pay-in capture-time risk policy reference (settlement-time risk checks)",
+            "example": "policy_cap_payin_standard_001"
+          },
+          "payoutAuthorizationRisk": {
+            "type": "string",
+            "description": "Pay-out authorization-time risk policy reference (disbursement fraud checks, velocity limits)",
+            "example": "policy_auth_payout_standard_001"
+          },
+          "payoutCaptureRisk": {
+            "type": "string",
+            "description": "Pay-out capture-time risk policy reference (settlement-time disbursement risk checks)",
+            "example": "policy_cap_payout_standard_001"
+          }
+        }
+      },
+      "FieldConfiguration": {
+        "type": "object",
+        "description": "Configuration for a single field in the template",
+        "properties": {
+          "fieldPath": {
+            "type": "string",
+            "description": "Dot-notation path to field in data model",
+            "example": "business.annualRevenue"
+          },
+          "label": {
+            "type": "string",
+            "description": "Custom display label (overrides default)",
+            "maxLength": 200,
+            "example": "Annual Gross Revenue"
+          },
+          "hint": {
+            "type": "string",
+            "description": "Help text displayed below/beside field",
+            "maxLength": 1000,
+            "example": "Enter your estimated annual revenue in USD"
+          },
+          "attributes": {
+            "type": "array",
+            "description": "Field visibility and requirement attributes",
+            "items": {
+              "type": "string",
+              "enum": [
+                "visible",
+                "required",
+                "readonly",
+                "recommended"
+              ]
+            },
+            "example": [
+              "required",
+              "visible"
+            ]
+          },
+          "validation": {
+            "type": "object",
+            "description": "Additional validation rules",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "minLength": {
+                "type": "integer"
+              },
+              "maxLength": {
+                "type": "integer"
+              },
+              "pattern": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "fieldPath",
+          "attributes"
+        ]
+      },
+      "ConditionalRule": {
+        "type": "object",
+        "description": "Conditional rule for dynamic field behavior",
+        "properties": {
+          "ruleName": {
+            "type": "string",
+            "description": "Unique rule identifier",
+            "pattern": "^[a-z0-9_]+$",
+            "example": "require_bank_statement"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description",
+            "example": "Require bank statement for revenue over $500K"
+          },
+          "expression": {
+            "type": "string",
+            "description": "Boolean expression. Supports: >, <, >=, <=, ==, !=, &&, ||, !, Contains(), StartsWith(), EndsWith(), Any(), All()",
+            "example": "business.annualRevenue > 500000"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleAction"
+            }
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "ruleName",
+          "expression",
+          "actions"
+        ]
+      },
+      "RuleAction": {
+        "type": "object",
+        "description": "Action to perform when rule condition is met",
+        "properties": {
+          "actionType": {
+            "type": "string",
+            "enum": [
+              "SetFieldAttributes",
+              "SetFieldHint"
+            ]
+          },
+          "fieldPath": {
+            "type": "string",
+            "example": "documents.bankStatement"
+          },
+          "attributes": {
+            "type": "array",
+            "description": "For SetFieldAttributes only",
+            "items": {
+              "type": "string",
+              "enum": [
+                "visible",
+                "required",
+                "readonly",
+                "recommended"
+              ]
+            },
+            "example": [
+              "required",
+              "visible"
+            ]
+          },
+          "hint": {
+            "type": "string",
+            "description": "For SetFieldHint only",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "actionType",
+          "fieldPath"
+        ]
+      },
+      "CreateTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^tmpl_[a-zA-Z0-9]+$"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "traceId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "id"
+        ]
+      },
+      "GetTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "orgId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer"
+              },
+              "contactSupport": {
+                "type": "object"
+              },
+              "configurations": {
+                "$ref": "#/components/schemas/TemplateConfigurations"
+              },
+              "fieldConfigurations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FieldConfiguration"
+                }
+              },
+              "conditionalRules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ConditionalRule"
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "allowGuidedTour": {
+                "type": "boolean"
+              },
+              "allowBusinessPrefill": {
+                "type": "boolean"
+              },
+              "allowPeoplePrefill": {
+                "type": "boolean"
+              },
+              "allowUserCreation": {
+                "type": "boolean"
+              },
+              "allowSaveForLater": {
+                "type": "boolean"
+              },
+              "allowAmigoChat": {
+                "type": "boolean"
+              },
+              "allowServiceSelection": {
+                "type": "boolean"
+              },
+              "allowDeviceSelection": {
+                "type": "boolean"
+              },
+              "allowMultipleBanks": {
+                "type": "boolean"
+              },
+              "allowFundingConfiguration": {
+                "type": "boolean"
+              },
+              "allowRealTimeBankVerification": {
+                "type": "boolean"
+              },
+              "allowCheckboxSigning": {
+                "type": "boolean"
+              },
+              "allowTypedSignature": {
+                "type": "boolean"
+              },
+              "allowWrittenSignature": {
+                "type": "boolean"
+              },
+              "allowMultiOwnerEsign": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "UpdateTemplateRequest": {
+        "type": "object",
+        "description": "Partial update \u2014 include only fields to modify",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "contactSupport": {
+            "type": "object"
+          },
+          "configurations": {
+            "$ref": "#/components/schemas/TemplateConfigurations"
+          },
+          "fieldConfigurations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldConfiguration"
+            }
+          },
+          "conditionalRules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionalRule"
+            }
+          },
+          "allowGuidedTour": {
+            "type": "boolean"
+          },
+          "allowBusinessPrefill": {
+            "type": "boolean"
+          },
+          "allowPeoplePrefill": {
+            "type": "boolean"
+          },
+          "allowUserCreation": {
+            "type": "boolean"
+          },
+          "allowSaveForLater": {
+            "type": "boolean"
+          },
+          "allowAmigoChat": {
+            "type": "boolean"
+          },
+          "allowServiceSelection": {
+            "type": "boolean"
+          },
+          "allowDeviceSelection": {
+            "type": "boolean"
+          },
+          "allowMultipleBanks": {
+            "type": "boolean"
+          },
+          "allowFundingConfiguration": {
+            "type": "boolean"
+          },
+          "allowRealTimeBankVerification": {
+            "type": "boolean"
+          },
+          "allowCheckboxSigning": {
+            "type": "boolean"
+          },
+          "allowTypedSignature": {
+            "type": "boolean"
+          },
+          "allowWrittenSignature": {
+            "type": "boolean"
+          },
+          "allowMultiOwnerEsign": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "description": "New version number after update"
+              },
+              "changedFields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": [
+        "templates:read",
+        "templates:write"
+      ]
+    },
+    {
+      "BearerAuth": []
+    }
+  ]
+}

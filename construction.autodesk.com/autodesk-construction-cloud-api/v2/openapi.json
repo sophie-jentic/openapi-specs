@@ -1,0 +1,2610 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Autodesk Construction Cloud API",
+    "description": "Autodesk Platform Services (APS) and Construction Cloud API providing access to Data Management, BIM 360 / Autodesk Construction Cloud project data, Model Derivative services, Account Administration, and Webhooks.",
+    "version": "2.0.0",
+    "x-jentic-source-url": "https://aps.autodesk.com/",
+    "contact": {
+      "name": "Autodesk Platform Services",
+      "url": "https://aps.autodesk.com/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://developer.api.autodesk.com",
+      "description": "Autodesk Platform Services Production Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Data Management",
+      "description": "Manage hubs, projects, folders, items, versions, and storage in BIM 360 and ACC."
+    },
+    {
+      "name": "BIM 360",
+      "description": "Autodesk Construction Cloud and BIM 360 endpoints for issues, RFIs, submittals, locations, cost management, and forms."
+    },
+    {
+      "name": "Model Derivative",
+      "description": "Translate designs into different formats and extract metadata from design files."
+    },
+    {
+      "name": "Account Admin",
+      "description": "Manage BIM 360 / ACC accounts, projects, users, and companies."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Subscribe to events and receive notifications for changes in APS resources."
+    }
+  ],
+  "paths": {
+    "/project/v1/hubs": {
+      "get": {
+        "operationId": "getHubs",
+        "summary": "List Hubs",
+        "description": "Returns a collection of accessible hubs for the current authenticated user.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "filter[id]",
+            "in": "query",
+            "description": "Filter by hub ID.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[extension.type]",
+            "in": "query",
+            "description": "Filter by extension type.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of hubs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HubsResponse"
+                }
+              }
+            }
+          },
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized. Invalid or expired access token."},
+          "403": {"description": "Forbidden. The user does not have permission."}
+        }
+      }
+    },
+    "/project/v1/hubs/{hubId}": {
+      "get": {
+        "operationId": "getHub",
+        "summary": "Get Hub Details",
+        "description": "Returns data for a specific hub.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "hubId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the hub.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved hub details."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Hub not found."}
+        }
+      }
+    },
+    "/project/v1/hubs/{hubId}/projects": {
+      "get": {
+        "operationId": "getHubProjects",
+        "summary": "List Projects in Hub",
+        "description": "Returns a collection of projects for a given hub.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "hubId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the hub.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[id]",
+            "in": "query",
+            "description": "Filter by project ID.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "page[number]",
+            "in": "query",
+            "description": "Page number for pagination.",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "page[limit]",
+            "in": "query",
+            "description": "Number of results per page.",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved list of projects."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/project/v1/hubs/{hubId}/projects/{projectId}": {
+      "get": {
+        "operationId": "getProject",
+        "summary": "Get Project Details",
+        "description": "Returns details for a specific project within a hub.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "hubId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved project details."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Project not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/folders/{folderId}/contents": {
+      "get": {
+        "operationId": "getFolderContents",
+        "summary": "List Folder Contents",
+        "description": "Returns a collection of items and folders within a given folder.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[type]",
+            "in": "query",
+            "description": "Filter by resource type (items, folders).",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[extension.type]",
+            "in": "query",
+            "description": "Filter by extension type.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "page[number]",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "page[limit]",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved folder contents."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "403": {"description": "Forbidden."},
+          "404": {"description": "Folder not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/folders": {
+      "post": {
+        "operationId": "createFolder",
+        "summary": "Create Folder",
+        "description": "Creates a new folder in the specified project.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:create"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Folder created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "403": {"description": "Forbidden."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/folders/{folderId}": {
+      "get": {
+        "operationId": "getFolder",
+        "summary": "Get Folder",
+        "description": "Returns the folder by ID for a given project.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved folder."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Folder not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/items": {
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create Item",
+        "description": "Creates a new item (first version of a file) in the specified project.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:create"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Item created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "409": {"description": "Conflict. An item with the same name already exists."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/items/{itemId}": {
+      "get": {
+        "operationId": "getItem",
+        "summary": "Get Item",
+        "description": "Returns the item by ID for a given project.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved item."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Item not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/items/{itemId}/versions": {
+      "get": {
+        "operationId": "getItemVersions",
+        "summary": "List Item Versions",
+        "description": "Returns versions for the given item.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "page[number]",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "page[limit]",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved versions."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Item not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/versions/{versionId}": {
+      "get": {
+        "operationId": "getVersion",
+        "summary": "Get Version",
+        "description": "Returns the version by ID for a given project.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved version."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Version not found."}
+        }
+      }
+    },
+    "/oss/v2/buckets": {
+      "get": {
+        "operationId": "getBuckets",
+        "summary": "List Buckets",
+        "description": "Returns a list of buckets owned by the application.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["bucket:read"]}],
+        "parameters": [
+          {
+            "name": "region",
+            "in": "query",
+            "description": "Region where the bucket resides (US, EMEA).",
+            "schema": {"type": "string", "enum": ["US", "EMEA"]}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 10}
+          },
+          {
+            "name": "startAt",
+            "in": "query",
+            "description": "Key to start listing from.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved buckets."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createBucket",
+        "summary": "Create Bucket",
+        "description": "Creates a new OSS bucket for storing objects.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["bucket:create"]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBucketRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Bucket created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "409": {"description": "Bucket already exists."}
+        }
+      }
+    },
+    "/oss/v2/buckets/{bucketKey}/objects/{objectKey}": {
+      "put": {
+        "operationId": "uploadObject",
+        "summary": "Upload Object",
+        "description": "Uploads an object to the specified bucket.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "bucketKey",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "objectKey",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "Content-Length",
+            "in": "header",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {"type": "string", "format": "binary"}
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Object uploaded successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "403": {"description": "Forbidden."}
+        }
+      }
+    },
+    "/construction/issues/v1/projects/{projectId}/issues": {
+      "get": {
+        "operationId": "getIssues",
+        "summary": "List Issues",
+        "description": "Returns a list of issues for the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "description": "The project ID (without the 'b.' prefix).",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "description": "Filter by issue status.",
+            "schema": {"type": "string", "enum": ["open", "pending", "in_review", "closed"]}
+          },
+          {
+            "name": "filter[issueTypeId]",
+            "in": "query",
+            "description": "Filter by issue type ID.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[assignedTo]",
+            "in": "query",
+            "description": "Filter by assigned user ID.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[dueDate]",
+            "in": "query",
+            "description": "Filter by due date (ISO 8601).",
+            "schema": {"type": "string", "format": "date"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25, "maximum": 100}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort results by field.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved issues.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuesResponse"
+                }
+              }
+            }
+          },
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "403": {"description": "Forbidden."}
+        }
+      },
+      "post": {
+        "operationId": "createIssue",
+        "summary": "Create Issue",
+        "description": "Creates a new issue in the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIssueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Issue created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "403": {"description": "Forbidden."}
+        }
+      }
+    },
+    "/construction/issues/v1/projects/{projectId}/issues/{issueId}": {
+      "get": {
+        "operationId": "getIssue",
+        "summary": "Get Issue",
+        "description": "Returns a single issue by ID.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved issue."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Issue not found."}
+        }
+      },
+      "patch": {
+        "operationId": "updateIssue",
+        "summary": "Update Issue",
+        "description": "Updates an existing issue.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIssueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Issue updated successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Issue not found."}
+        }
+      }
+    },
+    "/construction/issues/v1/projects/{projectId}/issue-types": {
+      "get": {
+        "operationId": "getIssueTypes",
+        "summary": "List Issue Types",
+        "description": "Returns a list of available issue types and subtypes for the project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved issue types."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/issues/v1/projects/{projectId}/issues/{issueId}/comments": {
+      "get": {
+        "operationId": "getIssueComments",
+        "summary": "List Issue Comments",
+        "description": "Returns comments associated with an issue.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved comments."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createIssueComment",
+        "summary": "Create Issue Comment",
+        "description": "Adds a comment to an issue.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "issueId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["body"],
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "description": "The comment text."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Comment created."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/rfis/v2/projects/{projectId}/rfis": {
+      "get": {
+        "operationId": "getRfis",
+        "summary": "List RFIs",
+        "description": "Returns a list of RFIs for the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "description": "Filter by RFI status.",
+            "schema": {"type": "string", "enum": ["draft", "submitted", "open", "answered", "closed", "void"]}
+          },
+          {
+            "name": "filter[assignedTo]",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved RFIs."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createRfi",
+        "summary": "Create RFI",
+        "description": "Creates a new RFI in the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRfiRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "RFI created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/rfis/v2/projects/{projectId}/rfis/{rfiId}": {
+      "get": {
+        "operationId": "getRfi",
+        "summary": "Get RFI",
+        "description": "Returns a single RFI by ID.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "rfiId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved RFI."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "RFI not found."}
+        }
+      },
+      "patch": {
+        "operationId": "updateRfi",
+        "summary": "Update RFI",
+        "description": "Updates an existing RFI.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "rfiId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRfiRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "RFI updated successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "RFI not found."}
+        }
+      }
+    },
+    "/construction/submittals/v2/projects/{projectId}/items": {
+      "get": {
+        "operationId": "getSubmittalItems",
+        "summary": "List Submittal Items",
+        "description": "Returns a list of submittal items for the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved submittal items."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/locations/v2/projects/{projectId}/trees/{treeId}/nodes": {
+      "get": {
+        "operationId": "getLocationNodes",
+        "summary": "List Location Nodes",
+        "description": "Returns location nodes for a given tree in the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "treeId",
+            "in": "path",
+            "required": true,
+            "description": "The location tree ID (use 'default' for the default tree).",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved location nodes."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/locations/v2/projects/{projectId}/trees": {
+      "get": {
+        "operationId": "getLocationTrees",
+        "summary": "List Location Trees",
+        "description": "Returns the location trees configured for the project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved location trees."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/cost/v1/containers/{containerId}/budgets": {
+      "get": {
+        "operationId": "getBudgets",
+        "summary": "List Budgets",
+        "description": "Returns a list of budget line items for the cost container.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "containerId",
+            "in": "path",
+            "required": true,
+            "description": "The cost container ID (project ID).",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field and direction.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved budgets."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createBudget",
+        "summary": "Create Budget",
+        "description": "Creates a new budget line item.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "containerId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBudgetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Budget created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/cost/v1/containers/{containerId}/contracts": {
+      "get": {
+        "operationId": "getContracts",
+        "summary": "List Contracts",
+        "description": "Returns a list of contracts for the cost container.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "containerId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved contracts."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/cost/v1/containers/{containerId}/change-orders": {
+      "get": {
+        "operationId": "getChangeOrders",
+        "summary": "List Change Orders",
+        "description": "Returns a list of change orders for the cost container.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "containerId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved change orders."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/construction/forms/v1/projects/{projectId}/forms": {
+      "get": {
+        "operationId": "getForms",
+        "summary": "List Forms",
+        "description": "Returns a list of forms for the specified project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 25}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved forms."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/job": {
+      "post": {
+        "operationId": "translateDesign",
+        "summary": "Submit Translation Job",
+        "description": "Submits a translation job to convert a design file to a specified output format (SVF, SVF2, OBJ, STL, STEP, IGES, etc.).",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:write", "data:create"]}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Translation job submitted or already complete."},
+          "201": {"description": "Translation job created."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/{urn}/manifest": {
+      "get": {
+        "operationId": "getManifest",
+        "summary": "Get Manifest",
+        "description": "Returns the manifest of derivatives for a source design, including translation status and available outputs.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "description": "The Base64-encoded URN of the source design.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved manifest.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManifestResponse"
+                }
+              }
+            }
+          },
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Manifest not found."}
+        }
+      },
+      "delete": {
+        "operationId": "deleteManifest",
+        "summary": "Delete Manifest",
+        "description": "Deletes the manifest and all derivatives for the specified source design.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:write"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Manifest deleted."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Manifest not found."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/{urn}/metadata": {
+      "get": {
+        "operationId": "getMetadata",
+        "summary": "Get Metadata",
+        "description": "Returns a list of model views (metadata) for a source design.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "description": "The Base64-encoded URN of the source design.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved metadata."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Design not found."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/{urn}/metadata/{modelGuid}": {
+      "get": {
+        "operationId": "getModelViewMetadata",
+        "summary": "Get Model View Metadata",
+        "description": "Returns the object tree (hierarchy) for a specific model view.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "modelGuid",
+            "in": "path",
+            "required": true,
+            "description": "The GUID of the model view.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved model view metadata."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Not found."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/{urn}/metadata/{modelGuid}/properties": {
+      "get": {
+        "operationId": "getModelViewProperties",
+        "summary": "Get Model View Properties",
+        "description": "Returns properties for all objects in the specified model view.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "modelGuid",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "objectId",
+            "in": "query",
+            "description": "Filter by object ID to return properties for a specific object.",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved properties."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Not found."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/{urn}/thumbnail": {
+      "get": {
+        "operationId": "getThumbnail",
+        "summary": "Get Thumbnail",
+        "description": "Returns a thumbnail image for the specified design.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "urn",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "description": "Width of the thumbnail (100, 200, or 400).",
+            "schema": {"type": "integer", "enum": [100, 200, 400]}
+          },
+          {
+            "name": "height",
+            "in": "query",
+            "description": "Height of the thumbnail (100, 200, or 400).",
+            "schema": {"type": "integer", "enum": [100, 200, 400]}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thumbnail image returned.",
+            "content": {
+              "image/png": {
+                "schema": {"type": "string", "format": "binary"}
+              }
+            }
+          },
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Thumbnail not found."}
+        }
+      }
+    },
+    "/modelderivative/v2/designdata/formats": {
+      "get": {
+        "operationId": "getSupportedFormats",
+        "summary": "List Supported Formats",
+        "description": "Returns a list of supported translation formats.",
+        "tags": ["Model Derivative"],
+        "security": [{"oauth2": ["data:read"]}],
+        "responses": {
+          "200": {"description": "Successfully retrieved supported formats."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/projects": {
+      "get": {
+        "operationId": "getAccountProjects",
+        "summary": "List Account Projects",
+        "description": "Returns a list of projects for the specified BIM 360 / ACC account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[status]",
+            "in": "query",
+            "schema": {"type": "string", "enum": ["active", "inactive", "archived"]}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved projects."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createAccountProject",
+        "summary": "Create Project",
+        "description": "Creates a new project in the BIM 360 / ACC account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:write"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Project created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/projects/{projectId}": {
+      "get": {
+        "operationId": "getAccountProject",
+        "summary": "Get Account Project",
+        "description": "Returns details for a specific project in the account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved project."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Project not found."}
+        }
+      },
+      "patch": {
+        "operationId": "updateAccountProject",
+        "summary": "Update Project",
+        "description": "Updates a project in the account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:write"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "status": {"type": "string", "enum": ["active", "inactive", "archived"]},
+                  "start_date": {"type": "string", "format": "date"},
+                  "end_date": {"type": "string", "format": "date"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Project updated successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Project not found."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/users": {
+      "get": {
+        "operationId": "getAccountUsers",
+        "summary": "List Account Users",
+        "description": "Returns a list of users in the BIM 360 / ACC account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          },
+          {
+            "name": "filter[email]",
+            "in": "query",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved users."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createAccountUser",
+        "summary": "Add User to Account",
+        "description": "Adds a user to the BIM 360 / ACC account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:write"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "User added successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "409": {"description": "User already exists."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/companies": {
+      "get": {
+        "operationId": "getAccountCompanies",
+        "summary": "List Account Companies",
+        "description": "Returns a list of companies in the BIM 360 / ACC account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved companies."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/projects/{projectId}/users": {
+      "get": {
+        "operationId": "getProjectUsers",
+        "summary": "List Project Users",
+        "description": "Returns a list of users assigned to the specified project.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved project users."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "addProjectUser",
+        "summary": "Add User to Project",
+        "description": "Assigns a user to the specified project with a given role.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:write"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "services"],
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "services": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "serviceName": {"type": "string"},
+                        "access": {"type": "string", "enum": ["admin", "member"]}
+                      }
+                    }
+                  },
+                  "company_id": {"type": "string"},
+                  "role": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "User added to project."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/webhooks/v1/systems/{system}/events/{event}/hooks": {
+      "get": {
+        "operationId": "getWebhooks",
+        "summary": "List Webhooks",
+        "description": "Returns a list of webhooks for the specified system and event.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "system",
+            "in": "path",
+            "required": true,
+            "description": "The system identifier (e.g., 'data', 'derivative', 'adsk.c4r').",
+            "schema": {"type": "string", "enum": ["data", "derivative", "adsk.c4r"]}
+          },
+          {
+            "name": "event",
+            "in": "path",
+            "required": true,
+            "description": "The event type (e.g., 'dm.version.added', 'extraction.finished').",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved webhooks."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "summary": "Create Webhook",
+        "description": "Creates a new webhook subscription for the specified system and event.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read", "data:write"]}],
+        "parameters": [
+          {
+            "name": "system",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "enum": ["data", "derivative", "adsk.c4r"]}
+          },
+          {
+            "name": "event",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Webhook created successfully."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "409": {"description": "Webhook already exists."}
+        }
+      }
+    },
+    "/webhooks/v1/systems/{system}/events/{event}/hooks/{hookId}": {
+      "get": {
+        "operationId": "getWebhook",
+        "summary": "Get Webhook",
+        "description": "Returns details for a specific webhook.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "system",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "event",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "hookId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved webhook."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Webhook not found."}
+        }
+      },
+      "patch": {
+        "operationId": "updateWebhook",
+        "summary": "Update Webhook",
+        "description": "Updates a webhook subscription.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read", "data:write"]}],
+        "parameters": [
+          {
+            "name": "system",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "event",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "hookId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {"type": "string", "enum": ["active", "inactive"]},
+                  "filter": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {"description": "Webhook updated."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Webhook not found."}
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhook",
+        "summary": "Delete Webhook",
+        "description": "Deletes a webhook subscription.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read", "data:write"]}],
+        "parameters": [
+          {
+            "name": "system",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "event",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "hookId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "204": {"description": "Webhook deleted."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Webhook not found."}
+        }
+      }
+    },
+    "/webhooks/v1/hooks": {
+      "get": {
+        "operationId": "getAllWebhooks",
+        "summary": "List All Webhooks",
+        "description": "Returns all webhooks for the current application across all systems and events.",
+        "tags": ["Webhooks"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "pageState",
+            "in": "query",
+            "description": "Token for pagination.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by webhook status.",
+            "schema": {"type": "string", "enum": ["active", "inactive"]}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved all webhooks."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/authentication/v2/token": {
+      "post": {
+        "operationId": "getToken",
+        "summary": "Get Access Token",
+        "description": "Obtains an access token using client credentials (2-legged OAuth) or authorization code (3-legged OAuth).",
+        "tags": ["Data Management"],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["client_id", "client_secret", "grant_type"],
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "description": "The application's client ID."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "The application's client secret."
+                  },
+                  "grant_type": {
+                    "type": "string",
+                    "description": "The grant type.",
+                    "enum": ["client_credentials", "authorization_code", "refresh_token"]
+                  },
+                  "scope": {
+                    "type": "string",
+                    "description": "Space-separated list of requested scopes."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Authorization code (for 3-legged OAuth)."
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "description": "Redirect URI (for 3-legged OAuth)."
+                  },
+                  "refresh_token": {
+                    "type": "string",
+                    "description": "Refresh token (for token refresh)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Access token returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {"description": "Bad request. Invalid grant type or missing parameters."},
+          "401": {"description": "Unauthorized. Invalid client credentials."}
+        }
+      }
+    },
+    "/userprofile/v1/users/@me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get Current User Profile",
+        "description": "Returns the profile of the currently authenticated user.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["user-profile:read"]}],
+        "responses": {
+          "200": {"description": "Successfully retrieved user profile."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/project/v1/hubs/{hubId}/projects/{projectId}/topFolders": {
+      "get": {
+        "operationId": "getTopFolders",
+        "summary": "List Top Folders",
+        "description": "Returns the top-level folders for a project. These are the root-level folders like 'Project Files' and 'Plans'.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "hubId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved top folders."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Project not found."}
+        }
+      }
+    },
+    "/data/v1/projects/{projectId}/folders/{folderId}/search": {
+      "get": {
+        "operationId": "searchFolder",
+        "summary": "Search Folder",
+        "description": "Searches for items within a folder by name or other attributes.",
+        "tags": ["Data Management"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[displayName]",
+            "in": "query",
+            "description": "Filter items by display name.",
+            "schema": {"type": "string"}
+          },
+          {
+            "name": "filter[fileType]",
+            "in": "query",
+            "description": "Filter by file extension.",
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Search results returned."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."},
+          "404": {"description": "Folder not found."}
+        }
+      }
+    },
+    "/construction/issues/v1/projects/{projectId}/issue-attribute-definitions": {
+      "get": {
+        "operationId": "getIssueAttributeDefinitions",
+        "summary": "List Issue Attribute Definitions",
+        "description": "Returns custom attribute definitions for issues in the project.",
+        "tags": ["BIM 360"],
+        "security": [{"oauth2": ["data:read"]}],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved attribute definitions."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/industry_roles": {
+      "get": {
+        "operationId": "getIndustryRoles",
+        "summary": "List Industry Roles",
+        "description": "Returns a list of industry roles for the account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved industry roles."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    },
+    "/hq/v1/accounts/{accountId}/business_units": {
+      "get": {
+        "operationId": "getBusinessUnits",
+        "summary": "List Business Units",
+        "description": "Returns a list of business units for the account.",
+        "tags": ["Account Admin"],
+        "security": [{"oauth2": ["account:read"]}],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Successfully retrieved business units."},
+          "400": {"description": "Bad request."},
+          "401": {"description": "Unauthorized."}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "Autodesk Platform Services OAuth 2.0 authentication supporting 2-legged (client credentials) and 3-legged (authorization code) flows.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://developer.api.autodesk.com/authentication/v2/token",
+            "scopes": {
+              "data:read": "Read access to data.",
+              "data:write": "Write access to data.",
+              "data:create": "Create access to data.",
+              "data:search": "Search access to data.",
+              "bucket:read": "Read access to OSS buckets.",
+              "bucket:create": "Create OSS buckets.",
+              "bucket:update": "Update OSS buckets.",
+              "bucket:delete": "Delete OSS buckets.",
+              "account:read": "Read access to account information.",
+              "account:write": "Write access to account information.",
+              "user-profile:read": "Read user profile."
+            }
+          },
+          "authorizationCode": {
+            "authorizationUrl": "https://developer.api.autodesk.com/authentication/v2/authorize",
+            "tokenUrl": "https://developer.api.autodesk.com/authentication/v2/token",
+            "scopes": {
+              "data:read": "Read access to data.",
+              "data:write": "Write access to data.",
+              "data:create": "Create access to data.",
+              "data:search": "Search access to data.",
+              "bucket:read": "Read access to OSS buckets.",
+              "bucket:create": "Create OSS buckets.",
+              "bucket:update": "Update OSS buckets.",
+              "bucket:delete": "Delete OSS buckets.",
+              "account:read": "Read access to account information.",
+              "account:write": "Write access to account information.",
+              "user-profile:read": "Read user profile."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HubsResponse": {
+        "type": "object",
+        "properties": {
+          "jsonapi": {
+            "type": "object",
+            "properties": {
+              "version": {"type": "string"}
+            }
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Hub"
+            }
+          }
+        }
+      },
+      "Hub": {
+        "type": "object",
+        "properties": {
+          "type": {"type": "string"},
+          "id": {"type": "string"},
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "region": {"type": "string"},
+              "extension": {
+                "type": "object",
+                "properties": {
+                  "type": {"type": "string"},
+                  "version": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateFolderRequest": {
+        "type": "object",
+        "required": ["jsonapi", "data"],
+        "properties": {
+          "jsonapi": {
+            "type": "object",
+            "properties": {
+              "version": {"type": "string", "example": "1.0"}
+            }
+          },
+          "data": {
+            "type": "object",
+            "required": ["type", "attributes", "relationships"],
+            "properties": {
+              "type": {"type": "string", "example": "folders"},
+              "attributes": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "extension": {
+                    "type": "object",
+                    "properties": {
+                      "type": {"type": "string"},
+                      "version": {"type": "string"}
+                    }
+                  }
+                }
+              },
+              "relationships": {
+                "type": "object",
+                "properties": {
+                  "parent": {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "type": {"type": "string"},
+                          "id": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateItemRequest": {
+        "type": "object",
+        "required": ["jsonapi", "data", "included"],
+        "properties": {
+          "jsonapi": {
+            "type": "object",
+            "properties": {
+              "version": {"type": "string"}
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {"type": "string"},
+              "attributes": {"type": "object"},
+              "relationships": {"type": "object"}
+            }
+          },
+          "included": {
+            "type": "array",
+            "items": {"type": "object"}
+          }
+        }
+      },
+      "CreateBucketRequest": {
+        "type": "object",
+        "required": ["bucketKey", "policyKey"],
+        "properties": {
+          "bucketKey": {
+            "type": "string",
+            "description": "A unique name for the bucket."
+          },
+          "policyKey": {
+            "type": "string",
+            "description": "Retention policy.",
+            "enum": ["transient", "temporary", "persistent"]
+          },
+          "allow": {
+            "type": "array",
+            "description": "Access permissions.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "authId": {"type": "string"},
+                "access": {"type": "string", "enum": ["full", "read"]}
+              }
+            }
+          }
+        }
+      },
+      "IssuesResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "Issue": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "status": {"type": "string", "enum": ["open", "pending", "in_review", "closed"]},
+          "issueTypeId": {"type": "string"},
+          "issueSubtypeId": {"type": "string"},
+          "assignedTo": {"type": "string"},
+          "assignedToType": {"type": "string", "enum": ["user", "company", "role"]},
+          "dueDate": {"type": "string", "format": "date"},
+          "locationId": {"type": "string"},
+          "linkedDocuments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "urn": {"type": "string"}
+              }
+            }
+          },
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"},
+          "createdBy": {"type": "string"}
+        }
+      },
+      "CreateIssueRequest": {
+        "type": "object",
+        "required": ["title", "issueSubtypeId"],
+        "properties": {
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "status": {"type": "string", "enum": ["open", "pending", "in_review", "closed"]},
+          "issueSubtypeId": {"type": "string"},
+          "assignedTo": {"type": "string"},
+          "assignedToType": {"type": "string", "enum": ["user", "company", "role"]},
+          "dueDate": {"type": "string", "format": "date"},
+          "locationId": {"type": "string"},
+          "linkedDocuments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {"type": "string"},
+                "urn": {"type": "string"}
+              }
+            }
+          }
+        }
+      },
+      "UpdateIssueRequest": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "status": {"type": "string", "enum": ["open", "pending", "in_review", "closed"]},
+          "assignedTo": {"type": "string"},
+          "assignedToType": {"type": "string", "enum": ["user", "company", "role"]},
+          "dueDate": {"type": "string", "format": "date"},
+          "locationId": {"type": "string"}
+        }
+      },
+      "CreateRfiRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {"type": "string"},
+          "question": {"type": "string"},
+          "assignedTo": {"type": "string"},
+          "dueDate": {"type": "string", "format": "date"},
+          "priority": {"type": "string", "enum": ["low", "normal", "high", "critical"]},
+          "locationId": {"type": "string"},
+          "status": {"type": "string", "enum": ["draft", "submitted", "open", "answered", "closed", "void"]}
+        }
+      },
+      "UpdateRfiRequest": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "question": {"type": "string"},
+          "answer": {"type": "string"},
+          "assignedTo": {"type": "string"},
+          "dueDate": {"type": "string", "format": "date"},
+          "priority": {"type": "string", "enum": ["low", "normal", "high", "critical"]},
+          "status": {"type": "string", "enum": ["draft", "submitted", "open", "answered", "closed", "void"]}
+        }
+      },
+      "CreateBudgetRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string"},
+          "code": {"type": "string"},
+          "quantity": {"type": "number"},
+          "unitPrice": {"type": "number"},
+          "unit": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      },
+      "TranslationJobRequest": {
+        "type": "object",
+        "required": ["input", "output"],
+        "properties": {
+          "input": {
+            "type": "object",
+            "required": ["urn"],
+            "properties": {
+              "urn": {
+                "type": "string",
+                "description": "The Base64-encoded URN of the source design."
+              },
+              "compressedUrn": {"type": "boolean"},
+              "rootFilename": {
+                "type": "string",
+                "description": "The root filename for compressed archives."
+              }
+            }
+          },
+          "output": {
+            "type": "object",
+            "required": ["formats"],
+            "properties": {
+              "destination": {
+                "type": "object",
+                "properties": {
+                  "region": {"type": "string", "enum": ["US", "EMEA"]}
+                }
+              },
+              "formats": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "description": "Output format type.",
+                      "enum": ["svf", "svf2", "obj", "stl", "step", "iges", "thumbnail"]
+                    },
+                    "views": {
+                      "type": "array",
+                      "items": {"type": "string", "enum": ["2d", "3d"]}
+                    },
+                    "advanced": {
+                      "type": "object",
+                      "description": "Advanced format-specific options."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ManifestResponse": {
+        "type": "object",
+        "properties": {
+          "type": {"type": "string"},
+          "hasThumbnail": {"type": "string"},
+          "status": {"type": "string", "enum": ["pending", "inprogress", "success", "failed", "timeout"]},
+          "progress": {"type": "string"},
+          "region": {"type": "string"},
+          "urn": {"type": "string"},
+          "derivatives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string"},
+                "hasThumbnail": {"type": "string"},
+                "status": {"type": "string"},
+                "progress": {"type": "string"},
+                "outputType": {"type": "string"},
+                "children": {
+                  "type": "array",
+                  "items": {"type": "object"}
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {
+            "type": "string",
+            "description": "Project type.",
+            "enum": ["ACC Build", "BIM 360", "Convention Center", "Data Center", "Hospital", "Hotel", "Office", "Residential", "Retail", "Stadium"]
+          },
+          "start_date": {"type": "string", "format": "date"},
+          "end_date": {"type": "string", "format": "date"},
+          "status": {"type": "string", "enum": ["active", "inactive"]},
+          "value": {"type": "number", "description": "Project monetary value."},
+          "currency": {"type": "string", "description": "Currency code (e.g., USD)."},
+          "job_number": {"type": "string"},
+          "address_line_1": {"type": "string"},
+          "city": {"type": "string"},
+          "state_or_province": {"type": "string"},
+          "postal_code": {"type": "string"},
+          "country": {"type": "string"}
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {"type": "string", "format": "email"},
+          "first_name": {"type": "string"},
+          "last_name": {"type": "string"},
+          "company_id": {"type": "string"},
+          "role": {"type": "string"},
+          "nickname": {"type": "string"},
+          "image_url": {"type": "string", "format": "uri"}
+        }
+      },
+      "CreateWebhookRequest": {
+        "type": "object",
+        "required": ["callbackUrl", "scope"],
+        "properties": {
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to receive webhook notifications."
+          },
+          "scope": {
+            "type": "object",
+            "description": "The scope that defines the resources to monitor.",
+            "properties": {
+              "folder": {"type": "string"}
+            }
+          },
+          "hookAttribute": {
+            "type": "object",
+            "description": "Custom metadata to include with notifications."
+          },
+          "filter": {
+            "type": "string",
+            "description": "JSON filter expression to narrow event scope."
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {"type": "string"},
+          "token_type": {"type": "string", "example": "Bearer"},
+          "expires_in": {"type": "integer", "description": "Token lifetime in seconds."},
+          "refresh_token": {"type": "string", "description": "Refresh token (3-legged OAuth only)."}
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": {"type": "integer"},
+          "offset": {"type": "integer"},
+          "totalResults": {"type": "integer"}
+        }
+      }
+    }
+  }
+}

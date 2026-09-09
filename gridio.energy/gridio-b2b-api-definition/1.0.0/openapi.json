@@ -1,0 +1,2808 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Gridio B2B API definition",
+    "description": "Definition of Gridio B2B REST API endpoints.\n\nCurrent definition covers MVP of the portal (ie. provision of authentication and fleet overview functionality).\n\nNote the follwing:\n* when using start and end dates as query parameter, both dates are inclusive. So when you need data only for 12th of August 2024, set both\n  start and end date values to 2024-08-12\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/gridio/B2BAPI/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.gridio.energy",
+      "description": "Production endpoint of the B2B REST API"
+    },
+    {
+      "url": "https://test.gridio.energy",
+      "description": "Test endpoint for the B2B REST API with mock responses"
+    }
+  ],
+  "paths": {
+    "/oauth2/token": {
+      "post": {
+        "summary": "OAuth2 compliant authentication system",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "description": "OAuth2 compliant body for token issue and refresh",
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON structure with access and refresh tokens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized access"
+          }
+        }
+      }
+    },
+    "/oauth2/logout": {
+      "post": {
+        "summary": "Log out",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful logout returns empty response body"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses": {
+      "get": {
+        "summary": "Get list of businesses that customer currently logged in is permitted to manage.",
+        "tags": [
+          "Businesses"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of business metadata for all business accessible for given user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Business"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}": {
+      "get": {
+        "summary": "Get metadata for given business id.",
+        "tags": [
+          "Businesses"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business metadata for given business id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Business"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers": {
+      "get": {
+        "summary": "Get paginated list of all current customers. Ordered by last created customers first, descending order.",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "offset",
+            "description": "Pagination offset for the query (start at n-th customer). If missing, assumed zero.",
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "description": "Pagination page size, required parameter",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filter",
+            "description": "Fuzzy filter for a set of customers. Filter string is matched with customer id, external customer id\nemail or phone number. Must be at least 4 characters.\n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "john@hotmail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Customer"
+                      }
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "description": "Page size",
+                      "example": 50
+                    },
+                    "offset": {
+                      "type": "integer",
+                      "description": "Offset of the request",
+                      "example": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Creates new Gridio customer for given Business ID",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer created successfully"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/{customer_id}": {
+      "get": {
+        "summary": "Get latest customer data",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the customer to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer object"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Change customer record by customer id",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the customer to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "requestBody": {
+          "description": "Payload consisting of customer data to be changed",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "account_delete_requested": {
+                    "type": "boolean"
+                  },
+                  "business_id": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "ext_user_id": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "region": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Empty response with response code"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete customer record by customer id",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the customer to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empty response with response code"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/{customer_id}/locations": {
+      "get": {
+        "summary": "Gets locations by customer id and business id.",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of charging locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Location"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/{customer_id}/locations/{location_id}": {
+      "delete": {
+        "summary": "Deletes a location for given customer by location id.",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "location_id",
+            "in": "path",
+            "description": "Location ID to be requested",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location unlink successful"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/by_ext_user_id/{ext_user_id}/access_token": {
+      "post": {
+        "summary": "Generates front end (Gridio Connect) access token by External Customer ID",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the token request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "ext_user_id",
+            "in": "path",
+            "description": "External Customer ID for the token request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gridio Connect access token"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/token": {
+      "get": {
+        "summary": "Generates front end (Gridio Connect) access token by Gridio customer ID",
+        "tags": [
+          "Customers"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locatokentions request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Gridio Customer ID for the token request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gridio Connect access token"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/analytics/customers/history": {
+      "get": {
+        "summary": "Get summary stats on customers over time",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date (YYYY-MM-DD) of customer history",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-07-01"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date (YYYY-MM-DD) of customer history. End date will provide a closed boundary, ie. end date is included in data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-08-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of daily customer counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerStats"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices": {
+      "get": {
+        "summary": "Get list of all current devices in fleet with optional filtering. Ordered by last added devices\nbeing on top of the list. Order descending. Legacy endpoint for new schema use V2.\n",
+        "tags": [
+          "Fleet"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "offset",
+            "description": "Pagination offset for the query (start at n-th customer). If missing, assumed zero.",
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "description": "Pagination page size, required parameter",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filter",
+            "description": "Fuzzy filter for a set of customers. Filter string is matched with customer id, external customer id\nemail or phone number. Must be at least 4 characters. Note that customer locations are not provided\nwithin customer objects container in this respons. For customer's locations you need to request each\ncustomer data separately with get customer by ID request.   \n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "My blue tesla"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Device"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/businesses/{business_id}/devices": {
+      "get": {
+        "summary": "Get list of all current devices in fleet with optional filtering. Ordered by last added devices\nbeing on top of the list. Order descending.\n",
+        "tags": [
+          "Fleet"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "offset",
+            "description": "Pagination offset for the query (start at n-th customer). If missing, assumed zero.",
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "description": "Pagination page size, required parameter",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "filter",
+            "description": "Fuzzy filter for a set of customers. Filter string is matched with customer id, external customer id\nemail or phone number. Must be at least 4 characters. Note that customer locations are not provided\nwithin customer objects container in this respons. For customer's locations you need to request each\ncustomer data separately with get customer by ID request.   \n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "My blue tesla"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Devices list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceV2"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}": {
+      "get": {
+        "summary": "Get device data snapshot for given device ID",
+        "tags": [
+          "Fleet"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest device data snapshot for given device ID"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Fleet"
+        ],
+        "summary": "Changes device configuration. This is a customer agnostic request, therefore, it \nmutates the device directly.\n",
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body for changing device configuration",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "charge_by": {
+                    "type": "string",
+                    "example": "10:00"
+                  },
+                  "charge_from": {
+                    "type": "string",
+                    "example": "10:00"
+                  },
+                  "guaranteed_max_price": {
+                    "type": "number",
+                    "example": 120.5
+                  },
+                  "guaranteed_soc": {
+                    "type": "integer",
+                    "example": 50
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+                  },
+                  "opt_out_until": {
+                    "type": "integer",
+                    "example": 1627849329
+                  },
+                  "policy": {
+                    "type": "string",
+                    "example": "CHARGE BY"
+                  },
+                  "setup_complete": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "solar_start_level": {
+                    "type": "number",
+                    "example": 3500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful patch of the device"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}/status": {
+      "get": {
+        "summary": "Get Gridio status for the device",
+        "tags": [
+          "Fleet"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gridio status of the device",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GridioStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}/metrics/{metric_name}": {
+      "get": {
+        "summary": "Get historical data on the device",
+        "tags": [
+          "Fleet",
+          "Data"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          },
+          {
+            "name": "metric_name",
+            "in": "path",
+            "description": "Metric to be requested (eg. power, state of charge)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "RFC3339 compliant start time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "RFC3339 compliant end time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical time series data for the given device"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}/metrics/{metric_name}/latest": {
+      "get": {
+        "summary": "Get latest known data snapshot for the device",
+        "tags": [
+          "Fleet",
+          "Data"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          },
+          {
+            "name": "metric_name",
+            "description": "Metric enum for the data request (ie. capacity_available)",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest data for the given device"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/sessions": {
+      "get": {
+        "summary": "Get charging sessions for given device",
+        "tags": [
+          "Data"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "query",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "RFC3339 compliant start time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "RFC3339 compliant end time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "last_id",
+            "in": "query",
+            "description": "Last session UUID from previous request (paging for long responses)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of charging sessions"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}/location": {
+      "get": {
+        "summary": "Get device current location",
+        "tags": [
+          "Fleet"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current device location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "example": 59.21541578979492
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "example": 24.128607924316405
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/devices/{dev_id}/customers/{customer_id}": {
+      "patch": {
+        "tags": [
+          "Customer devices"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "summary": "Pairs customer with the device",
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device successfully paired"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer devices"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "summary": "Unlinks (unpairs) the device from the user",
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "dev_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "1777849329"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Device successfully unpaired"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/dev_makes/{dev_make_id}": {
+      "patch": {
+        "tags": [
+          "Fleet"
+        ],
+        "summary": "Patches devices of given make (OEM) for given business ID.\nMost likely to be used for mass opt outs and opt ins.\n",
+        "parameters": [
+          {
+            "description": "Business ID",
+            "in": "path",
+            "name": "business_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "description": "Device Make ID",
+            "in": "path",
+            "name": "dev_make_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "requestBody": {
+          "description": "Request body for opting out devices",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "opt_out_until": {
+                    "description": "UNIX timestamp until when the device is opted out.",
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful patch"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/analytics/devices/history": {
+      "get": {
+        "summary": "Get fleet summary stats over time",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date (YYYY-MM-DD) of fleet history",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-07-01"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date (YYYY-MM-DD) of fleet history. End date will provide a closed boundary, ie. end date is included in data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-08-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of daily device counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceStats"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/analytics/devices/dev_makes": {
+      "get": {
+        "summary": "Get summary stats of the fleet by device makes",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of device make counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceMakeStats"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/analytics/devices/performance": {
+      "get": {
+        "summary": "Get summary statistics on the fleet performance over given period",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date (YYYY-MM-DD) of fleet performance history.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-07-01"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date (YYYY-MM-DD) of fleet performance history. End date will provide a closed boundary, ie. end date is included in data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-08-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Summary statistics of fleet performance over the given time period",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/analytics/devices/capacity": {
+      "get": {
+        "summary": "Time series of fleet total charging capacity and solar capacity with 5 min resolution.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date (YYYY-MM-DD or RFC3339 compliant time) of fleet capacity history.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-07-01T00:00:00Z"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date (YYYY-MM-DD or RFC3339 compliant time) of fleet capacity history. End date will provide a closed boundary, ie. end date is included in data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024-08-01T00:00:00Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fleet charging history with 5 min resolution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "$ref": "#/components/schemas/CapacitySummary"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CapacityStats"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/locations": {
+      "get": {
+        "summary": "Paged list of charging locations for given business",
+        "tags": [
+          "Locations"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the customer request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "offset",
+            "description": "Pagination offset for the query (start at n-th customer). If missing, assumed zero.",
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "required": false
+          },
+          {
+            "name": "limit",
+            "description": "Pagination page size, required parameter",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged list of charging locations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Location"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/locations/{location_id}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "location_id",
+            "in": "path",
+            "description": "Location ID to be requested",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Charging location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Locations"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "location_id",
+            "in": "path",
+            "description": "Location ID to be changed",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Charging location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/customers/{customer_id}/locations/{location_id}/prices": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the locations request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "location_id",
+            "in": "path",
+            "description": "Location ID for the prices to be requested",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the prices to be requested",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "RFC3339 compliant start time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "RFC3339 compliant end time of price time series",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resolution",
+            "in": "query",
+            "description": "RFC3339 compliant duration (defaults to 1 hour)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prices response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/locations/{location_id}/customers/{customer_id}": {
+      "delete": {
+        "summary": "Unlink customer from given location id.",
+        "tags": [
+          "Locations"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the location unlink request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID for the location unlink request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "location_id",
+            "in": "path",
+            "description": "Location ID to be requested",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location unlink successful"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/households/{household_id}/customers": {
+      "get": {
+        "summary": "Get customers assigned to the given household",
+        "tags": [
+          "Households"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "household_id",
+            "in": "path",
+            "description": "Household ID for the household request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array if customer objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Customer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/households/{household_id}/customers/{customer_id}": {
+      "put": {
+        "summary": "Assign customer to a household",
+        "tags": [
+          "Households"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "household_id",
+            "in": "path",
+            "description": "Household ID for the household assignment request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "customer_id",
+            "in": "path",
+            "description": "Customer ID to be assigned",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Household assignment successful"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/webhooks/subscriptions": {
+      "get": {
+        "summary": "Get list of realtime alert push webhooks",
+        "tags": [
+          "Alerting"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of created webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new realtime alert push webhook",
+        "tags": [
+          "Alerting"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook create successful"
+          }
+        }
+      }
+    },
+    "/api/v1/businesses/{business_id}/webhooks/subscriptions/{webhook_id}": {
+      "patch": {
+        "summary": "Update realtime alert webhook by webhook ID",
+        "tags": [
+          "Alerting"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "description": "Webhook ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook update successful"
+          },
+          "404": {
+            "description": "Webhook with given ID not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete realtime alert webhooks by webhooks ID",
+        "tags": [
+          "Alerting"
+        ],
+        "security": [
+          {
+            "oauth2": [
+              "general"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "business_id",
+            "in": "path",
+            "description": "Business ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "description": "Webhook ID for the request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook delete successful"
+          },
+          "404": {
+            "description": "Webhook with given ID not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {
+              "general": "Generic scope"
+            },
+            "tokenUrl": "https://api.gridio.energy/oauth2/token",
+            "refreshUrl": "https://api.gridio.energy/oauth2/token"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "TokenRequest": {
+        "type": "object",
+        "required": [
+          "grant_type"
+        ],
+        "properties": {
+          "grant_type": {
+            "description": "OAuth2 compliant grant type field. Current implementation only supports credentials flow, therefore this must be set to \"password\" for login request and \"refresh_token\" for token refresh request.\n",
+            "example": "password",
+            "type": "string"
+          },
+          "username": {
+            "description": "Username",
+            "type": "string"
+          },
+          "password": {
+            "description": "Password",
+            "type": "string"
+          },
+          "refresh_token": {
+            "description": "Refresh token",
+            "type": "string"
+          }
+        }
+      },
+      "Business": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "name": {
+            "type": "string",
+            "example": "Gridio 2.0"
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "ext_user_id": {
+            "type": "string",
+            "example": "ZX33332234"
+          },
+          "email": {
+            "type": "string",
+            "example": "bob@gridio.io"
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "+4766332728"
+          },
+          "region": {
+            "type": "string",
+            "example": "FR"
+          },
+          "account_delete_requested": {
+            "type": "boolean",
+            "example": false
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Connected location id (UUID)",
+              "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+            }
+          },
+          "connected_devices": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Connected device id",
+              "example": 1723496400
+            }
+          },
+          "household_id": {
+            "type": "string",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "created_at": {
+            "description": "UNIX timestamp of customer creation",
+            "type": "integer",
+            "example": 1723496400
+          }
+        }
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "household_id": {
+            "type": "string",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "latitude": {
+            "type": "number",
+            "example": 54.222
+          },
+          "longitude": {
+            "type": "number",
+            "example": 12.455
+          },
+          "label": {
+            "type": "string",
+            "example": "Home"
+          },
+          "address": {
+            "type": "string",
+            "example": "Sihi 5, Tallinn"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Optional access token expiry time in seconds",
+            "type": "integer"
+          }
+        }
+      },
+      "CustomerStats": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "description": "UNIX timestamp of date",
+            "type": "integer",
+            "example": 1723496400
+          },
+          "total_count": {
+            "type": "integer",
+            "example": 1670
+          },
+          "customers_added": {
+            "type": "integer",
+            "example": 15
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "dev_id": {
+            "type": "string",
+            "example": "123333"
+          },
+          "phys_id": {
+            "type": "string",
+            "example": "VWZZZ122313331"
+          },
+          "dev_make": {
+            "type": "string",
+            "example": "Fronius"
+          },
+          "dev_type": {
+            "type": "string",
+            "example": "solar"
+          },
+          "charging_status": {
+            "type": "string",
+            "enum": [
+              "unplugged",
+              "unknown",
+              "plugged_in_charging",
+              "plugged_in_discharging",
+              "plugged_in_stopped",
+              "plugged_in_completed"
+            ],
+            "example": "unplugged"
+          },
+          "status": {
+            "type": "string",
+            "example": "active",
+            "enum": [
+              "active",
+              "paused",
+              "setup_incomplete"
+            ]
+          },
+          "setup_complete": {
+            "type": "boolean",
+            "example": true
+          },
+          "last_seen_timestamp": {
+            "type": "integer",
+            "example": 1723496400
+          },
+          "opt_out_until": {
+            "type": "integer",
+            "example": 1723496400
+          },
+          "policy": {
+            "type": "string",
+            "description": "Smart charging policy for the device",
+            "example": "CHARGE BY"
+          },
+          "tariffs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "ID of activated network tariff"
+            }
+          },
+          "guaranteed_max_price": {
+            "type": "number",
+            "example": 15.3
+          },
+          "guaranteed_soc": {
+            "type": "integer",
+            "example": 45
+          },
+          "solar_start_level": {
+            "type": "number",
+            "description": "Solar production power from where onwards solar charging starts [W]",
+            "example": 1500
+          },
+          "solar_smart_meter_aware": {
+            "type": "boolean",
+            "description": "Indicator whether inverter installation includes smart meter.",
+            "example": true
+          },
+          "fixed_location_id": {
+            "type": "string",
+            "description": "Location ID for fixed devices (eg. solar, chargers)",
+            "example": "bdee2fba-a80e-475f-bc8e-dc15ac50ed2f"
+          },
+          "customer_list": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "external_customer_count": {
+            "type": "integer",
+            "description": "In case there are customers belonging to other businesses connected to the same vehicle, then\nthis number will be greater than zero.\n",
+            "example": 1
+          }
+        }
+      },
+      "DeviceV2": {
+        "type": "object",
+        "description": "Device object representing a connected energy device (vehicle, charger, battery, or solar inverter)",
+        "properties": {
+          "__typename": {
+            "type": "string",
+            "description": "Device type discriminator",
+            "example": "Vehicle",
+            "enum": [
+              "Vehicle",
+              "Charger",
+              "Battery",
+              "Solar"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique device identifier",
+            "example": "1768571200"
+          },
+          "dev_make": {
+            "type": "string",
+            "description": "Device manufacturer/brand name",
+            "example": "mock"
+          },
+          "phys_id": {
+            "type": "string",
+            "description": "Physical device identifier (e.g., VIN for vehicles)",
+            "format": "uuid",
+            "example": "14cc14ac-46a7-40d0-8885-4c99118086d3"
+          },
+          "dev_type": {
+            "type": "string",
+            "description": "Human-readable device type",
+            "example": "Electric vehicle",
+            "enum": [
+              "Electric vehicle",
+              "Charger",
+              "Battery",
+              "Solar"
+            ]
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/DeviceMetadata"
+          },
+          "connector_data": {
+            "$ref": "#/components/schemas/DeviceConnectorData"
+          },
+          "config": {
+            "$ref": "#/components/schemas/DeviceConfig"
+          },
+          "policy": {
+            "type": "string",
+            "description": "Active charging policy",
+            "example": "CHARGE BY",
+            "enum": [
+              "CHARGE BY",
+              "SOLAR",
+              "IMMEDIATE"
+            ]
+          },
+          "setup_complete": {
+            "type": "boolean",
+            "description": "Whether device setup has been completed",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "dev_make",
+          "dev_type"
+        ]
+      },
+      "DeviceMetadata": {
+        "type": "object",
+        "description": "Internal device metadata",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Metadata record ID",
+            "example": "1712571200"
+          },
+          "dev_id": {
+            "type": "string",
+            "description": "Device ID reference",
+            "example": "1712571200"
+          },
+          "dev_type": {
+            "type": "string",
+            "description": "Device type",
+            "example": "Electric vehicle"
+          },
+          "dev_make": {
+            "type": "string",
+            "description": "Device manufacturer",
+            "example": "mock"
+          },
+          "phys_id": {
+            "type": "string",
+            "description": "Physical device identifier",
+            "format": "uuid",
+            "example": "a60c6774-93ed-49ad-8c9d-0e537e35e42d"
+          },
+          "household_id": {
+            "type": "string",
+            "description": "Household ID for the device",
+            "format": "uuid",
+            "example": "a60c6774-93ed-49ad-8c9d-0e537e35e42d"
+          },
+          "setup_complete": {
+            "type": "boolean",
+            "description": "Setup completion status",
+            "example": true
+          }
+        }
+      },
+      "DeviceConnectorData": {
+        "type": "object",
+        "description": "Device display and capability information from the connector",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Device title/model name",
+            "example": "BMW iX3"
+          },
+          "display_name": {
+            "type": "string",
+            "description": "User-facing display name",
+            "example": "BMW iX3"
+          },
+          "location_aware": {
+            "type": "boolean",
+            "description": "Whether device supports location-based features",
+            "example": true
+          }
+        }
+      },
+      "DeviceConfig": {
+        "type": "object",
+        "description": "Device smart charging configuration",
+        "properties": {
+          "opt_out": {
+            "type": "boolean",
+            "description": "Whether smart charging is currently opted out",
+            "example": false
+          },
+          "opt_out_until": {
+            "type": "string",
+            "description": "ISO timestamp or empty string when opt-out expires",
+            "example": ""
+          },
+          "charge_by": {
+            "type": "string",
+            "description": "Daily target completion time in HH:MM format",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+            "example": "06:00"
+          },
+          "charge_from": {
+            "type": "string",
+            "description": "Daily charging start time in HH:MM format",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+            "example": "06:00"
+          },
+          "guaranteed_max_price": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Maximum electricity price for charging (EUR/MWh)",
+            "example": null
+          },
+          "guaranteed_soc": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Minimum SoC percentage below which price constraints are ignored",
+            "example": 0
+          },
+          "target_soc": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Target state of charge percentage"
+          }
+        },
+        "example": 100
+      },
+      "DeviceStats": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "description": "UNIX timestamp of date",
+            "type": "integer",
+            "example": 1723496400
+          },
+          "devices_by_type": {
+            "description": "List of device counts by device type",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dev_type": {
+                  "type": "string",
+                  "example": "solar"
+                },
+                "total_count": {
+                  "type": "integer",
+                  "example": 15
+                },
+                "devices_added": {
+                  "type": "integer",
+                  "example": 2
+                }
+              }
+            }
+          }
+        }
+      },
+      "DeviceMakeStats": {
+        "type": "object",
+        "properties": {
+          "dev_make": {
+            "type": "string",
+            "example": "huawei"
+          },
+          "title": {
+            "type": "string",
+            "example": "Huawei Fusionsolar"
+          },
+          "total_count": {
+            "type": "integer",
+            "example": 121
+          }
+        }
+      },
+      "PerformanceStats": {
+        "type": "object",
+        "properties": {
+          "start_timestamp": {
+            "description": "UNIX timestamp of start date",
+            "type": "integer",
+            "example": 1723496400
+          },
+          "end_timestamp": {
+            "description": "UNIX timestamp of end date",
+            "type": "integer",
+            "example": 1723596400
+          },
+          "savings": {
+            "description": "Daily savings of the fleet in EUR over the given time period",
+            "type": "number",
+            "example": 5556.2
+          },
+          "energy_cost": {
+            "description": "Energy cost incurred by the fleet in EUR over the given time period",
+            "type": "number",
+            "example": 88892.1
+          },
+          "smart_charged_wh": {
+            "description": "Smart charged Wh for the fleet at given day",
+            "type": "number",
+            "example": 12000.4
+          },
+          "max_capacity_w": {
+            "description": "Maximum total capacity (power) of the fleet in W over the given time period",
+            "type": "number",
+            "example": 2303450.0
+          },
+          "max_solar_w": {
+            "description": "Maximum solar production capacity (power) of the fleet in W over the given time period",
+            "type": "number",
+            "example": 1240121.2
+          }
+        }
+      },
+      "CapacitySummary": {
+        "type": "object",
+        "properties": {
+          "max_capacity_w": {
+            "description": "Maximum total capacity (power) of the fleet at given day in W",
+            "type": "number",
+            "example": 2303450.0
+          },
+          "min_capacity_w": {
+            "description": "Minimum total capacity (power) of the fleet at given day in W",
+            "type": "number",
+            "example": 1200.0
+          },
+          "max_solar_w": {
+            "description": "Maximum solar production capacity (power) of the fleet at given day in W",
+            "type": "number",
+            "example": 1240121.2
+          }
+        }
+      },
+      "CapacityStats": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "description": "UNIX timestamp of the data",
+            "type": "integer",
+            "example": 1723496400
+          },
+          "charging_capacity_w": {
+            "description": "Average charging capacity of the fleet in W at given time period",
+            "type": "number",
+            "example": 120003
+          },
+          "solar_capacity_w": {
+            "description": "Average solar capacity of the fleet in W at given time period",
+            "type": "number",
+            "example": 5004
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "a60c6774-93ed-49ad-8c9d-0e537e35e42"
+          },
+          "business_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "a60c6774-93ed-49ad-8c9d-0e537e35e42d"
+          },
+          "callback_url": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GridioStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "setup_incomplete"
+            ],
+            "example": "active"
+          },
+          "gridio_status": {
+            "type": "string",
+            "enum": [
+              "active_smart_charging",
+              "active_charging",
+              "active_solar_charging",
+              "active_scheduled",
+              "active_waiting",
+              "inactive_opted_out",
+              "inactive_scheduled",
+              "inactive_setup_incomplete"
+            ],
+            "example": "active_smart_charging"
+          }
+        }
+      }
+    }
+  }
+}

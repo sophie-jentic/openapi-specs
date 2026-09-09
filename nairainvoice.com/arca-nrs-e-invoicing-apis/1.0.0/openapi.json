@@ -1,0 +1,1649 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Arca NRS E-Invoicing APIs",
+    "description": "The Arca E-Invoicing API enables Nigerian organisations to standardise, validate, and securely transmit invoices to the Nigerian Revenue Service (NRS/FIRS).\n\nArca Payments is one of the first 16 licensed Access Point Providers and System Integrators (APP/SI) approved by the NRS.\n\n## Authentication\nAll invoice lifecycle endpoints require an `X-Business-Key` header. Obtain this key by calling the **Request Business Key** endpoint.\n\n## Base URL\n- **Development:** `https://api-dev.nairainvoice.com/dev`\n- **Production:** `https://api.nairainvoice.com/api`\n",
+    "version": "1.0.0",
+    "contact": {
+      "email": "finance@arca.network"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/arcapayments/arca-nrs-e-invoicing-apis/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-dev.nairainvoice.com/dev",
+      "description": "Development Server"
+    },
+    {
+      "url": "https://api.nairainvoice.com/api",
+      "description": "Production Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Business Onboarding",
+      "description": "Endpoints for registering a business and managing business keys"
+    },
+    {
+      "name": "Invoice Creation",
+      "description": "Endpoints for creating, retrieving, and managing invoices"
+    },
+    {
+      "name": "Invoice Reversal",
+      "description": "Endpoints for reversing invoices and generating credit notes"
+    },
+    {
+      "name": "Invoice Receipt",
+      "description": "Endpoints for fetching and confirming received invoices"
+    },
+    {
+      "name": "FIRS Resources",
+      "description": "Reference data endpoints for currencies, tax categories, product codes and more"
+    }
+  ],
+  "paths": {
+    "/external/request-business-key": {
+      "post": {
+        "tags": [
+          "Business Onboarding"
+        ],
+        "summary": "Request Business Key",
+        "description": "Registers a business entity and generates a business key used for authenticating all subsequent API calls.\nRequires valid FIRS credentials and business address details.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "businessAddress",
+                  "businessAddressLg",
+                  "businessAddressStreetName",
+                  "businessCity",
+                  "businessCountry",
+                  "businessPostalCode",
+                  "businessState",
+                  "contactEmail",
+                  "entityFirsId",
+                  "businessFirsId"
+                ],
+                "properties": {
+                  "businessAddress": {
+                    "type": "string",
+                    "description": "Full business address",
+                    "example": "123 Commerce Plaza, Victoria Island"
+                  },
+                  "businessAddressLg": {
+                    "type": "string",
+                    "description": "Business address local government area",
+                    "example": "Eti-Osa"
+                  },
+                  "businessAddressStreetName": {
+                    "type": "string",
+                    "description": "Street name of the business address",
+                    "example": "Adeola Odeku Street"
+                  },
+                  "businessCity": {
+                    "type": "string",
+                    "description": "City where the business is located",
+                    "example": "Lagos"
+                  },
+                  "businessCountry": {
+                    "type": "string",
+                    "description": "Country where the business is located",
+                    "example": "Nigeria"
+                  },
+                  "businessPostalCode": {
+                    "type": "string",
+                    "description": "Postal/ZIP code of the business address",
+                    "example": "101241"
+                  },
+                  "businessState": {
+                    "type": "string",
+                    "description": "State/province where the business is located",
+                    "example": "Lagos"
+                  },
+                  "contactEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Contact email address for the business",
+                    "example": "info@example.com"
+                  },
+                  "entityFirsId": {
+                    "type": "string",
+                    "description": "FIRS identification number for the entity",
+                    "example": "ENT-87654321"
+                  },
+                  "businessFirsId": {
+                    "type": "string",
+                    "description": "FIRS identification number for the business",
+                    "example": "26ede24b-ac50-475f-aacc-5ea6339f0863"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business key generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessKeyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessFirsId}/regenerate-business-key": {
+      "post": {
+        "tags": [
+          "Business Onboarding"
+        ],
+        "summary": "Regenerate Business Key",
+        "description": "Regenerates the business key for an existing business. Use this when rotating keys for security purposes or when an existing key has been compromised.\n\n**Warning:** Regenerating a business key immediately invalidates the previous key. Update all systems using the old key before or immediately after regeneration.\n",
+        "parameters": [
+          {
+            "name": "businessFirsId",
+            "in": "path",
+            "required": true,
+            "description": "The FIRS identification number for the business",
+            "schema": {
+              "type": "string"
+            },
+            "example": "26ede24b-ac50-475f-aacc-5ea6339f0863"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business key regenerated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessKeyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessId}/invoices": {
+      "post": {
+        "tags": [
+          "Invoice Creation"
+        ],
+        "summary": "Create Invoice",
+        "description": "Creates a new NRS-compliant invoice for the specified business. The invoice is validated and transmitted to the Nigerian Revenue Service.\n\nSupports both **B2B** (Business to Business) and **B2C** (Business to Customer) invoice types.\n\nAt least one invoice line item and one tax total must be provided.\n",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              },
+              "example": {
+                "requesttype": "B2B",
+                "invoice_number": "INV236",
+                "business_id": "b4009129-ece8-45fc-9584-976fcbe35f8d",
+                "issue_date": "2025-08-26",
+                "due_date": "2025-08-26",
+                "issue_time": "12:57:15",
+                "invoice_type_code": "389",
+                "payment_status": "PAID",
+                "note": "August Electricity Bill",
+                "tax_point_date": "2025-08-26",
+                "document_currency_code": "NGN",
+                "tax_currency_code": "NGN",
+                "supplier_party_tin": "68721523-8104",
+                "supplier_party_email": "supplier@example.com",
+                "supplier_party_name": "Arca Payments",
+                "supplier_party_business_description": "Switching and Processing",
+                "supplier_lga": "Eti-Osa",
+                "supplier_state": "Lagos",
+                "supplier_city_name": "Lagos",
+                "supplier_postal_zone": "101245",
+                "supplier_country": "NG",
+                "supplier_street_name": "5, Furo Ezimora Street",
+                "line_extension_amount": 30030.0,
+                "tax_exclusive_amount": 30030.0,
+                "tax_inclusive_amount": 30255.22,
+                "payable_amount": 30255.22,
+                "invoice_line": [
+                  {
+                    "hsn_code": "2716.00",
+                    "product_category": "Electrical energy",
+                    "invoiced_quantity": 200.0,
+                    "line_extension_amount": 30030.0,
+                    "item_name": "Electricity Supply",
+                    "item_description": "Electricity Units",
+                    "price_amount": 150.0,
+                    "price_base_quantity": 1.0,
+                    "price_unit": "NGN PER 1"
+                  }
+                ],
+                "tax_total": [
+                  {
+                    "tax_amount": 225.22,
+                    "tax_subtotal": [
+                      {
+                        "taxable_amount": 30030.0,
+                        "tax_amount": 225.22,
+                        "category_id": "STANDARD_VAT",
+                        "category_percent": 0.75
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessId}/invoices/{invoiceIrn}": {
+      "get": {
+        "tags": [
+          "Invoice Creation"
+        ],
+        "summary": "Get Invoice Details",
+        "description": "Retrieves comprehensive details of a specific invoice including line items, tax information, customer and supplier details, and payment status.",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessId"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceIrn"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessId}/invoices/{invoiceIrn}/qr": {
+      "get": {
+        "tags": [
+          "Invoice Creation"
+        ],
+        "summary": "Get Invoice QR Code",
+        "description": "Retrieves the QR code for a specific invoice. Returns a base64-encoded PNG image and encrypted invoice data.\n\nThe QR code can be embedded in invoice PDFs or displayed in mobile apps to facilitate payment.\n",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessId"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceIrn"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR code retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "encryptedDataBase64": {
+                          "type": "string",
+                          "description": "Base64 encoded encrypted invoice data"
+                        },
+                        "irn": {
+                          "type": "string",
+                          "description": "Invoice Reference Number"
+                        },
+                        "qrCodeBase64": {
+                          "type": "string",
+                          "description": "Base64 encoded QR code image (PNG format)"
+                        },
+                        "timestamp": {
+                          "type": "integer",
+                          "description": "Unix timestamp of response generation"
+                        }
+                      }
+                    },
+                    "responseCode": {
+                      "type": "string",
+                      "example": "00"
+                    },
+                    "responseMessage": {
+                      "type": "string",
+                      "example": "QR code retrieved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessId}/invoices/update-payment/{invoiceIrn}": {
+      "post": {
+        "tags": [
+          "Invoice Creation"
+        ],
+        "summary": "Update Invoice Payment Status",
+        "description": "Updates the payment status of an existing invoice.\n\n**Allowed status transitions:**\n- `PENDING` \u2192 `PAID` or `REJECTED`\n- `REJECTED` \u2192 `PENDING` (for reprocessing)\n",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessId"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceIrn"
+          },
+          {
+            "name": "invoiceStatus",
+            "in": "query",
+            "required": true,
+            "description": "The new payment status for the invoice",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PAID",
+                "REJECTED"
+              ]
+            },
+            "example": "PAID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
+          }
+        }
+      }
+    },
+    "/external/businesses/{businessId}/invoices/reversal": {
+      "post": {
+        "tags": [
+          "Invoice Reversal"
+        ],
+        "summary": "Reverse Invoice",
+        "description": "Reverses an existing invoice by its IRN. This creates a credit note against the original invoice.\n\n**Workflow:**\n1. Create Invoice\n2. Invoice Transmitted\n3. Identify error or cancellation need\n4. Call this endpoint to reverse\n5. Create a new corrected invoice if needed\n\nReversed invoices cannot be un-reversed.\n",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "irn"
+                ],
+                "properties": {
+                  "irn": {
+                    "type": "string",
+                    "description": "Invoice Reference Number of the invoice to reverse",
+                    "example": "INV236-1070ECE8-20250826"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoice reversed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceReversalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Conflict - Invoice cannot be reversed (already reversed or in invalid state)"
+          }
+        }
+      }
+    },
+    "/external/{businessId}/fetchInvoices": {
+      "post": {
+        "tags": [
+          "Invoice Receipt"
+        ],
+        "summary": "Fetch Received Invoices",
+        "description": "Fetches invoices received by the business from other parties via the NRS network.",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoices fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/external/{businessId}/confirmInvoiceReceipt/{invoiceIrn}": {
+      "get": {
+        "tags": [
+          "Invoice Receipt"
+        ],
+        "summary": "Confirm Received Invoice",
+        "description": "Confirms receipt of a specific invoice received from another business via the NRS network.",
+        "security": [
+          {
+            "BusinessKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/invoiceIrn"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice receipt confirmed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleSuccessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/currencies": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Currencies",
+        "description": "Returns the list of currencies supported by FIRS for invoice transactions.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Currencies retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/invoice-types": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Invoice Types",
+        "description": "Returns the list of valid invoice type codes accepted by FIRS.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice types retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/payment-means": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Payment Means",
+        "description": "Returns the list of valid payment means codes accepted by FIRS.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment means retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/product-codes": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Product Codes",
+        "description": "Returns the list of FIRS product codes (HSN codes) for classifying goods on invoices.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product codes retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/service-codes": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Service Codes",
+        "description": "Returns the list of FIRS service codes for classifying services on invoices.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service codes retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/tax-categories": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Tax Categories",
+        "description": "Returns the list of valid tax category IDs and their applicable rates as defined by FIRS.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tax categories retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/countries": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Countries",
+        "description": "Returns the list of countries supported by FIRS using ISO 2-letter country codes.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Countries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/states": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS States",
+        "description": "Returns the list of Nigerian states recognised by FIRS.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "States retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/lgas": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS Local Government Areas",
+        "description": "Returns the list of Local Government Areas (LGAs) recognised by FIRS.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "LGAs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/external/{businessId}/resources/lookup-tin/{tin}": {
+      "get": {
+        "tags": [
+          "FIRS Resources"
+        ],
+        "summary": "Get FIRS TIN Lookup",
+        "description": "Looks up a Tax Identification Number (TIN) to validate and retrieve associated business details from the FIRS registry.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/businessIdPath"
+          },
+          {
+            "name": "tin",
+            "in": "path",
+            "required": true,
+            "description": "Tax Identification Number to look up",
+            "schema": {
+              "type": "string"
+            },
+            "example": "68721523-8104"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TIN details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BusinessKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Business-Key",
+        "description": "Business authentication key obtained from the Request Business Key endpoint"
+      }
+    },
+    "parameters": {
+      "businessId": {
+        "name": "businessId",
+        "in": "path",
+        "required": true,
+        "description": "The unique FIRS identifier of the business",
+        "schema": {
+          "type": "string"
+        },
+        "example": "26ede24b-ac50-475f-aacc-5ea6339f0863"
+      },
+      "businessIdPath": {
+        "name": "businessId",
+        "in": "path",
+        "required": true,
+        "description": "The unique FIRS identifier of the business",
+        "schema": {
+          "type": "string"
+        },
+        "example": "26ede24b-ac50-475f-aacc-5ea6339f0863"
+      },
+      "invoiceIrn": {
+        "name": "invoiceIrn",
+        "in": "path",
+        "required": true,
+        "description": "Invoice Reference Number (IRN)",
+        "schema": {
+          "type": "string"
+        },
+        "example": "INV237-1070ECE8-20250826"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - Invalid input parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Invalid or missing business key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - Resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Unprocessable Entity - Business logic validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "BusinessKeyResponse": {
+        "type": "object",
+        "properties": {
+          "businessFirsId": {
+            "type": "string",
+            "example": "26ede24b-ac50-475f-aacc-5ea6339f0863"
+          },
+          "businessKey": {
+            "type": "string",
+            "example": "BK_QUBYK4S2X97J"
+          },
+          "responseCode": {
+            "type": "string",
+            "example": "00"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Business key generated successfully"
+          }
+        }
+      },
+      "SimpleSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "responseCode": {
+            "type": "string",
+            "example": "00"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Success"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "nullable": true,
+            "example": null
+          },
+          "responseCode": {
+            "type": "string",
+            "example": "404"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Resource not found"
+          }
+        }
+      },
+      "ResourceListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "responseCode": {
+            "type": "string",
+            "example": "00"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Success"
+          }
+        }
+      },
+      "CreateInvoiceRequest": {
+        "type": "object",
+        "required": [
+          "invoice_number",
+          "business_id",
+          "issue_date",
+          "due_date",
+          "issue_time",
+          "invoice_type_code",
+          "payment_status",
+          "note",
+          "tax_point_date",
+          "document_currency_code",
+          "supplier_party_tin",
+          "supplier_party_email",
+          "supplier_party_name",
+          "supplier_party_business_description",
+          "supplier_lga",
+          "supplier_state",
+          "supplier_city_name",
+          "supplier_postal_zone",
+          "supplier_country",
+          "supplier_street_name",
+          "line_extension_amount",
+          "tax_exclusive_amount",
+          "tax_inclusive_amount",
+          "payable_amount",
+          "invoice_line",
+          "tax_total"
+        ],
+        "properties": {
+          "requesttype": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "description": "Invoice transaction type"
+          },
+          "invoice_number": {
+            "type": "string",
+            "description": "Unique invoice identifier"
+          },
+          "business_id": {
+            "type": "string",
+            "description": "Business FIRS ID"
+          },
+          "issue_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Invoice issue date (YYYY-MM-DD)"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date (YYYY-MM-DD)"
+          },
+          "issue_time": {
+            "type": "string",
+            "description": "Invoice issue time (HH:MM:SS)"
+          },
+          "invoice_type_code": {
+            "type": "string",
+            "description": "Invoice type code from FIRS reference list"
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "PAID",
+              "PENDING",
+              "REJECTED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Additional notes on the invoice"
+          },
+          "tax_point_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date when tax becomes due (YYYY-MM-DD)"
+          },
+          "document_currency_code": {
+            "type": "string",
+            "description": "Currency code (e.g. NGN)"
+          },
+          "tax_currency_code": {
+            "type": "string",
+            "description": "Tax currency code"
+          },
+          "customer_party_tin": {
+            "type": "string",
+            "description": "Customer TIN (optional)"
+          },
+          "customer_party_email": {
+            "type": "string",
+            "description": "Customer email (optional)"
+          },
+          "customer_party_name": {
+            "type": "string",
+            "description": "Customer name (optional)"
+          },
+          "customer_party_telephone": {
+            "type": "string",
+            "description": "Customer phone (optional)"
+          },
+          "customer_party_business_description": {
+            "type": "string",
+            "description": "Customer business description (optional)"
+          },
+          "customer_city_name": {
+            "type": "string"
+          },
+          "customer_postal_zone": {
+            "type": "string"
+          },
+          "customer_country": {
+            "type": "string"
+          },
+          "customer_street_name": {
+            "type": "string"
+          },
+          "customer_lga": {
+            "type": "string"
+          },
+          "customer_state": {
+            "type": "string"
+          },
+          "supplier_party_tin": {
+            "type": "string",
+            "minLength": 6
+          },
+          "supplier_party_email": {
+            "type": "string",
+            "format": "email"
+          },
+          "supplier_party_name": {
+            "type": "string"
+          },
+          "supplier_party_telephone": {
+            "type": "string"
+          },
+          "supplier_party_business_description": {
+            "type": "string",
+            "minLength": 6
+          },
+          "supplier_lga": {
+            "type": "string"
+          },
+          "supplier_state": {
+            "type": "string"
+          },
+          "supplier_city_name": {
+            "type": "string"
+          },
+          "supplier_postal_zone": {
+            "type": "string"
+          },
+          "supplier_country": {
+            "type": "string"
+          },
+          "supplier_street_name": {
+            "type": "string"
+          },
+          "line_extension_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "tax_exclusive_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "tax_inclusive_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "payable_amount": {
+            "type": "number",
+            "minimum": 0
+          },
+          "invoice_line": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLine"
+            }
+          },
+          "tax_total": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/TaxTotal"
+            }
+          },
+          "allowance_charge": {
+            "type": "array",
+            "description": "Optional allowances or charges",
+            "items": {
+              "$ref": "#/components/schemas/AllowanceCharge"
+            }
+          },
+          "order_reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "buyer_reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "accounting_cost": {
+            "type": "string",
+            "nullable": true
+          },
+          "actual_delivery_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "payment_terms_note": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "InvoiceLine": {
+        "type": "object",
+        "required": [
+          "hsn_code",
+          "product_category",
+          "invoiced_quantity",
+          "line_extension_amount",
+          "item_name",
+          "item_description",
+          "price_amount",
+          "price_base_quantity",
+          "price_unit"
+        ],
+        "properties": {
+          "hsn_code": {
+            "type": "string",
+            "description": "HSN/commodity classification code",
+            "example": "2716.00"
+          },
+          "product_category": {
+            "type": "string",
+            "description": "Product category description",
+            "example": "Electrical energy"
+          },
+          "invoiced_quantity": {
+            "type": "number",
+            "minimum": 0.01,
+            "example": 200.0
+          },
+          "line_extension_amount": {
+            "type": "number",
+            "minimum": 0,
+            "example": 30030.0
+          },
+          "item_name": {
+            "type": "string",
+            "example": "Electricity Supply"
+          },
+          "item_description": {
+            "type": "string",
+            "example": "Electricity Units"
+          },
+          "price_amount": {
+            "type": "number",
+            "minimum": 0,
+            "example": 150.0
+          },
+          "price_base_quantity": {
+            "type": "number",
+            "minimum": 0.01,
+            "example": 1.0
+          },
+          "price_unit": {
+            "type": "string",
+            "example": "NGN PER 1"
+          },
+          "discount_rate": {
+            "type": "number",
+            "default": 0.0
+          },
+          "discount_amount": {
+            "type": "number",
+            "default": 0.0
+          },
+          "fee_rate": {
+            "type": "number",
+            "default": 0.0
+          },
+          "fee_amount": {
+            "type": "number",
+            "default": 0.0
+          }
+        }
+      },
+      "TaxTotal": {
+        "type": "object",
+        "required": [
+          "tax_amount",
+          "tax_subtotal"
+        ],
+        "properties": {
+          "tax_amount": {
+            "type": "number",
+            "minimum": 0,
+            "example": 225.22
+          },
+          "tax_subtotal": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "taxable_amount",
+                "tax_amount",
+                "category_id",
+                "category_percent"
+              ],
+              "properties": {
+                "taxable_amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "example": 30030.0
+                },
+                "tax_amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "example": 225.22
+                },
+                "category_id": {
+                  "type": "string",
+                  "description": "Tax category ID from FIRS reference list",
+                  "example": "STANDARD_VAT"
+                },
+                "category_percent": {
+                  "type": "number",
+                  "minimum": 0,
+                  "example": 0.75
+                }
+              }
+            }
+          }
+        }
+      },
+      "AllowanceCharge": {
+        "type": "object",
+        "properties": {
+          "allowanceChargeIndicator": {
+            "type": "boolean",
+            "description": "false = allowance, true = charge"
+          },
+          "allowanceChargeReason": {
+            "type": "string",
+            "example": "Early payment discount"
+          },
+          "allowanceChargeReasonCode": {
+            "type": "string",
+            "example": "95"
+          },
+          "allowanceChargeAmount": {
+            "type": "number",
+            "example": 150.0
+          },
+          "allowanceChargeBaseAmount": {
+            "type": "number",
+            "example": 30030.0
+          },
+          "allowanceChargeMultiplierFactorNumeric": {
+            "type": "number",
+            "example": 0.005
+          }
+        }
+      },
+      "CreateInvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "invoiceId": {
+                "type": "integer",
+                "example": 132
+              },
+              "invoiceCreatedAt": {
+                "type": "string",
+                "example": "2025-08-26T12:57:15Z"
+              },
+              "invoiceStatus": {
+                "type": "string",
+                "example": "CREATED"
+              },
+              "invoiceNumber": {
+                "type": "string",
+                "example": "INV236"
+              },
+              "invoiceNote": {
+                "type": "string",
+                "example": "August Electricity Bill"
+              },
+              "invoiceBusinessId": {
+                "type": "string",
+                "example": "b4009129-ece8-45fc-9584-976fcbe35f8d"
+              },
+              "invoiceIssueDate": {
+                "type": "string",
+                "example": "2025-08-26"
+              },
+              "invoiceDueDate": {
+                "type": "string",
+                "example": "2025-08-26"
+              },
+              "invoiceTypeCode": {
+                "type": "string",
+                "example": "389"
+              },
+              "invoicePaymentStatus": {
+                "type": "string",
+                "example": "PAID"
+              },
+              "invoiceDocumentCurrencyCode": {
+                "type": "string",
+                "example": "NGN"
+              },
+              "invoicePayableAmount": {
+                "type": "number",
+                "example": 30255.22
+              },
+              "invoiceTaxExclusiveAmount": {
+                "type": "number",
+                "example": 30030.0
+              },
+              "invoiceTaxInclusiveAmount": {
+                "type": "number",
+                "example": 30255.22
+              },
+              "invoiceLineExtensionAmount": {
+                "type": "number",
+                "example": 30030.0
+              }
+            }
+          },
+          "responseCode": {
+            "type": "string",
+            "example": "200"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Invoice created successfully"
+          }
+        }
+      },
+      "InvoiceDetailResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "irn": {
+                "type": "string",
+                "example": "INV237-1070ECE8-20250826"
+              },
+              "issueDate": {
+                "type": "string",
+                "example": "2025-08-26"
+              },
+              "issueTime": {
+                "type": "string",
+                "example": "12:57:15"
+              },
+              "dueDate": {
+                "type": "string",
+                "example": "2025-08-26"
+              },
+              "invoiceTypeCode": {
+                "type": "string",
+                "example": "389"
+              },
+              "paymentStatus": {
+                "type": "string",
+                "example": "PAID"
+              },
+              "documentCurrencyCode": {
+                "type": "string",
+                "example": "NGN"
+              },
+              "taxCurrencyCode": {
+                "type": "string",
+                "example": "NGN"
+              },
+              "note": {
+                "type": "string"
+              },
+              "legalMonetaryTotal": {
+                "type": "object",
+                "properties": {
+                  "lineExtensionAmount": {
+                    "type": "number"
+                  },
+                  "taxExclusiveAmount": {
+                    "type": "number"
+                  },
+                  "taxInclusiveAmount": {
+                    "type": "number"
+                  },
+                  "payableAmount": {
+                    "type": "number"
+                  }
+                }
+              },
+              "accountingCustomerParty": {
+                "type": "object"
+              },
+              "accountingSupplierParty": {
+                "type": "object"
+              },
+              "invoiceLine": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "taxTotal": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "responseCode": {
+            "type": "string",
+            "example": "00"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Invoice retrieved successfully"
+          }
+        }
+      },
+      "InvoiceReversalResponse": {
+        "type": "object",
+        "properties": {
+          "responseCode": {
+            "type": "string",
+            "example": "00"
+          },
+          "responseMessage": {
+            "type": "string",
+            "example": "Success"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "invoiceId": {
+                "type": "integer"
+              },
+              "invoiceIrn": {
+                "type": "string"
+              },
+              "invoiceStatus": {
+                "type": "string",
+                "example": "REVERSED"
+              },
+              "invoiceTypeCode": {
+                "type": "string"
+              },
+              "invoicePaymentStatus": {
+                "type": "string"
+              },
+              "invoiceCreatedAt": {
+                "type": "string"
+              },
+              "invoiceLine": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "invoiceTaxTotal": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

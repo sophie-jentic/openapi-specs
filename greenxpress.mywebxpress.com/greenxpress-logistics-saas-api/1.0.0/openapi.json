@@ -1,0 +1,849 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GreenXpress Logistics SaaS API",
+    "description": "API for GreenXpress logistics SaaS platform.\nThis API supports user authentication, API key management, trip management, and master data management.\nAuthentication:\n  - BearerAuth: JWT token required for most endpoints.\n  - ApiKeyAuth: API key via X-API-Key header allowed for trip upload.\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/refaiai/GeneratedAPI_2026-02-13-1231/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://greenxpress.mywebxpress.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication endpoints"
+    },
+    {
+      "name": "API Keys",
+      "description": "API key management (Admin only)"
+    },
+    {
+      "name": "Trips",
+      "description": "Trip management endpoints"
+    },
+    {
+      "name": "Masters",
+      "description": "Master data management endpoints"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate user and return JWT token",
+        "operationId": "loginUser",
+        "requestBody": {
+          "description": "User credentials for login",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "userId",
+                  "password"
+                ],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "description": "User identifier",
+                    "example": "john.doe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "User password",
+                    "example": "P@ssw0rd!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful authentication returns JWT tokens and expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "accessToken",
+                    "refreshToken",
+                    "expiresIn"
+                  ],
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT access token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refreshToken": {
+                      "type": "string",
+                      "description": "JWT refresh token",
+                      "example": "dGhpc2lzYXJlZnJlc2h0b2tlbg=="
+                    },
+                    "expiresIn": {
+                      "type": "integer",
+                      "description": "Expiry time in seconds",
+                      "example": 3600
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid credentials"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/api-keys/generate": {
+      "post": {
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Generate a new API key for a company (Admin only)",
+        "operationId": "generateApiKey",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "API key generation details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "company_id",
+                  "tms_name",
+                  "description",
+                  "expires_in_days"
+                ],
+                "properties": {
+                  "company_id": {
+                    "type": "integer",
+                    "description": "Company identifier",
+                    "example": 123
+                  },
+                  "tms_name": {
+                    "type": "string",
+                    "description": "Transportation Management System name",
+                    "example": "GreenXpress TMS"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the API key usage",
+                    "example": "Key for integration with partner system"
+                  },
+                  "expires_in_days": {
+                    "type": "integer",
+                    "description": "Number of days until the API key expires",
+                    "example": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API key generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "apiKey",
+                    "expiresAt"
+                  ],
+                  "properties": {
+                    "apiKey": {
+                      "type": "string",
+                      "description": "Generated API key",
+                      "example": "a1b2c3d4e5f6g7h8i9j0"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Expiration datetime of the API key",
+                      "example": "2024-07-01T00:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    },
+    "/api/api-keys/list": {
+      "get": {
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "List API keys for a company (Admin only)",
+        "operationId": "listApiKeys",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "description": "Company identifier to filter API keys",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 123
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of API keys for the specified company",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "apiKeyId": {
+                        "type": "integer",
+                        "description": "API key identifier",
+                        "example": 1
+                      },
+                      "apiKey": {
+                        "type": "string",
+                        "description": "API key string",
+                        "example": "a1b2c3d4e5f6g7h8i9j0"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the API key",
+                        "example": "Key for integration with partner system"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Expiration datetime",
+                        "example": "2024-07-01T00:00:00Z"
+                      },
+                      "isActive": {
+                        "type": "boolean",
+                        "description": "Whether the API key is active",
+                        "example": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    },
+    "/api/api-keys/revoke/{key_id}": {
+      "post": {
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Revoke an API key by its ID (Admin only)",
+        "operationId": "revokeApiKey",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "description": "API key identifier to revoke",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API key revoked successfully, no content returned"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          },
+          "404": {
+            "description": "API key not found"
+          }
+        }
+      }
+    },
+    "/api/trips/upload": {
+      "post": {
+        "tags": [
+          "Trips"
+        ],
+        "summary": "Upload multiple trip records",
+        "operationId": "uploadTrips",
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Array of trip objects to upload",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "tripId",
+                    "fromCity",
+                    "toCity",
+                    "vehicleNo",
+                    "customerName"
+                  ],
+                  "properties": {
+                    "tripId": {
+                      "type": "string",
+                      "description": "Unique trip identifier",
+                      "example": "TRIP12345"
+                    },
+                    "fromCity": {
+                      "type": "string",
+                      "description": "Origin city name",
+                      "example": "New York"
+                    },
+                    "toCity": {
+                      "type": "string",
+                      "description": "Destination city name",
+                      "example": "Los Angeles"
+                    },
+                    "vehicleNo": {
+                      "type": "string",
+                      "description": "Vehicle number plate",
+                      "example": "AB123CD"
+                    },
+                    "customerName": {
+                      "type": "string",
+                      "description": "Customer name for the trip",
+                      "example": "Acme Corp"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trips uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Trips uploaded successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error due to missing master data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "message",
+                    "errors"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Validation failed"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "Vehicle not found",
+                        "Customer not found",
+                        "City not found"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trips/list": {
+      "post": {
+        "tags": [
+          "Trips"
+        ],
+        "summary": "List trips with pagination",
+        "operationId": "listTrips",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Pagination parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "Page",
+                  "PageSize"
+                ],
+                "properties": {
+                  "Page": {
+                    "type": "integer",
+                    "description": "Page number (starting from 1)",
+                    "example": 1
+                  },
+                  "PageSize": {
+                    "type": "integer",
+                    "description": "Number of trips per page",
+                    "example": 20
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paginated list of trips",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "Total number of trips available",
+                      "example": 100
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "Current page number",
+                      "example": 1
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "description": "Number of trips per page",
+                      "example": 20
+                    },
+                    "trips": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "tripId": {
+                            "type": "string",
+                            "example": "TRIP12345"
+                          },
+                          "fromCity": {
+                            "type": "string",
+                            "example": "New York"
+                          },
+                          "toCity": {
+                            "type": "string",
+                            "example": "Los Angeles"
+                          },
+                          "vehicleNo": {
+                            "type": "string",
+                            "example": "AB123CD"
+                          },
+                          "customerName": {
+                            "type": "string",
+                            "example": "Acme Corp"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    },
+    "/api/masters/vehicles/create": {
+      "post": {
+        "tags": [
+          "Masters"
+        ],
+        "summary": "Create a new vehicle master record",
+        "operationId": "createVehicle",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Vehicle details to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "VehicleNo",
+                  "VehicleModel",
+                  "VehicleTypeId",
+                  "FuelTypeId",
+                  "VendorId",
+                  "OwnerVendor",
+                  "IsActive"
+                ],
+                "properties": {
+                  "VehicleNo": {
+                    "type": "string",
+                    "description": "Vehicle number plate",
+                    "example": "AB123CD"
+                  },
+                  "VehicleModel": {
+                    "type": "string",
+                    "description": "Model of the vehicle",
+                    "example": "Volvo FH16"
+                  },
+                  "VehicleTypeId": {
+                    "type": "integer",
+                    "description": "Identifier for vehicle type",
+                    "example": 2
+                  },
+                  "FuelTypeId": {
+                    "type": "integer",
+                    "description": "Identifier for fuel type",
+                    "example": 1
+                  },
+                  "VendorId": {
+                    "type": "integer",
+                    "description": "Vendor identifier",
+                    "example": 10
+                  },
+                  "OwnerVendor": {
+                    "type": "string",
+                    "description": "Owner vendor name",
+                    "example": "GreenXpress Logistics"
+                  },
+                  "IsActive": {
+                    "type": "boolean",
+                    "description": "Whether the vehicle is active",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "vehicleId": {
+                      "type": "integer",
+                      "description": "Created vehicle identifier",
+                      "example": 101
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Vehicle created successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    },
+    "/api/masters/customers/create": {
+      "post": {
+        "tags": [
+          "Masters"
+        ],
+        "summary": "Create a new customer master record",
+        "operationId": "createCustomer",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Customer details to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "CustomerCode",
+                  "CustomerName",
+                  "CustomerType",
+                  "City",
+                  "ContactPerson",
+                  "Phone",
+                  "Email",
+                  "IsActive"
+                ],
+                "properties": {
+                  "CustomerCode": {
+                    "type": "string",
+                    "description": "Unique customer code",
+                    "example": "CUST001"
+                  },
+                  "CustomerName": {
+                    "type": "string",
+                    "description": "Customer full name",
+                    "example": "Acme Corporation"
+                  },
+                  "CustomerType": {
+                    "type": "string",
+                    "description": "Type/category of customer",
+                    "example": "Corporate"
+                  },
+                  "City": {
+                    "type": "string",
+                    "description": "City where customer is located",
+                    "example": "New York"
+                  },
+                  "ContactPerson": {
+                    "type": "string",
+                    "description": "Primary contact person name",
+                    "example": "Jane Smith"
+                  },
+                  "Phone": {
+                    "type": "string",
+                    "description": "Contact phone number",
+                    "example": "+1-555-1234"
+                  },
+                  "Email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Contact email address",
+                    "example": "contact@acme.com"
+                  },
+                  "IsActive": {
+                    "type": "boolean",
+                    "description": "Whether the customer is active",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customerId": {
+                      "type": "integer",
+                      "description": "Created customer identifier",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Customer created successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    },
+    "/api/masters/cities/add": {
+      "post": {
+        "tags": [
+          "Masters"
+        ],
+        "summary": "Add a new city to the city master",
+        "operationId": "addCity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "City details to add",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cityName",
+                  "IsActive"
+                ],
+                "properties": {
+                  "cityName": {
+                    "type": "string",
+                    "description": "Name of the city",
+                    "example": "San Francisco"
+                  },
+                  "IsActive": {
+                    "type": "boolean",
+                    "description": "Whether the city is active",
+                    "example": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "City added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cityId": {
+                      "type": "integer",
+                      "description": "Created city identifier",
+                      "example": 301
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "City added successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing JWT token"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Bearer authentication. Include the token in the Authorization header as:\n`Authorization: Bearer {token}`\n"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key authentication via X-API-Key header"
+      }
+    },
+    "schemas": {
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "message",
+          "errors"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "message": {
+            "type": "string",
+            "example": "Validation failed"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Vehicle not found",
+              "Customer not found",
+              "City not found"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1577 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Honeycomb by Omnidots API",
+    "description": "Vibration monitoring and sensor data API for the Honeycomb platform by Omnidots. Provides access to vibration measurement data including peak particle velocity, VDV (Vibration Dose Value), and Veff/KB records from deployed sensors and measuring points. Supports user authentication, sensor management, measuring point configuration, and detailed trace data retrieval.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://honeycomb.omnidots.com/api/docs"
+  },
+  "servers": [
+    {
+      "url": "https://honeycomb.omnidots.com/api/v1",
+      "description": "Honeycomb API v1 Production"
+    }
+  ],
+  "paths": {
+    "/user/authenticate": {
+      "post": {
+        "operationId": "authenticateUser",
+        "summary": "Authenticate user and obtain API token",
+        "description": "Authenticate with username and password to receive a temporary API token. The token expires after 14 days of inactivity; each API call resets the expiration timer.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "User's username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "User's password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Temporary API token valid for 14 days of inactivity",
+                      "example": "702811da14ff4225973c4054ed52bb9f"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "username and/or password wrong"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/account": {
+      "get": {
+        "operationId": "getUserAccount",
+        "summary": "Get user account details",
+        "description": "Retrieve the authenticated user's account information including name and email.",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "account": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "string"
+                        },
+                        "first_name": {
+                          "type": "string"
+                        },
+                        "last_name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/token_details": {
+      "get": {
+        "operationId": "getTokenDetails",
+        "summary": "Validate token and get account info",
+        "description": "Test the validity of an API token and return associated account information if valid.",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token to validate",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "token_description": {
+                      "type": "string",
+                      "description": "Human-readable description of the token's purpose"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token not supplied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token not supplied"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list_measuring_points": {
+      "get": {
+        "operationId": "listMeasuringPoints",
+        "summary": "List accessible measuring points",
+        "description": "Retrieve a list of all measuring points accessible by the authenticated token. Returns configuration details, sensor information, and location data for each measuring point.",
+        "tags": ["Measuring Points"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of measuring points retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "measuring_points": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MeasuringPoint"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/configure_measuring_point": {
+      "post": {
+        "operationId": "configureMeasuringPoint",
+        "summary": "Configure a measuring point",
+        "description": "Create or update a measuring point configuration. Omit measuring_point_id to create a new measuring point. Includes settings for measurement standards, data capture thresholds, alarm levels, scheduling, and webhook notifications.",
+        "tags": ["Measuring Points"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasuringPointConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Measuring point configured successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid configuration parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list_sensors": {
+      "get": {
+        "operationId": "listSensors",
+        "summary": "List accessible sensors",
+        "description": "Retrieve a list of currently active sensors accessible by the authenticated token. Only returns current active sensors, not historical ones.",
+        "tags": ["Sensors"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of sensors retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "sensors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Sensor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_peak_records": {
+      "get": {
+        "operationId": "getPeakRecords",
+        "summary": "Fetch peak particle velocity/acceleration records",
+        "description": "Retrieve peak particle velocity and acceleration records for a given measuring point within a specified time range. Returns dominant frequency and peak velocity for each axis.",
+        "tags": ["Measurement Data"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "measuring_point_id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the measuring point to fetch records from",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "description": "Start time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "description": "End time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Peak records retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PeakRecord"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_vdv_records": {
+      "get": {
+        "operationId": "getVdvRecords",
+        "summary": "Fetch VDV records",
+        "description": "Retrieve Vibration Dose Value (VDV) records for a given measuring point. Returns VDV measurements in m/s^1.75 for each axis with frequency weighting filter information.",
+        "tags": ["Measurement Data"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "measuring_point_id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the measuring point to fetch records from",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "description": "Start time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "description": "End time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VDV records retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VdvRecord"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_veff_records": {
+      "get": {
+        "operationId": "getVeffRecords",
+        "summary": "Fetch Veff/KB records",
+        "description": "Retrieve Veff/KBF,max records for a given measuring point. Returns effective velocity measurements in mm/s for each axis.",
+        "tags": ["Measurement Data"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "measuring_point_id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the measuring point to fetch records from",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "description": "Start time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "description": "End time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Veff records retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "samples": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VeffRecord"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_traces_list": {
+      "get": {
+        "operationId": "getTracesList",
+        "summary": "List traces for a time range",
+        "description": "Get a list of available vibration traces for a given measuring point within a specified time range. Returns start and end timestamps for each trace.",
+        "tags": ["Measurement Data"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "measuring_point_id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the measuring point",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "description": "Start time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "description": "End time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trace list retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "traces": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TraceSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_traces": {
+      "get": {
+        "operationId": "getTraces",
+        "summary": "Get detailed trace data",
+        "description": "Retrieve detailed vibration trace data for a given measuring point and time range. Returns velocity arrays at 1kHz frequency for each axis (x, y, z) in mm/s.",
+        "tags": ["Measurement Data"],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "description": "API authentication token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "measuring_point_id",
+            "in": "query",
+            "required": true,
+            "description": "ID of the measuring point",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": true,
+            "description": "Start time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": true,
+            "description": "End time in milliseconds since epoch",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detailed trace data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "traces": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TraceDetail"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenInvalidResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "tokenAuth": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "token",
+        "description": "API token obtained via the /user/authenticate endpoint or generated from the Honeycomb token management page. Passed as a query parameter on all requests."
+      }
+    },
+    "schemas": {
+      "MeasuringPoint": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique measuring point identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Measuring point name"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the measuring point is currently active"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category classification (e.g., CAT1, CAT2, CAT3)"
+          },
+          "building_level": {
+            "type": "string",
+            "description": "Building structure classification"
+          },
+          "guide_line": {
+            "type": "string",
+            "description": "Vibration guideline standard (e.g., Circulaire86, BS7385_250Hz, DIN4150_2)"
+          },
+          "measuring_type": {
+            "type": "string",
+            "enum": ["indicative", "limited", "extensive"],
+            "description": "Type of measurement"
+          },
+          "vibration_type": {
+            "type": "string",
+            "enum": ["longTerm", "continually", "continuous", "shortTerm", "repeated", "momentarily", "peak", "impulsive"],
+            "description": "Type of vibration being measured"
+          },
+          "data_save_level": {
+            "type": "number",
+            "description": "Threshold in mm/s for recording data"
+          },
+          "trace_save_level": {
+            "type": "number",
+            "description": "Threshold in mm/s for recording traces"
+          },
+          "measurement_duration": {
+            "type": "number",
+            "description": "Sampling interval in seconds"
+          },
+          "trace_pre_trigger": {
+            "type": "number",
+            "description": "Pre-event capture window in seconds"
+          },
+          "trace_post_trigger": {
+            "type": "number",
+            "description": "Post-event capture window in seconds"
+          },
+          "log_flush_interval": {
+            "type": "integer",
+            "description": "Seconds between non-alarm measurement transmissions"
+          },
+          "disable_led": {
+            "type": "boolean",
+            "description": "Whether the front LED is disabled"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone identifier"
+          },
+          "schedule_enable_0": {
+            "type": "string",
+            "description": "Sunday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_0": {
+            "type": "string",
+            "description": "Sunday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_1": {
+            "type": "string",
+            "description": "Monday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_1": {
+            "type": "string",
+            "description": "Monday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_2": {
+            "type": "string",
+            "description": "Tuesday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_2": {
+            "type": "string",
+            "description": "Tuesday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_3": {
+            "type": "string",
+            "description": "Wednesday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_3": {
+            "type": "string",
+            "description": "Wednesday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_4": {
+            "type": "string",
+            "description": "Thursday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_4": {
+            "type": "string",
+            "description": "Thursday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_5": {
+            "type": "string",
+            "description": "Friday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_5": {
+            "type": "string",
+            "description": "Friday disable time (HH:mm:ss)"
+          },
+          "schedule_enable_6": {
+            "type": "string",
+            "description": "Saturday enable time (HH:mm:ss)"
+          },
+          "schedule_disable_6": {
+            "type": "string",
+            "description": "Saturday disable time (HH:mm:ss)"
+          },
+          "user_location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number",
+                "nullable": true
+              },
+              "longitude": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          },
+          "sensor": {
+            "$ref": "#/components/schemas/SensorSummary"
+          }
+        }
+      },
+      "MeasuringPointConfig": {
+        "type": "object",
+        "properties": {
+          "measuring_point_id": {
+            "type": "integer",
+            "description": "ID of measuring point to update. Omit to create new."
+          },
+          "name": {
+            "type": "string",
+            "description": "Measuring point name"
+          },
+          "sensor_name": {
+            "type": "string",
+            "description": "Six-letter sensor identifier from Swarm device sticker"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone identifier"
+          },
+          "guide_line": {
+            "type": "string",
+            "description": "Vibration guideline standard"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["CAT1", "CAT2", "CAT3"]
+          },
+          "building_level": {
+            "type": "string",
+            "description": "Structure classification"
+          },
+          "measuring_type": {
+            "type": "string",
+            "enum": ["indicative", "limited", "extensive"]
+          },
+          "vibration_type": {
+            "type": "string",
+            "enum": ["longTerm", "continually", "continuous", "shortTerm", "repeated", "momentarily", "peak", "impulsive"]
+          },
+          "data_save_level": {
+            "type": "number",
+            "description": "Recording threshold in mm/s"
+          },
+          "trace_save_level": {
+            "type": "number",
+            "description": "Trace recording threshold in mm/s"
+          },
+          "measurement_duration": {
+            "type": "number",
+            "description": "Sampling interval in seconds"
+          },
+          "trace_pre_trigger": {
+            "type": "number",
+            "description": "Pre-event capture in seconds"
+          },
+          "trace_post_trigger": {
+            "type": "number",
+            "description": "Post-event capture in seconds"
+          },
+          "log_flush_interval": {
+            "type": "integer",
+            "description": "Seconds between non-alarm transmissions"
+          },
+          "disable_led": {
+            "type": "boolean"
+          },
+          "vector_enabled": {
+            "type": "boolean"
+          },
+          "vdv_enabled": {
+            "type": "boolean"
+          },
+          "atop_enabled": {
+            "type": "boolean"
+          },
+          "vtop_enabled": {
+            "type": "boolean"
+          },
+          "alarm_level_1": {
+            "type": "integer",
+            "description": "Alarm threshold percentage of guideline level 1"
+          },
+          "alarm_level_2": {
+            "type": "integer",
+            "description": "Alarm threshold percentage of guideline level 2"
+          },
+          "alarm_level_3": {
+            "type": "integer",
+            "description": "Alarm threshold percentage of guideline level 3"
+          },
+          "email_delay": {
+            "type": "integer",
+            "description": "Seconds between alert email notifications"
+          },
+          "alarm_recipients": {
+            "type": "array",
+            "description": "List of alarm notification recipients as [type, value, trigger_level] arrays",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "webhook_recipient": {
+            "type": "object",
+            "description": "Webhook notification configuration",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "secret": {
+                "type": "string"
+              },
+              "level_1": {
+                "type": "boolean"
+              },
+              "level_2": {
+                "type": "boolean"
+              },
+              "level_3": {
+                "type": "boolean"
+              }
+            }
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "house_number": {
+            "type": "string"
+          },
+          "street_name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "enable_time_0": {
+            "type": "string",
+            "description": "Sunday enable time (HH:mm:ss)"
+          },
+          "disable_time_0": {
+            "type": "string",
+            "description": "Sunday disable time (HH:mm:ss)"
+          },
+          "enable_time_1": {
+            "type": "string",
+            "description": "Monday enable time"
+          },
+          "disable_time_1": {
+            "type": "string",
+            "description": "Monday disable time"
+          },
+          "enable_time_2": {
+            "type": "string"
+          },
+          "disable_time_2": {
+            "type": "string"
+          },
+          "enable_time_3": {
+            "type": "string"
+          },
+          "disable_time_3": {
+            "type": "string"
+          },
+          "enable_time_4": {
+            "type": "string"
+          },
+          "disable_time_4": {
+            "type": "string"
+          },
+          "enable_time_5": {
+            "type": "string"
+          },
+          "disable_time_5": {
+            "type": "string"
+          },
+          "enable_time_6": {
+            "type": "string"
+          },
+          "disable_time_6": {
+            "type": "string"
+          }
+        }
+      },
+      "Sensor": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sensor identifier"
+          },
+          "lastseen": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last time the sensor was seen online"
+          },
+          "connected_using": {
+            "type": "string",
+            "description": "Connection method"
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            }
+          },
+          "measuring_point": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "user_location": {
+                "type": "object",
+                "properties": {
+                  "latitude": {
+                    "type": "string"
+                  },
+                  "longitude": {
+                    "type": "string"
+                  }
+                }
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "category": {
+                "type": "string"
+              },
+              "measuring_type": {
+                "type": "string"
+              },
+              "vibration_type": {
+                "type": "string"
+              },
+              "guide_line": {
+                "type": "string"
+              },
+              "alarm_percentage": {
+                "type": "integer"
+              },
+              "data_save_level": {
+                "type": "number"
+              },
+              "disable_led": {
+                "type": "boolean"
+              },
+              "measurement_duration": {
+                "type": "integer"
+              },
+              "trace_post_trigger": {
+                "type": "integer"
+              },
+              "trace_pre_trigger": {
+                "type": "integer"
+              },
+              "trace_save_level": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "SensorSummary": {
+        "type": "object",
+        "description": "Sensor information when coupled to a measuring point",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "lastseen": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "connected_using": {
+            "type": "string"
+          },
+          "battery_charge": {
+            "type": "number",
+            "nullable": true
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "PeakRecord": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timestamp in milliseconds since epoch"
+          },
+          "category": {
+            "type": "string",
+            "description": "Measurement category"
+          },
+          "measuring_type": {
+            "type": "string",
+            "description": "Type of measurement"
+          },
+          "vibration_type": {
+            "type": "string",
+            "description": "Type of vibration"
+          },
+          "guide_line": {
+            "type": "string",
+            "description": "Applied guideline standard"
+          },
+          "x": {
+            "type": "object",
+            "description": "X-axis measurements",
+            "properties": {
+              "Fdom": {
+                "type": "number",
+                "description": "Dominant frequency in Hz"
+              },
+              "Vtop": {
+                "type": "number",
+                "description": "Peak velocity in mm/s"
+              }
+            }
+          },
+          "y": {
+            "type": "object",
+            "description": "Y-axis measurements",
+            "properties": {
+              "Fdom": {
+                "type": "number",
+                "description": "Dominant frequency in Hz"
+              },
+              "Vtop": {
+                "type": "number",
+                "description": "Peak velocity in mm/s"
+              }
+            }
+          },
+          "z": {
+            "type": "object",
+            "description": "Z-axis measurements",
+            "properties": {
+              "Fdom": {
+                "type": "number",
+                "description": "Dominant frequency in Hz"
+              },
+              "Vtop": {
+                "type": "number",
+                "description": "Peak velocity in mm/s"
+              }
+            }
+          }
+        }
+      },
+      "VdvRecord": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timestamp in milliseconds since epoch"
+          },
+          "vdv_period": {
+            "type": "integer",
+            "description": "Seconds between measurements"
+          },
+          "vdv_x": {
+            "type": "string",
+            "description": "Frequency weighting filter applied to X-axis acceleration"
+          },
+          "vdv_y": {
+            "type": "string",
+            "description": "Frequency weighting filter applied to Y-axis acceleration"
+          },
+          "vdv_z": {
+            "type": "string",
+            "description": "Frequency weighting filter applied to Z-axis acceleration"
+          },
+          "x": {
+            "type": "number",
+            "description": "VDV measurement for X-axis in m/s^1.75"
+          },
+          "y": {
+            "type": "number",
+            "description": "VDV measurement for Y-axis in m/s^1.75"
+          },
+          "z": {
+            "type": "number",
+            "description": "VDV measurement for Z-axis in m/s^1.75"
+          }
+        }
+      },
+      "VeffRecord": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timestamp in milliseconds since epoch"
+          },
+          "x": {
+            "type": "number",
+            "description": "Veff/KBF,max value for X-axis in mm/s"
+          },
+          "y": {
+            "type": "number",
+            "description": "Veff/KBF,max value for Y-axis in mm/s"
+          },
+          "z": {
+            "type": "number",
+            "description": "Veff/KBF,max value for Z-axis in mm/s"
+          }
+        }
+      },
+      "TraceSummary": {
+        "type": "object",
+        "properties": {
+          "start_time": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Trace start time in milliseconds since epoch"
+          },
+          "end_time": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Trace end time in milliseconds since epoch"
+          }
+        }
+      },
+      "TraceDetail": {
+        "type": "object",
+        "properties": {
+          "start_time": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Trace start time in milliseconds since epoch"
+          },
+          "end_time": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Trace end time in milliseconds since epoch"
+          },
+          "x": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "X-axis velocity values at 1kHz in mm/s"
+          },
+          "y": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Y-axis velocity values at 1kHz in mm/s"
+          },
+          "z": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "Z-axis velocity values at 1kHz in mm/s"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "description": "Error description"
+          },
+          "help": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to endpoint documentation"
+          }
+        }
+      },
+      "TokenInvalidResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Token invalid"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1578 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API de Sensores y Mediciones (V2)",
+    "version": "1",
+    "description": "API para el registro y consulta de datos de sensores provenientes de PLCs, con l\u00edmites integrados en la entidad Sensor.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/PABLOINGEGNIERI1/TechPro/1"
+  },
+  "servers": [
+    {
+      "url": "https://api.tudominio.com/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticaci\u00f3n",
+      "description": "Endpoints de gesti\u00f3n de acceso (Login, Logout)."
+    },
+    {
+      "name": "Usuarios",
+      "description": "Gesti\u00f3n de usuarios del sistema (ABMC)."
+    },
+    {
+      "name": "Zonas",
+      "description": "Gesti\u00f3n de \u00e1reas f\u00edsicas de los sensores (ABMC)."
+    },
+    {
+      "name": "Sensores",
+      "description": "Gesti\u00f3n de los dispositivos de medici\u00f3n, incluyendo sus l\u00edmites (ABMC)."
+    },
+    {
+      "name": "Mediciones",
+      "description": "Registro y consulta de los datos brutos de los sensores."
+    },
+    {
+      "name": "Alarmas",
+      "description": "Registro y consulta de las incidencias por valores fuera de l\u00edmite."
+    }
+  ],
+  "security": [
+    {
+      "BearerToken": []
+    }
+  ],
+  "paths": {
+    "/api/auth/token": {
+      "post": {
+        "tags": [
+          "Autenticaci\u00f3n"
+        ],
+        "summary": "Login de Usuario y Obtenci\u00f3n de Token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              },
+              "examples": {
+                "LoginCorrecto": {
+                  "value": {
+                    "email": "user@plc.com",
+                    "password": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token de acceso generado exitosamente.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "TokenGenerado": {
+                    "value": {
+                      "token": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                      "token_type": "Bearer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Autenticaci\u00f3n"
+        ],
+        "summary": "Revoca el token de acceso actual (Logout)",
+        "responses": {
+          "204": {
+            "description": "Token revocado exitosamente (Sin contenido)."
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/auth/password": {
+      "patch": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Autenticaci\u00f3n"
+        ],
+        "summary": "Cambia la contrase\u00f1a del usuario autenticado",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "current_password": {
+                    "type": "string"
+                  },
+                  "new_password": {
+                    "type": "string"
+                  },
+                  "new_password_confirmation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "current_password",
+                  "new_password",
+                  "new_password_confirmation"
+                ]
+              },
+              "examples": {
+                "CambioDeClave": {
+                  "value": {
+                    "current_password": "password123",
+                    "new_password": "NewSecurePassword456",
+                    "new_password_confirmation": "NewSecurePassword456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contrase\u00f1a actualizada exitosamente.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Exito": {
+                    "value": {
+                      "message": "Password updated successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Listar todos los usuarios",
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                },
+                "examples": {
+                  "ListaUsuarios": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "name": "Juan Perez",
+                        "email": "juan.perez@example.com"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Crear un nuevo usuario",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ]
+              },
+              "examples": {
+                "CreacionUsuario": {
+                  "value": {
+                    "name": "Nuevo Administrador",
+                    "email": "admin@plc.com",
+                    "password": "securepassword"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "examples": {
+                  "UsuarioCreado": {
+                    "value": {
+                      "id": 3,
+                      "name": "Nuevo Administrador",
+                      "email": "admin_new@plc.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "integer"
+          },
+          "required": true,
+          "description": "ID del usuario a gestionar."
+        }
+      ],
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Obtener un usuario por ID",
+        "responses": {
+          "200": {
+            "description": "Detalles del usuario.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "examples": {
+                  "UsuarioObtenido": {
+                    "value": {
+                      "id": 1,
+                      "name": "Juan Perez",
+                      "email": "juan.perez@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Actualizar un usuario por ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User",
+                "properties": {
+                  "password": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "Actualizacion": {
+                  "value": {
+                    "name": "Juan Perez (Actualizado)",
+                    "email": "juan.perez.new@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "examples": {
+                  "UsuarioActualizado": {
+                    "value": {
+                      "id": 1,
+                      "name": "Juan Perez (Actualizado)",
+                      "email": "juan.perez.new@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Eliminar un usuario por ID",
+        "responses": {
+          "204": {
+            "description": "Usuario eliminado exitosamente."
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/zones": {
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Zonas"
+        ],
+        "summary": "Listar todas las zonas",
+        "responses": {
+          "200": {
+            "description": "Lista de zonas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Zone"
+                  }
+                },
+                "examples": {
+                  "ListaZonas": {
+                    "value": [
+                      {
+                        "id": 1,
+                        "name": "Sala de Servidores",
+                        "description": "Racks 1 al 10."
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Zonas"
+        ],
+        "summary": "Crear una nueva zona",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "examples": {
+                "ZonaEjemplo": {
+                  "value": {
+                    "name": "Sala de Calderas",
+                    "description": "\u00c1rea con equipos de alta temperatura"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zona creada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                },
+                "examples": {
+                  "ZonaCreada": {
+                    "value": {
+                      "id": 3,
+                      "name": "Cuarto de Mantenimiento",
+                      "description": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/zones/{id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "integer"
+          },
+          "required": true,
+          "description": "ID de la zona."
+        }
+      ],
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Zonas"
+        ],
+        "summary": "Obtener una zona por ID",
+        "responses": {
+          "200": {
+            "description": "Detalles de la zona.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                },
+                "examples": {
+                  "ZonaObtenida": {
+                    "value": {
+                      "id": 1,
+                      "name": "Sala de Servidores",
+                      "description": "Racks 1 al 10."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Zonas"
+        ],
+        "summary": "Actualizar una zona por ID",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Zone",
+                "properties": {
+                  "id": {
+                    "readOnly": true
+                  }
+                }
+              },
+              "examples": {
+                "ZonaActualizada": {
+                  "value": {
+                    "name": "Sala de Calderas Principal",
+                    "description": "\u00c1rea con equipos de alta temperatura",
+                    "renovada.": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zona actualizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                },
+                "examples": {
+                  "ZonaActualizadaExitosa": {
+                    "value": {
+                      "id": 1,
+                      "name": "Sala de Calderas Principal",
+                      "description": "\u00c1rea con equipos de alta temperatura",
+                      "renovada.": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Zonas"
+        ],
+        "summary": "Eliminar una zona por ID",
+        "responses": {
+          "204": {
+            "description": "Zona eliminada exitosamente."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/sensors": {
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Sensores"
+        ],
+        "summary": "Listar todos los sensores",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "zone_id",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false,
+            "description": "Filtrar sensores por ID de zona."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de sensores.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sensor"
+                  }
+                },
+                "examples": {
+                  "ListaSensores": {
+                    "value": [
+                      {
+                        "id": 101,
+                        "zone_id": 1,
+                        "name": "Temp_Rack_1",
+                        "type": "Temperatura",
+                        "max_value": 30.5,
+                        "min_value": 12.0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Sensores"
+        ],
+        "summary": "Crear un nuevo sensor con l\u00edmites",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "zone_id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "max_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float"
+                  },
+                  "min_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float"
+                  }
+                },
+                "required": [
+                  "zone_id",
+                  "name",
+                  "type"
+                ]
+              },
+              "examples": {
+                "SensorNuevo": {
+                  "value": {
+                    "zone_id": 1,
+                    "name": "Sensor_Temperatura_01",
+                    "type": "Temperatura",
+                    "max_value": 30.5,
+                    "min_value": 12.0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sensor creado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                },
+                "examples": {
+                  "SensorCreado": {
+                    "value": {
+                      "id": 300,
+                      "zone_id": 1,
+                      "name": "Sensor_Temperatura_01",
+                      "type": "Temperatura",
+                      "max_value": 30.5,
+                      "min_value": 12.0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/sensors/{id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "integer"
+          },
+          "required": true,
+          "description": "ID del sensor."
+        }
+      ],
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Sensores"
+        ],
+        "summary": "Obtener un sensor por ID",
+        "responses": {
+          "200": {
+            "description": "Detalles del sensor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                },
+                "examples": {
+                  "SensorObtenido": {
+                    "value": {
+                      "id": 101,
+                      "zone_id": 1,
+                      "name": "Temp_Rack_1",
+                      "type": "Temperatura",
+                      "max_value": 30.5,
+                      "min_value": 12.0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Sensores"
+        ],
+        "summary": "Actualizar un sensor y sus l\u00edmites",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sensor",
+                "properties": {
+                  "id": {
+                    "readOnly": true
+                  },
+                  "max_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float"
+                  },
+                  "min_value": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "float"
+                  }
+                }
+              },
+              "examples": {
+                "SensorActualizado": {
+                  "value": {
+                    "zone_id": 1,
+                    "name": "Sensor_Temp_Entrada_Modificado",
+                    "type": "Temperatura",
+                    "max_value": 32.0,
+                    "min_value": 12.0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sensor actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                },
+                "examples": {
+                  "SensorActualizadoExitoso": {
+                    "value": {
+                      "id": 101,
+                      "zone_id": 1,
+                      "name": "Sensor_Temp_Entrada_Modificado",
+                      "type": "Temperatura",
+                      "max_value": 32.0,
+                      "min_value": 12.0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Sensores"
+        ],
+        "summary": "Eliminar un sensor por ID",
+        "responses": {
+          "204": {
+            "description": "Sensor eliminado exitosamente."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/measurements": {
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Mediciones"
+        ],
+        "summary": "Listar todas las mediciones",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sensor_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por ID de sensor."
+          },
+          {
+            "in": "query",
+            "name": "from_date",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Filtrar desde esta fecha (ISO 8601)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de mediciones.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Measurement"
+                  }
+                },
+                "examples": {
+                  "ListaMediciones": {
+                    "value": [
+                      {
+                        "id": 1500,
+                        "sensor_id": 101,
+                        "value": 24.5,
+                        "recorded_at": "2025-11-05T15:00:00Z"
+                      },
+                      {
+                        "id": 1501,
+                        "sensor_id": 205,
+                        "value": 85.2,
+                        "recorded_at": "2025-11-05T15:00:15Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Mediciones"
+        ],
+        "summary": "Registrar una nueva medici\u00f3n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Measurement",
+                "properties": {
+                  "id": {
+                    "readOnly": true
+                  },
+                  "recorded_at": {
+                    "description": "Opcional. Si no se env\u00eda",
+                    "el servidor usa la hora de recepci\u00f3n.": null
+                  }
+                }
+              },
+              "examples": {
+                "Temperatura": {
+                  "summary": "Ejemplo de registro de temperatura",
+                  "value": {
+                    "sensor_id": 101,
+                    "value": 24.5,
+                    "recorded_at": "2025-11-05T15:00:00Z"
+                  }
+                },
+                "Ruido": {
+                  "summary": "Ejemplo de registro de ruido (dB)",
+                  "value": {
+                    "sensor_id": 205,
+                    "value": 85.2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Medici\u00f3n registrada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Measurement"
+                },
+                "examples": {
+                  "MedicionRegistrada": {
+                    "value": {
+                      "id": 1502,
+                      "sensor_id": 101,
+                      "value": 25.1,
+                      "recorded_at": "2025-11-05T15:01:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/api/measurements/{id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "integer"
+          },
+          "required": true,
+          "description": "ID de la medici\u00f3n."
+        }
+      ],
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Mediciones"
+        ],
+        "summary": "Obtener una medici\u00f3n por ID",
+        "responses": {
+          "200": {
+            "description": "Detalles de la medici\u00f3n.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Measurement"
+                },
+                "examples": {
+                  "MedicionObtenida": {
+                    "value": {
+                      "id": 1500,
+                      "sensor_id": 101,
+                      "value": 24.5,
+                      "recorded_at": "2025-11-05T15:00:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/alarms": {
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Alarmas"
+        ],
+        "summary": "Listar todas las alarmas",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "sensor_id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por ID de sensor."
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "closed",
+                "acknowledged"
+              ]
+            },
+            "description": "Filtrar por estado de la alarma."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de alarmas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alarm"
+                  }
+                },
+                "examples": {
+                  "ListaAlarmas": {
+                    "value": [
+                      {
+                        "id": 45,
+                        "measurement_id": 1500,
+                        "sensor_id": 101,
+                        "limit_value": 30.5,
+                        "limit_exceeded_type": "MAX",
+                        "status": "open",
+                        "triggered_at": "2025-11-05T14:45:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/alarms/{id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "schema": {
+            "type": "integer"
+          },
+          "required": true,
+          "description": "ID de la alarma."
+        }
+      ],
+      "get": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Alarmas"
+        ],
+        "summary": "Obtener una alarma por ID",
+        "responses": {
+          "200": {
+            "description": "Detalles de la alarma.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alarm"
+                },
+                "examples": {
+                  "AlarmaObtenida": {
+                    "value": {
+                      "id": 45,
+                      "measurement_id": 1500,
+                      "sensor_id": 101,
+                      "limit_value": 30.5,
+                      "limit_exceeded_type": "MAX",
+                      "status": "open",
+                      "triggered_at": "2025-11-05T14:45:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "BearerToken": []
+          }
+        ],
+        "tags": [
+          "Alarmas"
+        ],
+        "summary": "Actualizar el estado de una alarma",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "closed",
+                      "acknowledged"
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "examples": {
+                "Reconocimiento": {
+                  "value": {
+                    "status": "acknowledged"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado de la alarma actualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alarm"
+                },
+                "examples": {
+                  "AlarmaActualizada": {
+                    "value": {
+                      "id": 45,
+                      "measurement_id": 1500,
+                      "sensor_id": 101,
+                      "limit_value": 30.5,
+                      "limit_exceeded_type": "MAX",
+                      "status": "acknowledged",
+                      "triggered_at": "2025-11-05T14:45:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "Zone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Sensor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "zone_id": {
+            "type": "integer",
+            "description": "ID de la zona a la que pertenece el sensor."
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo de medici\u00f3n que registra el sensor (e.g.",
+            "Temperatura": null,
+            "Ruido).": null
+          },
+          "max_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "L\u00edmite m\u00e1ximo para esta medici\u00f3n."
+          },
+          "min_value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "L\u00edmite m\u00ednimo para esta medici\u00f3n."
+          }
+        }
+      },
+      "Measurement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "sensor_id": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "number",
+            "format": "float"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Alarm": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "measurement_id": {
+            "type": "integer",
+            "description": "ID de la medici\u00f3n que dispar\u00f3 la alarma."
+          },
+          "sensor_id": {
+            "type": "integer"
+          },
+          "limit_value": {
+            "type": "number",
+            "format": "float",
+            "description": "El valor del l\u00edmite que fue excedido."
+          },
+          "limit_exceeded_type": {
+            "type": "string",
+            "enum": [
+              "MAX",
+              "MIN"
+            ],
+            "description": "Indica si se excedi\u00f3 el l\u00edmite **M\u00c1XIMO** o **M\u00cdNIMO**."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed",
+              "acknowledged"
+            ]
+          },
+          "triggered_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "No autenticado o token inv\u00e1lido (401).",
+        "content": {
+          "application/json": {
+            "examples": {
+              "Error401": {
+                "value": {
+                  "message": "Unauthenticated."
+                }
+              }
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "El usuario autenticado no tiene permisos para esta acci\u00f3n (403).",
+        "content": {
+          "application/json": {
+            "examples": {
+              "Error403": {
+                "value": {
+                  "message": "This action is unauthorized."
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso no encontrado (404).",
+        "content": {
+          "application/json": {
+            "examples": {
+              "Error404": {
+                "value": {
+                  "message": "The requested resource was not found."
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Error de validaci\u00f3n de los datos (422).",
+        "content": {
+          "application/json": {
+            "examples": {
+              "Error422": {
+                "value": {
+                  "message": "The given data was invalid.",
+                  "errors": {
+                    "name": [
+                      "The name field is required."
+                    ],
+                    "email": [
+                      "The email has already been taken."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

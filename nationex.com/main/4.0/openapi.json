@@ -1,0 +1,3772 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "Welcome to our Nationex integration API.\nAll of Nationex's APIS are organized around REST. If you\u2019ve used RESTful APIs before, many of the concepts here will be familiar to you. \nEach resource has a unique URL, and HTTP verbs are used to specify actions you want to perform on each resource. \nAll request and response bodies, including errors, are encoded in JSON.\n\n# Introduction\nHere\u2019s what you can do with our APIs :\n- Create, update, cancel shipment.\n- Get shipment current status.\n- Get shipment rates.\n- Get shipment manifest.\n- Get labels. \n\n# API version\nWe release new versions when we make backwards-incompatible changes to our APIs.\nThe current version of our APIs is v4, so the base URL will always look something like this :\n\n**https://api.nationex.com/api/v4**\n\n# Requirements\n  You need to get API keys from our IT team at **support@nationex.com**. You will start with API devlopement key and when you are ready to go live you will change your API for the production one.\n\n# Authentication\nNationex Restfull API needs authentication:\n  Basic authentication is a simple authentication scheme built into the HTTP protocol. The client sends HTTP requests with the `Authorization header` that contains the word Basic word followed by a space and **a base64-encoded string username:password**. \n  For example, to authorize as demo / p@55w0rd the client would send Authorization: Basic ZGVtbzpwQDU1dzByZA==\n\n# Webhook\nA webhook for updating shipment statuses is available but you will need to contact us to activate it.\nParameters we need :\n - URL, example : https://api.test.com/nationex/{id}\n - Http Method, example HttpPut\n - Authorization header\n \nThe {id} parameter is the Nationex Shipping Id\n \nYou can provide an authorization header or we can provide you one.\n\nWe will call your api endpoint every time a shipment status changes and provide a \"DTOShipment\" as request body.\n\n# ShipmentStatus enum :\n\"Creation\", \"Pickup\", \"Transit\", \"OutForDelivery\", \"Delivered\", \"OnHold\", \"Attention\", \"Cancelled\", \"ReturnCompleted\", \"OutForPickup\", \"PickupAttemptFailed\", \"RefusedDelivery\", \"ReturnToSender\", \"PartiallyPickedUp\", \"PartiallyInTransit\", \"PartiallyOutForDelivery\", \"PartiallyDelivered\"\n\n# Other\n- Nationex logo : https://apidocs.nationex.com/images/Nationex_logo_CMYK.svg \n- Nationex icon : https://apidocs.nationex.com/images/Nationex_logo_RES_coul.png\n\n<SecurityDefinitions />\n# Response code\n| Status Code | Description | Note |\n  |----|----|----|\n  |`200` |  OK - The request was successful (some API calls may return 201 instead on `PUT`).|  <ul><li>GET request returns a representation of the requested entity.</li><li>The body of other requests will be a Status entity.</li></ul>|\n  |`201` | Created - The request was successful and a resource was created. |<ul><li>This cannot happen on GET or DELETE requests.</li><li>This will happen on POST and may happen on PUT requests. </li></ul>\n  |`204` | No Content | <ul><li>The request was successful but there is no representation to return (that is, the response is empty). </li></ul>|\n  |`400` | Bad Request |  <ul><li>The request is invalid the body was missing required parameters and or parameter did not respect data validation see error messages in body.</li></ul>|\n  |`401` | Unauthorized | <ul><li>Client authentication failed (invalid **user/password**). </li></ul> |\n  |`403` | Forbidden | <ul><li>Access denied due to missing **Permissions**</li></ul>|\n  |`404` | Not Found | <ul><li>No resource was found at this location (URI)</li><li>If the requested URL contains an **ID** , this means that we did not find anything matching the ID</li></ul>|\n  |`405` | Method Not Allowed | <ul><li>Requested method is not supported for the specified resource. </li></ul>|\n  |`406` | Not Acceptable | <ul><li>Request contains **Bad headers** for this request</li></ul>|\n  |`5xx` | Server-Side Error | <ul><li>These codes should not be set programmatically and are reserved for unexpected errors. </li></ul>|\n",
+    "version": "4.0",
+    "title": "Nationex API",
+    "contact": {
+      "email": "support@nationex.com",
+      "url": "https://nationex.com"
+    },
+    "x-logo": {
+      "url": "https://apidocs.nationex.com/images/Nationex_logo_VER_coul.png",
+      "altText": "Nationex logo"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/CCLS/nationex-api/4.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.nationex.com/api/v4",
+      "variables": {
+        "environment": {
+          "default": "Development",
+          "enum": [
+            "Production",
+            "Development"
+          ]
+        },
+        "version": {
+          "default": "4",
+          "enum": [
+            "4"
+          ]
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/Shipments": {
+      "post": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Create shipment",
+        "description": "Create a new shipment",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Shipment to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTOShipmentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTOShipmentCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput:   The max length of a field has been exceeded or the postal code is not covered by Nationex. The specific error message will be returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Address1 length is too long"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: The ShipmentId already exists. Can only happen if shipmentId is provided by user (shipmentId != -1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Conflict"
+                },
+                "example": {
+                  "code": 409,
+                  "message": "Duplicate shipment ID: 501339228"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get shipment",
+        "description": "Returns details about a particular shipment",
+        "operationId": "getShipment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment (9 digits)",
+            "required": true,
+            "example": 999999999,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 100000000,
+              "maximum": 999999999
+            }
+          },
+          {
+            "name": "tracking",
+            "in": "query",
+            "description": "Returns tracking (parcel history) or not",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "parcels",
+            "in": "query",
+            "description": "Returns the parcel infos (weights & dimensions) or not",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "consol",
+            "in": "query",
+            "description": "Returns all consolidated shipments or not",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "images",
+            "in": "query",
+            "description": "Returns all photos and signatures of the shipment",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details about a shipment by ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTOShipment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Cancel shipment",
+        "description": "Cancel a shipment, can only be used if the shipment is not billed or has no action (Pickup attempts, refusal, etc.)",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                },
+                "examples": {
+                  "Boolean Response": {
+                    "value": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/reports": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get shipment status report",
+        "description": "Returns details about a particular shipment in PDF",
+        "operationId": "getReports",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment",
+            "example": 999999999,
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": true,
+            "description": "Language of the report",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Fr",
+                "En"
+              ]
+            },
+            "example": "Fr"
+          },
+          {
+            "name": "consol",
+            "in": "query",
+            "description": "Returns the consolIds or not",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "light",
+            "in": "query",
+            "description": "Lighter version of the report",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/labels": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get labels",
+        "description": "Returns labels attached to a particular shipment",
+        "operationId": "getLabels",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment or ID of a parcel for a single label",
+            "required": true,
+            "example": 103848576,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Type of file",
+            "example": "PDF",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PDF",
+                "PNG"
+              ],
+              "default": "PDF"
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "Orientation of the file",
+            "example": "landscape",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "landscape",
+                "portrait"
+              ],
+              "default": "landscape"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Page format of the file",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "4x6",
+                "85x11"
+              ],
+              "default": "4x6"
+            },
+            "example": "4x6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/labelsZpl": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get labels ZPL",
+        "description": "Returns ZPL label strings attached to a particular shipment",
+        "operationId": "getLabelsZpl",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment or ID of a parcel for a single label",
+            "required": true,
+            "example": 103848576,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "Orientation of the file",
+            "example": "landscape",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "landscape",
+                "portrait"
+              ],
+              "default": "landscape"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ZPL String",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ZPLString": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "String Response": {
+                    "value": "^XA^LRY\\r\\n^CF0,,30^FWR,0^FO750,100^FDLIBRAIRIE LU-LU ( ALQ )^FS\\r\\n^FO750,770^FDDATE: 2021-05-02^FS\\r\\n^FO750,1030^FD11:15:07^FS\\r\\n^FO720,100^FD144890^FS\\r\\n^FO720,770^FDREF: LIQ631858^FS\\r\\n^FO710,100^GB1,1040,3^FS\\r\\n^FO665,100^FDPOIDS(lbs): 1.00^FS\\r\\n^FO665,350^FD(KG): 0.45^FS\\r\\n^FO660,100^GB1,1040,3^FS\\r\\n^FO610,100^FDAURELIE CONSTANCIAS^FS\\r\\n^FO580,100^FD1259 RUE DU PEKAN^FS\\r\\n^FO550,100^FD^FS\\r\\n^FO520,100^FDSAINTE-JULIENNE, QC^FS\\r\\n^FO490,100^FDJ0K2T0^FS\\r\\n^CF0,,80^FWR,0^FO540,890^FDJ0K^FS\\r\\n^FO165,1040^GB95,50,90,b^FS\\r\\n^FO160,1050^FD^FS\\r\\n^FO545,720^GB95,160,90,b^FS\\r\\n^FO540,730^FDBLV^FS\\r\\n^FO390,1110^FD1^FS\\r\\n^FO370,660^BY4,2,230^BCr,150,Y,N,N^FDJ0K2T0^FS\\r\\n^FO80,100^BY5,2,230^B2r,,n,,n^FD999989028016^FS\\r\\n^CF0,, 45^FWR,0^FO20,210^FD999989028^FS\\r\\n^CF0,,40^FWR,0^FO70,630^FD1^FS\\r\\n^FO70,650^FD/1^FS\\r\\n^FO160,700^GB150,285,75,b^FS\\r\\n^FO250,720^FDFloor: ^FS\\r\\n^FO210,720^FDRoute: 25^FS\\r\\n^FO170,720^FDDriver: 250^FS\\r\\n^XZ"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/labelsPng": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get labels Png",
+        "description": "Returns labels attached to a particular shipment in PNG format",
+        "operationId": "getLabelsPng",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment or ID of a parcel for a single label",
+            "required": true,
+            "example": 103848576,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "orientation",
+            "in": "query",
+            "description": "Orientation of the file",
+            "example": "landscape",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "landscape",
+                "portrait"
+              ],
+              "default": "landscape"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTOFile"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/dangerous": {
+      "post": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get dangerous goods PDF",
+        "description": "Returns a dangerous goods PDF",
+        "operationId": "getDangerousPDF",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment or ID of a parcel for a single label",
+            "required": true,
+            "example": 103848576,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Dangerous Goods PDF report info",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTODangerousGoods"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput: Class1 is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Class1 is required"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Shipments/{id}/pod": {
+      "get": {
+        "tags": [
+          "Shipments"
+        ],
+        "summary": "Get shipment POD",
+        "description": "Returns proof of delivery for a shipment",
+        "operationId": "getShipmentPOD",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the shipment (9 digits)",
+            "required": true,
+            "example": 999999999,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 100000000,
+              "maximum": 999999999
+            }
+          },
+          {
+            "name": "consol",
+            "in": "query",
+            "description": "Returns all consolidated shipments or not",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "images",
+            "in": "query",
+            "description": "Returns all photos and signatures of the shipment",
+            "example": true,
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Details about a shipment by ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTOShipmentPOD"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ShipmentId 501399432 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/rates": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get rates",
+        "description": "Get rates for a shipment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Shipment rates request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTOShipmentRatesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTORatesDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput:   The postal code is not covered by Nationex or other invalid input. The specific error message will be returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "The postal code 'A0A0A7' is not served by Nationex"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/transitDelay": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get transit delay",
+        "description": "Get estimated date of delivery for a specified Destination",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "in": "query",
+            "name": "shipmentType",
+            "description": "Type of shipment",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Delivery",
+                "PickupReturn",
+                "PickupDelivery"
+              ],
+              "example": "Delivery",
+              "default": "Delivery",
+              "description": "Delivery - Schedule a pickup at the address registered in your Nationex account and deliver it to your consignee. PickupReturn - Parcels picked up at a location and brought back to your location. PickupDelivery - Parcels picked up at one location and shipped to another location which is different than your own location. Billed to your Nationex account."
+            }
+          },
+          {
+            "in": "query",
+            "name": "destPostalCode",
+            "description": "Postal Code of the destination, required for Delivery and PickupDelivery. Customer's postal code is used as default for PickupReturn.",
+            "required": false,
+            "example": "J4T2S2",
+            "schema": {
+              "type": "string",
+              "maxLength": 6
+            }
+          },
+          {
+            "in": "query",
+            "name": "origPostalCode",
+            "description": "Postal Code of the origin, required for PickupReturn and PickupDelivery. Customer's postal code is used by default for Delivery",
+            "required": false,
+            "example": "J4Z2S5",
+            "schema": {
+              "type": "string",
+              "maxLength": 6
+            }
+          },
+          {
+            "in": "query",
+            "name": "pickupDate",
+            "description": "Date of pickup. Defaults to Today for Delivery, and to next business day for PickupReturn and PickupDelivery.",
+            "required": false,
+            "example": "2021-05-07",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTOTransitDelay"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput:  The postal code is not server by Nationex or other input error. Specific error message will be returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Postal code A0A0A7 is not served by Nationex"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Postal code A0A0A0 not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/driverManifests": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get driver manifest",
+        "description": "Get a PDF report to print and give to the Nationex driver when he comes and pick up shipments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "description": "Starting datetime of the shipments included in the manifest. Defaults to current date.",
+            "required": false,
+            "example": "2021-03-31 00:00:00",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "description": "Ending datetime of the shipments included in the manifest. Defaults to current date. If the startDate is the same as endDate, it will default to 00:00 to 23:59 instead of returning an empty range.",
+            "required": false,
+            "example": "2021-03-31 23:59:59",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expeditionDate",
+            "description": "If true, will use the expedition date and not the creation (insert) date. If null or false, creation date will be used.",
+            "required": false,
+            "example": "true",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "description": "Used only with `application/pdf` responses",
+                  "example": "attachment; filename=\"manifest_2021-04-28.pdf\""
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/driverManifestsPng": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get driver manifest Png",
+        "description": "Get a PNG report to print and give to the Nationex driver when he comes and pick up shipments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "description": "Starting datetime of the shipments included in the manifest. Defaults to current date.",
+            "required": false,
+            "example": "2021-03-31 00:00:00",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "description": "Ending datetime of the shipments included in the manifest. Defaults to current date. If the startDate is the same as endDate, it will default to 00:00 to 23:59 instead of returning an empty range.",
+            "required": false,
+            "example": "2021-03-31 23:59:59",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expeditionDate",
+            "description": "If true, will use the expedition date and not the creation (insert) date. If null or false, creation date will be used.",
+            "required": false,
+            "example": "true",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "description": "Used only with `application/png` responses",
+                  "example": "attachment; filename=\"manifest_2021-04-28.png\""
+                }
+              }
+            },
+            "content": {
+              "application/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/customerManifests": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get customer manifest",
+        "description": "Get a list of shipments created between specified dates in PDF or XLSX format",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "description": "Starting date of the shipments included in the report. Defaults to the current date",
+            "required": false,
+            "example": "2021-03-31",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "description": "Ending date of the shipments included in the report. Defaults to the current date",
+            "required": false,
+            "example": "2021-03-31",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "description": "Format of the report, either pdf or xlsx. Defaults to PDF",
+            "required": false,
+            "example": "pdf",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xlsx",
+                "pdf"
+              ],
+              "default": "pdf"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "description": "Used only with `application/pdf` responses",
+                  "example": "attachment; filename=\"ship_manifest_2021-04-28.pdf\""
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/billing": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get invoice list",
+        "description": "Get a list of invoices infos and links to download individual documents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "description": "Starting date for invoices",
+            "required": true,
+            "example": "2021-02-05",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "description": "Ending date for invoices",
+            "required": true,
+            "example": "2021-05-05",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTOInvoiceInfo"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "No invoice found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Customers/{id}/fuelRate": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get Fuel Rate",
+        "description": "Get current fuel rate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "required": true,
+            "example": 113300,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Locations/{postalCode}": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get location",
+        "description": "Get location services availability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "postalCode",
+            "description": "Postal code",
+            "required": true,
+            "example": "H1B1Y8",
+            "schema": {
+              "type": "string",
+              "maxLength": 6
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DTOLocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput:  The postal code format is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "Postal code A0A0A is not valid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "Postal code D0A1A0 does not exist"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Get location list",
+        "description": "Get list of locations services availability",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Page iterator",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "count",
+            "description": "Locations count",
+            "required": true,
+            "example": 100,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 5000
+            }
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTOLocation"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Partners/insertEvent": {
+      "post": {
+        "tags": [
+          "Partners"
+        ],
+        "summary": "Insert Event",
+        "description": "Insert an even for parcels, can include signatures, pictures. Nationex partner api key required.",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Event to insert",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DTOEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Success": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "examples": {
+                  "Boolean Response": {
+                    "value": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "InvalidInput: ParcelIds is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InvalidInput"
+                },
+                "example": {
+                  "code": 400,
+                  "message": "ParcelIds is required"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NotFound: The resource requested does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/NotFound"
+                },
+                "example": {
+                  "code": 404,
+                  "message": "ParcelId 50139943201"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/PointsOfService/List": {
+      "get": {
+        "tags": [
+          "PointsOfService"
+        ],
+        "summary": "Get Points of service list",
+        "description": "Get list of locations where Nationex can deposit parcels and consignees can pick them up",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DTOPointOfService"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/Unauthorized"
+                },
+                "example": {
+                  "code": 401,
+                  "message": "Invalid key"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InternalServerError:   There has been an unexpected error in our server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                },
+                "example": {
+                  "code": 500,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "ErrorCode 404: The specified resource was not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "ErrorCode 401: The key is either missing, or is used on the wrong server, or is not associated with the provided CustomerId. Dev keys can only be used on our dev servers and production keys can only be used on our production servers.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "ErrorCode 409: The resource already exists",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "ErrorCode 500: There has been an unexpected error in our server",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InvalidInput": {
+        "description": "ErrorCode 400: There is some part of the input that is invalid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "DTOParcelHistory": {
+        "type": "object",
+        "description": "Event of a single parcel",
+        "properties": {
+          "ParcelHistoryId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "ID of the parcel history",
+            "example": 3049373748
+          },
+          "ProcessedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date time of the event",
+            "example": "2021-03-31 13:31:00"
+          },
+          "ExceptionId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "ID of the exception code",
+            "example": 5
+          },
+          "CityDepot": {
+            "type": "string",
+            "description": "Name of the city of the depot where the event occured",
+            "example": "Blainville"
+          },
+          "DescriptionFr": {
+            "type": "string",
+            "description": "Description of parcel history in french",
+            "example": "Destinataire indisponible - Tentative de livraison le jour ouvrable suivant"
+          },
+          "DescriptionEn": {
+            "type": "string",
+            "description": "Description of parcel history in english",
+            "example": "Unavailable consignee - Delivery attempt on next business day"
+          },
+          "PhotoId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Id of the photo image, found in DTOShipment",
+            "example": 18840452
+          },
+          "SignatureId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Id of the signature image, found in DTOShipment"
+          },
+          "Geocoding": {
+            "$ref": "#/components/schemas/DTOGeocoding"
+          }
+        }
+      },
+      "DTOAccessory": {
+        "type": "object",
+        "properties": {
+          "InsuranceAmount": {
+            "type": "number",
+            "format": "float",
+            "description": "Total price value to be insured",
+            "maximum": 2500,
+            "example": 0,
+            "default": 0
+          },
+          "FrozenProtection": {
+            "type": "boolean",
+            "description": "Freezing protection"
+          },
+          "DangerousGoods": {
+            "type": "boolean",
+            "description": "Dangerous goods"
+          },
+          "SNR": {
+            "type": "boolean",
+            "description": "No signature required"
+          }
+        }
+      },
+      "DTOCashOnDelivery": {
+        "type": "object",
+        "properties": {
+          "CODType": {
+            "type": "string",
+            "example": "Check",
+            "enum": [
+              "NoCOD",
+              "Check",
+              "Cash",
+              "PostDatedCheck",
+              "CertifiedCheck"
+            ],
+            "description": "Type of Cash on delivery"
+          },
+          "CODAmount": {
+            "type": "number",
+            "format": "float",
+            "example": 24.12,
+            "default": 0,
+            "maximum": 50000,
+            "description": "Amount of cash on delivery"
+          }
+        }
+      },
+      "DTODestination": {
+        "type": "object",
+        "required": [
+          "AccountName",
+          "Address1",
+          "PostalCode",
+          "City",
+          "Phone"
+        ],
+        "properties": {
+          "Contact": {
+            "type": "string",
+            "description": "Name of the person receiving the shipment",
+            "example": "Sonia",
+            "maxLength": 50
+          },
+          "AccountNumber": {
+            "type": "string",
+            "description": "Account Id used to identify and retrieve the consignee",
+            "example": "NC33233",
+            "maxLength": 20
+          },
+          "AccountName": {
+            "type": "string",
+            "description": "Consignee name",
+            "example": "Coffee Shop",
+            "maxLength": 40
+          },
+          "Address1": {
+            "type": "string",
+            "description": "First part of address, includes street number and street name",
+            "example": "433 Apple street",
+            "maxLength": 35
+          },
+          "Address2": {
+            "type": "string",
+            "description": "Second part of address, optional",
+            "example": "3rd floor",
+            "maxLength": 35
+          },
+          "PostalCode": {
+            "type": "string",
+            "example": "H2H2S2",
+            "maxLength": 6
+          },
+          "City": {
+            "type": "string",
+            "example": "Montreal",
+            "maxLength": 35
+          },
+          "ProvinceState": {
+            "type": "string",
+            "example": "QC",
+            "maxLength": 50
+          },
+          "Phone": {
+            "type": "string",
+            "example": 4183776671,
+            "maxLength": 15
+          },
+          "SmsNotification": {
+            "type": "boolean",
+            "description": "Enable or disable SMS notifications",
+            "example": true,
+            "default": false
+          },
+          "EmailNotification": {
+            "type": "boolean",
+            "description": "Enable or disable Email notifications",
+            "example": true,
+            "default": false
+          },
+          "NoCivic": {
+            "type": "string",
+            "description": "Civic address number or street number (Use either Address 1 or a combination of NoCivic/StreetName)",
+            "example": 880,
+            "maxLength": 20
+          },
+          "Suite": {
+            "type": "string",
+            "example": 400,
+            "maxLength": 30
+          },
+          "StreetName": {
+            "type": "string",
+            "description": "Name of the street",
+            "example": "Rue Claudia",
+            "maxLength": 50
+          },
+          "Email": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "example@gmail.com"
+          },
+          "Geocoding": {
+            "$ref": "#/components/schemas/DTOGeocoding"
+          }
+        }
+      },
+      "DTODimensions": {
+        "type": "object",
+        "properties": {
+          "Height": {
+            "type": "number",
+            "format": "float",
+            "example": 6.5,
+            "description": "Height of the box in inches by default, can be changed in UnitsOfMeasurement for GetRates"
+          },
+          "Length": {
+            "type": "number",
+            "format": "float",
+            "example": 12,
+            "description": "Length of the box in inches by default, can be changed in UnitsOfMeasurement for GetRates"
+          },
+          "Width": {
+            "type": "number",
+            "format": "float",
+            "example": 8,
+            "description": "Width of the box in inches by default, can be changed in UnitsOfMeasurement for GetRates"
+          },
+          "Cubing": {
+            "type": "number",
+            "format": "float",
+            "example": 2.6,
+            "description": "Volume of the parcel in cubic foot. Calculated with 'Width * Height * Length) / 1728'"
+          }
+        }
+      },
+      "DTOParcelInfo": {
+        "type": "object",
+        "properties": {
+          "ParcelId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "11 digit number to identify the parcel",
+            "example": 50133944801
+          },
+          "ParcelNumber": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Number of the parcel in the shipment, starting at 1"
+          },
+          "ReferenceNumber": {
+            "type": "string",
+            "description": "Reference number, string which can be used to track the shipment",
+            "example": "JDI394"
+          },
+          "NCV": {
+            "type": "boolean",
+            "description": "Non conveyable. These are the criterias for non-conveyable items : -  At least one of the dimensions exceed 36 inches (91.5cm) or one of the two smallest dimensions exceeds 30 inches (76cm) -  Weight exceeds 70 lbs (32 kg) -  Identified as non-conveyable with stickers -  Is a bucket -  Hazardous materials identified as toxic, corrosive -  In bulk items like tires, display stands -  Objects wrapped in plastic or paper -  Bags or pouches"
+          },
+          "Weight": {
+            "type": "number",
+            "format": "float",
+            "description": "Weight of the parcel (lbs)"
+          },
+          "Status": {
+            "type": "string",
+            "enum": [
+              "Creation",
+              "Pickup",
+              "Transit",
+              "OutForDelivery",
+              "Delivered",
+              "OnHold",
+              "Attention",
+              "Cancelled",
+              "ReturnCompleted",
+              "OutForPickup",
+              "PickupAttemptFailed",
+              "RefusedDelivery",
+              "ReturnToSender"
+            ]
+          },
+          "StatusDescriptionEn": {
+            "type": "string",
+            "description": "Description of Status in english",
+            "example": "In transit"
+          },
+          "StatusDescriptionFr": {
+            "type": "string",
+            "description": "Description of Status in french",
+            "example": "En transit"
+          },
+          "EstimatedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Live estimated date of delivery",
+            "example": "2021-04-16"
+          },
+          "EstimatedDeliveryTime": {
+            "type": "string",
+            "description": "Live estimated time of delivery (only available during day of delivery), does not include margin of error",
+            "example": "13:15"
+          },
+          "EstimatedDeliveryTimeFr": {
+            "type": "string",
+            "description": "Readable EstimatedTime in french",
+            "example": "Entre 12:45 et 13:45"
+          },
+          "EstimatedDeliveryTimeEn": {
+            "type": "string",
+            "description": "Readable EstimatedTime in english",
+            "example": "Between 12:45 and 13:45"
+          },
+          "EstimatedPercentageBeforeDelivery": {
+            "type": "integer",
+            "description": "Estimated percentage of delivery, 100 when delivered",
+            "example": 88
+          },
+          "Dimensions": {
+            "$ref": "#/components/schemas/DTODimensions"
+          },
+          "History": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOParcelHistory"
+            }
+          },
+          "ParcelStatusHistories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOParcelStatusHistory"
+            }
+          }
+        }
+      },
+      "DTOSender": {
+        "type": "object",
+        "required": [
+          "AccountName",
+          "Address1",
+          "PostalCode",
+          "City",
+          "Phone"
+        ],
+        "properties": {
+          "Contact": {
+            "type": "string",
+            "description": "Name of the person receiving the shipment",
+            "example": "Sonia",
+            "maxLength": 50
+          },
+          "AccountNumber": {
+            "type": "string",
+            "description": "Account Id used to identify and retrieve the consignee",
+            "example": "NC33233",
+            "maxLength": 15
+          },
+          "AccountName": {
+            "type": "string",
+            "description": "Consignee name",
+            "example": "Coffee Shop",
+            "maxLength": 40
+          },
+          "Address1": {
+            "type": "string",
+            "description": "First part of address, includes street number and street name",
+            "example": "433 Apple street",
+            "maxLength": 35
+          },
+          "Address2": {
+            "type": "string",
+            "description": "Second part of address, optional",
+            "example": "3rd floor",
+            "maxLength": 35
+          },
+          "PostalCode": {
+            "type": "string",
+            "example": "H2H2S2",
+            "maxLength": 6
+          },
+          "City": {
+            "type": "string",
+            "example": "Montreal",
+            "maxLength": 35
+          },
+          "ProvinceState": {
+            "type": "string",
+            "example": "QC",
+            "maxLength": 50
+          },
+          "Phone": {
+            "type": "string",
+            "description": "Sender's phone number",
+            "example": 555123456
+          },
+          "SmsNotification": {
+            "type": "boolean",
+            "description": "Enable or disable SMS notifications",
+            "example": true,
+            "default": false
+          },
+          "EmailNotification": {
+            "type": "boolean",
+            "description": "Enabled or disables Email notifications",
+            "example": true,
+            "default": false
+          },
+          "NoCivic": {
+            "type": "string",
+            "description": "Civic address number or street number (Use either Address 1 or a combination of NoCivic/StreetName)",
+            "example": 880,
+            "maxLength": 20
+          },
+          "Suite": {
+            "type": "string",
+            "example": 400,
+            "maxLength": 30
+          },
+          "StreetName": {
+            "type": "string",
+            "description": "Name of the street",
+            "example": "Rue Claudia",
+            "maxLength": 50
+          },
+          "Email": {
+            "type": "string",
+            "example": "example@gmail.com"
+          },
+          "Geocoding": {
+            "$ref": "#/components/schemas/DTOGeocoding"
+          }
+        }
+      },
+      "DTOShipment": {
+        "type": "object",
+        "required": [
+          "CustomerId",
+          "ShipmentId",
+          "ExpeditionDate",
+          "TotalParcels",
+          "TotalWeight",
+          "Sender",
+          "Destination",
+          "Accessory",
+          "Parcels",
+          "PrintPreference"
+        ],
+        "properties": {
+          "CustomerId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "example": 113300
+          },
+          "ShipmentId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Needs to be -1 for auto generation, 9 digits otherwise, used to identify and track the shipment",
+            "example": 103882774
+          },
+          "ExpeditionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The expedition date",
+            "example": "2021-03-30"
+          },
+          "TotalParcels": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The quantity of parcels in the shipment. Cannot exceed 99.",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 99
+          },
+          "TotalWeight": {
+            "type": "number",
+            "format": "float",
+            "description": "Sum of weights of shipments (lbs)",
+            "example": 5.5
+          },
+          "ShipmentStatus": {
+            "type": "string",
+            "enum": [
+              "Creation",
+              "Pickup",
+              "Transit",
+              "OutForDelivery",
+              "Delivered",
+              "OnHold",
+              "Attention",
+              "Cancelled",
+              "ReturnCompleted",
+              "OutForPickup",
+              "PickupAttemptFailed",
+              "RefusedDelivery",
+              "ReturnToSender",
+              "PartiallyPickedUp",
+              "PartiallyInTransit",
+              "PartiallyOutForDelivery",
+              "PartiallyDelivered"
+            ],
+            "description": "Global status of the entire shipment",
+            "example": "Creation"
+          },
+          "ShipmentStatusFr": {
+            "type": "string",
+            "description": "Readable ShipmentStatus in french",
+            "example": "Donn\u00e9es re\u00e7ues"
+          },
+          "ShipmentStatusEn": {
+            "type": "string",
+            "description": "Readable ShipmentStatus in english",
+            "example": "Data received"
+          },
+          "StatusHistories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOShipmentStatusHistory"
+            }
+          },
+          "ShipmentType": {
+            "type": "string",
+            "enum": [
+              "Delivery",
+              "PickupReturn",
+              "PickupDelivery"
+            ],
+            "example": "Delivery",
+            "default": "Delivery",
+            "description": "Delivery - Schedule a pickup at the address registered in your Nationex account and deliver it to your consignee. PickupReturn - Parcels picked up at a location and brought back to your location. PickupDelivery - Parcels picked up at one location and shipped to another location which is different than your own location. Billed to your Nationex account."
+          },
+          "ReferenceNumber": {
+            "type": "string",
+            "description": "Reference number, string which can be used to track the shipment",
+            "example": "CX4335"
+          },
+          "Note": {
+            "type": "string",
+            "description": "A delivery driver note, this will be print on the label.",
+            "example": "If no answer leave under the stairs",
+            "maxLength": 100
+          },
+          "BillingAccount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nationex Customer ID of the collect account if different from shipping account",
+            "example": 165556
+          },
+          "Sender": {
+            "$ref": "#/components/schemas/DTOSender"
+          },
+          "Destination": {
+            "$ref": "#/components/schemas/DTODestination"
+          },
+          "Accessory": {
+            "$ref": "#/components/schemas/DTOAccessory"
+          },
+          "Parcels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOParcelInfo"
+            }
+          },
+          "ConsolId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Id of the consolidated shipment. Corresponds to the lowest ShipmentId of the shipments going to the same address, same day",
+            "example": 103882771
+          },
+          "IsInvoiced": {
+            "description": "Indicates if the shipment has been invoiced. Only appears if parameter 'tracking' is true in Get Shipment",
+            "type": "boolean",
+            "example": false
+          },
+          "IsScanned": {
+            "description": "Indicates if the shipment has been scanned. Only appears if parameter 'tracking' is true in Get Shipment",
+            "type": "boolean",
+            "example": false
+          },
+          "IsConsolidated": {
+            "type": "boolean",
+            "description": "Indicates if the shipment has other shipments consolidated with it",
+            "example": false
+          },
+          "Photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOPhoto"
+            },
+            "description": "Signatures and photos. Linked with the PhotoId's and SignatureId's from DTOParcelHistory"
+          }
+        }
+      },
+      "DTOShipmentCreate": {
+        "type": "object",
+        "description": "Request object to create a shipment. For a Delivery and PickupDelivery type, Destination is required. For a PickupReturn and PickupDelivery type, Sender is required. Otherwise it is the customer's address by default",
+        "required": [
+          "CustomerId",
+          "ShipmentId",
+          "ExpeditionDate",
+          "TotalParcels",
+          "TotalWeight"
+        ],
+        "properties": {
+          "CustomerId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "example": 113300
+          },
+          "ShipmentId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Needs to be -1 for auto generation, 9 digits otherwise, used to identify and track the shipment",
+            "example": -1,
+            "default": -1
+          },
+          "ExpeditionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The expedition date",
+            "example": "2021-03-30"
+          },
+          "ShipmentType": {
+            "type": "string",
+            "enum": [
+              "Delivery",
+              "PickupReturn",
+              "PickupDelivery",
+              "DeliveryCollect"
+            ],
+            "example": "Delivery",
+            "default": "Delivery",
+            "description": "Delivery - Schedule a pickup at the address registered in your Nationex account and deliver it to your consignee. PickupReturn - Parcels picked up at a location and brought back to your location. PickupDelivery - Parcels picked up at one location and shipped to another location which is different than your own location. Billed to your Nationex account."
+          },
+          "TotalParcels": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The quantity of parcels in the shipment. Cannot exceed 99.",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 99
+          },
+          "TotalWeight": {
+            "type": "number",
+            "format": "float",
+            "description": "Sum of weights of shipments (lbs)",
+            "example": 5.5
+          },
+          "ReferenceNumber": {
+            "type": "string",
+            "description": "Reference number, string which can be used to track the shipment",
+            "example": "CX4335",
+            "maxLength": 15
+          },
+          "CustomBarcode": {
+            "type": "string",
+            "description": "If the barcode is not generated by Nationex, it has to be entered here. Only 1 barcode is supported."
+          },
+          "Note": {
+            "type": "string",
+            "description": "A Delivery Note",
+            "example": "If no answer leave under the stairs",
+            "maxLength": 100
+          },
+          "BillingAccount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nationex Customer ID of the billing account if different from shipping account",
+            "example": 0
+          },
+          "Sender": {
+            "$ref": "#/components/schemas/DTOSender"
+          },
+          "Destination": {
+            "$ref": "#/components/schemas/DTODestination"
+          },
+          "Accessory": {
+            "$ref": "#/components/schemas/DTOAccessory"
+          },
+          "Parcels": {
+            "description": "Optional, can be used to provide weight and dimensions of individual parcels for a more accurate price",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTORatesRequestParcel"
+            }
+          },
+          "UnitsOfMeasurement": {
+            "description": "Optional, used to provide rate if measurements are included, LI = lb|inch, KC = kg|cm",
+            "type": "string",
+            "enum": [
+              "LI",
+              "KC"
+            ],
+            "example": "LI",
+            "default": "LI"
+          },
+          "PointOfServiceId": {
+            "description": "Id of the DTOPointOfService, a location where Nationex will deposit parcels and the consignee has to pick it up. Nationex will deliver directly to the point of service if this property is not null, and the Destination address (consignee address) will be overwritten by the address of this Point of service. The list of available points of services can be obtained using GET /PointsOfService/List. Points of services have to be activated on the Nationex customer for this to be available, by default it's unavailable. Only active locations are returned.",
+            "type": "number",
+            "example": 847
+          }
+        }
+      },
+      "DTOShipmentCreated": {
+        "type": "object",
+        "properties": {
+          "ShipmentId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "9 digits number, used to identify and track the shipment",
+            "example": 501883938
+          },
+          "ConsolId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Id of the consolidated shipment. Corresponds to the lowest ShipmentId of the shipments going to the same address, same day",
+            "example": 501883122
+          },
+          "BillingAccount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "CustomerID being billed",
+            "example": 165556
+          },
+          "ParcelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              50188393801,
+              50188393802
+            ]
+          },
+          "Barcodes": {
+            "description": "If no custom barcode is provided, the ParcelId's with the check digits are returned.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              501883938010,
+              501883938027
+            ]
+          },
+          "RatesDetail": {
+            "$ref": "#/components/schemas/DTORatesDetail"
+          }
+        }
+      },
+      "DTOShipmentRatesRequest": {
+        "type": "object",
+        "required": [
+          "CustomerId",
+          "DestinationPostalCode",
+          "TotalParcels"
+        ],
+        "properties": {
+          "CustomerId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Nationex Customer Id (5 or 6 digits)",
+            "example": 113300
+          },
+          "ExpeditionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The expedition or pickup date. Not required, but this will be used to calculate the fuel rate, which changes weekly. If blank, the current week's rate will be used.",
+            "example": "2021-03-31"
+          },
+          "ShipmentType": {
+            "type": "string",
+            "enum": [
+              "Delivery",
+              "PickupReturn",
+              "PickupDelivery"
+            ],
+            "example": "Delivery",
+            "default": "Delivery",
+            "description": "Delivery - Schedule a pickup at the address registered in your Nationex account and deliver it to your consignee. PickupReturn - Parcels picked up at a location and brought back to your location. PickupDelivery - Parcels picked up at one location and shipped to another location which is different than your own location. Billed to your Nationex account."
+          },
+          "SourcePostalCode": {
+            "type": "string",
+            "description": "Postal code of the origin",
+            "example": "J3Y5T7"
+          },
+          "DestinationPostalCode": {
+            "type": "string",
+            "description": "Postal code of the destination",
+            "example": "H2H2S2"
+          },
+          "TotalWeight": {
+            "type": "number",
+            "format": "float",
+            "description": "Total weight of the shipment in pounds (lbs)",
+            "example": 12.2
+          },
+          "TotalParcels": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The quantity of parcels in the shipment. Cannot exceed 99.",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 99
+          },
+          "UnitsOfMeasurement": {
+            "type": "string",
+            "enum": [
+              "LI",
+              "KC"
+            ],
+            "description": "LI = lb|inch, KC = kg|cm",
+            "example": "LI",
+            "default": "LI"
+          },
+          "Accessory": {
+            "$ref": "#/components/schemas/DTOAccessory"
+          },
+          "Parcels": {
+            "description": "Optional, can be used to provide weight and dimensions of individual parcels for a more accurate price",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTORatesRequestParcel"
+            }
+          }
+        }
+      },
+      "DTORatesDetail": {
+        "description": "Contains a shipment's rates details. Note : the example amounts are random number, they are not accurate",
+        "type": "object",
+        "properties": {
+          "BasePrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Price without any tax or charges",
+            "example": 47.22
+          },
+          "SurchargeCharges": {
+            "description": "Special charges for excessive parcel length or remote areas",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOSurchargeCharge"
+            },
+            "example": [
+              {
+                "Id": "99",
+                "Charge": 2.404,
+                "BeyondId": 0,
+                "NameFr": "Colis hors-norme - Longueur",
+                "NameEn": "Oversized parcel - Lenght"
+              },
+              {
+                "Id": "519",
+                "Charge": 8.404,
+                "BeyondId": 102,
+                "NameFr": "SURCHARGE R\u00c9GION \u00c9LOIGN\u00c9E",
+                "NameEn": "BEYOND SURCHARGE"
+              },
+              {
+                "Id": "0",
+                "Charge": 4.323,
+                "BeyondId": 0,
+                "NameFr": "Classe B",
+                "NameEn": "Class B"
+              },
+              {
+                "Id": "0",
+                "Charge": 6.323,
+                "BeyondId": 0,
+                "NameFr": "Classe C",
+                "NameEn": "Class C"
+              },
+              {
+                "Id": "0",
+                "Charge": 12.13,
+                "BeyondId": 0,
+                "NameFr": "Classe D",
+                "NameEn": "Class D"
+              },
+              {
+                "Id": "0",
+                "Charge": 20.76,
+                "BeyondId": 0,
+                "NameFr": "Classe P",
+                "NameEn": "Class P"
+              }
+            ]
+          },
+          "TaxCharges": {
+            "description": "Federal and provincial tax rates and charges",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOTaxCharge"
+            },
+            "example": [
+              {
+                "Id": "GST",
+                "Charge": 0.287,
+                "Rate": 0.05,
+                "NameFr": "TPS",
+                "NameEn": "GST"
+              },
+              {
+                "Id": "PST",
+                "Charge": 1.548,
+                "Rate": 0.1,
+                "NameFr": "TVQ",
+                "NameEn": "PST"
+              },
+              {
+                "Id": "HST",
+                "Charge": 0,
+                "Rate": 0,
+                "NameFr": "TVH",
+                "NameEn": "HST"
+              }
+            ]
+          },
+          "AccessoryCharges": {
+            "description": "Optionnal charges for extra services. Include Freezing protection, Dangerous goods, Special 10h30 service, COD and Insurance",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOAccessoryCharge"
+            },
+            "example": [
+              {
+                "Id": "1",
+                "Charge": 12.97,
+                "NameFr": "ASSURANCE SUPPL+\u00ebMENTAIRE",
+                "NameEn": "ADDITIONNAL INSURANCE"
+              },
+              {
+                "Id": "2",
+                "Charge": 5.125,
+                "NameFr": "PAYABLE SUR LIVRAISON",
+                "NameEn": "CASH OR CHEQUE ON DELIVERY"
+              },
+              {
+                "Id": "3",
+                "Charge": 11.366,
+                "NameFr": "MATI+\u00eaRE DANGEREUSES",
+                "NameEn": "DANGEROUS GOODS"
+              },
+              {
+                "Id": "4",
+                "Charge": 16.351,
+                "NameFr": "LIVRAISON AVANT 10H30",
+                "NameEn": "DELIVERY BEFORE 10H30"
+              },
+              {
+                "Id": "5",
+                "Charge": 7.577,
+                "NameFr": "PROTECTION CONTRE LE GEL",
+                "NameEn": "FREEZE PROTECTION"
+              }
+            ]
+          },
+          "NCVCharge": {
+            "type": "number",
+            "format": "float",
+            "description": "Non-Conveyable charge. These are the criterias for non-conveyable items : -  At least one of the dimensions exceed 36 inches (91.5cm) or one of the two smallest dimensions exceeds 30 inches (76cm) -  Weight exceeds 70 lbs (32 kg) -  Identified as non-conveyable with stickers -  Is a bucket -  Hazardous materials identified as toxic, corrosive -  In bulk items like tires, display stands -  Objects wrapped in plastic or paper -  Bags or pouches",
+            "example": 4.0
+          },
+          "FuelRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Rate of fuel charge, varies week to week",
+            "example": 0.1425
+          },
+          "FuelCharge": {
+            "type": "number",
+            "format": "float",
+            "description": "Fuel charge",
+            "example": 2.51
+          },
+          "SubTotal": {
+            "type": "number",
+            "format": "float",
+            "description": "Includes baseprice and all charges except fuel and taxes",
+            "example": 55.89
+          },
+          "Total": {
+            "type": "number",
+            "format": "float",
+            "example": 61.12
+          },
+          "TotalBillableWeight": {
+            "type": "number",
+            "format": "float",
+            "example": 0.0
+          },
+          "BillingZone": {
+            "type": "string",
+            "description": "Nationex billing zone",
+            "example": "NL"
+          },
+          "DelayTransitDays": {
+            "type": "integer",
+            "format": "int32",
+            "example": 2,
+            "description": "Transit delay in business days"
+          },
+          "EstimatedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2021-05-05",
+            "description": "Estimated date of delivery"
+          },
+          "IsGreen": {
+            "type": "boolean",
+            "example": true,
+            "description": "Green delivery at this location (electric vehicle)"
+          }
+        }
+      },
+      "DTOTaxCharge": {
+        "description": "Name, rate and amount of tax",
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string",
+            "example": "GST"
+          },
+          "Charge": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount charged",
+            "example": 12.905
+          },
+          "Rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Current tax rate"
+          },
+          "NameFr": {
+            "type": "string",
+            "example": "TPS"
+          },
+          "NameEn": {
+            "type": "string",
+            "example": "GST"
+          }
+        }
+      },
+      "DTOSurchargeCharge": {
+        "description": "Name, rate and amount of charge for excessive parcel length or remote areas",
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string",
+            "example": "519"
+          },
+          "Charge": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount charged",
+            "example": 21.211
+          },
+          "BeyondId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Id of the beyond charge for remote areas",
+            "example": 102
+          },
+          "NameFr": {
+            "type": "string",
+            "example": "Surcharge r\u00e9gion \u00e9loign\u00e9e"
+          },
+          "NameEn": {
+            "type": "string",
+            "example": "Beyond surcharge"
+          }
+        }
+      },
+      "DTOAccessoryCharge": {
+        "description": "Optionnal charges for extra services. Include Freezing protection, Dangerous goods, Special 10h30 service, COD and Insurance",
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string",
+            "example": "3"
+          },
+          "Charge": {
+            "type": "number",
+            "format": "float",
+            "description": "Amount charged",
+            "example": 36.545
+          },
+          "NameFr": {
+            "type": "string",
+            "example": "Mati\u00e8res dangereuses"
+          },
+          "NameEn": {
+            "type": "string",
+            "example": "Dangerous goods"
+          }
+        }
+      },
+      "DTOGeocoding": {
+        "description": "Latitude and longitude",
+        "type": "object",
+        "properties": {
+          "Longitude": {
+            "type": "number",
+            "format": "float",
+            "example": -78.098725
+          },
+          "Latitude": {
+            "type": "number",
+            "format": "float",
+            "example": 48.575377
+          }
+        }
+      },
+      "DTOTransitDelay": {
+        "description": "Transit days estimation",
+        "type": "object",
+        "properties": {
+          "BusinessDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Estimated number of business days for transit. Starting from pickupDate and not necessarily from current day.",
+            "example": 1
+          },
+          "DeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Estimated date of delivery",
+            "example": "2021-04-05"
+          },
+          "TotalDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Estimated totals days for transit including weekends and holidays. Starting from pickupDate and not necessarily from current day.",
+            "example": 3
+          },
+          "BeyondId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Beyond Id for billing",
+            "example": 100
+          }
+        }
+      },
+      "DTORatesRequestParcel": {
+        "type": "object",
+        "properties": {
+          "NCV": {
+            "type": "boolean",
+            "description": "Non conveyable. These are the criterias for non-conveyable items : -  At least one of the dimensions exceed 36 inches (91.5cm) or one of the two smallest dimensions exceeds 30 inches (76cm) -  Weight exceeds 70 lbs (32 kg) -  Identified as non-conveyable with stickers -  Is a bucket -  Hazardous materials identified as toxic, corrosive -  In bulk items like tires, display stands -  Objects wrapped in plastic or paper -  Bags or pouches"
+          },
+          "Weight": {
+            "type": "number",
+            "format": "float",
+            "example": 15.5,
+            "description": "Weight of the parcel in lbs by default, can be changed in UnitsOfMeasurement for GetRates. Maximum 99 lbs"
+          },
+          "Dimensions": {
+            "description": "Maximum volume is 16 cubic feet, maximum single dimension is 10 feet",
+            "$ref": "#/components/schemas/DTODimensions"
+          }
+        }
+      },
+      "DTOLocation": {
+        "type": "object",
+        "description": "Postal code availability information",
+        "properties": {
+          "PostalCode": {
+            "type": "string",
+            "example": "H2H2S2",
+            "maxLength": 6
+          },
+          "Enabled": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is served by Nationex"
+          },
+          "PickupAvailable": {
+            "type": "boolean",
+            "example": true,
+            "description": "Pickup service is available"
+          },
+          "City": {
+            "type": "string",
+            "example": "Montreal"
+          },
+          "ProvinceFr": {
+            "type": "string",
+            "example": "Qu\u00e9bec"
+          },
+          "Zone": {
+            "type": "string",
+            "example": "MTL"
+          },
+          "BeyondId": {
+            "type": "integer",
+            "example": "100"
+          },
+          "DeliveryDays": {
+            "description": "Days of week serviced by Nationex.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ]
+            },
+            "example": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ]
+          }
+        }
+      },
+      "DTOInvoiceInfo": {
+        "type": "object",
+        "description": "Contains dates and download links to download invoices documents",
+        "properties": {
+          "ShippingAccount": {
+            "description": "Nationex CustomerId (5 or 6 digits), can be different from billing account",
+            "type": "integer",
+            "format": "int32",
+            "example": 113300
+          },
+          "InvoiceDate": {
+            "description": "Date of the invoice",
+            "type": "string",
+            "format": "date",
+            "example": "2021-05-04"
+          },
+          "InvoiceLinkToken": {
+            "description": "Link to download invoice",
+            "type": "string"
+          },
+          "ManifestPDFLinkToken": {
+            "description": "Link to download PDF",
+            "type": "string"
+          },
+          "ManifestExcelLinkToken": {
+            "description": "Link to download Excel",
+            "type": "string"
+          },
+          "MiscLinkToken": {
+            "description": "Link to download Misc",
+            "type": "string"
+          }
+        }
+      },
+      "DTOPhoto": {
+        "type": "object",
+        "description": "Contains the Id of the picture or signature and Base64 string data",
+        "properties": {
+          "Id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 18840452,
+            "description": "Contains either PhotoId or SignatureId"
+          },
+          "Data": {
+            "type": "string",
+            "format": "byte",
+            "example": "iVBORw0KGgoAAAANSUhEUgAAAZsAAACBCAYAAAAWohexAAAEtUlEQVR4Xu3VwQkAMAwDsXj/pTPF /dQBGhCG23kECBAgQCAWWPy/7wkQIECAwImNERAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQO ECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQI ECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQI iI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJj AwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AAB AgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAAB ArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAu IDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hN TuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7 QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAg QICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAg IDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiN DRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwME CBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIE COQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5 gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2 ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7s AAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CA AAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECA gNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2 NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAs8wZUAgqa0VWgAAAAA SUVORK5CYII="
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "Address1 is too long."
+          }
+        }
+      },
+      "DTODangerousGoods": {
+        "description": "Information to be displayed on Dangerous Goods PDF report. If no class is provided those fields will be left empty, to be filled manually",
+        "type": "object",
+        "properties": {
+          "Language": {
+            "type": "string",
+            "enum": [
+              "Fr",
+              "En"
+            ],
+            "example": "Fr",
+            "default": "Fr"
+          },
+          "WarehouseClerkName": {
+            "type": "string",
+            "example": "Bob"
+          },
+          "DriverNumber": {
+            "type": "string",
+            "example": "123ABC"
+          },
+          "TransportUnitNo": {
+            "type": "string",
+            "example": "3449DZO"
+          },
+          "Class1": {
+            "description": "Class for row 1 on dangerous goods PDF report. The class number will be associated with the value : - Safety explosives (1.4S) - Flammable gas (2.1) - Non-flammable compressed gas (2.2) - Flammable liquids (3) - Flammable solids (4.1) - Spontaneously combustible (4.2) - Oxidizer (5.1) - Toxic substances packing (6.1) - Infectious substances (6.2) - Corrosive matters (8) - Miscellaneous products or substances (?)",
+            "type": "string",
+            "enum": [
+              "SafetyExplosives",
+              "FlammableGas",
+              "NonflammableCompressedGas",
+              "FlammableLiquids",
+              "FlammableSolids",
+              "SpontaneouslyCombustible",
+              "Oxidizer",
+              "ToxicSubstancesPacking",
+              "CorrosiveMatters",
+              "MiscellaneousProducts"
+            ],
+            "example": "CorrosiveMatters"
+          },
+          "Class2": {
+            "description": "Class for row 2 on dangerous goods PDF report",
+            "type": "string",
+            "enum": [
+              "SafetyExplosives",
+              "FlammableGas",
+              "NonflammableCompressedGas",
+              "FlammableLiquids",
+              "FlammableSolids",
+              "SpontaneouslyCombustible",
+              "Oxidizer",
+              "ToxicSubstancesPacking",
+              "CorrosiveMatters",
+              "MiscellaneousProducts"
+            ],
+            "example": "CorrosiveMatters"
+          },
+          "Class3": {
+            "description": "Class for row 3 on dangerous goods PDF report",
+            "type": "string",
+            "enum": [
+              "SafetyExplosives",
+              "FlammableGas",
+              "NonflammableCompressedGas",
+              "FlammableLiquids",
+              "FlammableSolids",
+              "SpontaneouslyCombustible",
+              "Oxidizer",
+              "ToxicSubstancesPacking",
+              "CorrosiveMatters",
+              "MiscellaneousProducts"
+            ]
+          },
+          "UNNumber1": {
+            "description": "UN numbers or UN IDs are four-digit numbers that identify dangerous goods, hazardous substances and articles (such as explosives, flammable liquids, toxic substances, etc.) in the framework of international transport. They are assigned by the United Nations Committee of Experts on the Transport of Dangerous Goods",
+            "type": "string",
+            "example": "UN 0006",
+            "default": ""
+          },
+          "UNNumber2": {
+            "type": "string",
+            "example": "UN 0013",
+            "default": ""
+          },
+          "UNNumber3": {
+            "type": "string",
+            "default": ""
+          },
+          "PackingGroup1": {
+            "type": "integer",
+            "example": 1,
+            "default": 0
+          },
+          "PackingGroup2": {
+            "type": "integer",
+            "example": 2,
+            "default": 0
+          },
+          "PackingGroup3": {
+            "type": "integer",
+            "default": 0
+          },
+          "TotalQty1": {
+            "type": "integer",
+            "example": 1,
+            "default": 0
+          },
+          "TotalQty2": {
+            "type": "integer",
+            "example": 2,
+            "default": 0
+          },
+          "TotalQty3": {
+            "type": "integer",
+            "default": 0
+          },
+          "NbrPackagesRequiringLabels1": {
+            "type": "integer",
+            "example": 1,
+            "default": 0
+          },
+          "NbrPackagesRequiringLabels2": {
+            "type": "integer",
+            "example": 2,
+            "default": 0
+          },
+          "NbrPackagesRequiringLabels3": {
+            "type": "integer",
+            "default": 0
+          }
+        }
+      },
+      "DTOShipmentStatusHistory": {
+        "description": "History of shipment status",
+        "type": "object",
+        "properties": {
+          "ShipmentStatus": {
+            "type": "string",
+            "enum": [
+              "Creation",
+              "Pickup",
+              "Transit",
+              "OutForDelivery",
+              "Delivered",
+              "OnHold",
+              "Attention",
+              "Cancelled",
+              "ReturnCompleted",
+              "OutForPickup",
+              "PickupAttemptFailed",
+              "RefusedDelivery",
+              "ReturnToSender",
+              "PartiallyPickedUp",
+              "PartiallyInTransit",
+              "PartiallyOutForDelivery",
+              "PartiallyDelivered"
+            ],
+            "description": "Global status of the entire shipment",
+            "example": "Creation"
+          },
+          "ShipmentStatusFr": {
+            "type": "string",
+            "description": "Readable ShipmentStatus in french",
+            "example": "Donn\u00e9es re\u00e7ues"
+          },
+          "ShipmentStatusEn": {
+            "type": "string",
+            "description": "Readable ShipmentStatus in english",
+            "example": "Data received"
+          },
+          "StatusDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "LastLocation": {
+            "type": "string",
+            "example": "St-Hubert"
+          }
+        }
+      },
+      "DTOEvent": {
+        "type": "object",
+        "description": "Event of a single parcel",
+        "properties": {
+          "ParcelIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "description": "Nationex Id of the parcel. 11 digits (9 digit shipmentId followed by 2 digit parcel number)",
+              "example": 10344859601
+            }
+          },
+          "ProcessedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date time of the event",
+            "example": "2021-03-31 13:31:00"
+          },
+          "EventId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "ID of the event/exception : [3] - Wrong Address [4] - Consignee refused [5] - Unavailable consignee [7] - No parcel to pickup [52] - Pickup of the parcel completed [119] - Delivery completed",
+            "example": 5
+          },
+          "Photos": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "byte",
+              "example": "iVBORw0KGgoAAAANSUhEUgAAAZsAAACBCAYAAAAWohexAAAEtUlEQVR4Xu3VwQkAMAwDsXj/pTPF /dQBGhCG23kECBAgQCAWWPy/7wkQIECAwImNERAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQO ECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQI ECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQI iI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJj AwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AAB AgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAAB ArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAu IDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hN TuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7 QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAg QICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAg IDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiN DRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwME CBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIE COQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5 gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2 ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7s AAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CA AAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECA gNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2 NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAs8wZUAgqa0VWgAAAAA SUVORK5CYII="
+            }
+          },
+          "Signature": {
+            "type": "string",
+            "format": "byte",
+            "example": "iVBORw0KGgoAAAANSUhEUgAAAZsAAACBCAYAAAAWohexAAAEtUlEQVR4Xu3VwQkAMAwDsXj/pTPF /dQBGhCG23kECBAgQCAWWPy/7wkQIECAwImNERAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQO ECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQI ECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQI iI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJj AwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AAB AgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAAB ArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAu IDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hN TuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7 QIAAAQJiYwMECBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAg QICA2NgAAQIECOQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAg IDY2QIAAAQK5gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiN DRAgQIBALiA2ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwME CBAgkAuITU7sAAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIE COQCYpMTO0CAAAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5 gNjkxA4QIECAgNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2 ObEDBAgQICA2NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAuITU7s AAECBAiIjQ0QIECAQC4gNjmxAwQIECAgNjZAgAABArmA2OTEDhAgQICA2NgAAQIECOQCYpMTO0CA AAECYmMDBAgQIJALiE1O7AABAgQIiI0NECBAgEAuIDY5sQMECBAgIDY2QIAAAQK5gNjkxA4QIECA gNjYAAECBAjkAmKTEztAgAABAmJjAwQIECCQC4hNTuwAAQIECIiNDRAgQIBALiA2ObEDBAgQICA2 NkCAAAECuYDY5MQOECBAgIDY2AABAgQI5AJikxM7QIAAAQJiYwMECBAgkAs8wZUAgqa0VWgAAAAA SUVORK5CYII="
+          },
+          "Contact": {
+            "type": "string",
+            "example": "Roger"
+          },
+          "Reason": {
+            "type": "string",
+            "example": "No answer"
+          }
+        }
+      },
+      "DTOShipmentPOD": {
+        "type": "object",
+        "description": "POD for a shipment",
+        "properties": {
+          "ShipmentId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Needs to be -1 for auto generation, 9 digits otherwise, used to identify and track the shipment",
+            "example": 103882774
+          },
+          "ExpeditionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The expedition date",
+            "example": "2021-03-30"
+          },
+          "Parcels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOParcelPOD"
+            }
+          },
+          "Photos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DTOPhoto"
+            },
+            "description": "Signatures and photos."
+          }
+        }
+      },
+      "DTOParcelPOD": {
+        "type": "object",
+        "description": "POD for a parcel",
+        "properties": {
+          "ParcelId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "DeliveredDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "Contact": {
+            "type": "string"
+          }
+        }
+      },
+      "DTOFile": {
+        "type": "object",
+        "properties": {
+          "Content": {
+            "type": "string",
+            "format": "byte",
+            "example": "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"
+          },
+          "Name": {
+            "type": "string",
+            "example": "59921803901.png"
+          },
+          "ParcelId": {
+            "type": "number",
+            "example": 59921803901
+          }
+        }
+      },
+      "DTOParcelStatusHistory": {
+        "description": "History of parcel status, Same as DTOShipmentStatusHistory but fewer statuses",
+        "type": "object",
+        "properties": {
+          "ParcelStatus": {
+            "type": "string",
+            "enum": [
+              "Creation",
+              "Pickup",
+              "Transit",
+              "OutForDelivery",
+              "Delivered",
+              "OnHold",
+              "Attention",
+              "Cancelled",
+              "ReturnCompleted",
+              "OutForPickup",
+              "PickupAttemptFailed",
+              "RefusedDelivery",
+              "ReturnToSender"
+            ],
+            "description": "Global status of the entire shipment",
+            "example": "Creation"
+          },
+          "ParcelStatusFr": {
+            "type": "string",
+            "description": "Readable ParcelStatus in french",
+            "example": "Donn\u00e9es re\u00e7ues"
+          },
+          "ParcelStatusEn": {
+            "type": "string",
+            "description": "Readable ParcelStatus in english",
+            "example": "Data received"
+          },
+          "StatusDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "LastLocation": {
+            "type": "string",
+            "example": "St-Hubert"
+          }
+        }
+      },
+      "DTOPointOfService": {
+        "description": "Location where Nationex can deposit parcels and consignees can pick them up",
+        "type": "object",
+        "properties": {
+          "PointOfServiceId": {
+            "type": "number",
+            "description": "Nationex Id of the point of service, to be used in DTOCreateShipment.PointOfServiceId",
+            "example": 847
+          },
+          "Name": {
+            "type": "string",
+            "description": "Location name",
+            "example": "Depanneur Boni Soir"
+          },
+          "Address1": {
+            "type": "string",
+            "description": "Location address 1",
+            "example": "12543 Avenue Fernand-Gauthier"
+          },
+          "Address2": {
+            "type": "string",
+            "description": "Location address 2",
+            "example": "Local #103"
+          },
+          "PostalCode": {
+            "type": "string",
+            "description": "Location postal code",
+            "example": "H1E2X2"
+          },
+          "City": {
+            "type": "string",
+            "description": "Location city",
+            "example": "Montreal"
+          },
+          "Phone": {
+            "type": "string",
+            "description": "Location phone",
+            "example": "5144944056"
+          },
+          "Latitude": {
+            "type": "number",
+            "description": "Location latitude",
+            "example": "-73.6040237"
+          },
+          "Longitude": {
+            "type": "number",
+            "description": "Location longitude",
+            "example": "45.6358175"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BasicAuth": []
+    }
+  ]
+}

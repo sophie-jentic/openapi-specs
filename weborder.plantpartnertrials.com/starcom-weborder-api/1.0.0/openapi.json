@@ -1,0 +1,2232 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Starcom WebOrder API",
+    "version": "1.0.0",
+    "description": "The Starcom WebOrder API enables external client applications to search products,\nmanage a shopping cart, and submit purchase orders without using the WebOrder\nfrontend UI.\n\n## Who this is for\nPartners and customers who want **API-only** access to build custom ordering\nexperiences or back-office integrations.\n\n## Base URL\n- Production/Sandbox: http://weborder.plantpartnertrials.com\n\n## Authentication\n- HTTP Basic Auth (username + password) on protected endpoints.\n- Include credentials via the `Authorization: Basic <base64(username:password)>` header.\n\n## Typical flow\n1) Discover available products and criteria\n   - `GET /api/v1/products/search-params`\n   - `POST /api/v1/products/search`\n   - `POST /api/v1/products/availability`\n2) Build the cart\n   - `PUT /api/v1/cart` to set order date and items\n   - `POST /api/v1/cart/search` to read the current cart snapshot\n   - `DELETE /api/v1/cart/products?ids=...` to remove specific items\n3) Place the order\n   - `POST /api/v1/orders` to commit/submit the order\n4) Account & Settings\n   - `POST /api/v1/users/sign-up`, `POST /api/v1/auth/login`, `GET /api/v1/auth/logout`\n   - `GET /api/v1/users/extract` for the current user profile\n   - `GET /api/v1/settings` and `GET /api/v1/settings/customer` for configuration\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/jenezisltd/starcom-weborder-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://weborder.plantpartnertrials.com",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/cart": {
+      "put": {
+        "tags": [
+          "cart-controller"
+        ],
+        "summary": "Update cart (set order date and items)",
+        "description": "Replaces the current cart contents with the provided order date and product lines.\n\n**Use when**: You want to define the cart's order date and add/update all items in a single call.\n\n**Request body**: `UpdateCartRequest`\n- `orderDate` (date): targeted ship/order date for pricing and availability.\n- `products[]` (array of `ProductCart`): each entry includes `productId`, `packageId`, `quantity`,\n  and optional `kit`/`oversell`.\n\n**Returns**: `200 OK` if the cart is successfully updated. To read the cart snapshot (totals, items),\ncall `POST /api/v1/cart/search`.\n",
+        "operationId": "updateCart",
+        "requestBody": {
+          "description": "New cart definition including the order date and the full set of cart items.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Cart updated successfully. Use `/api/v1/cart/search` to retrieve the current snapshot."
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "cart-controller"
+        ],
+        "summary": "Clear cart",
+        "description": "Removes **all** items from the current cart.\n\n**Returns**: `200 OK` after the cart is emptied.\n",
+        "operationId": "clearCart",
+        "responses": {
+          "200": {
+            "description": "Cart cleared successfully."
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/sign-up": {
+      "post": {
+        "tags": [
+          "user-controller"
+        ],
+        "summary": "Create a new user account",
+        "description": "Registers a new end user for WebOrder.\n\n**Request body**: `CreateUserRequest` with contact info and credentials\n(e.g., `username`, `password`, `firstName`, `lastName`, `email`, `phone`, `companyName`).\n\n**Returns**: `201 Created` on success.\n",
+        "operationId": "createUser",
+        "requestBody": {
+          "description": "Registration payload containing user credentials and company/contact details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully."
+          }
+        }
+      }
+    },
+    "/api/v1/products/search": {
+      "post": {
+        "tags": [
+          "product-controller"
+        ],
+        "summary": "Search products",
+        "description": "Searches the product catalog with optional free-text query and filters.\n\n**Request body**: `SearchProductsRequest`\n- `query.orderDate` (date, required): the context date to evaluate inventory/pricing.\n- `query.search` (string): free-text (e.g., SKU, name).\n- `query.categoryIds` (array[int]): filter by categories.\n- `query.baseAvailabilityCriteria` (int): inventory criteria to apply.\n- `navigation` (page/size/sorts): pagination and sorting options.\n\n**Returns**: `200 OK` with `SearchProductsResponse` containing a `products[]` list and `page` pagination info.\n",
+        "operationId": "searchProducts",
+        "requestBody": {
+          "description": "Search criteria (query + pagination/sorting) for locating products.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchProductsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Product search results, including items and pagination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchProductsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products/availability": {
+      "post": {
+        "tags": [
+          "product-controller"
+        ],
+        "summary": "Get availability for specific products",
+        "description": "Returns availability quantities (and optional comments) for the given product IDs.\n\n**Request body**: `AvailabilityRequest`\n- `items[]` (array[int]): product IDs to check.\n- `baseAvailCritId` (int): availability criteria to apply.\n- `forDate` (string): date context for availability.\n- `comments` (bool): include availability comments if `true`.\n\n**Returns**: `200 OK` with `GetProductsAvailabilityResponse` containing `availability` details by product.\n",
+        "operationId": "getProductsAvailability",
+        "requestBody": {
+          "description": "The list of product IDs and options used to compute current availability.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Availability information for the requested products.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetProductsAvailabilityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "tags": [
+          "order-controller"
+        ],
+        "summary": "Commit (place) an order",
+        "description": "Submits the current cart as an order with shipping/billing details.\n\n**Request body**: `OrderCommitRequest`\n- Required: `shipViaId`\n- Optional: `extraPurchaseOrderNumber`, `placedBy`, `email`, `phone`,\n  `shipAddress`, `billingAddress`, `orderDate`.\n\n**Returns**: `200 OK` with `OrderCommitResponse` containing the generated `orderNumber`.\n",
+        "operationId": "commitOrder",
+        "requestBody": {
+          "description": "Order submission payload including shipping method and contact/addresses.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCommitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Order accepted. Response includes the `orderNumber`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCommitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cart/search": {
+      "post": {
+        "tags": [
+          "cart-controller"
+        ],
+        "summary": "Get current cart snapshot",
+        "description": "Returns the current cart with items, totals, and pagination-ready product list.\n\n**Request body**: `GetCartRequest` (optional `navigation` to page through items).\n\n**Returns**: `200 OK` with `SearchCartProductsResponse` containing `cart` details and `page` pagination.\n",
+        "operationId": "getCart",
+        "requestBody": {
+          "description": "Optional pagination configuration to page through the cart's product list.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Current cart contents and totals with pagination info.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchCartProductsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/password/reset": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Reset password using token",
+        "description": "Completes a password reset using a valid reset token (obtained via \"forgot password\").\n\n**Request body**: `ResetPasswordRequest` with `username`, `token` (exact length 50), and `passwordReset` (new password + confirmation).\n\n**Returns**: `200 OK` with `SuccessResponse` message if the password was updated.\n",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "description": "Username, reset token, and new password to finalize a password reset.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset completed.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/forgot-password": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Start password reset (send reset token)",
+        "description": "Initiates a password reset by sending a reset token to the user's registered contact channel.\n\n**Request body**: `ForgotPasswordRequest` with `username`.\n\n**Returns**: `200 OK` with `SuccessResponse` message if the reset process was initiated.\n",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "description": "Username of the account requesting a password reset.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset request accepted.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Log in",
+        "description": "Authenticates a user with `username` and `password`.\n\n**Request body**: `LoginRequest` (`username`, `password`, optional `origin`).\n\n**Returns**: `200 OK` on successful authentication.\n",
+        "operationId": "login",
+        "requestBody": {
+          "description": "Credentials for authentication.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful."
+          }
+        }
+      }
+    },
+    "/api/v1/users/extract": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "summary": "Get current authenticated user",
+        "description": "Returns public information about the currently authenticated user.\n\n**Returns**: `200 OK` with `UserResponse`.\n",
+        "operationId": "extractUser",
+        "responses": {
+          "200": {
+            "description": "Current user profile payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "tags": [
+          "setting-controller"
+        ],
+        "summary": "Get global settings",
+        "description": "Returns global UI/ordering settings that can inform client behavior and display.\n\n**Returns**: `200 OK` with `SettingResponse` (e.g., `uiSetting`, `orderSetting`, `shippingOptions`).\n",
+        "operationId": "setting",
+        "responses": {
+          "200": {
+            "description": "Global settings payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/customer": {
+      "get": {
+        "tags": [
+          "setting-controller"
+        ],
+        "summary": "Get customer/company-specific settings",
+        "description": "Returns settings specific to the current company, including order and shipping defaults.\n\n**Returns**: `200 OK` with `CompanySettingResponse` (e.g., `orderSetting`, `shippingSetting`).\n",
+        "operationId": "customerSetting",
+        "responses": {
+          "200": {
+            "description": "Company settings payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanySettingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products/search-params": {
+      "get": {
+        "tags": [
+          "product-controller"
+        ],
+        "summary": "Get product search parameters & criteria",
+        "description": "Returns the available search criteria, programs, and categories to help build rich product filters.\n\n**Returns**: `200 OK` with `ProductSearchCriteriaResponse`.\n",
+        "operationId": "getSearchParam",
+        "responses": {
+          "200": {
+            "description": "Search criteria definitions (criteria, programs, categories).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSearchCriteriaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "get": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Log out",
+        "description": "Ends the current authenticated session.\n\n**Returns**: `200 OK` after logout.\n",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "Logout successful."
+          }
+        }
+      }
+    },
+    "/api/v1/cart/products": {
+      "delete": {
+        "tags": [
+          "cart-controller"
+        ],
+        "summary": "Remove specific items from cart",
+        "description": "Removes one or more cart line items by their **cart item IDs**.\n\n**Query parameters**\n- `ids` (array[int], required): list of cart line item IDs to remove.\n\n**Returns**: `200 OK` once the specified items are deleted.\n",
+        "operationId": "deleteCartProducts",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "description": "One or more cart **item IDs** to remove. Provide as repeated `ids` parameters or as a comma-separated list depending on client.",
+            "schema": {
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Specified cart items removed."
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProductCart": {
+        "required": [
+          "packageId",
+          "productId",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "packageId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kit": {
+            "type": "boolean"
+          },
+          "oversell": {
+            "type": "boolean",
+            "description": "Indicates that the grower is willing to accept orders for that product even if they currently have no available inventory."
+          }
+        }
+      },
+      "UpdateCartRequest": {
+        "required": [
+          "orderDate"
+        ],
+        "type": "object",
+        "properties": {
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductCart"
+            }
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "required": [
+          "companyName",
+          "contactName",
+          "email",
+          "firstName",
+          "lastName",
+          "password",
+          "passwordConfirmation",
+          "phone",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "maxLength": 80,
+            "minLength": 8,
+            "type": "string"
+          },
+          "passwordConfirmation": {
+            "maxLength": 80,
+            "minLength": 8,
+            "type": "string"
+          },
+          "companyName": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          },
+          "contactName": {
+            "maxLength": 80,
+            "minLength": 2,
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 80,
+            "minLength": 4,
+            "type": "string"
+          },
+          "firstName": {
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lastName": {
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 100,
+            "minLength": 5,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 40,
+            "minLength": 10,
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          }
+        }
+      },
+      "NavigationRequest": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortDirection"
+            }
+          }
+        }
+      },
+      "SearchProductsQuery": {
+        "required": [
+          "orderDate"
+        ],
+        "type": "object",
+        "properties": {
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "search": {
+            "type": "string"
+          },
+          "categoryIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "baseAvailabilityCriteria": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SearchProductsRequest": {
+        "required": [
+          "navigation",
+          "query"
+        ],
+        "type": "object",
+        "properties": {
+          "query": {
+            "$ref": "#/components/schemas/SearchProductsQuery"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/NavigationRequest"
+          }
+        }
+      },
+      "SortDirection": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ]
+          }
+        }
+      },
+      "Image": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "thumb": {
+            "type": "string"
+          }
+        }
+      },
+      "LabelIdPair": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PackageOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "pages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProductProfileData": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "typeId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProductResponse": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "availQty": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "program": {
+            "$ref": "#/components/schemas/LabelIdPair"
+          },
+          "category": {
+            "$ref": "#/components/schemas/LabelIdPair"
+          },
+          "oversell": {
+            "type": "boolean"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Image"
+            }
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "cartCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "outOfStock": {
+            "type": "boolean"
+          },
+          "packageOption": {
+            "$ref": "#/components/schemas/PackageOption"
+          },
+          "profile": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductProfileData"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pkgs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackageOption"
+            }
+          }
+        }
+      },
+      "SearchProductsResponse": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductResponse"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "AvailabilityRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "baseAvailCritId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comments": {
+            "type": "boolean"
+          },
+          "forDate": {
+            "type": "string"
+          }
+        }
+      },
+      "GetProductsAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/ItemAvailability"
+          }
+        }
+      },
+      "ItemAvailability": {
+        "type": "object",
+        "properties": {
+          "forDate": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "comments": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Address": {
+        "required": [
+          "city",
+          "country",
+          "name",
+          "postalCode",
+          "stateId",
+          "street1"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "street1": {
+            "type": "string"
+          },
+          "street2": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "stateId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderCommitRequest": {
+        "required": [
+          "shipViaId"
+        ],
+        "type": "object",
+        "properties": {
+          "shipViaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extraPurchaseOrderNumber": {
+            "type": "string"
+          },
+          "placedBy": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "shipAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "OrderCommitResponse": {
+        "type": "object",
+        "properties": {
+          "orderNumber": {
+            "type": "string"
+          }
+        }
+      },
+      "GetCartRequest": {
+        "type": "object",
+        "properties": {
+          "navigation": {
+            "$ref": "#/components/schemas/NavigationRequest"
+          }
+        }
+      },
+      "CartInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "tax": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Tax"
+            }
+          },
+          "discount": {
+            "type": "number"
+          },
+          "freight": {
+            "type": "number"
+          },
+          "surcharge": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CartProduct"
+            }
+          }
+        }
+      },
+      "CartProduct": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "productId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "label": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "packageOption": {
+            "$ref": "#/components/schemas/PackageOption"
+          },
+          "price": {
+            "type": "number"
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "kit": {
+            "type": "boolean"
+          },
+          "oversell": {
+            "type": "boolean"
+          },
+          "outOfStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProductCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "SearchCartProductsResponse": {
+        "type": "object",
+        "properties": {
+          "cart": {
+            "$ref": "#/components/schemas/CartInfo"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "Tax": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "taxableAmt": {
+            "type": "number",
+            "format": "double"
+          },
+          "percent": {
+            "type": "number",
+            "format": "double"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PasswordReset": {
+        "required": [
+          "password",
+          "passwordConfirmation"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "maxLength": 80,
+            "minLength": 8,
+            "type": "string"
+          },
+          "passwordConfirmation": {
+            "maxLength": 80,
+            "minLength": 8,
+            "type": "string"
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "required": [
+          "passwordReset",
+          "token",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "token": {
+            "maxLength": 50,
+            "minLength": 50,
+            "type": "string"
+          },
+          "passwordReset": {
+            "$ref": "#/components/schemas/PasswordReset"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "required": [
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": [
+          "password",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicCompany": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "shipDays": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "username": {
+            "type": "string"
+          },
+          "company": {
+            "$ref": "#/components/schemas/PublicCompany"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/PublicUser"
+          }
+        }
+      },
+      "ClientMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actionStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overrideTableName": {
+            "type": "string"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ValueObject"
+          },
+          "classType": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "messageKey": {
+            "type": "string"
+          },
+          "messageString": {
+            "type": "string"
+          },
+          "information": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "type": "string"
+          },
+          "messageConstant": {
+            "type": "string",
+            "enum": [
+              "application_version_error",
+              "application_version_incompatibility",
+              "application_version_mismatch",
+              "application_version_warning",
+              "application_version_download_error",
+              "application_delete_id_required",
+              "application_save_insert_error",
+              "application_save_update_error",
+              "application_listall_error",
+              "application_deletebyid_error",
+              "application_findbyid_error",
+              "system_error",
+              "login_error",
+              "remote_error",
+              "connection_error",
+              "incorrect_username_error",
+              "server_down_error",
+              "incompatable_datatype",
+              "system_function_not_implemented",
+              "auto_login_error",
+              "system_frame_register_error",
+              "unable_to_extract_property",
+              "unable_to_populate_property",
+              "client_common_no_identifier_selected",
+              "client_common_single_selection",
+              "client_required_item",
+              "client_generic_criteria_required",
+              "client_generic_no_data_to_process",
+              "client_generic_no_results",
+              "client_generic_required_fields",
+              "client_table_sort",
+              "client_dirty",
+              "client_dirty_discard",
+              "client_save_success",
+              "client_table_select",
+              "client_table_select_exactly_one",
+              "client_table_multiselect_notallowed",
+              "client_close_confirm",
+              "client_generic_close_confirm",
+              "client_table_results_none",
+              "client_table_selection_listener_error",
+              "client_tab_none",
+              "client_tab_save",
+              "client_domain_no_edits",
+              "client_notes_save_success",
+              "client_notes_general_failure",
+              "client_action_failed",
+              "client_criteria_processlong_time",
+              "client_areamaintenance_area_already_exists",
+              "client_customer_not_found",
+              "client_customer_terms_required",
+              "client_customer_billto_not_billable",
+              "client_customer_profile_save_success",
+              "client_customer_billing_partner_required",
+              "client_customer_contact_delete_selectitem",
+              "client_customer_contact_delete_success",
+              "client_customer_contact_primary_not_unique",
+              "client_customer_not_selected",
+              "client_customer_selectitem",
+              "client_customer_adjustment_freight_add",
+              "client_customer_add_store_parent_required",
+              "client_customer_code_name_unique",
+              "client_customer_code_name_required",
+              "client_customer_billing_address_required",
+              "client_customer_duplicate_upc",
+              "client_customer_consignment_tape_difference",
+              "client_customer_duplicate",
+              "client_customer_billto_unposted",
+              "client_customer_billto_balance",
+              "client_customer_billto_history",
+              "client_customer_bills_to_me",
+              "client_inventory_tree_invalid_update_selection",
+              "client_inventory_tree_invalid_duplicate_selection",
+              "client_inventory_tree_invalid_view_selection",
+              "client_inventory_inventoryitem_selectitem",
+              "client_inventory_inventoryitem_delete_confirm",
+              "client_inventory_inventoryitem_delete_success",
+              "client_inventory_inventoryitem_delete_unposted",
+              "client_inventory_inventoryitem_delete_materialsinfo",
+              "client_inventory_inventoryitem_delete_inventory",
+              "client_inventory_inventoryitem_delete_cascadedelete",
+              "client_inventory_plantdate_after_readydate",
+              "client_inventory_quantities_not_balanced",
+              "client_inventory_quantities_zero",
+              "client_inventory_inventoryitem_inventoryglaccount_zero",
+              "client_inventory_inventoryitem_revenueglaccount_zero",
+              "client_inventory_inventoryitem_discountglaccount_zero",
+              "client_inventory_inventoryitem_returnglaccount_zero",
+              "client_inventory_inventoryitem_costglaccount_zero",
+              "client_inventory_inventoryitems_delete_confirm",
+              "client_inventory_inventoryitems_delete_success",
+              "client_inventory_inventoryitems_delete_failure",
+              "client_inventory_inventoryitem_save_success",
+              "client_inventory_inventoryitem_duplication_success",
+              "client_inventory_availabilitycriteria_items",
+              "client_select_date",
+              "server_inventory_inventoryitem_noitemcode",
+              "server_inventory_inventoryitem_itemcode_unique",
+              "server_inventory_inventoryitem_shortdescription_unique",
+              "server_inventory_inventoryitem_itemcategoryscientificname_unique",
+              "server_inventory_inventoryitem_itemcategorydescription_unique",
+              "server_inventory_inventoryitem_defaultwarehouse_required",
+              "server_inventory_inventoryitem_eachct_zero",
+              "server_inventory_lots_exist",
+              "server_inventory_pricegroup_cannot_delete",
+              "server_inventory_vendorpricegroup_cannot_delete",
+              "server_inventory_pricelist_cannot_delete_unposted",
+              "client_inventory_expiry_future",
+              "client_inventory_expiry_before_ready",
+              "client_inventory_shippingtask_save_error",
+              "client_inventory_itemcategory_change_onhand",
+              "client_inventory_delete_lot_not_zero",
+              "client_inventory_delete_lot_forecast_not_zero",
+              "client_inventory_confirm_delete_lot",
+              "client_inventory_packages_delete_noselection",
+              "client_inventory_packages_save_invalid_data",
+              "client_inventory_packages_save_success",
+              "client_inventory_packages_save_invalid_cannot_deselect_primary",
+              "client_inventory_packages_save_invalid_duplicate_packagecode",
+              "client_inventory_category_items_exist",
+              "client_inventory_kit_no_kitcode",
+              "client_inventory_kit_parent_loop_removed",
+              "client_inventory_kit_duplicate_kitcode",
+              "client_inventory_kit_update_select_multi",
+              "client_inventory_kit_loop",
+              "client_inventory_iteminformation_companyucpcode_blank",
+              "client_inventory_area_no_type",
+              "client_inventory_area_not_facility",
+              "client_inventory_area_delete_failed",
+              "client_inventory_area_confirm_change_parent",
+              "client_external_truckstops_exe_failed",
+              "client_inventory_transfer_exceeds_onhand",
+              "client_inventory_transfer_process",
+              "client_external_truckstops_connection_failed",
+              "client_inventory_link_recursive",
+              "client_inventory_analysis_no_facility",
+              "client_inventory_analysis_not_negative",
+              "client_inventory_analysis_no_commitment",
+              "client_inventory_direct_ship_clear",
+              "client_inventory_analysis_invalid_column",
+              "client_inventory_future_before_commit",
+              "client_inventory_shippingcontainer_delete",
+              "framefactory_debug_selectframe",
+              "validation_error",
+              "validation_error_notnull",
+              "validation_inventory_iteminformation_category",
+              "validation_inventory_iteminformation_itemcode",
+              "validation_inventory_iteminformation_description",
+              "validation_inventory_iteminformation_itemclass",
+              "validation_inventory_iteminformation_function",
+              "validation_customer_name",
+              "validation_customer_code",
+              "validation_common_form",
+              "client_customer_save_success",
+              "client_customer_delete_confirm",
+              "client_customer_delete_success",
+              "client_customer_search_required_fields",
+              "client_customer_search_no_results",
+              "client_customer_search_no_customertype",
+              "client_customer_cannot_delete_has_history",
+              "client_customer_product_code_invalid",
+              "client_inventory_search_no_results",
+              "client_inventory_search_required_fields",
+              "client_inventory_mass_update_success",
+              "client_inventory_mass_update_no_changes",
+              "client_inventory_mass_update_packages_error_no_packagecode",
+              "client_inventory_iteminformation_itemupccode",
+              "client_inventory_iteminformation_itemupccode_duplicate",
+              "client_inventory_iteminformation_itemupccode_parseerror",
+              "client_inventory_iteminformation_link",
+              "client_inventory_itemselection_required",
+              "client_inventory_pricegroup_delete_closewindow_noitems_confirm",
+              "client_inventory_kits_chooseparent",
+              "client_inventory_kits_displayable_notregistered",
+              "client_inventory_kits_type_choose",
+              "client_inventory_kits_save",
+              "client_inventory_kits_save_success",
+              "client_inventory_kits_remove_select",
+              "client_inventory_kits_remove_save",
+              "client_inventory_price_mass_update_itemselection_required",
+              "client_inventory_price_group_singleitemselection_required",
+              "client_inventory_price_singleitemselection_required",
+              "client_inventory_pricelist_edit_invalid_date",
+              "client_inventory_pricegroup_save_duplicate",
+              "client_inventory_price_save_duplicate",
+              "client_inventory_price_save_invalid_shipto",
+              "client_inventory_price_save_invalid_qtybreak",
+              "client_inventory_price_save_invalid_defaultqtybreak",
+              "client_inventory_pricegroup_save_pricegroup_required",
+              "client_inventory_pricegroup_delete_confirmation",
+              "client_inventory_price_delete_confirmation",
+              "client_inventory_pricegroup_clear_confirmation",
+              "client_inventory_price_cannot_delete_default_price",
+              "client_inventory_pricelist_edit_invalid_price",
+              "client_inventory_pricelist_edit_invalid_percent",
+              "client_inventory_itempackage_singleitemselection_required",
+              "client_inventory_itempackage_delete_confirmation",
+              "client_inventory_itempackage_packagecount_zero",
+              "client_inventory_lot_not_zero",
+              "domain_save_duplicate_code",
+              "domain_save_enter_code",
+              "domain_type_selection",
+              "client_inventory_shippingtask_uph_greater_zero",
+              "client_inventory_shippingcontainer_save_duplicate",
+              "client_inventory_category_inventory_method",
+              "client_inventory_category_program",
+              "client_inventory_price_mass_update_no_changes",
+              "client_inventory_massupdate_bycategorycode_confirm",
+              "client_inventory_massupdate_byclasscode_confirm",
+              "client_inventory_massupdate_byitemcode_confirm",
+              "client_inventory_pricegroup_delete_noitemsassign_confirm",
+              "client_inventory_pricegroup_delete_noitemsassign_list_confirm",
+              "client_inventory_categorycode_missing",
+              "client_inventory_classcode_missing",
+              "client_inventory_itemcode_missing",
+              "client_inventory_pricegroup_cannot_delete",
+              "client_order_no_terms",
+              "client_order_lineitems_invalid",
+              "client_order_lineitems_none",
+              "client_order_line_itemcode_failure",
+              "client_order_line_invalid_qty",
+              "client_order_line_searchresults_verify_failure",
+              "client_order_line_searchresults_select",
+              "client_order_line_search_no_results",
+              "client_order_line_save_select",
+              "client_order_line_save_error_no_package_defined",
+              "client_order_line_save_error_no_primaryfacility_defined",
+              "client_order_line_save_error",
+              "client_order_line_save_success",
+              "client_order_line_delete_confirmation",
+              "client_order_line_edit_dirty",
+              "client_order_line_edit_package_error",
+              "client_order_line_edit_validation_error",
+              "client_order_line_lineitems_method_modified",
+              "client_order_line_lineitems_massupdate_select",
+              "client_order_line_lineitems_repeat_select",
+              "client_order_line_lineitems_substitution_select",
+              "client_order_line_lineitems_substitution_same",
+              "client_order_line_lineitems_substitution_exists",
+              "client_order_line_lineitems_substitution_notdone",
+              "client_order_line_lineitems_substitution_negative",
+              "client_order_line_substitution_into_assorted",
+              "client_order_line_lineitems_substitution_confirm",
+              "client_order_line_minimum_price",
+              "client_order_credit_limit_proceed",
+              "client_order_customer_lockout",
+              "client_order_customer_warning",
+              "client_order_confirm_convert_to_master",
+              "client_order_confirm_convert_to_promo",
+              "client_order_confirm_convert_to_consignment",
+              "client_order_confirm_convert_consignment_to_invoice",
+              "client_order_no_deliveries",
+              "client_order_modify_due_date_failed",
+              "client_order_modify_receive_date_failed",
+              "client_order_saved_expected",
+              "client_order_search_no_results",
+              "client_order_select_one",
+              "client_order_shipdate_error",
+              "client_order_shipdate_invalid",
+              "client_order_shipdate_invalid_later",
+              "client_order_shipdate_invalid_leadtime",
+              "client_order_adjustment_freight_add",
+              "client_order_adjustment_invalid",
+              "client_order_purchase_order_required",
+              "client_order_purchase_order_not_unique",
+              "client_order_package_doesnt_exist",
+              "client_order_customer_shipdate_exists",
+              "client_order_option_locked",
+              "client_order_option_cancelled",
+              "client_order_change_facility_selected_same",
+              "client_order_assign_save_out_of_balance",
+              "client_order_assign_confirm_unassign",
+              "client_order_assign_greater_than_max",
+              "client_order_assign_same_lot",
+              "client_order_assign_greater_than_unassigned",
+              "client_order_assign_delete_pallet_invalid",
+              "client_order_assign_delete_pallet_confirm",
+              "client_order_confirm_save",
+              "client_order_confirm_pull",
+              "client_order_confirm_ship",
+              "client_order_confirm_unship",
+              "client_order_confirm_truckstops_new",
+              "client_order_confirm_truckstops_append",
+              "client_order_invalid_document_number",
+              "client_order_status_change_exception",
+              "client_order_confirm_unlink_promo",
+              "client_order_confirm_relink",
+              "client_order_confirm_unlink_order",
+              "client_order_not_linked_promo",
+              "client_order_cannot_edit_linked_promo",
+              "client_orderprocessing_address_error",
+              "client_orderprocessing_massupdate_error",
+              "client_orderprocessing_massupdate_shipdate_error",
+              "client_orderprocessing_delivery_no_vehicle",
+              "client_orderprocessing_delivery_loaddate_late",
+              "client_orderprocessing_delivery_no_driver",
+              "client_orderprocessing_delivery_cannot_delete",
+              "client_orderprocessing_delivery_cannot_massdelete",
+              "client_order_update_promo_date",
+              "client_order_confirm_post",
+              "client_order_post_failed",
+              "client_order_confirm_cancel",
+              "client_order_confirm_unpost",
+              "client_order_cannot_unpost",
+              "client_order_already_shipment_master",
+              "client_order_selected_not_master",
+              "client_order_discount_already_applied",
+              "client_order_no_facility",
+              "client_order_master_committed_exceeded",
+              "client_order_qty_negative",
+              "client_order_master_not_delete_shipment",
+              "client_order_already_assorted",
+              "client_order_assort_insufficient_available",
+              "client_order_assort_no_kit",
+              "client_order_items_no_package",
+              "client_order_master_no_assort_committed",
+              "client_order_cannot_unassort",
+              "client_order_cannot_edit_assorted",
+              "client_order_selection_required",
+              "client_order_search_select_transactiontype",
+              "client_order_edi855_action_required",
+              "client_order_search_select_customer",
+              "client_order_edi_no_config",
+              "client_order_edi_process_invalid",
+              "client_order_edi_confirm_delete_message",
+              "client_order_edi_no_file_selected",
+              "client_order_edi_confirm_action",
+              "client_order_none_in_process",
+              "client_order_mark_in_process",
+              "client_order_pull_inventory",
+              "client_order_post_scanned",
+              "client_order_confirm_convert_to_scanpo",
+              "client_process_finished",
+              "client_route_order_posted",
+              "client_order_posted_excluded",
+              "client_order_posted_all",
+              "client_order_shipped_excluded",
+              "client_order_shipped_all",
+              "client_order_duplicate_po",
+              "client_order_shipment_reduced",
+              "client_order_locked",
+              "client_order_line_package_invalid",
+              "client_order_adjustments_none",
+              "client_order_sku_required",
+              "client_order_save_changes",
+              "client_delivery_change_delivery_date",
+              "client_order_change_date_unship",
+              "client_order_change_date_unroute",
+              "client_order_shipped_unshipped",
+              "client_order_starting_po",
+              "client_generic_enter_numeric",
+              "client_generic_invalid_date",
+              "client_order_no_export",
+              "client_order_oversell_warning",
+              "client_sales_report_price_ignore_nosku",
+              "client_order_reassign_select_area",
+              "client_order_confirm_convert_invoice_to_transfer_facility",
+              "client_generic_confirm_delete",
+              "client_generic_select_row",
+              "client_generic_start_after_begin",
+              "client_inventorylot_waste_reason",
+              "client_inventorylot_negative",
+              "inventory_no_delete_reason",
+              "client_consignment_adjustment_no_reason",
+              "client_consignment_adjustment_no_adjustment_code",
+              "client_consignment_adjustment_no_adjustment_qty",
+              "client_consignment_adjustment_invalid_code",
+              "client_not_selected",
+              "client_productionlot_duplicate",
+              "client_productionlot_duplicates",
+              "client_season_choose",
+              "client_order_ordersheet_delete_confirm",
+              "client_order_ordersheet_item_delete_confirm",
+              "client_ar_apply_exceeds_balance",
+              "client_ar_payment_search_no_results",
+              "client_ar_payment_void_confirm",
+              "client_ar_payment_discardchanges_confirm",
+              "client_ar_payment_missing_billto",
+              "client_ar_payment_missing_paymentdate",
+              "client_ar_payment_missing_batchdate",
+              "client_ar_payment_available_amount_exceeded",
+              "client_ar_payment_single_select",
+              "client_ar_payment_tape_difference",
+              "client_ar_payment_create_prepay_confirm",
+              "client_ar_payment_debit_confirm",
+              "client_ar_payment_void_applied",
+              "client_ar_payment_applied_no_edit",
+              "client_ar_glaccount_cannot_be_deleted",
+              "client_ar_finance_charge_not_selected",
+              "client_ar_finance_charge_process",
+              "client_ar_finance_charge_already",
+              "client_ar_applications_no_open_items",
+              "client_ar_credit_memo_positive",
+              "client_ar_debit_memo_negative",
+              "client_ar_glaccount_exception",
+              "client_ar_payment_applied_nodata",
+              "client_ar_payment_applied_docnum_nf",
+              "client_ar_payment_applied_ponum_nf",
+              "client_ar_payment_applied_docnum_inv",
+              "client_ar_credit_finance_charge",
+              "client_gl_period_exception",
+              "client_gl_account_exception",
+              "client_gl_close_period",
+              "client_gl_close_period_no_finance_charge",
+              "client_invalid_input",
+              "client_gl_no_ar_account",
+              "client_gl_posted",
+              "client_gl_unpost_transaction_type",
+              "client_gl_unpost_credit_applied",
+              "client_ar_memo_detail_verification_each_count",
+              "client_ar_memo_confirm_cancel",
+              "client_ar_memo_applied",
+              "client_ar_memo_period",
+              "client_ar_memo_glaccount_invalid",
+              "client_ar_memo_confirm_save",
+              "client_ar_memo_invoice_not_posted",
+              "client_user_not_found",
+              "client_user_select_one",
+              "client_user_delete_confirm",
+              "client_user_delete_protected",
+              "client_user_multiple_delete_protected",
+              "client_role_delete_confirm",
+              "client_role_delete_protected",
+              "client_role_multiple_delete_protected",
+              "client_resource_delete_confirm",
+              "client_resource_delete_protected",
+              "client_resource_multiple_delete_protected",
+              "client_policy_delete_confirm",
+              "client_policy_delete_protected",
+              "client_policy_multiple_delete_protected",
+              "client_memo_confirm_change_transaction_type",
+              "client_security_admin_function",
+              "client_security_authentication_error",
+              "client_security_authentication_invalid",
+              "client_security_user_password_required",
+              "client_security_user_password_length",
+              "client_security_user_password_confirmation",
+              "client_security_resource_not_allowed",
+              "client_production_labor_cannot_edit_no_labor",
+              "client_production_confirm_process_forecasts_tasks",
+              "client_production_confirm_process_tasks",
+              "client_production_confirm_forecast_committed",
+              "client_production_forecast_criteria_no_results",
+              "client_production_delete_failed",
+              "client_production_confirm_unlink_inventory",
+              "client_production_no_customer_forecastset",
+              "client_production_growseason_delete",
+              "client_production_confirm_delete_forecast_season",
+              "client_planting_no_edit_planted",
+              "client_materials_pull_nothing_selected",
+              "client_materials_pull_confirm",
+              "client_materials_pull_exceeds_onhand",
+              "client_replenish_confirm_delete",
+              "client_generic_confirm_delete_data",
+              "client_space_select_profile",
+              "client_space_load_profile",
+              "client_space_select_level",
+              "client_space_select_facilities",
+              "client_edi_export_file",
+              "client_query_dirty",
+              "client_query_search_dirty",
+              "client_query_delete_confirm",
+              "client_report_delete_layout_confirm",
+              "client_generic_search_no_results",
+              "client_report_delete_layout_nosuccess",
+              "client_message_delete_confirm",
+              "client_message_no_data",
+              "client_message_no_results",
+              "server_space_no_profile",
+              "server_space_no_levels",
+              "server_production_forecast_loop",
+              "server_production_forecast_no_productionitem",
+              "server_production_no_inventoryitem",
+              "server_production_forecast_no_season",
+              "server_production_forecast_late",
+              "server_production_growseason_factor_zero",
+              "server_production_growseason_multiple_by_zero",
+              "server_production_growseason_yield_zero",
+              "server_production_growseason_invalid_save",
+              "server_production_growseason_delete_zero",
+              "server_system_cannot_delete",
+              "server_system_cannot_edit",
+              "server_save_duplicate_code",
+              "server_save_duplicate_values",
+              "server_production_element_required",
+              "server_production_plantgroup_cannot_change_elementtype",
+              "server_production_forecastgroup_cannot_change_plantgroup",
+              "server_production_forecastgroup_container",
+              "server_production_item_unplanted",
+              "server_production_item_status_unplanted",
+              "server_production_invalid_plant_type",
+              "server_production_forecast_no_from_forecastgroup",
+              "server_forecastgroup_cannot_change_category",
+              "server_productionhierarchy_duplicate_elements",
+              "server_production_cannot_delete_unplanted_forecasts",
+              "server_production_forecast_planted",
+              "server_production_forecast_confirmed",
+              "server_production_pushupspec_nomix",
+              "server_production_unplanted_pred",
+              "server_querytext_save_duplicate",
+              "server_po_vendor_id_zero",
+              "server_po_vendoraddress_id_zero",
+              "server_po_warehouse_id_zero",
+              "server_po_no_item",
+              "server_po_invalid_package",
+              "server_po_price_not_found",
+              "server_po_invalid_status",
+              "server_po_orderqty_lessthan_received",
+              "server_apply_zero",
+              "server_system_account_no_accounts_receivable",
+              "server_system_account_no_cash_discount",
+              "server_system_account_no_cash",
+              "server_system_account_no_prepay",
+              "server_batch_select_too_late",
+              "server_exception",
+              "server_edi_export_validation",
+              "server_edi_export_mapper_setting",
+              "server_edi_export_launch_mapper",
+              "server_edi_export_file",
+              "server_edi_export_empty",
+              "server_imported_message_validation_error",
+              "server_mixcode_duplicate_date",
+              "server_imports_converter_exception",
+              "component_datetime_calendarfield_notsupported",
+              "trans_history_servtype_invalid",
+              "security_remove_not_currentuser",
+              "security_currentuser_not_admin_realm",
+              "security_ldap_user_notfound",
+              "security_ldap_invalid_oldpwd",
+              "security_db_user_notfound",
+              "security_user_not_authenticate",
+              "version_missing_title",
+              "version_missing_vendor",
+              "version_missing_desc",
+              "version_missing_copyright",
+              "version_missing_bld",
+              "version_missing_num",
+              "version_invalid_blddate",
+              "version_load_error",
+              "version_parse_error",
+              "version_invalid_num",
+              "authorize_user_no",
+              "excp_cause_null",
+              "excp_cause_rskey_null",
+              "excp_msg_null",
+              "excp_msg_cause_null",
+              "excp_msg_msgs_null",
+              "excp_msg_rskey_null",
+              "excp_msg_or_rskey_null",
+              "excp_msgs_null",
+              "excp_rskey_null",
+              "excp_rskeys_null",
+              "excp_rskeys_msg_null",
+              "excp_code_enum_name_nf",
+              "excp_pcode_enum_name_nf",
+              "msginfo_invalid",
+              "msg_type_string_invalid",
+              "msg_type_enum_name_nf",
+              "rpt_id_nf",
+              "prop_populate_error",
+              "prop_extract_error",
+              "class_method_nf",
+              "cart_ship_out_of_balance"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ImageShort": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "LocalDateRange": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "OrderSetting": {
+        "type": "object",
+        "properties": {
+          "minSum": {
+            "type": "number"
+          },
+          "dateRange": {
+            "$ref": "#/components/schemas/LocalDateRange"
+          }
+        }
+      },
+      "ProfileValue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "SettingResponse": {
+        "type": "object",
+        "properties": {
+          "restrictAvailabilityCriteria": {
+            "type": "boolean"
+          },
+          "uiSetting": {
+            "$ref": "#/components/schemas/UiSetting"
+          },
+          "orderSetting": {
+            "$ref": "#/components/schemas/OrderSetting"
+          },
+          "shippingOptions": {
+            "$ref": "#/components/schemas/ShippingOptions"
+          },
+          "globalSetting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileValue"
+            }
+          }
+        }
+      },
+      "ShipVia": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientMessage"
+            }
+          },
+          "actionStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overrideTableName": {
+            "type": "string"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ValueObject"
+          },
+          "classType": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "processId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "serviceCode": {
+            "type": "string"
+          },
+          "freightChargesByCartShip": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ShippingCountry": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/State"
+            }
+          }
+        }
+      },
+      "ShippingOptions": {
+        "type": "object",
+        "properties": {
+          "shipOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipVia"
+            }
+          },
+          "shipCountryOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShippingCountry"
+            }
+          }
+        }
+      },
+      "State": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UiSetting": {
+        "type": "object",
+        "properties": {
+          "welcomeTitle": {
+            "type": "string"
+          },
+          "welcomeMessage": {
+            "type": "string"
+          },
+          "searchTooltip": {
+            "type": "string"
+          },
+          "searchInputWidth": {
+            "type": "string"
+          },
+          "logo": {
+            "$ref": "#/components/schemas/ImageShort"
+          },
+          "welcomePageLogo": {
+            "$ref": "#/components/schemas/ImageShort"
+          },
+          "galleryImages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageShort"
+            }
+          },
+          "theme": {
+            "$ref": "#/components/schemas/UiTheme"
+          },
+          "captcha": {
+            "type": "string"
+          },
+          "cartSidebarEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UiTheme": {
+        "type": "object",
+        "properties": {
+          "themeId": {
+            "type": "string"
+          },
+          "menuColorId": {
+            "type": "string"
+          },
+          "componentColorId": {
+            "type": "string"
+          }
+        }
+      },
+      "ValueObject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "actionStatus": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overrideTableName": {
+            "type": "string"
+          },
+          "object": {
+            "$ref": "#/components/schemas/ValueObject"
+          },
+          "classType": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CompanyOrderSetting": {
+        "type": "object",
+        "properties": {
+          "minSum": {
+            "type": "number"
+          },
+          "dateRange": {
+            "$ref": "#/components/schemas/LocalDateRange"
+          },
+          "shipDays": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MONDAY",
+                "TUESDAY",
+                "WEDNESDAY",
+                "THURSDAY",
+                "FRIDAY",
+                "SATURDAY",
+                "SUNDAY"
+              ]
+            }
+          }
+        }
+      },
+      "CompanySettingResponse": {
+        "type": "object",
+        "properties": {
+          "orderSetting": {
+            "$ref": "#/components/schemas/CompanyOrderSetting"
+          },
+          "shippingSetting": {
+            "$ref": "#/components/schemas/OrderShippingDetails"
+          }
+        }
+      },
+      "OrderShippingDetails": {
+        "required": [
+          "shipViaId"
+        ],
+        "type": "object",
+        "properties": {
+          "shipViaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extraPurchaseOrderNumber": {
+            "type": "string"
+          },
+          "placedBy": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "shipAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "ProductSearchCriteriaResponse": {
+        "type": "object",
+        "properties": {
+          "criteriaType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "RESTRICT_TO_AVAILABILITY_CRITERIA",
+              "MIXED"
+            ]
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebOrderAvailableCriteriaResponse"
+            }
+          }
+        }
+      },
+      "WebOrderAvailableCriteria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "WebOrderAvailableCriteriaResponse": {
+        "type": "object",
+        "properties": {
+          "criteria": {
+            "$ref": "#/components/schemas/WebOrderAvailableCriteria"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebOrderItemProgram"
+            }
+          }
+        }
+      },
+      "WebOrderItemCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "selectedInCriteria": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WebOrderItemProgram": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebOrderItemCategory"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  }
+}

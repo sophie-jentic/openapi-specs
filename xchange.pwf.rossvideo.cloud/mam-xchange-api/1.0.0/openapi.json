@@ -1,0 +1,3078 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MAM Xchange API",
+    "description": "API specification for MAM (Media Asset Management) Xchange services.\nThis API provides comprehensive functionality for managing assets, projects,\nauthentication, and various media operations through Xchange integration.\n\nAll API responses follow: version, status, msg, data. Success: status=0, msg=\"ok\".\nError responses include errorMsg and errorString.\n\nAuthentication using an external system is supported through a master token:\n- Master Token for administrative access and elevated permissions\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Ross Video MAM Team"
+    },
+    "license": {
+      "name": "Proprietary"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/newsmax-164/mam-xchange-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://xchange.pwf.rossvideo.cloud",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.xchange.rossvideo.com",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://10.3.25.6",
+      "description": "Local network server"
+    }
+  ],
+  "security": [
+    {
+      "MasterTokenAuth": []
+    },
+    {
+      "CookieAuth": []
+    }
+  ],
+  "paths": {
+    "/xchange/XChange/api/auth/auth_user": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate user with username and password",
+        "description": "Authenticates a user with username and password credentials (Base64 encoded)",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "pass",
+                  "login_type",
+                  "override"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "description": "Base64 encoded username",
+                    "example": "YWRtaW4="
+                  },
+                  "pass": {
+                    "type": "string",
+                    "description": "Base64 encoded password",
+                    "example": "cEBzc3cwcmQ="
+                  },
+                  "login_type": {
+                    "type": "integer",
+                    "description": "Login type (always 4)",
+                    "example": 4
+                  },
+                  "override": {
+                    "type": "string",
+                    "description": "Override flag",
+                    "example": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/XchangeAuthenticationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/auth/check_login_status/": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authenticate with Xchange access token",
+        "description": "Authenticates a user with an existing Xchange access token",
+        "parameters": [
+          {
+            "name": "login_type",
+            "in": "query",
+            "required": true,
+            "description": "Login type (always 4)",
+            "schema": {
+              "type": "integer",
+              "example": 4
+            }
+          }
+        ],
+        "headers": {
+          "Authorization": {
+            "description": "Xchange access token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/XchangeAuthenticationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout user",
+        "description": "Logs out the user represented by the access token",
+        "parameters": [
+          {
+            "name": "login_type",
+            "in": "query",
+            "required": true,
+            "description": "Login type (always 4)",
+            "schema": {
+              "type": "integer",
+              "example": 4
+            }
+          }
+        ],
+        "headers": {
+          "Authorization": {
+            "description": "Access token to logout",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/media/getFilteredMedia": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Search assets",
+        "description": "Search for assets using various criteria",
+        "parameters": [
+          {
+            "name": "MediaRequest[start]",
+            "in": "query",
+            "description": "Starting index for pagination",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "MediaRequest[count]",
+            "in": "query",
+            "description": "Number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            },
+            "example": 20
+          },
+          {
+            "name": "MediaRequest[filterOrParams][recordid][]",
+            "in": "query",
+            "description": "Specific asset record ID",
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASSET_12345"
+          },
+          {
+            "name": "MediaRequest[filterOrParams][Name][]",
+            "in": "query",
+            "description": "Asset name to search for",
+            "schema": {
+              "type": "string"
+            },
+            "example": "My Video Asset"
+          },
+          {
+            "name": "MediaRequest[mediaCategories][media_category][0]",
+            "in": "query",
+            "description": "Asset category filter",
+            "schema": {
+              "type": "string"
+            },
+            "example": "VIDEO"
+          },
+          {
+            "name": "MediaRequest[projectBin][]",
+            "in": "query",
+            "description": "Project bin ID to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MediaRequest[binPermissions][]",
+            "in": "query",
+            "description": "Smartbin ID to request data from. The authenticated user must have \naccess permissions to the specified Smartbin. This parameter filters results to only \ninclude assets from the specified Smartbin that the user is authorized to access.\n",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 12345
+          },
+          {
+            "name": "MediaRequest[binPermissions]",
+            "in": "query",
+            "description": "Smartbin ID to request data from. The authenticated user must have \naccess permissions to the specified Smartbin. This parameter filters results to only \ninclude assets from the specified Smartbin that the user is authorized to access.\n",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "MediaRequest[userId]",
+            "in": "query",
+            "description": "User ID for filtering",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "MediaRequest[sorters][id]",
+            "in": "query",
+            "description": "Sort order",
+            "schema": {
+              "type": "string",
+              "default": "desc"
+            }
+          },
+          {
+            "name": "MediaRequest[showCounts]",
+            "in": "query",
+            "description": "Whether to show counts",
+            "schema": {
+              "type": "string",
+              "default": "1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/media/by_record_id": {
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset by record ID",
+        "description": "Retrieves assets by one or more record IDs. Send as form-encoded array using the parameter name **record_id[]** for each ID (e.g. `record_id[]=a5cb4590-1` or multiple `record_id[]=id1&record_id[]=id2`).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "record_id[]"
+                ],
+                "properties": {
+                  "record_id[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Record ID(s). Form-encode as record_id[]=id1&record_id[]=id2",
+                    "example": [
+                      "a5cb4590-1"
+                    ]
+                  }
+                }
+              },
+              "encoding": {
+                "record_id[]": {
+                  "style": "form",
+                  "explode": true
+                }
+              },
+              "example": {
+                "record_id[]": [
+                  "a5cb4590-1"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/upload/register_media_placeholder/": {
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Create new asset placeholder",
+        "description": "Creates a new asset placeholder in the system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "pds_id"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Asset name",
+                    "example": "My Video Asset"
+                  },
+                  "pds_id": {
+                    "type": "integer",
+                    "description": "PDS ID",
+                    "example": 123
+                  },
+                  "metadata_fields": {
+                    "type": "string",
+                    "description": "JSON string of metadata fields",
+                    "example": "{\"title\": \"My Video Title\", \"description\": \"Video description\"}"
+                  },
+                  "project_bin_id": {
+                    "type": "string",
+                    "description": "JSON array of project bin IDs",
+                    "example": "[\"BIN_12345\"]"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asset placeholder created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/upload/register_media": {
+      "post": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Fulfill asset placeholder",
+        "description": "Fulfills a placeholder asset with actual content",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "filePath"
+                ],
+                "properties": {
+                  "filePath": {
+                    "type": "string",
+                    "description": "Path to the file to fulfill the placeholder",
+                    "example": "/uploads/video.mp4"
+                  },
+                  "metadata": {
+                    "type": "string",
+                    "description": "JSON string of additional metadata",
+                    "example": "{\"title\": \"Updated Title\", \"tags\": [\"updated\", \"test\"]}"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset fulfilled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Asset fulfilled successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/media/get_file_pathv2/": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset file path",
+        "description": "Retrieves file path information for an asset",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "query",
+            "required": true,
+            "description": "Asset record ID",
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASSET_12345"
+          },
+          {
+            "name": "resourceType",
+            "in": "query",
+            "description": "Type of resource to retrieve",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "thumbnail",
+                "proxy",
+                "filepath"
+              ]
+            },
+            "example": "thumbnail"
+          },
+          {
+            "name": "resolution",
+            "in": "query",
+            "description": "Resolution for thumbnail/proxy",
+            "schema": {
+              "type": "string"
+            },
+            "example": "1920x1080"
+          },
+          {
+            "name": "systemType",
+            "in": "query",
+            "description": "System type for file paths",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "win",
+                "mac",
+                "linux"
+              ],
+              "default": "win"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource information retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/project/search/": {
+      "get": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Search projects",
+        "description": "Search for projects using various criteria",
+        "parameters": [
+          {
+            "name": "projectName",
+            "in": "query",
+            "description": "Project name to search for",
+            "schema": {
+              "type": "string"
+            },
+            "example": "My Project"
+          },
+          {
+            "name": "recordId",
+            "in": "query",
+            "description": "Specific project record ID",
+            "schema": {
+              "type": "string"
+            },
+            "example": "PROJECT_12345"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Starting index for pagination",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/project/create/": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create new project",
+        "description": "Creates a new project in the system",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "FORKProject[projectName]",
+                  "FORKProject[pdsId]",
+                  "FORKProject[creator]",
+                  "FORKProject[userId]",
+                  "send_to_fork",
+                  "resolve_project_name"
+                ],
+                "properties": {
+                  "FORKProject[projectName]": {
+                    "type": "string",
+                    "description": "Project name",
+                    "example": "My New Project"
+                  },
+                  "FORKProject[pdsId]": {
+                    "type": "integer",
+                    "description": "PDS ID",
+                    "example": 123
+                  },
+                  "FORKProject[creator]": {
+                    "type": "string",
+                    "description": "Creator name",
+                    "example": "john.doe"
+                  },
+                  "FORKProject[userId]": {
+                    "type": "integer",
+                    "description": "User ID",
+                    "example": 456
+                  },
+                  "send_to_fork": {
+                    "type": "integer",
+                    "description": "Send to fork flag",
+                    "example": 0
+                  },
+                  "resolve_project_name": {
+                    "type": "integer",
+                    "description": "Resolve project name flag",
+                    "example": 1
+                  },
+                  "FORKProject[groupNames]": {
+                    "type": "string",
+                    "description": "JSON string of permission groups",
+                    "example": "[\"admin\", \"editor\"]"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/project/media/addtorootbin/": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Add asset to project",
+        "description": "Adds an asset to a project",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "assetId",
+                  "projectId"
+                ],
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "description": "Asset ID to add",
+                    "example": "ASSET_12345"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "description": "Project ID",
+                    "example": "PROJECT_12345"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset added to project successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Asset added to project successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/project/media/removefromrootbin/": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Remove asset from project",
+        "description": "Removes an asset from a project",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "assetId",
+                  "projectId"
+                ],
+                "properties": {
+                  "assetId": {
+                    "type": "string",
+                    "description": "Asset ID to remove",
+                    "example": "ASSET_12345"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "description": "Project ID",
+                    "example": "PROJECT_12345"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Asset removed from project successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Asset removed from project successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project or asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/user/smartbin/get_smartbin_tree": {
+      "post": {
+        "tags": [
+          "Smartbins"
+        ],
+        "summary": "Get Smartbin tree",
+        "description": "Returns all Smartbins the provided user ID has access to, optionally filtered\nby user, library, project, and whether to exclude project Smartbins.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "library",
+                  "project"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "description": "User ID to filter Smartbins",
+                    "example": 750
+                  },
+                  "library": {
+                    "type": "integer",
+                    "description": "Library ID to filter Smartbins",
+                    "example": 0
+                  },
+                  "project": {
+                    "type": "integer",
+                    "description": "Project ID to filter Smartbins",
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Smartbin tree (nested hierarchy with bin_name, bin_id, parent_id, children)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartBinTreeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/smartbin/create/": {
+      "post": {
+        "tags": [
+          "Smartbins"
+        ],
+        "summary": "Create or update Smartbin",
+        "description": "Creates a new Smartbin or updates an existing one. Same endpoint for both:\n- **Create**: omit smartbin[id]. Required: smartbin[smartbinName].\n- **Update**: include smartbin[id] with the bin ID to modify.\n\nForm encoding: smartbin[key] for bin properties.\n\n**filterFields** is a flat structure where each key is a metadata field name in Xchange.\nFor fields with match options, use three values:\n- **value** (string): The filter value\n- **matchOption**: startsWith, endsWith, contains, or exact\n- **comparator**: like, not like, =, or !=\n\nExample: smartbin[filterFields][Approval Status][value]=Approved,\nsmartbin[filterFields][Approval Status][matchOption]=startsWith,\nsmartbin[filterFields][Approval Status][comparator]=like        \n\nOptional: userIds[], groupIds[] for access.        \n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SmartbinCreateForm"
+              },
+              "examples": {
+                "create": {
+                  "summary": "Create new Smartbin (form-urlencoded)",
+                  "value": {
+                    "smartbin[smartbinName]": "TestApi",
+                    "smartbin[filterFields][Approval Status][value]": "Approved",
+                    "smartbin[filterFields][Approval Status][matchOption]": "startsWith",
+                    "smartbin[filterFields][Approval Status][comparator]": "like"
+                  }
+                },
+                "update": {
+                  "summary": "Update existing Smartbin (form-urlencoded)",
+                  "value": {
+                    "smartbin[id]": "208279",
+                    "smartbin[smartbinName]": "TestApi",
+                    "smartbin[filterFields][Approval Status][value]": "Rejected",
+                    "smartbin[filterFields][Approval Status][matchOption]": "startsWith",
+                    "smartbin[filterFields][Approval Status][comparator]": "like"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Smartbin created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmartbinCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Smartbins"
+        ],
+        "summary": "Delete Smartbin",
+        "description": "Deletes a Smartbin by ID.",
+        "parameters": [
+          {
+            "name": "bin_id",
+            "in": "query",
+            "required": true,
+            "description": "Smartbin ID to delete",
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Smartbin deleted successfully"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/smartbin/addtouser/": {
+      "post": {
+        "tags": [
+          "Smartbins"
+        ],
+        "summary": "Add user to Smartbin access",
+        "description": "Grants a user access to one or more Smartbins.\nRequest body must be application/x-www-form-urlencoded. Example: user_id=22076&bin_id[]=208281\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "bin_id[]"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "description": "User ID to grant access",
+                    "example": 750
+                  },
+                  "bin_id[]": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "Smartbin ID(s). Form encoding bin_id[]=42&bin_id[]=43",
+                    "example": [
+                      1
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User added to Smartbin access successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Smartbins"
+        ],
+        "summary": "Remove user from Smartbin access",
+        "description": "Removes a user's access to one or more Smartbins. Use query format bin_id[]=42&bin_id[]=43&user_id[]=101.",
+        "parameters": [
+          {
+            "name": "bin_id[]",
+            "in": "query",
+            "required": true,
+            "description": "Smartbin IDs to remove access from",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "example": [
+              42
+            ]
+          },
+          {
+            "name": "user_id[]",
+            "in": "query",
+            "required": true,
+            "description": "User IDs to remove access (first element is the target user)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "example": [
+              750
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User removed from Smartbin access successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/mediaannotation/{start}/{count}/": {
+      "get": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Search media annotations",
+        "description": "Search for media annotations (markers, subclips) using SearchRequest query parameters.\nUse SearchRequest[equalsAnd][field], SearchRequest[likeOr][field], SearchRequest[sorters][field] encoding.\n",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "path",
+            "required": true,
+            "description": "Starting index for pagination",
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "count",
+            "in": "path",
+            "required": true,
+            "description": "Number of results to return",
+            "schema": {
+              "type": "integer",
+              "example": 1000
+            }
+          },
+          {
+            "name": "SearchRequest[equalsAnd][_parent_recordid]",
+            "in": "query",
+            "description": "Filter by parent record ID (exact match)",
+            "schema": {
+              "type": "string",
+              "example": "58e319c05f97c--1"
+            }
+          },
+          {
+            "name": "SearchRequest[likeOr][_parent_recordid]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchRequest[likeOr][Name]",
+            "in": "query",
+            "description": "Filter by name (like match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchRequest[likeOr][Description]",
+            "in": "query",
+            "description": "Filter by description (like match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchRequest[concatWithAnd]",
+            "in": "query",
+            "description": "Combine filters with AND (1) or OR (0)",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          },
+          {
+            "name": "SearchRequest[sorters][_seconds_in]",
+            "in": "query",
+            "description": "Sort by field (asc or desc)",
+            "schema": {
+              "type": "string",
+              "example": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAnnotationSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Create or modify media annotation",
+        "description": "Creates a new marker/subclip or updates an existing media annotation.\nRequest body must be application/x-www-form-urlencoded. Use MediaAnnotation[key] form encoding.\n",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "count",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 20
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaAnnotationCreateForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Annotation created or updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAnnotation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Annotations"
+        ],
+        "summary": "Delete media annotation",
+        "description": "Deletes a media annotation (marker or subclip).\nSend as query params or x-www-form-urlencoded body. Use MediaAnnotation[id], MediaAnnotation[mediaRecordId], MediaAnnotation[parentRecordId].\n",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "count",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "MediaAnnotation[id]",
+            "in": "query",
+            "required": true,
+            "description": "Annotation ID",
+            "schema": {
+              "type": "integer",
+              "example": 4
+            }
+          },
+          {
+            "name": "MediaAnnotation[mediaRecordId]",
+            "in": "query",
+            "required": true,
+            "description": "Annotation record ID",
+            "schema": {
+              "type": "string",
+              "example": "d6ee8f45c00b5--1"
+            }
+          },
+          {
+            "name": "MediaAnnotation[parentRecordId]",
+            "in": "query",
+            "required": true,
+            "description": "Parent asset record ID",
+            "schema": {
+              "type": "string",
+              "example": "58e319c05f97c--1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Annotation deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/metadata": {
+      "get": {
+        "tags": [
+          "Metadata"
+        ],
+        "summary": "Get metadata fields",
+        "description": "Retrieves available metadata fields for a form",
+        "parameters": [
+          {
+            "name": "formName",
+            "in": "query",
+            "required": true,
+            "description": "Name of the form to get metadata fields for",
+            "schema": {
+              "type": "string"
+            },
+            "example": "assetForm"
+          },
+          {
+            "name": "searchable",
+            "in": "query",
+            "description": "Whether to return only searchable fields",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metadata fields retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MetadataField"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/xchange/XChange/api/render/timeline/workflow": {
+      "post": {
+        "tags": [
+          "Renders"
+        ],
+        "summary": "Create render timeline workflow",
+        "description": "Creates a render timeline workflow for processing",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "timelineId",
+                  "outputFormat"
+                ],
+                "properties": {
+                  "timelineId": {
+                    "type": "string",
+                    "description": "Timeline ID to render",
+                    "example": "TIMELINE_12345"
+                  },
+                  "outputFormat": {
+                    "type": "string",
+                    "description": "Output format",
+                    "example": "mp4"
+                  },
+                  "resolution": {
+                    "type": "string",
+                    "description": "Output resolution",
+                    "example": "1920x1080"
+                  },
+                  "quality": {
+                    "type": "string",
+                    "description": "Output quality",
+                    "example": "high"
+                  },
+                  "outputPath": {
+                    "type": "string",
+                    "description": "Output file path",
+                    "example": "/renders/output.mp4"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Render workflow created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Render workflow created successfully"
+                    },
+                    "workflowId": {
+                      "type": "string",
+                      "example": "WORKFLOW_12345"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "access_token",
+        "description": "Access token as a cookie (alternative to Authorization header)"
+      },
+      "MasterTokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "JWT access token or Master Token. XChange expects the **raw token** as the header value.\nDo not prefix with \"Bearer \" \u2014 send only the token (e.g. the value of accessToken from login).\nExample: Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\n"
+      }
+    },
+    "schemas": {
+      "XchangeAuthenticationResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token for API authentication",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "user": {
+            "$ref": "#/components/schemas/XchangeUser"
+          }
+        }
+      },
+      "XchangeUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "User ID",
+            "example": 123
+          },
+          "username": {
+            "type": "string",
+            "description": "Username",
+            "example": "john.doe"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "User's first name",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "User's last name",
+            "example": "Doe"
+          }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Asset ID",
+            "example": 12345
+          },
+          "name": {
+            "type": "string",
+            "description": "Asset name",
+            "example": "My Video Asset"
+          },
+          "recordId": {
+            "type": "string",
+            "description": "Asset record ID",
+            "example": "ASSET_12345"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to asset thumbnail",
+            "example": "https://cdn.example.com/thumbnails/asset_12345.jpg"
+          },
+          "creationDate": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Creation timestamp",
+            "example": 1640995200000
+          },
+          "assetCategory": {
+            "$ref": "#/components/schemas/AssetCategory"
+          },
+          "metadataFields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Asset metadata fields",
+            "example": {
+              "title": "My Video Title",
+              "description": "Video description",
+              "duration": 120.5
+            }
+          },
+          "streamlineId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Streamline ID",
+            "example": 67890
+          },
+          "storageTarget": {
+            "type": "string",
+            "description": "Storage target",
+            "example": "S3_BUCKET_1"
+          },
+          "proxyUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to asset proxy",
+            "example": "https://cdn.example.com/proxies/asset_12345.mp4"
+          },
+          "isPlaceholder": {
+            "type": "boolean",
+            "description": "Whether asset is a placeholder",
+            "example": false
+          },
+          "trackInfo": {
+            "$ref": "#/components/schemas/AssetTrackInfo"
+          },
+          "audioProxiesUrl": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "URLs to audio proxies",
+            "example": [
+              "https://cdn.example.com/audio/asset_12345_audio.mp3"
+            ]
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResource"
+            }
+          },
+          "duration": {
+            "type": "number",
+            "format": "double",
+            "description": "Asset duration in seconds",
+            "example": 120.5
+          },
+          "timecodeStart": {
+            "type": "string",
+            "description": "Start timecode",
+            "example": "01:00:00:00"
+          }
+        }
+      },
+      "AssetCategory": {
+        "type": "string",
+        "enum": [
+          "VIDEO",
+          "AUDIO",
+          "IMAGE",
+          "DOCUMENT",
+          "PROJECT",
+          "PLACEHOLDER"
+        ],
+        "description": "Asset category type",
+        "example": "VIDEO"
+      },
+      "AssetResource": {
+        "type": "object",
+        "properties": {
+          "assetResourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the resource",
+            "example": "https://cdn.example.com/resources/asset_12345_thumb.jpg"
+          },
+          "assetResourceFilePath": {
+            "type": "string",
+            "description": "File system path to the resource",
+            "example": "/storage/assets/12345/thumbnail.jpg"
+          },
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource",
+            "example": "thumbnail"
+          },
+          "asset": {
+            "$ref": "#/components/schemas/Asset"
+          }
+        }
+      },
+      "AssetTrackInfo": {
+        "type": "object",
+        "properties": {
+          "videoTracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetTrack"
+            }
+          },
+          "audioTracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetTrack"
+            }
+          }
+        }
+      },
+      "AssetTrack": {
+        "type": "object",
+        "properties": {
+          "trackId": {
+            "type": "integer",
+            "description": "Track ID",
+            "example": 1
+          },
+          "trackType": {
+            "type": "string",
+            "description": "Track type",
+            "example": "video"
+          },
+          "codec": {
+            "type": "string",
+            "description": "Codec used",
+            "example": "H.264"
+          },
+          "bitrate": {
+            "type": "integer",
+            "description": "Bitrate in bps",
+            "example": 5000000
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Resolution",
+            "example": "1920x1080"
+          },
+          "framerate": {
+            "type": "number",
+            "format": "double",
+            "description": "Frame rate",
+            "example": 29.97
+          }
+        }
+      },
+      "AssetCreateRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Asset name",
+            "example": "My Video Asset"
+          },
+          "metadataFields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Asset metadata fields",
+            "example": {
+              "title": "My Video Title",
+              "description": "Video description"
+            }
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Access token for authentication",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "binId": {
+            "type": "string",
+            "description": "Bin ID to place asset in",
+            "example": "BIN_12345"
+          }
+        }
+      },
+      "AssetUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New asset name",
+            "example": "Updated Video Asset"
+          },
+          "pdsId": {
+            "type": "integer",
+            "description": "PDS ID",
+            "example": 123
+          }
+        }
+      },
+      "AssetFulfillRequest": {
+        "type": "object",
+        "required": [
+          "filePath"
+        ],
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "Path to the file to fulfill the placeholder",
+            "example": "/uploads/video.mp4"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Additional metadata for the fulfilled asset"
+          }
+        }
+      },
+      "AssetResourceRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Asset ID",
+            "example": 12345
+          },
+          "recordId": {
+            "type": "string",
+            "description": "Asset record ID",
+            "example": "ASSET_12345"
+          },
+          "resourceType": {
+            "type": "string",
+            "description": "Type of resource requested",
+            "example": "thumbnail"
+          },
+          "name": {
+            "type": "string",
+            "description": "Resource name",
+            "example": "thumbnail_1920x1080"
+          },
+          "systemType": {
+            "type": "string",
+            "enum": [
+              "win",
+              "mac",
+              "linux"
+            ],
+            "default": "win",
+            "description": "System type for file paths",
+            "example": "win"
+          }
+        }
+      },
+      "MediaAnnotationCreateForm": {
+        "type": "object",
+        "description": "Flat form schema for x-www-form-urlencoded. Use these exact property names.\nExample: MediaAnnotation[parentRecordId]=58e319c05f97c--1&MediaAnnotation[type]=1&MediaAnnotation[fields][Name]=Marker+001\n",
+        "required": [
+          "MediaAnnotation[parentRecordId]",
+          "MediaAnnotation[type]"
+        ],
+        "properties": {
+          "MediaAnnotation[parentRecordId]": {
+            "type": "string",
+            "description": "Parent asset record ID",
+            "example": "58e319c05f97c--1"
+          },
+          "MediaAnnotation[type]": {
+            "type": "integer",
+            "description": "Annotation type (1=marker, 2=subclip)",
+            "example": 1
+          },
+          "MediaAnnotation[timecodeIn]": {
+            "type": "string",
+            "description": "In point timecode (HH:MM:SS:FF)",
+            "example": "00:00:03:05"
+          },
+          "MediaAnnotation[timecodeOut]": {
+            "type": "string",
+            "description": "Out point timecode",
+            "example": "00:00:03:05"
+          },
+          "MediaAnnotation[secondsIn]": {
+            "type": "number",
+            "description": "In point in seconds"
+          },
+          "MediaAnnotation[secondsOut]": {
+            "type": "number",
+            "description": "Out point in seconds"
+          },
+          "MediaAnnotation[duration]": {
+            "type": "number",
+            "description": "Duration"
+          },
+          "MediaAnnotation[fields][Name]": {
+            "type": "string",
+            "description": "Marker/subclip name",
+            "example": "Marker 001"
+          },
+          "MediaAnnotation[fields][Description]": {
+            "type": "string",
+            "description": "Marker/subclip description"
+          },
+          "MediaAnnotation[fields][Creator]": {
+            "type": "string",
+            "description": "Creator",
+            "example": "root"
+          },
+          "send_fork": {
+            "type": "integer",
+            "description": "Whether to sync to Fork (0 or 1)",
+            "example": 1
+          }
+        },
+        "example": {
+          "MediaAnnotation[parentRecordId]": "58e319c05f97c--1",
+          "MediaAnnotation[type]": 1,
+          "MediaAnnotation[timecodeIn]": "00:00:03:05",
+          "MediaAnnotation[timecodeOut]": "00:00:03:05",
+          "MediaAnnotation[secondsIn]": 3.1666666666666665,
+          "MediaAnnotation[secondsOut]": 3.1666666666666665,
+          "MediaAnnotation[duration]": 0,
+          "MediaAnnotation[fields][Name]": "Marker 001",
+          "MediaAnnotation[fields][Description]": "",
+          "MediaAnnotation[fields][Creator]": "root"
+        }
+      },
+      "MediaAnnotationDeleteForm": {
+        "type": "object",
+        "description": "Form schema for delete. Use query params or x-www-form-urlencoded body.\nExample: MediaAnnotation[id]=4&MediaAnnotation[mediaRecordId]=d6ee8f45c00b5--1&MediaAnnotation[parentRecordId]=58e319c05f97c--1\n",
+        "required": [
+          "MediaAnnotation[id]",
+          "MediaAnnotation[mediaRecordId]",
+          "MediaAnnotation[parentRecordId]"
+        ],
+        "properties": {
+          "MediaAnnotation[id]": {
+            "type": "integer",
+            "description": "Annotation ID",
+            "example": 4
+          },
+          "MediaAnnotation[mediaRecordId]": {
+            "type": "string",
+            "description": "Annotation record ID",
+            "example": "d6ee8f45c00b5--1"
+          },
+          "MediaAnnotation[parentRecordId]": {
+            "type": "string",
+            "description": "Parent asset record ID",
+            "example": "58e319c05f97c--1"
+          }
+        }
+      },
+      "MediaAnnotation": {
+        "type": "object",
+        "description": "Media annotation (marker or subclip) on an asset",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Annotation ID"
+          },
+          "media_record_id": {
+            "type": "string",
+            "description": "Annotation record ID"
+          },
+          "parent_record_id": {
+            "type": "string",
+            "description": "Parent asset record ID"
+          },
+          "type": {
+            "type": "integer",
+            "description": "Annotation type (1=marker, 2=subclip)"
+          },
+          "timecode_in": {
+            "type": "string",
+            "description": "In point timecode"
+          },
+          "timecode_out": {
+            "type": "string",
+            "description": "Out point timecode"
+          },
+          "seconds_in": {
+            "type": "number",
+            "description": "In point in seconds"
+          },
+          "seconds_out": {
+            "type": "number",
+            "description": "Out point in seconds"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Annotation metadata (Name, Creator, etc.)"
+          }
+        }
+      },
+      "MediaAnnotationSearchResponse": {
+        "type": "object",
+        "description": "Search results for media annotations",
+        "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaAnnotation"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total count"
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Project ID",
+            "example": 12345
+          },
+          "recordId": {
+            "type": "string",
+            "description": "Project record ID",
+            "example": "PROJECT_12345"
+          },
+          "name": {
+            "type": "string",
+            "description": "Project name",
+            "example": "My Project"
+          },
+          "bins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectBin"
+            }
+          }
+        }
+      },
+      "ProjectBin": {
+        "type": "object",
+        "properties": {
+          "binId": {
+            "type": "integer",
+            "description": "Bin ID",
+            "example": 1
+          },
+          "parentBinId": {
+            "type": "integer",
+            "description": "Parent bin ID",
+            "example": null
+          },
+          "name": {
+            "type": "string",
+            "description": "Bin name",
+            "example": "Main Bin"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectBin"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          }
+        }
+      },
+      "ProjectCreateRequest": {
+        "type": "object",
+        "required": [
+          "projectName",
+          "pdsId",
+          "userId",
+          "creator"
+        ],
+        "properties": {
+          "projectName": {
+            "type": "string",
+            "description": "Project name",
+            "example": "My New Project"
+          },
+          "pdsId": {
+            "type": "integer",
+            "description": "PDS ID",
+            "example": 123
+          },
+          "userId": {
+            "type": "integer",
+            "description": "User ID",
+            "example": 456
+          },
+          "creator": {
+            "type": "string",
+            "description": "Creator name",
+            "example": "john.doe"
+          },
+          "sendToFork": {
+            "type": "integer",
+            "description": "Send to fork flag",
+            "example": 0
+          },
+          "permissionGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permission groups",
+            "example": [
+              "admin",
+              "editor"
+            ]
+          }
+        }
+      },
+      "ProjectAssetAddRequest": {
+        "type": "object",
+        "required": [
+          "assetId",
+          "binId"
+        ],
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "description": "Asset ID to add",
+            "example": "ASSET_12345"
+          },
+          "binId": {
+            "type": "string",
+            "description": "Bin ID to add asset to",
+            "example": "BIN_12345"
+          }
+        }
+      },
+      "ProjectAssetRemoveRequest": {
+        "type": "object",
+        "required": [
+          "assetId"
+        ],
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "description": "Asset ID to remove",
+            "example": "ASSET_12345"
+          }
+        }
+      },
+      "Smartbin": {
+        "type": "object",
+        "description": "Smartbin object for create/update. Form encoding: smartbin[smartbinName], smartbin[filterFields][key], etc.\nCreate: omit id. Update: include id with bin ID.\n",
+        "required": [
+          "smartbinName"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Smartbin ID. Required for update; omit for create.",
+            "example": 208279
+          },
+          "smartbinName": {
+            "type": "string",
+            "description": "Smartbin name (required)",
+            "example": "TestApi"
+          },
+          "parentId": {
+            "type": "integer",
+            "description": "Parent Smartbin ID"
+          },
+          "filterFields": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Flat structure. Key = metadata field name in Xchange. For match options use value (string),\nmatchOption (startsWith, endsWith, contains, exact), comparator (like, not like, =, !=).\nSimple fields: smartbin[filterFields][_is_container]=1\n"
+          },
+          "mediaCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Media categories filter (VIDEO, AUDIO, IMAGE, DOCUMENT, PROJECT, etc.)"
+          },
+          "mediaTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Media types filter"
+          },
+          "daysOld": {
+            "type": "integer",
+            "description": "Days old filter (assets uploaded within this many days)"
+          },
+          "isContainer": {
+            "type": "integer",
+            "description": "When 1, this Smartbin is a container only. 0 = searchable bin with filter criteria.\n"
+          },
+          "isHideable": {
+            "type": "integer",
+            "description": "When 1, this Smartbin is not displayed in the manager config UI. 0 = visible.\n"
+          }
+        }
+      },
+      "SmartBinResponse": {
+        "type": "object",
+        "properties": {
+          "smartBins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartBin"
+            }
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "description": "Standard API response. All API responses follow this structure.",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "API version",
+            "example": "1.2"
+          },
+          "status": {
+            "type": "integer",
+            "description": "0 = success",
+            "example": 0
+          },
+          "msg": {
+            "type": "string",
+            "description": "Message (e.g. \"ok\")",
+            "example": "ok"
+          },
+          "data": {
+            "type": "object",
+            "description": "Response payload; shape varies by endpoint",
+            "additionalProperties": true
+          },
+          "errorMsg": {
+            "type": "string",
+            "description": "Error message when status indicates failure"
+          },
+          "errorString": {
+            "type": "string",
+            "description": "Error details when status indicates failure"
+          }
+        }
+      },
+      "SmartbinCreateResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/SmartbinResponseData"
+              }
+            }
+          }
+        ]
+      },
+      "SmartbinResponseData": {
+        "type": "object",
+        "description": "Created or updated Smartbin returned in data",
+        "properties": {
+          "mediaType": {
+            "type": "object",
+            "nullable": true
+          },
+          "id": {
+            "type": "string",
+            "example": "208346"
+          },
+          "smartbinName": {
+            "type": "string",
+            "example": "TestApi"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "filterFields": {
+            "type": "object",
+            "description": "Key = metadata field. Value = object with value, matchOption, comparator",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "matchOption": {
+                  "type": "string",
+                  "description": "startsWith, endsWith, contains, or exact"
+                },
+                "comparator": {
+                  "type": "string",
+                  "description": "like, not like, =, or !="
+                }
+              }
+            }
+          },
+          "mediaCategories": {
+            "type": "array",
+            "nullable": true
+          },
+          "mediaTypes": {
+            "type": "array",
+            "nullable": true
+          },
+          "daysOld": {
+            "type": "integer",
+            "nullable": true
+          },
+          "isContainer": {
+            "type": "integer",
+            "nullable": true
+          },
+          "isHideable": {
+            "type": "integer",
+            "nullable": true
+          },
+          "_dbFields": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "SmartBinTreeData": {
+        "type": "object",
+        "properties": {
+          "smartbin_tree": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartBinTreeNode"
+            }
+          }
+        }
+      },
+      "SmartBinTreeResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/SmartBinTreeData"
+              }
+            }
+          }
+        ]
+      },
+      "SmartBinTreeNode": {
+        "type": "object",
+        "description": "Tree node in Smartbin hierarchy",
+        "properties": {
+          "bin_name": {
+            "type": "string",
+            "example": "Approvals"
+          },
+          "parent_id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "0"
+          },
+          "bin_id": {
+            "type": "string",
+            "example": "172323"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartBinTreeNode"
+            }
+          },
+          "_project": {
+            "type": "string",
+            "example": "0"
+          }
+        }
+      },
+      "SmartBin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Smartbin ID",
+            "example": 123
+          },
+          "smartbin_name": {
+            "type": "string",
+            "description": "Smartbin name",
+            "example": "Recent Videos"
+          },
+          "name": {
+            "type": "string",
+            "description": "Smartbin name (alias)",
+            "example": "Recent Videos"
+          },
+          "parent_id": {
+            "type": "integer",
+            "description": "Parent Smartbin ID",
+            "example": 10
+          },
+          "media_categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Media categories filter",
+            "example": [
+              "VIDEO",
+              "AUDIO"
+            ]
+          },
+          "media_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Media types filter"
+          },
+          "days_old": {
+            "type": "integer",
+            "description": "Days old filter",
+            "example": 30
+          },
+          "_is_container": {
+            "type": "integer",
+            "description": "When 1, this Smartbin is a container for other Smartbins only \u2014 it has no search/filter fields.\nUse for organizing bins into folders. 0 = searchable bin with filter criteria.\n"
+          },
+          "_hideable": {
+            "type": "integer",
+            "description": "When 1, this Smartbin is not displayed in the Smartbin manager config UI.\n0 = visible in the manager.\n"
+          },
+          "filterFields": {
+            "type": "object",
+            "description": "Custom metadata/search criteria. Key-value pairs where keys are metadata field names\nand values are filter values. Defines what assets match this Smartbin.\n",
+            "additionalProperties": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Smartbin description",
+            "example": "Videos uploaded in the last 30 days"
+          },
+          "criteria": {
+            "type": "object",
+            "description": "Smartbin search criteria (alias for filterFields)",
+            "additionalProperties": true
+          }
+        }
+      },
+      "SmartbinCreateRequest": {
+        "type": "object",
+        "description": "Create Smartbin request. Form encoding: smartbin[smartbinName], smartbin[parentId], etc.\nAccess arrays: userIds[0], userIds[1], groupIds[0], groupIds[1].\n",
+        "required": [
+          "smartbin"
+        ],
+        "properties": {
+          "smartbin": {
+            "$ref": "#/components/schemas/Smartbin"
+          },
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "User IDs to grant access"
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Group IDs to grant access"
+          }
+        }
+      },
+      "SmartbinCreateForm": {
+        "type": "object",
+        "description": "Flat form schema for x-www-form-urlencoded. Use these exact property names.\nAPI accepts form-urlencoded only; JSON is not supported.\n",
+        "required": [
+          "smartbin[smartbinName]"
+        ],
+        "properties": {
+          "smartbin[smartbinName]": {
+            "type": "string",
+            "description": "Smartbin name (required)",
+            "example": "TestApi"
+          },
+          "smartbin[filterFields][Approval Status][value]": {
+            "type": "string",
+            "description": "Filter value (string)",
+            "example": "Approved"
+          },
+          "smartbin[filterFields][Approval Status][matchOption]": {
+            "type": "string",
+            "description": "startsWith, endsWith, contains, or exact",
+            "example": "startsWith"
+          },
+          "smartbin[filterFields][Approval Status][comparator]": {
+            "type": "string",
+            "description": "like, not like, =, or !=",
+            "example": "like"
+          }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "timelines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Timeline"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of results",
+            "example": 150
+          }
+        }
+      },
+      "ProjectSearchResponse": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of results",
+            "example": 25
+          }
+        }
+      },
+      "SearchFilter": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Field name to filter by",
+            "example": "title"
+          },
+          "operator": {
+            "type": "string",
+            "description": "Filter operator",
+            "example": "contains"
+          },
+          "value": {
+            "type": "string",
+            "description": "Filter value",
+            "example": "video"
+          }
+        }
+      },
+      "MetadataField": {
+        "type": "object",
+        "properties": {
+          "fieldName": {
+            "type": "string",
+            "description": "Field name",
+            "example": "title"
+          },
+          "fieldType": {
+            "type": "string",
+            "description": "Field data type",
+            "example": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name for the field",
+            "example": "Title"
+          },
+          "isRequired": {
+            "type": "boolean",
+            "description": "Whether field is required",
+            "example": false
+          },
+          "isSearchable": {
+            "type": "boolean",
+            "description": "Whether field is searchable",
+            "example": true
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Default value for the field",
+            "example": ""
+          }
+        }
+      },
+      "RenderRequest": {
+        "type": "object",
+        "required": [
+          "timelineId",
+          "outputFormat"
+        ],
+        "properties": {
+          "timelineId": {
+            "type": "string",
+            "description": "Timeline ID to render",
+            "example": "TIMELINE_12345"
+          },
+          "outputFormat": {
+            "type": "string",
+            "description": "Output format",
+            "example": "mp4"
+          },
+          "resolution": {
+            "type": "string",
+            "description": "Output resolution",
+            "example": "1920x1080"
+          },
+          "quality": {
+            "type": "string",
+            "description": "Output quality",
+            "example": "high"
+          },
+          "outputPath": {
+            "type": "string",
+            "description": "Output file path",
+            "example": "/renders/output.mp4"
+          }
+        }
+      },
+      "Timeline": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timeline ID",
+            "example": 12345
+          },
+          "name": {
+            "type": "string",
+            "description": "Timeline name",
+            "example": "My Timeline"
+          },
+          "duration": {
+            "type": "number",
+            "format": "double",
+            "description": "Timeline duration in seconds",
+            "example": 300.5
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimelineTrack"
+            }
+          }
+        }
+      },
+      "TimelineTrack": {
+        "type": "object",
+        "properties": {
+          "trackId": {
+            "type": "integer",
+            "description": "Track ID",
+            "example": 1
+          },
+          "trackType": {
+            "type": "string",
+            "description": "Track type",
+            "example": "video"
+          },
+          "clips": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimelineClip"
+            }
+          }
+        }
+      },
+      "TimelineClip": {
+        "type": "object",
+        "properties": {
+          "clipId": {
+            "type": "integer",
+            "description": "Clip ID",
+            "example": 1
+          },
+          "assetId": {
+            "type": "string",
+            "description": "Asset ID",
+            "example": "ASSET_12345"
+          },
+          "startTime": {
+            "type": "number",
+            "format": "double",
+            "description": "Start time in seconds",
+            "example": 10.5
+          },
+          "endTime": {
+            "type": "number",
+            "format": "double",
+            "description": "End time in seconds",
+            "example": 25.0
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "API version",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "msg": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Bad Request"
+          },
+          "errorMsg": {
+            "type": "string",
+            "description": "Detailed error message",
+            "example": "Invalid parameter provided"
+          },
+          "errorString": {
+            "type": "string",
+            "description": "Error string representation",
+            "example": "com.example.InvalidParameterException: Invalid parameter provided"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and session management"
+    },
+    {
+      "name": "Assets",
+      "description": "Asset management operations"
+    },
+    {
+      "name": "Projects",
+      "description": "Project management operations"
+    },
+    {
+      "name": "Smartbins",
+      "description": "Smartbin operations"
+    },
+    {
+      "name": "Annotations",
+      "description": "Media annotation operations (markers, subclips)"
+    },
+    {
+      "name": "Metadata",
+      "description": "Metadata field management"
+    },
+    {
+      "name": "Renders",
+      "description": "Render workflow operations"
+    }
+  ]
+}
