@@ -1,0 +1,1627 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Q8-KPNWE-StationManagement",
+    "x-ibm-name": "api-stationmanagement",
+    "version": "1.1.1",
+    "description": "This API provides the functionality to manage station functions at the manned forecourt sites",
+    "termsOfService": "",
+    "contact": {},
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/KOLESNYKGANNA/stat/1.1.1"
+  },
+  "host": "$(catalog.host)",
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/api/stationmanagement/v1",
+  "produces": [
+    "application/json"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "security": [
+    {
+      "ClientId": [],
+      "ClientSecret": [],
+      "heartbeatoauth2": [
+        "heartbeat_scope"
+      ]
+    }
+  ],
+  "securityDefinitions": {
+    "heartbeatoauth2": {
+      "type": "oauth2",
+      "flow": "application",
+      "x-ibm-oauth-provider": "q8-kpnwe-heartbeat-oauth2",
+      "tokenUrl": "https://$(catalog.url)/q8kpnweheartbeatoauth2/oauth2/token",
+      "scopes": {
+        "heartbeat_scope": "HeartBeat Scope"
+      }
+    },
+    "ClientSecret": {
+      "type": "apiKey",
+      "description": "Client Secret",
+      "in": "header",
+      "x-key-type": "client_secret",
+      "name": "X-Q8-KPNWE-clientsecret"
+    },
+    "ClientId": {
+      "type": "apiKey",
+      "in": "header",
+      "x-key-type": "client_id",
+      "name": "X-Q8-KPNWE-clientid"
+    }
+  },
+  "tags": [
+    {
+      "name": "stationmanagement-controller",
+      "description": "Station Management Information Controller"
+    }
+  ],
+  "definitions": {
+    "SiteNumber": {
+      "type": "integer",
+      "format": "int64",
+      "maximum": 999999,
+      "maxLength": 6,
+      "description": "identifier of the site"
+    },
+    "UID": {
+      "description": "A global unique id for an object. Used to ensure idempotency in the data transfer and for handshaking.",
+      "type": "string"
+    },
+    "Action": {
+      "description": "Field indicating the action update/delete on an object",
+      "type": "string",
+      "enum": [
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    "StationName": {
+      "description": "Field describing the name of the station",
+      "type": "string",
+      "maxLength": 20
+    },
+    "Street": {
+      "description": "Field indicating the street name and street number",
+      "type": "string",
+      "maxLength": 30
+    },
+    "PostCode": {
+      "description": "Field indicating the postcode",
+      "type": "integer"
+    },
+    "CountryCode": {
+      "type": "string",
+      "maxLength": 2,
+      "example": "DE",
+      "description": "Country Code ISO 3166-1 alpha-2"
+    },
+    "TaxNumber": {
+      "description": "Field indicating the taxnumber of a station",
+      "type": "string",
+      "maxLength": 16
+    },
+    "StaffCode": {
+      "type": "integer",
+      "format": "int32",
+      "maximum": 99,
+      "description": "the staff code for the employee"
+    },
+    "Name": {
+      "type": "string",
+      "maxLength": 30,
+      "description": "userid of the employee"
+    },
+    "Password": {
+      "type": "string",
+      "maxLength": 8,
+      "description": "password of the employee"
+    },
+    "LanguageCode": {
+      "type": "string",
+      "maxLength": 2,
+      "description": "the ISO 639-1 code for the language",
+      "enum": [
+        "nl",
+        "en",
+        "fr",
+        "de"
+      ]
+    },
+    "TagNumber": {
+      "type": "integer",
+      "format": "int32",
+      "maximum": 999999,
+      "description": "the tag number for the employee"
+    },
+    "ProfileNumber": {
+      "type": "integer",
+      "format": "int32",
+      "maximum": 999,
+      "description": "the profile number for the employee"
+    },
+    "Status": {
+      "description": "Field indicating the result of an operation on an object",
+      "type": "string",
+      "enum": [
+        "OK",
+        "NOK"
+      ]
+    },
+    "ErrorCode": {
+      "type": "string",
+      "description": "Field indicating the error code"
+    },
+    "Message": {
+      "type": "string",
+      "description": "Field indicating the details of a failure operation on an object"
+    },
+    "StationData": {
+      "type": "object",
+      "properties": {
+        "stationName": {
+          "$ref": "#/definitions/StationName"
+        },
+        "street": {
+          "$ref": "#/definitions/Street"
+        },
+        "postCode": {
+          "$ref": "#/definitions/PostCode"
+        },
+        "city": {
+          "$ref": "#/definitions/City"
+        },
+        "countryCode": {
+          "$ref": "#/definitions/CountryCode"
+        },
+        "taxNumber": {
+          "$ref": "#/definitions/TaxNumber"
+        }
+      },
+      "required": [
+        "stationName",
+        "street",
+        "postCode",
+        "city",
+        "countryCode",
+        "taxNumber"
+      ]
+    },
+    "StationInfo": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "$ref": "#/definitions/UID"
+        },
+        "q8Info": {
+          "$ref": "#/definitions/StationData"
+        },
+        "dealerInfo": {
+          "$ref": "#/definitions/StationData"
+        },
+        "thirdPartyInfo": {
+          "$ref": "#/definitions/StationData"
+        },
+        "closingHoursAndOperationMode": {
+          "$ref": "#/definitions/ClosingHoursAndOperationMode"
+        }
+      },
+      "required": [
+        "uid",
+        "q8Info"
+      ]
+    },
+    "ClosingHourAndOperationMode": {
+      "type": "object",
+      "properties": {
+        "dayOfWeek": {
+          "type": "string",
+          "description": "the day of the week",
+          "minItems": 7,
+          "maxItems": 7,
+          "enum": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ]
+        },
+        "closingTime": {
+          "type": "string",
+          "description": "the closng time of the shop : HH:mm:ss"
+        },
+        "closingDay": {
+          "type": "boolean",
+          "description": "indicates if the ship is closed the entire day"
+        },
+        "operationMode": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "operation mode 1 to 5 (default 2)"
+        }
+      },
+      "required": [
+        "dayOfWeek",
+        "closingTime",
+        "operationMode"
+      ]
+    },
+    "ClosingHoursAndOperationMode": {
+      "type": "array",
+      "description": "an array of Closing Hour and Operation Mode data",
+      "items": {
+        "$ref": "#/definitions/ClosingHourAndOperationMode"
+      }
+    },
+    "SoftwareVersion": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "string",
+          "description": "the device"
+        },
+        "description": {
+          "type": "string",
+          "description": "the description of the device"
+        },
+        "version": {
+          "type": "string",
+          "description": "the software version of the device"
+        }
+      },
+      "required": [
+        "device",
+        "description",
+        "version"
+      ]
+    },
+    "SoftwareVersions": {
+      "type": "array",
+      "description": "an array of Software Versions",
+      "items": {
+        "$ref": "#/definitions/SoftwareVersion"
+      }
+    },
+    "Employee": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "$ref": "#/definitions/UID"
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        },
+        "staffCode": {
+          "$ref": "#/definitions/StaffCode"
+        },
+        "name": {
+          "$ref": "#/definitions/Name"
+        },
+        "password": {
+          "$ref": "#/definitions/Password"
+        },
+        "languageCode": {
+          "$ref": "#/definitions/LanguageCode"
+        },
+        "tagNumber": {
+          "$ref": "#/definitions/TagNumber"
+        },
+        "profileNumber": {
+          "$ref": "#/definitions/ProfileNumber"
+        }
+      },
+      "required": [
+        "uid",
+        "action",
+        "staffCode",
+        "name",
+        "password",
+        "languageCode",
+        "tagNumber",
+        "profileNumber"
+      ]
+    },
+    "Employees": {
+      "type": "array",
+      "description": "an array of Employee data",
+      "items": {
+        "$ref": "#/definitions/Employee"
+      }
+    },
+    "CustomerNumber": {
+      "type": "integer",
+      "format": "int64",
+      "maximum": 999999,
+      "maxLength": 6,
+      "description": "the number of the customer"
+    },
+    "CustomerName": {
+      "type": "string",
+      "maxLength": 50,
+      "description": "the name of the customer"
+    },
+    "City": {
+      "type": "string",
+      "maxLength": 30,
+      "description": "the city"
+    },
+    "Balance": {
+      "type": "number",
+      "maximum": 9999999.99,
+      "description": "the balance of the customer"
+    },
+    "CreditLimit": {
+      "type": "number",
+      "maximum": 9999999.99,
+      "description": "the credit limit of the customer"
+    },
+    "CustomerType": {
+      "type": "string",
+      "description": "the type of the customer",
+      "enum": [
+        "Credit",
+        "NotInCredit"
+      ]
+    },
+    "LicenseNumber": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "the license number of the vehicle of the customer"
+    },
+    "CustomerCardNumber": {
+      "type": "integer",
+      "format": "int64",
+      "maximum": 99999999,
+      "maxLength": 8,
+      "description": "the card number of the customer"
+    },
+    "ExpirationDate": {
+      "type": "string",
+      "format": "date",
+      "description": "the expiration date of the customer card"
+    },
+    "PinCode": {
+      "type": "string",
+      "maxLength": 8,
+      "description": "the pin code of the customer card"
+    },
+    "AcceptedLocations": {
+      "type": "string",
+      "description": "the locations where the customer card is accepted",
+      "enum": [
+        "NoWhere",
+        "Indoor",
+        "Outdoor",
+        "EveryWhere"
+      ]
+    },
+    "AuthorizedCategories": {
+      "type": "string",
+      "description": "the categories where the customer card is authorized"
+    },
+    "MaxCreditPerMonth": {
+      "type": "number",
+      "maximum": 9999999.99,
+      "description": "the maximum monthly credit of the customer"
+    },
+    "MileageEntry": {
+      "type": "boolean",
+      "description": "indicator if mileage need to be entered"
+    },
+    "LicenseNumberEntry": {
+      "type": "boolean",
+      "description": "indicator if license number need to be entered"
+    },
+    "Customer": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "$ref": "#/definitions/UID"
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        },
+        "customerNumber": {
+          "$ref": "#/definitions/CustomerNumber"
+        },
+        "customerName": {
+          "$ref": "#/definitions/CustomerName"
+        },
+        "street": {
+          "$ref": "#/definitions/Street"
+        },
+        "postCode": {
+          "$ref": "#/definitions/PostCode"
+        },
+        "city": {
+          "$ref": "#/definitions/City"
+        },
+        "balance": {
+          "$ref": "#/definitions/Balance"
+        },
+        "creditLimit": {
+          "$ref": "#/definitions/CreditLimit"
+        },
+        "customerType": {
+          "$ref": "#/definitions/CustomerType"
+        },
+        "vehicles": {
+          "$ref": "#/definitions/Vehicles"
+        }
+      },
+      "required": [
+        "uid",
+        "action",
+        "customerNumber",
+        "customerName",
+        "street",
+        "postCode",
+        "city",
+        "balance",
+        "creditLimit",
+        "customerType"
+      ]
+    },
+    "Customers": {
+      "type": "array",
+      "description": "an array of customer items",
+      "items": {
+        "$ref": "#/definitions/Customer"
+      }
+    },
+    "Vehicle": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "$ref": "#/definitions/UID"
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        },
+        "licenseNumber": {
+          "$ref": "#/definitions/LicenseNumber"
+        },
+        "customerCardNumber": {
+          "$ref": "#/definitions/CustomerCardNumber"
+        },
+        "expirationDate": {
+          "$ref": "#/definitions/ExpirationDate"
+        },
+        "pinCode": {
+          "$ref": "#/definitions/PinCode"
+        },
+        "acceptedLocations": {
+          "$ref": "#/definitions/AcceptedLocations"
+        },
+        "authorizedCategories": {
+          "$ref": "#/definitions/AuthorizedCategories"
+        },
+        "maxCreditPerMonth": {
+          "$ref": "#/definitions/MaxCreditPerMonth"
+        },
+        "mileageEntry": {
+          "$ref": "#/definitions/MileageEntry"
+        },
+        "licenseNumberEntry": {
+          "$ref": "#/definitions/LicenseNumberEntry"
+        }
+      },
+      "required": [
+        "uid",
+        "action",
+        "licenseNumber",
+        "customerCardNumber",
+        "expirationDate",
+        "pinCode",
+        "acceptedLocations",
+        "authorizedCategories",
+        "maxCreditPerMonth",
+        "mileageEntry",
+        "licenseNumberEntry"
+      ]
+    },
+    "Vehicles": {
+      "type": "array",
+      "description": "an array of vehicles",
+      "items": {
+        "$ref": "#/definitions/Vehicle"
+      }
+    },
+    "VehiclesPerCustomer": {
+      "type": "object",
+      "properties": {
+        "customerNumber": {
+          "$ref": "#/definitions/CustomerNumber"
+        },
+        "vehicles": {
+          "$ref": "#/definitions/Vehicles"
+        }
+      }
+    },
+    "VehiclesPerCustomers": {
+      "type": "array",
+      "description": "an array of vehicles per customer items",
+      "items": {
+        "$ref": "#/definitions/VehiclesPerCustomer"
+      }
+    },
+    "Result": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "$ref": "#/definitions/UID"
+        },
+        "status": {
+          "$ref": "#/definitions/Status"
+        },
+        "errorCode": {
+          "$ref": "#/definitions/ErrorCode"
+        },
+        "message": {
+          "$ref": "#/definitions/Message"
+        }
+      },
+      "required": [
+        "uid",
+        "status"
+      ]
+    },
+    "Results": {
+      "type": "array",
+      "description": "an array of results",
+      "items": {
+        "$ref": "#/definitions/Result"
+      }
+    },
+    "ResultsPerSite": {
+      "type": "object",
+      "properties": {
+        "siteNumber": {
+          "$ref": "#/definitions/SiteNumber"
+        },
+        "results": {
+          "$ref": "#/definitions/Results"
+        }
+      }
+    },
+    "Error": {
+      "description": "This problem will be reported in response to requests that are not valid.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "This field will be used as identification of the problem but won't lead to any documentation when dereferenced. ",
+          "enum": [
+            "about:blank"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "A short, human-readable summary of the problem type."
+        },
+        "status": {
+          "type": "number",
+          "description": "The HTTP status code generated by the origin server for this occurrence of the problem"
+        },
+        "detail": {
+          "type": "string",
+          "description": "A human-readable explanation specific to this occurrence of the problem."
+        },
+        "instance": {
+          "type": "string",
+          "description": "urn:uuid:<X-Q8-KPNWE-messageId>"
+        },
+        "step": {
+          "type": "string",
+          "description": "The step that went wrong"
+        }
+      }
+    },
+    "Healthcheck": {
+      "description": "result of the actuator health check.",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "The runtime status of the API.",
+          "enum": [
+            "UP",
+            "DOWN"
+          ]
+        }
+      }
+    }
+  },
+  "paths": {
+    "/stationInfo/{siteNumber}": {
+      "put": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "update station info to the POS",
+        "operationId": "updateStationInfoUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "body",
+            "name": "stationInfo",
+            "description": "stationInfo data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StationInfo"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/stationInfo/{siteNumber}/{uid}": {
+      "delete": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "delete stationInfo to the POS",
+        "operationId": "deleteStationInfoUsingDELETE",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "type": "string",
+            "description": "the unique identifier of the delete operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/employees/{siteNumber}": {
+      "put": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "update employees data to the POS",
+        "operationId": "updateEmployeesUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "body",
+            "name": "employees",
+            "description": "employees data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Employees"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/employees/{siteNumber}/{uid}": {
+      "delete": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "delete mployees data to the POS",
+        "operationId": "deleteEmployeesUsingDELETE",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "type": "string",
+            "description": "the unique identifier of the delete operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/customers/{siteNumber}": {
+      "put": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "update customer info to the POS",
+        "operationId": "updateCustomerInfoUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "body",
+            "name": "customers",
+            "description": "customers data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Customers"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/customers/{siteNumber}/{uid}": {
+      "delete": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "delete customer Info to the POS",
+        "operationId": "deleteCustomerInfoUsingDELETE",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "type": "string",
+            "description": "the unique identifier of the delete operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{siteNumber}": {
+      "put": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "update vehicles info to the POS",
+        "operationId": "updateVehiclesUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "body",
+            "name": "vehicles",
+            "description": "vehicles data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VehiclesPerCustomers"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{siteNumber}/{uid}": {
+      "delete": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "delete vehicles Info to the POS",
+        "operationId": "deleteVehiclesInfoUsingDELETE",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "uid",
+            "type": "string",
+            "description": "the unique identifier of the delete operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/ResultsPerSite"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/softwareversions/{siteNumber}": {
+      "get": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "get Software Version of devices",
+        "operationId": "getSoftwareversionsUsingGet",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the request"
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "format": "uuid",
+            "description": "Correlation Id"
+          },
+          {
+            "name": "X-Receiver-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Receiver Id"
+          },
+          {
+            "name": "X-Sender-Id",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "Sender Id"
+          },
+          {
+            "in": "path",
+            "name": "siteNumber",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999,
+            "maxLength": 6,
+            "description": "identifier of the site",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/SoftwareVersions"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "stationmanagement-controller"
+        ],
+        "summary": "health check of the API",
+        "operationId": "getHealthCheck",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/xml",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has been accepted.",
+            "schema": {
+              "$ref": "#/definitions/Healthcheck"
+            }
+          },
+          "400": {
+            "description": "The value of one or more request parameters is not valid.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "415": {
+            "description": "unsupported media type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "429": {
+            "description": "too many requests",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

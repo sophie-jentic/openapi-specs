@@ -1,0 +1,144 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Digiparikshak RBAC & Identity API",
+    "version": "1.0.0",
+    "description": "API for managing dynamic roles and provisioning admin users mapped to specific exam tenants.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/techxploreio/Global-Admin-API-Digiparikshak-1.0.2/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.digiparikshak.io/v1",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/global/roles": {
+      "post": {
+        "summary": "Create Dynamic RBAC Role",
+        "tags": [
+          "RBAC"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Role created successfully."
+          },
+          "400": {
+            "description": "Invalid permission format."
+          }
+        }
+      }
+    },
+    "/global/tenant-admins": {
+      "post": {
+        "summary": "Create Admin and Bind to Exam Tenant",
+        "tags": [
+          "RBAC"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminProvisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Admin user provisioned and mapped to tenant."
+          },
+          "404": {
+            "description": "Tenant ID or Role ID not found."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "RoleRequest": {
+        "type": "object",
+        "required": [
+          "roleName",
+          "permissions"
+        ],
+        "properties": {
+          "roleName": {
+            "type": "string",
+            "example": "Center_Supervisor"
+          },
+          "permissions": {
+            "type": "object",
+            "description": "JSON object mapping modules to allowed actions.",
+            "example": {
+              "student": [
+                "read",
+                "write"
+              ],
+              "device": [
+                "unmap"
+              ],
+              "center": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "AdminProvisionRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "tenant_id",
+          "role_id"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "exam_admin@ssc.gov.in"
+          },
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Target Exam Tenant ID."
+          },
+          "role_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Role ID containing the permission set."
+          }
+        }
+      }
+    }
+  }
+}

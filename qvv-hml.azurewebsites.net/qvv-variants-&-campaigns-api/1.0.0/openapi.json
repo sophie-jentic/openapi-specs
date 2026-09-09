@@ -1,0 +1,614 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "QVV Variants & Campaigns API",
+    "version": "1.0.0",
+    "description": "API para listar variantes (paginado) e consultar uma variante específica. Retorna campanhas vinculadas (identificadas por MM/YYYY), país (ISO-2), status atual e histórico fixo de 3 aprovações: Comercial, ControllingCustos, ControllingPrecos.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/tsystems-155/qvv-variants-campaigns-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://qvv-hml.azurewebsites.net/api",
+      "description": "Homologation"
+    },
+    {
+      "url": "https://qvv.azurewebsites.net/api",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Variants",
+      "description": "Endpoints de variantes e suas campanhas"
+    }
+  ],
+  "paths": {
+    "/v1/variants": {
+      "get": {
+        "tags": [
+          "Variants"
+        ],
+        "summary": "Listar variantes paginadas com campanhas, país, status e aprovações",
+        "description": "Retorna uma lista paginada de variantes. Cada item contém apenas o identificador da variante (variantId) e a lista de campanhas associadas (cada campanha com país, status e 3 aprovações fixas).\n",
+        "operationId": "listVariants",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/countryIso"
+          },
+          {
+            "$ref": "#/components/parameters/variantIdFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de variantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantListResponse"
+                },
+                "examples": {
+                  "example": {
+                    "summary": "Exemplo de resposta paginada",
+                    "value": {
+                      "page": 1,
+                      "pageSize": 2,
+                      "totalItems": 120,
+                      "totalPages": 60,
+                      "items": [
+                        {
+                          "variantId": "QVV265115063CTT",
+                          "campaigns": [
+                            {
+                              "campaignId": "01/2026",
+                              "country": {
+                                "isoCode": "AR",
+                                "name": "Argentina"
+                              },
+                              "currentStatus": {
+                                "code": 4,
+                                "name": "Concluido"
+                              },
+                              "approvals": [
+                                {
+                                  "type": "Comercial",
+                                  "approvedBy": "F376009",
+                                  "approvedAt": "2026-01-06T14:32:02Z"
+                                },
+                                {
+                                  "type": "ControllingCustos",
+                                  "approvedBy": "F218054",
+                                  "approvedAt": "2026-01-13T11:30:39Z"
+                                },
+                                {
+                                  "type": "ControllingPrecos",
+                                  "approvedBy": "F376009",
+                                  "approvedAt": "2026-01-13T17:20:10Z"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "variantId": "QVV265115999AAA",
+                          "campaigns": []
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/variants/{variantId}": {
+      "get": {
+        "tags": [
+          "Variants"
+        ],
+        "summary": "Consultar uma variante específica com campanhas, país, status e aprovações",
+        "description": "Retorna uma variante (por variantId) com as campanhas associadas (cada campanha vinculada a um país), status atual e histórico fixo de 3 aprovações.\n",
+        "operationId": "getVariantById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/variantIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/countryIso"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variante encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariantDetailResponse"
+                },
+                "examples": {
+                  "example": {
+                    "summary": "Exemplo de detalhe",
+                    "value": {
+                      "variantId": "QVV265115063CTT",
+                      "campaigns": [
+                        {
+                          "campaignId": "01/2026",
+                          "country": {
+                            "isoCode": "ZA",
+                            "name": "South Africa"
+                          },
+                          "currentStatus": {
+                            "code": 8,
+                            "name": "EmAndamentoControllingPrecos"
+                          },
+                          "approvals": [
+                            {
+                              "type": "Comercial",
+                              "approvedBy": "F376009",
+                              "approvedAt": "2026-01-06T14:32:02Z"
+                            },
+                            {
+                              "type": "ControllingCustos",
+                              "approvedBy": "F218054",
+                              "approvedAt": "2026-01-13T11:30:39Z"
+                            },
+                            {
+                              "type": "ControllingPrecos",
+                              "approvedBy": null,
+                              "approvedAt": null
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY",
+        "description": "API Key enviada no header X-API-KEY.\n"
+      }
+    },
+    "parameters": {
+      "page": {
+        "name": "page",
+        "in": "query",
+        "required": false,
+        "description": "Número da página (iniciando em 1).\n",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        }
+      },
+      "pageSize": {
+        "name": "pageSize",
+        "in": "query",
+        "required": false,
+        "description": "Tamanho da página. Para proteção da API, existe limite máximo.\n",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
+      },
+      "countryIso": {
+        "name": "countryIso",
+        "in": "query",
+        "required": true,
+        "description": "Filtro obrigatório por países (ISO 3166-1 alpha-2, maiúsculo). Pode ser informado múltiplas vezes: countryIso=AR&countryIso=ZA.\n",
+        "schema": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          }
+        },
+        "style": "form",
+        "explode": true
+      },
+      "variantIdFilter": {
+        "name": "variantId",
+        "in": "query",
+        "required": false,
+        "description": "Filtra por um identificador de variante específico (ex.: QVV...).\n",
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50
+        }
+      },
+      "variantIdPath": {
+        "name": "variantId",
+        "in": "path",
+        "required": true,
+        "description": "Identificador da variante (ex.: QVV...).\n",
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Requisição inválida (ex.: parâmetros inconsistentes, pageSize acima do máximo).\n",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "example": {
+              "type": "https://httpstatuses.com/400",
+              "title": "Bad Request",
+              "status": 400,
+              "detail": "Invalid query parameter: pageSize exceeds maximum (200).",
+              "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "API Key ausente ou inválida.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "example": {
+              "type": "https://httpstatuses.com/401",
+              "title": "Unauthorized",
+              "status": 401,
+              "detail": "Missing or invalid API key.",
+              "traceId": "00-11111111111111111111111111111111-2222222222222222-00"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Recurso não encontrado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "example": {
+              "type": "https://httpstatuses.com/404",
+              "title": "Not Found",
+              "status": 404,
+              "detail": "Variant not found.",
+              "traceId": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Rate limit excedido.",
+        "headers": {
+          "Retry-After": {
+            "description": "Segundos para tentar novamente.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "example": {
+              "type": "https://httpstatuses.com/429",
+              "title": "Too Many Requests",
+              "status": 429,
+              "detail": "Rate limit exceeded.",
+              "traceId": "00-cccccccccccccccccccccccccccccccc-dddddddddddddddd-00"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Erro inesperado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProblemDetails"
+            },
+            "example": {
+              "type": "https://httpstatuses.com/500",
+              "title": "Internal Server Error",
+              "status": 500,
+              "detail": "Unexpected error.",
+              "traceId": "00-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffffffffffffffff-00"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "VariantListResponse": {
+        "type": "object",
+        "required": [
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages",
+          "items"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "totalItems": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariantItem"
+            }
+          }
+        }
+      },
+      "VariantDetailResponse": {
+        "$ref": "#/components/schemas/VariantItem"
+      },
+      "VariantItem": {
+        "type": "object",
+        "required": [
+          "variantId",
+          "campaigns"
+        ],
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "description": "Identificador da variante (ex.: QVV...).\n",
+            "example": "QVV265115063CTT"
+          },
+          "campaigns": {
+            "type": "array",
+            "description": "Campanhas associadas à variante (cada campanha vinculada a um país).\n",
+            "items": {
+              "$ref": "#/components/schemas/Campaign"
+            }
+          }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "required": [
+          "campaignId",
+          "country",
+          "currentStatus",
+          "approvals"
+        ],
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "description": "Identificador da campanha no formato MM/YYYY.\n",
+            "pattern": "^(0[1-9]|1[0-2])\\/\\d{4}$",
+            "example": "01/2026"
+          },
+          "country": {
+            "$ref": "#/components/schemas/Country"
+          },
+          "currentStatus": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "approvals": {
+            "type": "array",
+            "description": "Histórico fixo com 3 aprovações (Comercial, ControllingCustos, ControllingPrecos). Pode conter valores nulos quando a etapa ainda não foi aprovada.\n",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "$ref": "#/components/schemas/Approval"
+            }
+          }
+        }
+      },
+      "Country": {
+        "type": "object",
+        "required": [
+          "isoCode"
+        ],
+        "properties": {
+          "isoCode": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 (maiúsculo).\n",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$",
+            "example": "AR"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nome descritivo do país (se disponível).\n",
+            "example": "Argentina"
+          }
+        }
+      },
+      "CampaignStatus": {
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Código numérico do status.\n",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              99
+            ],
+            "example": 4
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do status.\n",
+            "enum": [
+              "PendenteComercial",
+              "EmAndamentoComercial",
+              "PendenteControllingCustos",
+              "EmAndamentoControllingCustos",
+              "Concluido",
+              "EnviadoICR",
+              "DevolvidoAreaComercial",
+              "PendenteControllingPrecos",
+              "EmAndamentoControllingPrecos",
+              "SolicitacaoCancelada"
+            ],
+            "example": "Concluido"
+          }
+        }
+      },
+      "Approval": {
+        "type": "object",
+        "required": [
+          "type",
+          "approvedBy",
+          "approvedAt"
+        ],
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ApprovalType"
+          },
+          "approvedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Identificador do aprovador (ex.: RACF).\n",
+            "example": "F376009"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Data/hora da aprovação em ISO 8601.\n",
+            "example": "2026-01-06T14:32:02Z"
+          }
+        }
+      },
+      "ApprovalType": {
+        "type": "string",
+        "enum": [
+          "Comercial",
+          "ControllingCustos",
+          "ControllingPrecos"
+        ],
+        "example": "Comercial"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "description": "Modelo de erro no padrão Problem Details (RFC 7807).\n",
+        "required": [
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "traceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

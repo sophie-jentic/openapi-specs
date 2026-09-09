@@ -1,0 +1,774 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "GOSSP Backend API",
+    "version": "0.2.0",
+    "description": "Base URL: https://gossp-backend.fly.dev\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/sb74/gossp-backend-api/0.2.0"
+  },
+  "servers": [
+    {
+      "url": "https://gossp-backend.fly.dev",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerStatic": []
+    }
+  ],
+  "paths": {
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus metrics",
+        "tags": [
+          "meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Prometheus exposition",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Liveness probe",
+        "tags": [
+          "meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/anonymous": {
+      "post": {
+        "summary": "Anonymous auth / ensure user",
+        "description": "Public endpoint. Generates (if empty) and ensures `anonymousId` → returns internal `userId`.\n",
+        "tags": [
+          "auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "anonymousId": {
+                    "type": "string",
+                    "description": "Client-side external anonymous ID; generated if empty"
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "platform": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "ios",
+                      "android",
+                      "web"
+                    ]
+                  },
+                  "appVersion": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "1.0.0"
+                  },
+                  "pushToken": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "userId": {
+                      "type": "string",
+                      "description": "Internal user id"
+                    },
+                    "anonymousId": {
+                      "type": "string",
+                      "description": "External id to persist on device"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestSimple"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalErrorSimple"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "List users (public)",
+        "tags": [
+          "users"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/cities": {
+      "get": {
+        "summary": "List cities (static mock)",
+        "tags": [
+          "directories"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/City"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cities/search": {
+      "get": {
+        "summary": "Search cities by name substring",
+        "tags": [
+          "directories"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/City"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report-reasons": {
+      "get": {
+        "summary": "List report reasons",
+        "tags": [
+          "moderation"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reason"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalErrorSimple"
+          }
+        }
+      }
+    },
+    "/gossips": {
+      "get": {
+        "summary": "Feed (public)",
+        "tags": [
+          "gossips"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "city",
+            "description": "City name (string) filter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "description": "Full-text search term",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Gossip"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "totalPages": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalErrorSimple"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create gossip (protected)",
+        "description": "Requires static bearer token (see `bearerStatic`).",
+        "tags": [
+          "gossips"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "text",
+                  "city"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "anonymousId": {
+                    "type": "string",
+                    "description": "Optional external anon id to resolve author"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "PUBLIC",
+                      "PRIVATE"
+                    ],
+                    "default": "PUBLIC"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Gossip"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Profanity detected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Содержит нецензурную лексику."
+                    },
+                    "errorData": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "data": {
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedSimple"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/gossips/report/{id}": {
+      "post": {
+        "summary": "Report a gossip (protected)",
+        "tags": [
+          "moderation"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ReasonID"
+                ],
+                "properties": {
+                  "ReasonID": {
+                    "type": "string",
+                    "description": "Reason code/id"
+                  },
+                  "AnonymousId": {
+                    "type": "string",
+                    "description": "Optional external anonymous id"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "CREATED",
+                        "EXISTS"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestSimple"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedSimple"
+          }
+        }
+      }
+    },
+    "/gossips/{id}/status": {
+      "patch": {
+        "summary": "Set gossip moderation status (protected)",
+        "tags": [
+          "gossips"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PUBLISHED",
+                      "BLOCKED",
+                      "ABUSED"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestSimple"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedSimple"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerStatic": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Bearer",
+        "description": "Static bearer token checked by backend (not a JWT). Send `Authorization: Bearer <APIToken>` for protected endpoints.\n"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "error": {
+                  "type": "string",
+                  "example": "invalid json"
+                },
+                "data": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "BadRequestSimple": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "invalid json"
+                }
+              }
+            }
+          }
+        }
+      },
+      "UnauthorizedSimple": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "unauthorized"
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "error": {
+                  "type": "string",
+                  "example": "internal error"
+                },
+                "data": {
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalErrorSimple": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "internal error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "anonymousId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "City": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "example": "ID"
+          }
+        }
+      },
+      "Reason": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "Gossip": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "PRIVATE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PUBLISHED",
+              "BLOCKED",
+              "ABUSED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

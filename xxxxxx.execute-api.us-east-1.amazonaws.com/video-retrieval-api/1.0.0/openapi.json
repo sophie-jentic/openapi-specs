@@ -1,0 +1,120 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Video Retrieval API",
+    "description": "Returns a JSON object containing a pre-signed URL to download a ZIP archive of multiple MP4 files.\n**Constraint:** The duration between `startDate` and `endDate` cannot exceed 30 minutes.\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/hellometer/VideoDownloadPublic/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://xxxxxx.execute-api.us-east-1.amazonaws.com/prod",
+      "description": "Video download API service"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/getPickupVideo": {
+      "get": {
+        "summary": "Get Pre-signed Download URL for Video Archive",
+        "description": "Validates the requested time range and returns a temporary URL to a ZIP file containing the relevant MP4 segments.\n",
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique ID of the desired location."
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$"
+            },
+            "example": "2026-02-25 14:00:00",
+            "description": "Start time in local time (YYYY-MM-DD hh:mm:ss)."
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$"
+            },
+            "example": "2026-02-25 14:10:00",
+            "description": "End time in local time (YYYY-MM-DD hh:mm:ss)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success - Pre-signed URL generated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "presignedUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://storage.provider.com/exports/video_bundle.zip?token=xyz..."
+                    },
+                    "expiresInSeconds": {
+                      "type": "integer",
+                      "example": 900
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Time range exceeds 30 minutes or invalid format.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Requested duration exceeds the 30-minute limit."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token is missing or invalid."
+          },
+          "404": {
+            "description": "Not Found - No video data for this location/time."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your API token in the format `Bearer <token>`."
+      }
+    }
+  }
+}

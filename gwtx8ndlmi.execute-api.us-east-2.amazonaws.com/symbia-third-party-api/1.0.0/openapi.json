@@ -1,0 +1,450 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Symbia Third Party API",
+    "version": "1.0.0",
+    "description": "Documentação OpenAPI para os endpoints expostos via API Gateway.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/symbia/symbia-aws-lambdas-tpuserauth-e-indexfile/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://gwtx8ndlmi.execute-api.us-east-2.amazonaws.com/dev",
+      "description": "URL base do API Gateway"
+    }
+  ],
+  "paths": {
+    "/tp-user-auth": {
+      "post": {
+        "summary": "Autenticar usuário externo e emitir token JWT",
+        "description": "Encaminha a requisição para a lambda `tpUserAuth`, que valida a API key fornecida nos headers, garante a existência do usuário, vincula grupos padrão e retorna um token JWT válido por 24h.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKeyHeader"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TpUserAuthRequest"
+              },
+              "example": {
+                "userId": "ext-123",
+                "userName": "Usuário Externo",
+                "email": "usuario@dominio.com",
+                "channelId": 42,
+                "groups": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TpUserAuthSuccessResponse"
+                },
+                "example": {
+                  "token": "jwt-gerado-pela-lambda"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos obrigatórios ausentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Campo obrigatório ausente: apikey"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API key ausente ou inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing": {
+                    "value": {
+                      "error": "API key não informada"
+                    }
+                  },
+                  "invalid": {
+                    "value": {
+                      "error": "API key inválida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Canal não encontrado para o channelId informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Canal não encontrado"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ou falha ao gerar token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Erro interno ao processar autenticação"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tp-index-file": {
+      "post": {
+        "summary": "Solicitar indexação ou remoção de arquivos",
+        "description": "Encaminha a requisição para a lambda `indexFile`, que valida a `apiKey`, checa a estrutura do payload e enfileira mensagens na fila de indexação",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKeyHeader"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexFileRequest"
+              },
+              "example": {
+                "callBackUrl": "https://seu-sistema.com/webhook",
+                "files": [
+                  {
+                    "action": "index",
+                    "path": "bucket/pasta/arquivo.pdf",
+                    "s3Key": "bucket/pasta/arquivo.pdf",
+                    "url": "https://cdn.exemplo.com/arquivo.pdf"
+                  },
+                  {
+                    "action": "delete",
+                    "path": "bucket/pasta/arquivo-antigo.pdf"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Solicitações aceitas para processamento assíncrono",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexFileAcceptedResponse"
+                },
+                "example": {
+                  "message": "Solicitações de indexação recebidas.",
+                  "correlationId": "c2d7c0c8-4e01-4d9c-9b77-9d6bd6c8c5f9",
+                  "filesAccepted": 2
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Payload inválido ou requisitos ausentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "files[0].action é obrigatório e deve ser \"index\" ou \"delete\"."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "apiKey não corresponde a nenhum cliente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "apiKey inválida."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna ou fila não configurada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "Fila de indexação não configurada."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ApiKeyHeader": {
+        "name": "x-api-key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "API key do cliente. O handler também aceita os aliases `x-apikey`, `api-key` ou `apikey`."
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Chave de autenticação do cliente. O handler também aceita aliases `x-apikey`, `api-key` ou `apikey`."
+      }
+    },
+    "schemas": {
+      "TpUserAuthRequest": {
+        "type": "object",
+        "required": [
+          "userId",
+          "userName",
+          "email",
+          "channelId"
+        ],
+        "properties": {
+          "apikey": {
+            "type": "string",
+            "description": "API key do cliente usada para localizar o registro em customer. Preferencialmente fornecida no header `x-api-key` (ou aliases `x-apikey`, `api-key` e `apikey`); o campo no body permanece para compatibilidade."
+          },
+          "userId": {
+            "type": "string",
+            "description": "Identificador do usuário no sistema de terceiros (tp_user_id)."
+          },
+          "userName": {
+            "type": "string",
+            "description": "Nome a ser associado ao usuário."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email do usuário."
+          },
+          "channelId": {
+            "type": "integer",
+            "description": "Identificador do canal configurado que possui o assistant correspondente."
+          },
+          "groups": {
+            "type": "array",
+            "description": "Lista opcional de IDs de grupo a associar além dos grupos padrão do cliente.",
+            "items": {
+              "type": "integer"
+            },
+            "default": []
+          }
+        }
+      },
+      "TpUserAuthSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT emitido pela lambda tokenHandler com validade de 24h."
+          }
+        }
+      },
+      "IndexFileRequest": {
+        "type": "object",
+        "required": [
+          "files"
+        ],
+        "properties": {
+          "callBackUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL opcional para receber notificações de conclusão."
+          },
+          "files": {
+            "type": "array",
+            "description": "Arquivos a indexar ou remover da base. Cada item gera uma mensagem na fila.",
+            "items": {
+              "$ref": "#/components/schemas/IndexFileFile"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "IndexFileFile": {
+        "type": "object",
+        "required": [
+          "action",
+          "path"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "index",
+              "delete"
+            ],
+            "description": "Operação a executar."
+          },
+          "path": {
+            "type": "string",
+            "description": "Caminho lógico ou chave do objeto no bucket."
+          },
+          "s3Key": {
+            "type": "string",
+            "description": "Chave S3 ou identificador usado para localizar o arquivo."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL de download quando o arquivo não está no S3 gerenciado."
+          },
+          "multipart": {
+            "$ref": "#/components/schemas/MultipartContent"
+          }
+        },
+        "oneOf": [
+          {
+            "description": "Regras para action = delete",
+            "properties": {
+              "action": {
+                "const": "delete"
+              },
+              "s3Key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "action",
+              "path",
+              "s3Key"
+            ]
+          },
+          {
+            "description": "Regras para action = index",
+            "properties": {
+              "action": {
+                "const": "index"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "s3Key"
+                ]
+              },
+              {
+                "required": [
+                  "url"
+                ]
+              },
+              {
+                "required": [
+                  "multipart"
+                ]
+              }
+            ],
+            "required": [
+              "action",
+              "path"
+            ]
+          }
+        ]
+      },
+      "MultipartContent": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Nome do arquivo (quando fornecido pelo cliente)."
+          },
+          "contentType": {
+            "type": "string",
+            "description": "MIME type do conteúdo."
+          },
+          "data": {
+            "type": "string",
+            "description": "Conteúdo em base64 ou texto."
+          }
+        }
+      },
+      "IndexFileAcceptedResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem de confirmação de recebimento."
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identificador correlacionado gerado pelo handler para rastrear a requisição."
+          },
+          "filesAccepted": {
+            "type": "integer",
+            "description": "Quantidade de arquivos aceitos para processamento."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Mensagem de erro retornada pelo endpoint tpUserAuth."
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensagem de erro retornada pelo endpoint indexFile."
+          }
+        }
+      }
+    }
+  }
+}
