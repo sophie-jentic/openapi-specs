@@ -1,0 +1,1116 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Drista ERP - Society Management API",
+    "description": "Comprehensive society management system API for managing residential complexes, \nmembers, billing, complaints, and visitors.\n\n## Features\n- Society and Building Management\n- Member and Resident Management\n- Flat/Unit Management\n- Visitor Management\n- Complaint/Helpdesk System\n- Notice Board\n- Multi-tenant architecture with RLS\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Drista API Support",
+      "url": "https://drista.in/support",
+      "email": "api-support@drista.in"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://drista.in/license"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/MUKESH06081990_1/society-management-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.drista.in/v1/society",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging-api.drista.in/v1/society",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:3001/api/v1/society",
+      "description": "Development server"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid request parameters"
+          },
+          "details": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginationResponse": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "hasPrevPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Society": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "address"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Green Valley Co-op Housing Society"
+          },
+          "registration_number": {
+            "type": "string"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "postal_code": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              }
+            }
+          },
+          "contact_info": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              }
+            }
+          },
+          "settings": {
+            "type": "object"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Building": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "society_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "society_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Block A"
+          },
+          "total_floors": {
+            "type": "integer"
+          },
+          "total_flats": {
+            "type": "integer"
+          },
+          "has_lift": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Flat": {
+        "type": "object",
+        "required": [
+          "id",
+          "building_id",
+          "flat_number",
+          "floor_number"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "flat_number": {
+            "type": "string",
+            "example": "101"
+          },
+          "floor_number": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "1BHK",
+              "2BHK",
+              "3BHK",
+              "4BHK",
+              "Penthouse",
+              "Studio"
+            ]
+          },
+          "area_sqft": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "occupied",
+              "vacant",
+              "under_maintenance"
+            ]
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        }
+      },
+      "Resident": {
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "last_name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "tenant",
+              "family_member"
+            ]
+          },
+          "flat_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_primary_contact": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "moved_out"
+            ]
+          }
+        }
+      },
+      "Visitor": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "purpose",
+          "flat_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "delivery",
+              "service",
+              "cab",
+              "other"
+            ]
+          },
+          "flat_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entry_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "exit_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "vehicle_number": {
+            "type": "string"
+          },
+          "approved_by": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Resident ID who approved"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "expected",
+              "checked_in",
+              "checked_out",
+              "denied"
+            ]
+          }
+        }
+      },
+      "Complaint": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "category",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "plumbing",
+              "electrical",
+              "security",
+              "cleaning",
+              "other"
+            ]
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "closed",
+              "reopened"
+            ]
+          },
+          "raised_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assigned_to": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Notice": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "content",
+          "valid_until"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "general",
+              "meeting",
+              "maintenance",
+              "event",
+              "emergency"
+            ]
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "all",
+              "owners",
+              "tenants",
+              "committee"
+            ]
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "TenantIdHeader": {
+        "name": "X-Tenant-ID",
+        "in": "header",
+        "description": "The unique identifier for the tenant (Society ID)",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "description": "Page number"
+      },
+      "LimitParam": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        },
+        "description": "Items per page"
+      }
+    },
+    "responses": {
+      "BadRequestError": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Society",
+      "description": "Society configuration and details"
+    },
+    {
+      "name": "Buildings",
+      "description": "Building and block management"
+    },
+    {
+      "name": "Flats",
+      "description": "Apartment/Unit management"
+    },
+    {
+      "name": "Residents",
+      "description": "Member and resident management"
+    },
+    {
+      "name": "Visitors",
+      "description": "Visitor entry and exit tracking"
+    },
+    {
+      "name": "Complaints",
+      "description": "Helpdesk and complaint management"
+    },
+    {
+      "name": "Notices",
+      "description": "Digital notice board"
+    }
+  ],
+  "paths": {
+    "/society/info": {
+      "get": {
+        "tags": [
+          "Society"
+        ],
+        "summary": "Get society details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Society details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Society"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Society"
+        ],
+        "summary": "Get society details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Society details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Society"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Society"
+        ],
+        "summary": "Update society details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Society"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated successfully"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/buildings": {
+      "get": {
+        "tags": [
+          "Buildings"
+        ],
+        "summary": "List buildings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of buildings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Building"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Buildings"
+        ],
+        "summary": "Add new building",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Building"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Building created"
+          }
+        }
+      }
+    },
+    "/flats": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "List flats",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "building_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of flats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Flat"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flats/{flatId}": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Get flat details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flat details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flat"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/residents": {
+      "get": {
+        "tags": [
+          "Residents"
+        ],
+        "summary": "List residents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "flat_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of residents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Resident"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Residents"
+        ],
+        "summary": "Add resident",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Resident"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resident added"
+          }
+        }
+      }
+    },
+    "/visitors": {
+      "get": {
+        "tags": [
+          "Visitors"
+        ],
+        "summary": "List visitors",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of visitors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Visitor"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Visitors"
+        ],
+        "summary": "Log visitor entry",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Visitor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Visitor logged"
+          }
+        }
+      }
+    },
+    "/visitors/{visitorId}/checkout": {
+      "post": {
+        "tags": [
+          "Visitors"
+        ],
+        "summary": "Log visitor exit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "name": "visitorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Visitor checked out"
+          }
+        }
+      }
+    },
+    "/complaints": {
+      "get": {
+        "tags": [
+          "Complaints"
+        ],
+        "summary": "List complaints",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of complaints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Complaint"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Complaints"
+        ],
+        "summary": "Raise a complaint",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Complaint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Complaint raised"
+          }
+        }
+      }
+    },
+    "/notices": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "List active notices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Notice"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Create notice",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Notice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Notice created"
+          }
+        }
+      }
+    }
+  }
+}

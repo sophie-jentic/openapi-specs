@@ -1,0 +1,2818 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SOLAS NIE API",
+    "description": "REST API untuk sistem manajemen registrasi produk farmasi SOLAS NIE.\n\n## Autentikasi\nAPI menggunakan Laravel Sanctum dengan Bearer Token. Gunakan endpoint `/auth/login` untuk mendapatkan token,\nkemudian sertakan token di header `Authorization: Bearer {token}` untuk setiap request.\n\n## Fitur Utama\n- **Users & RBAC**: Manajemen pengguna, roles, dan permissions\n- **Master Data**: Kategori, Bentuk Sediaan, Golongan Produk\n- **Master Produk**: Produk yang sudah memiliki NIE\n- **Produk Registrasi**: Produk dalam proses registrasi (Baru, Reformulasi, Renewal & Variasi)\n",
+    "version": "1.1.0",
+    "contact": {
+      "name": "SOLAS NIE Support",
+      "email": "support@solas.id"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/selfemployee-e24/solas-nie-api/1.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://nie.solas.id/api/v1",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8083/api/v1",
+      "description": "Local (Docker)"
+    },
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Local (artisan serve)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autentikasi dan manajemen token"
+    },
+    {
+      "name": "Users",
+      "description": "Manajemen pengguna"
+    },
+    {
+      "name": "Roles",
+      "description": "Manajemen roles"
+    },
+    {
+      "name": "Permissions",
+      "description": "Manajemen permissions"
+    },
+    {
+      "name": "Master Kategori",
+      "description": "Master data kategori produk"
+    },
+    {
+      "name": "Master Bentuk Sediaan",
+      "description": "Master data bentuk sediaan"
+    },
+    {
+      "name": "Master Golongan Produk",
+      "description": "Master data golongan produk"
+    },
+    {
+      "name": "Master Produk",
+      "description": "Produk yang sudah memiliki NIE"
+    },
+    {
+      "name": "Produk Registrasi",
+      "description": "Produk dalam proses registrasi"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register pengguna baru",
+        "description": "Mendaftarkan pengguna baru dan mendapatkan token akses",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRegisterRequest"
+              },
+              "example": {
+                "name": "John Doe",
+                "email": "john@example.com",
+                "password": "secretpassword",
+                "password_confirmation": "secretpassword",
+                "whatsapp": "+6281234567890"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registrasi berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login dan dapatkan token",
+        "description": "Autentikasi pengguna dan mendapatkan Bearer token untuk akses API",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequest"
+              },
+              "example": {
+                "email": "valen@solas.id",
+                "password": "supermansolas"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                },
+                "example": {
+                  "token": "1|rPw6mW8Da0Akkc5ZbJUuqknzGDtZozfUqeaxULQ1480963a1",
+                  "user": {
+                    "id": 17,
+                    "name": "valen",
+                    "email": "valen@solas.id",
+                    "whatsapp": "+6289512297179",
+                    "avatar": "users/avatars/01K9R9TNK2FK2JTP20CVX958SK.jpg",
+                    "created_at": "2025-11-06T14:07:06.000000Z",
+                    "updated_at": "2025-12-31T01:07:49.000000Z"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout (revoke token)",
+        "description": "Menghapus token akses saat ini",
+        "responses": {
+          "204": {
+            "description": "Logout berhasil"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List semua pengguna",
+        "description": "Mendapatkan daftar pengguna dengan pagination dan pencarian",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pengguna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedUsers"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Buat pengguna baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pengguna dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Detail pengguna",
+        "responses": {
+          "200": {
+            "description": "Detail pengguna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update pengguna",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pengguna diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Hapus pengguna",
+        "responses": {
+          "204": {
+            "description": "Pengguna dihapus"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/users/{id}/roles": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Attach atau sync roles ke pengguna",
+        "description": "Menambahkan roles ke pengguna. Gunakan `sync: true` untuk mengganti semua roles yang ada.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "roles"
+                ],
+                "properties": {
+                  "roles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "Admin",
+                      "Registrasi"
+                    ]
+                  },
+                  "sync": {
+                    "type": "boolean",
+                    "description": "Jika true, akan mengganti semua roles yang ada",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Roles berhasil di-attach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/roles/{role}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        },
+        {
+          "name": "role",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Nama role yang akan di-detach"
+        }
+      ],
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Detach role dari pengguna",
+        "responses": {
+          "200": {
+            "description": "Role berhasil di-detach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/permissions": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Attach atau sync permissions ke pengguna",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "permissions"
+                ],
+                "properties": {
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "manage users",
+                      "view dashboard"
+                    ]
+                  },
+                  "sync": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions berhasil di-attach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}/permissions/{permission}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        },
+        {
+          "name": "permission",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Nama permission yang akan di-detach"
+        }
+      ],
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Detach permission dari pengguna",
+        "responses": {
+          "200": {
+            "description": "Permission berhasil di-detach",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "List semua roles",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoles"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Buat role baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Role dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/roles/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Detail role (dengan permissions)",
+        "responses": {
+          "200": {
+            "description": "Detail role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleWithPermissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Update role",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Hapus role",
+        "responses": {
+          "204": {
+            "description": "Role dihapus"
+          }
+        }
+      }
+    },
+    "/permissions": {
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "List semua permissions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPermissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "Buat permission baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Permission dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/permissions/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "Detail permission",
+        "responses": {
+          "200": {
+            "description": "Detail permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "Update permission",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permission diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "Hapus permission",
+        "responses": {
+          "204": {
+            "description": "Permission dihapus"
+          }
+        }
+      }
+    },
+    "/master-kategori": {
+      "get": {
+        "tags": [
+          "Master Kategori"
+        ],
+        "summary": "List semua kategori",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar kategori",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMasterKategori"
+                },
+                "example": {
+                  "current_page": 1,
+                  "data": [
+                    {
+                      "id": 1,
+                      "nama_kategori": "Produk Baru",
+                      "tipe": "Produk Baru"
+                    },
+                    {
+                      "id": 2,
+                      "nama_kategori": "Reformulasi",
+                      "tipe": "Reformulasi"
+                    },
+                    {
+                      "id": 3,
+                      "nama_kategori": "Renewal & Variasi",
+                      "tipe": "Renewal & Variasi"
+                    }
+                  ],
+                  "total": 4
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Master Kategori"
+        ],
+        "summary": "Buat kategori baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterKategoriCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kategori dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterKategori"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/master-kategori/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Master Kategori"
+        ],
+        "summary": "Detail kategori",
+        "responses": {
+          "200": {
+            "description": "Detail kategori",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterKategori"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Master Kategori"
+        ],
+        "summary": "Update kategori",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterKategoriUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kategori diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterKategori"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Master Kategori"
+        ],
+        "summary": "Hapus kategori",
+        "responses": {
+          "204": {
+            "description": "Kategori dihapus"
+          }
+        }
+      }
+    },
+    "/master-bentuk-sediaan": {
+      "get": {
+        "tags": [
+          "Master Bentuk Sediaan"
+        ],
+        "summary": "List semua bentuk sediaan",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar bentuk sediaan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMasterBentukSediaan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Master Bentuk Sediaan"
+        ],
+        "summary": "Buat bentuk sediaan baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterBentukSediaanCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bentuk sediaan dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterBentukSediaan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/master-bentuk-sediaan/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Master Bentuk Sediaan"
+        ],
+        "summary": "Detail bentuk sediaan",
+        "responses": {
+          "200": {
+            "description": "Detail bentuk sediaan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterBentukSediaan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Master Bentuk Sediaan"
+        ],
+        "summary": "Update bentuk sediaan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterBentukSediaanUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bentuk sediaan diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterBentukSediaan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Master Bentuk Sediaan"
+        ],
+        "summary": "Hapus bentuk sediaan",
+        "responses": {
+          "204": {
+            "description": "Bentuk sediaan dihapus"
+          }
+        }
+      }
+    },
+    "/master-golongan-produk": {
+      "get": {
+        "tags": [
+          "Master Golongan Produk"
+        ],
+        "summary": "List semua golongan produk",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar golongan produk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMasterGolonganProduk"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Master Golongan Produk"
+        ],
+        "summary": "Buat golongan produk baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterGolonganProdukCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Golongan produk dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterGolonganProduk"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/master-golongan-produk/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Master Golongan Produk"
+        ],
+        "summary": "Detail golongan produk",
+        "responses": {
+          "200": {
+            "description": "Detail golongan produk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterGolonganProduk"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Master Golongan Produk"
+        ],
+        "summary": "Update golongan produk",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterGolonganProdukUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Golongan produk diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterGolonganProduk"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Master Golongan Produk"
+        ],
+        "summary": "Hapus golongan produk",
+        "responses": {
+          "204": {
+            "description": "Golongan produk dihapus"
+          }
+        }
+      }
+    },
+    "/master-produk": {
+      "get": {
+        "tags": [
+          "Master Produk"
+        ],
+        "summary": "List semua master produk",
+        "description": "Mendapatkan daftar produk yang sudah memiliki NIE",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar master produk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMasterProduk"
+                },
+                "example": {
+                  "current_page": 1,
+                  "data": [
+                    {
+                      "id": 2,
+                      "kode_produk": "NRTARF100",
+                      "nama_produk": "Arfen Kaplet",
+                      "nomor_nie": "DTL1234567890A1",
+                      "kategori": {
+                        "id": 1,
+                        "nama_kategori": "Produk Baru"
+                      }
+                    }
+                  ],
+                  "total": 100
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Master Produk"
+        ],
+        "summary": "Buat master produk baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterProdukCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Master produk dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterProduk"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/master-produk/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Master Produk"
+        ],
+        "summary": "Detail master produk",
+        "description": "Mendapatkan detail produk beserta relasi kategori, bentuk sediaan, dan golongan",
+        "responses": {
+          "200": {
+            "description": "Detail master produk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterProdukWithRelations"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Master Produk"
+        ],
+        "summary": "Update master produk",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasterProdukUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Master produk diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasterProduk"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Master Produk"
+        ],
+        "summary": "Hapus master produk",
+        "responses": {
+          "204": {
+            "description": "Master produk dihapus"
+          }
+        }
+      }
+    },
+    "/produk-registrasi": {
+      "get": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "List semua produk registrasi",
+        "description": "Mendapatkan daftar semua produk dalam proses registrasi",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk registrasi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedProdukRegistrasi"
+                },
+                "example": {
+                  "current_page": 1,
+                  "data": [
+                    {
+                      "id": 67,
+                      "kode_produk": "NRTARF100",
+                      "nama_produk": "Arfen Kaplet",
+                      "tahap_aktif": "Registrasi",
+                      "status_registrasi": "Progress",
+                      "progress": 86
+                    }
+                  ],
+                  "total": 39
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "Buat produk registrasi baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdukRegistrasiCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produk registrasi dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdukRegistrasi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produk-registrasi/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/IdPath"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "Detail produk registrasi",
+        "description": "Mendapatkan detail produk registrasi beserta relasi",
+        "responses": {
+          "200": {
+            "description": "Detail produk registrasi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdukRegistrasiWithRelations"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "Update produk registrasi",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdukRegistrasiUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produk registrasi diupdate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdukRegistrasi"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "Hapus produk registrasi",
+        "responses": {
+          "204": {
+            "description": "Produk registrasi dihapus"
+          }
+        }
+      }
+    },
+    "/produk-registrasi/baru": {
+      "get": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "List produk baru",
+        "description": "Mendapatkan daftar produk registrasi dengan kategori \"Produk Baru\"",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk baru",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedProdukRegistrasi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produk-registrasi/reformulasi": {
+      "get": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "List produk reformulasi",
+        "description": "Mendapatkan daftar produk registrasi dengan kategori \"Reformulasi\"",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk reformulasi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedProdukRegistrasi"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produk-registrasi/renewal": {
+      "get": {
+        "tags": [
+          "Produk Registrasi"
+        ],
+        "summary": "List produk renewal & variasi",
+        "description": "Mendapatkan daftar produk registrasi dengan kategori \"Renewal & Variasi\"",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageParam"
+          },
+          {
+            "$ref": "#/components/parameters/PerPageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk renewal & variasi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedProdukRegistrasi"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum",
+        "description": "Laravel Sanctum Bearer Token.\nDapatkan token dari endpoint `/auth/login` dan gunakan di header:\n`Authorization: Bearer {token}`\n"
+      }
+    },
+    "parameters": {
+      "IdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        },
+        "description": "ID resource"
+      },
+      "SearchParam": {
+        "name": "search",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Kata kunci pencarian (kode, nama, NIE, email, dll)"
+      },
+      "PageParam": {
+        "name": "page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 1
+        },
+        "description": "Nomor halaman"
+      },
+      "PerPageParam": {
+        "name": "per_page",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "default": 20,
+          "maximum": 100
+        },
+        "description": "Jumlah item per halaman"
+      }
+    },
+    "responses": {
+      "Unauthenticated": {
+        "description": "Token tidak valid atau tidak ada",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Unauthenticated."
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource tidak ditemukan",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Not found."
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validasi gagal",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "The given data was invalid."
+                },
+                "errors": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "email": [
+                      "The email field is required."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "current_page": {
+            "type": "integer"
+          },
+          "from": {
+            "type": "integer",
+            "nullable": true
+          },
+          "last_page": {
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "to": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "PaginationLinks": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "string",
+            "nullable": true
+          },
+          "last": {
+            "type": "string",
+            "nullable": true
+          },
+          "prev": {
+            "type": "string",
+            "nullable": true
+          },
+          "next": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AuthRegisterRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password",
+          "password_confirmation"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "password_confirmation": {
+            "type": "string"
+          },
+          "whatsapp": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          }
+        }
+      },
+      "AuthLoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Bearer token untuk autentikasi"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "whatsapp": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "type": "string",
+            "nullable": true
+          },
+          "email_verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "preferred_locale": {
+            "type": "string",
+            "nullable": true
+          },
+          "dashboard_widgets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserCreateRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "whatsapp": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          }
+        }
+      },
+      "UserUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "nullable": true
+          },
+          "whatsapp": {
+            "type": "string",
+            "maxLength": 30,
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedUsers": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/PaginationLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "guard_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RoleWithPermissions": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Role"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "RoleCreateRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "RoleUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "PaginatedRoles": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/PaginationLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "guard_name": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PermissionCreateRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "PermissionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "PaginatedPermissions": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            }
+          },
+          "links": {
+            "$ref": "#/components/schemas/PaginationLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "MasterKategori": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nama_kategori": {
+            "type": "string"
+          },
+          "tipe": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tipe kategori: Produk Baru, Reformulasi, Renewal & Variasi, All Produk"
+          },
+          "created_by": {
+            "type": "integer",
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "integer",
+            "nullable": true
+          },
+          "approved_by": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "MasterKategoriCreateRequest": {
+        "type": "object",
+        "required": [
+          "nama_kategori"
+        ],
+        "properties": {
+          "nama_kategori": {
+            "type": "string"
+          },
+          "tipe": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MasterKategoriUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "nama_kategori": {
+            "type": "string"
+          },
+          "tipe": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedMasterKategori": {
+        "type": "object",
+        "properties": {
+          "current_page": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MasterKategori"
+            }
+          },
+          "first_page_url": {
+            "type": "string"
+          },
+          "from": {
+            "type": "integer",
+            "nullable": true
+          },
+          "last_page": {
+            "type": "integer"
+          },
+          "last_page_url": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "label": {
+                  "type": "string"
+                },
+                "active": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "next_page_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "prev_page_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "to": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "MasterBentukSediaan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nama_bentuk": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MasterBentukSediaanCreateRequest": {
+        "type": "object",
+        "required": [
+          "nama_bentuk"
+        ],
+        "properties": {
+          "nama_bentuk": {
+            "type": "string"
+          }
+        }
+      },
+      "MasterBentukSediaanUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "nama_bentuk": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedMasterBentukSediaan": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedMasterKategori"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MasterBentukSediaan"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "MasterGolonganProduk": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nama_golongan": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MasterGolonganProdukCreateRequest": {
+        "type": "object",
+        "required": [
+          "nama_golongan"
+        ],
+        "properties": {
+          "nama_golongan": {
+            "type": "string"
+          }
+        }
+      },
+      "MasterGolonganProdukUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "nama_golongan": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedMasterGolonganProduk": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedMasterKategori"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MasterGolonganProduk"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "MasterProduk": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kode_produk": {
+            "type": "string",
+            "description": "Kode unik produk"
+          },
+          "nama_produk": {
+            "type": "string"
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "description": "Nomor Izin Edar"
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Tanggal terbit NIE"
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Tanggal kadaluarsa NIE"
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true,
+            "description": "Keterangan: 3S=3 Sertifikat, NREG=Non Registrasi, REG=Registrasi"
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "foto_kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "versi_formulasi": {
+            "type": "integer",
+            "nullable": true
+          },
+          "is_pruned": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "pruned_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MasterProdukWithRelations": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MasterProduk"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kategori": {
+                "$ref": "#/components/schemas/MasterKategori"
+              },
+              "bentuk_sediaan": {
+                "$ref": "#/components/schemas/MasterBentukSediaan"
+              },
+              "golongan_produk": {
+                "$ref": "#/components/schemas/MasterGolonganProduk"
+              }
+            }
+          }
+        ]
+      },
+      "MasterProdukCreateRequest": {
+        "type": "object",
+        "required": [
+          "kode_produk",
+          "nama_produk",
+          "kategori_id",
+          "bentuk_sediaan_id",
+          "golongan_produk_id",
+          "nomor_nie"
+        ],
+        "properties": {
+          "kode_produk": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "nama_produk": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "foto_kemasan": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MasterProdukUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "kode_produk": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "nama_produk": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "foto_kemasan": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedMasterProduk": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedMasterKategori"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MasterProdukWithRelations"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ProdukRegistrasi": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "kode_produk": {
+            "type": "string"
+          },
+          "nama_produk": {
+            "type": "string"
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "nullable": true
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "target_nie": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Target tanggal penerbitan NIE"
+          },
+          "tahap_aktif": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tahap registrasi saat ini",
+            "enum": [
+              "RND",
+              "ANDEV",
+              "Registrasi",
+              "Formulasi",
+              "Formulasi Stabilitas",
+              "BPOM",
+              "NIE Terbit"
+            ]
+          },
+          "status_registrasi": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "Progress",
+              "Done"
+            ]
+          },
+          "progress": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "description": "Persentase progress (0-100)"
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "gambar_produk": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProdukRegistrasiWithRelations": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProdukRegistrasi"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kategori": {
+                "$ref": "#/components/schemas/MasterKategori"
+              },
+              "bentuk_sediaan": {
+                "$ref": "#/components/schemas/MasterBentukSediaan"
+              },
+              "golongan_produk": {
+                "$ref": "#/components/schemas/MasterGolonganProduk"
+              }
+            }
+          }
+        ]
+      },
+      "ProdukRegistrasiCreateRequest": {
+        "type": "object",
+        "required": [
+          "kode_produk",
+          "nama_produk",
+          "kategori_id",
+          "bentuk_sediaan_id",
+          "golongan_produk_id"
+        ],
+        "properties": {
+          "kode_produk": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "nama_produk": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "target_nie": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tahap_aktif": {
+            "type": "string",
+            "nullable": true
+          },
+          "status_registrasi": {
+            "type": "string",
+            "enum": [
+              "Progress",
+              "Done"
+            ],
+            "nullable": true
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "gambar_produk": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProdukRegistrasiUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "kode_produk": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "nama_produk": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "kategori_id": {
+            "type": "integer"
+          },
+          "bentuk_sediaan_id": {
+            "type": "integer"
+          },
+          "golongan_produk_id": {
+            "type": "integer"
+          },
+          "nomor_nie": {
+            "type": "string",
+            "maxLength": 255,
+            "nullable": true
+          },
+          "tanggal_terbit": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tanggal_expired": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "target_nie": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "tahap_aktif": {
+            "type": "string",
+            "nullable": true
+          },
+          "status_registrasi": {
+            "type": "string",
+            "enum": [
+              "Progress",
+              "Done"
+            ],
+            "nullable": true
+          },
+          "ket": {
+            "type": "string",
+            "enum": [
+              "3S",
+              "NREG",
+              "REG"
+            ],
+            "nullable": true
+          },
+          "kemasan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikasi": {
+            "type": "string",
+            "nullable": true
+          },
+          "komposisi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dosis": {
+            "type": "string",
+            "nullable": true
+          },
+          "gambar_produk": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedProdukRegistrasi": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedMasterKategori"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProdukRegistrasiWithRelations"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

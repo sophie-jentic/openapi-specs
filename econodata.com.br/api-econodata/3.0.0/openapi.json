@@ -1,0 +1,918 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Econodata",
+    "version": "3.0.0",
+    "description": "API p\u00fablica da **Econodata** para consulta de dados de empresas, gest\u00e3o de webhooks e integra\u00e7\u00f5es (Zapier, CRMs e demais sistemas).\n\n| Recurso | Descri\u00e7\u00e3o |\n|--------|-----------|\n| **Empresas** | Consulta por CNPJ, site, e-mail ou raiz do CNPJ; exporta\u00e7\u00e3o em lote; enriquecimento de dados. |\n| **Tags** | Adi\u00e7\u00e3o de tags \u00e0s empresas (incluindo grupo econ\u00f4mico). |\n| **Webhooks** | Cadastro, listagem e edi\u00e7\u00e3o de integra\u00e7\u00f5es e URLs de webhook. |\n| **Token** | Valida\u00e7\u00e3o de token de integra\u00e7\u00e3o (ex.: Zapier). |\n\n<br>\n## Autentica\u00e7\u00e3o\nTodas as requisi\u00e7\u00f5es (exceto sa\u00fade e documenta\u00e7\u00e3o) exigem autentica\u00e7\u00e3o.\n\n| Header | Uso |\n|-----------|-----|\n| **`x-api-token`** | Token de integra\u00e7\u00e3o \u2014 usado na maioria dos endpoints (empresas, webhook \u00fanico, update-lead). |\n| **`x-ecdt-token`** | Token JWT da plataforma \u2014 usado em endpoints que listam/criam webhooks e em info-token. |\n\n**Como obter o token de integra\u00e7\u00e3o**\n1. Acesse o menu **Integra\u00e7\u00f5es** na plataforma de prospec\u00e7\u00e3o.\n2. Cadastre um novo token informando um **Nome** (esse nome aparece na tela de busca para envio de empresas).\n3. Opcionalmente, informe uma **URL de Webhook** para receber eventos.\n\n**Testar na documenta\u00e7\u00e3o:** use **\"Try it out\"** em cada endpoint e informe o cabe\u00e7alho apropriado.  \n\u26a0\ufe0f **Aten\u00e7\u00e3o:** requisi\u00e7\u00f5es de teste consomem cr\u00e9ditos de exporta\u00e7\u00e3o quando aplic\u00e1vel.\n\n<br>\n## Cr\u00e9ditos e limites\n- **Cr\u00e9ditos:** cada empresa exportada consome um cr\u00e9dito, exceto empresas j\u00e1 exportadas anteriormente (sem consumo adicional).\n- **Limite de requisi\u00e7\u00f5es:** at\u00e9 **75 requisi\u00e7\u00f5es por minuto**.\n- **Limite por requisi\u00e7\u00e3o:** at\u00e9 **100 CNPJs** por chamada (formato `XX.XXX.XXX/XXXX-XX`).\n\n\n| M\u00e9todo | Uso na API |\n|--------|------------|\n| **GET** | Consultas idempotentes (listar webhooks, obter um webhook, buscar empresa por par\u00e2metros na URL, validar token, info-token). |\n| **POST** | A\u00e7\u00f5es e envio de dados no body (lista de CNPJs, criar webhook, disparar webhook, adicionar tags, buscar empresa com body). |\n| **PUT** | Atualiza\u00e7\u00e3o completa/parcial de recurso (editar webhook: URL, nome, ativo). |\n\nPara **buscar uma empresa** por CNPJ, site, e-mail ou raiz, prefira **GET** `/v3/companies/search` com par\u00e2metros na query; **POST** com body \u00e9 aceito para compatibilidade.\n\n<br>\n\n## Respostas de erro\n\n| C\u00f3digo | Significado | Exemplo de mensagem |\n|--------|-------------|---------------------|\n| **400** | Requisi\u00e7\u00e3o inv\u00e1lida | Par\u00e2metros com formato inv\u00e1lido. / Envie pelo menos um crit\u00e9rio de busca. |\n| **401** | N\u00e3o autorizado | N\u00e3o autorizado. / O token enviado n\u00e3o existe. |\n| **402** | Saldo insuficiente | Saldo insuficiente. |\n| **404** | Recurso n\u00e3o encontrado | Empresa n\u00e3o encontrada ou fora do plano. / Nenhuma empresa p\u00f4de ser enviada ao webhook. |\n| **413** | Limite excedido (body) | O n\u00famero m\u00e1ximo de CNPJs \u00e9 de 100. |\n| **429** | Limite de taxa | O n\u00famero limite de requisi\u00e7\u00f5es por minuto foi excedido. |\n| **500** | Erro interno | Erro interno do servidor. |\n---\n<br>\n## Endpoints legados (v2)\nSe voc\u00ea precisa dos **endpoints da vers\u00e3o 2 (v2)** da API:\n- **Vers\u00e3o antiga (v2):** [Documenta\u00e7\u00e3o API Econodata \u2013 vers\u00f5es legadas](https://app.swaggerhub.com/apis-docs/econodata-f3f/econodata-api/3.0.0#/)\n",
+    "contact": {
+      "name": "Suporte Econodata",
+      "url": "https://econodata.com.br"
+    },
+    "termsOfService": "https://econodata.com.br/termos",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/econodata-ab7/econodata-api/3.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.econodata.com.br/ecdt-api",
+      "description": "Produ\u00e7\u00e3o"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Empresas",
+      "description": "Consulta e exporta\u00e7\u00e3o de dados de empresas por CNPJ, site, e-mail ou raiz."
+    },
+    {
+      "name": "Token",
+      "description": "Valida\u00e7\u00e3o de token de integra\u00e7\u00e3o."
+    },
+    {
+      "name": "Informa\u00e7\u00e3o webhook",
+      "description": "Consulta de um webhook espec\u00edfico (por token de integra\u00e7\u00e3o)."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Listagem, cria\u00e7\u00e3o e edi\u00e7\u00e3o de webhooks da conta."
+    },
+    {
+      "name": "Tags",
+      "description": "Adi\u00e7\u00e3o de tags \u00e0s empresas (incluindo grupo econ\u00f4mico)."
+    }
+  ],
+  "paths": {
+    "/v3/companies": {
+      "post": {
+        "tags": [
+          "Empresas"
+        ],
+        "summary": "Consultar empresas por lista de CNPJs (v3)",
+        "operationId": "getCompaniesByCnpjV3",
+        "description": "Mesmo comportamento do v2. Empresas nunca exportadas consumir\u00e3o cr\u00e9ditos; j\u00e1 exportadas podem ser enviadas novamente sem consumo adicional.\nLimite de 100 CNPJs por requisi\u00e7\u00e3o, formato XX.XXX.XXX/XXXX-XX.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "CNPJ no formato XX.XXX.XXX/XXXX-XX"
+                },
+                "minItems": 1,
+                "maxItems": 100
+              },
+              "example": [
+                "17.948.237/0001-00",
+                "00.000.000/0001-91"
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dados das empresas encontradas (um objeto por empresa, na mesma ordem dos CNPJs enviados).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "empresas": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CompanyResponse"
+                      },
+                      "description": "Lista de empresas retornadas"
+                    },
+                    "erros": {
+                      "type": "array",
+                      "description": "Lista de erros por CNPJ (quando aplic\u00e1vel)",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "cnpj": {
+                            "type": "string"
+                          },
+                          "mensagem": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "empresas": [
+                    {
+                      "cnpj": "17.948.237/0001-00",
+                      "razaoSocial": "ECONODATA TECNOLOGIA DA INFORMACAO LTDA",
+                      "nomeFantasia": "ECONODATA",
+                      "tipoUnidade": "MATRIZ",
+                      "cidade": "PORTO ALEGRE",
+                      "uf": "RS",
+                      "melhorTelefone": "(51) 3024-5688"
+                    },
+                    {
+                      "cnpj": "00.000.000/0001-91",
+                      "razaoSocial": "Raz\u00e3o Exemplo 2",
+                      "nomeFantasia": "Fantasia 2",
+                      "cidade": "SAO PAULO",
+                      "uf": "SP"
+                    }
+                  ],
+                  "erros": []
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body fora do esperado ou CNPJs com formato inv\u00e1lido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhuma das empresas enviadas foi encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/companies/search": {
+      "get": {
+        "tags": [
+          "Empresas"
+        ],
+        "summary": "Consultar uma empresa (v3 \u2014 GET, par\u00e2metros na URL)",
+        "operationId": "getCompanyByParametersQueryV3",
+        "description": "Consulta idempotente. Envie pelo menos um dos par\u00e2metros na query. Ordem de preced\u00eancia: CNPJ > site > e-mail > raiz_cnpj.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          },
+          {
+            "in": "query",
+            "name": "cnpj",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "00.000.000/0000-00"
+            },
+            "description": "CNPJ formatado"
+          },
+          {
+            "in": "query",
+            "name": "site",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Dom\u00ednio do site (sem http/https)"
+          },
+          {
+            "in": "query",
+            "name": "email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "E-mail da empresa"
+          },
+          {
+            "in": "query",
+            "name": "raiz_cnpj",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "00.000.000"
+            },
+            "description": "Raiz do CNPJ (8 d\u00edgitos)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empresa encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nenhum par\u00e2metro de busca enviado ou formato inv\u00e1lido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhuma empresa encontrada com os crit\u00e9rios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Empresas"
+        ],
+        "summary": "Consultar uma empresa (v3 \u2014 POST, par\u00e2metros no body)",
+        "operationId": "getCompanyByParametersV3",
+        "description": "Mesmo comportamento do GET v3; use POST quando preferir enviar crit\u00e9rios no body. Pelo menos um campo \u00e9 obrigat\u00f3rio.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanySearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Empresa com dados encontrados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nenhum par\u00e2metro de busca enviado ou formato inv\u00e1lido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhuma empresa com os dados enviados encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/webhook": {
+      "get": {
+        "tags": [
+          "Informa\u00e7\u00e3o webhook"
+        ],
+        "summary": "Consultar um webhook (v3)",
+        "operationId": "getWebhookV3",
+        "description": "Obter dados de um \u00fanico webhook do cliente (ativos e desativados).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do webhook pesquisado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nomeIntegracao": {
+                      "type": "string",
+                      "example": "Teste integra\u00e7\u00e3o"
+                    },
+                    "urlWebhook": {
+                      "type": "string",
+                      "example": "http://webhook.com/codigowebhook"
+                    },
+                    "ativo": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401APITokenNaoExiste"
+          },
+          "404": {
+            "description": "Token n\u00e3o encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/info-token": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Listar webhooks ativos do cliente (v3)",
+        "operationId": "getInfoTokenV3",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EcdtToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de todos os webhooks ativos do cliente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "nm_integracao": {
+                        "type": "string",
+                        "example": "Teste integra\u00e7\u00e3o"
+                      },
+                      "url_webhook": {
+                        "type": "string",
+                        "example": "http://webhook.com/codigowebhook"
+                      },
+                      "cd_token": {
+                        "type": "string",
+                        "description": "Token de integra\u00e7\u00e3o (UUID)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401EcdtTokenNaoAutorizado"
+          }
+        }
+      }
+    },
+    "/v3/valid-token-integration": {
+      "get": {
+        "tags": [
+          "Token"
+        ],
+        "summary": "Verificar se o token de integra\u00e7\u00e3o est\u00e1 ativo (v3)",
+        "operationId": "validarTokenV3",
+        "description": "Verifica se o token de integra\u00e7\u00e3o existe e est\u00e1 ativo. Retorna os dados da integra\u00e7\u00e3o. Use o cabe\u00e7alho x-api-token como nos demais endpoints.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Retorna os dados do token passado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cd_cliente": {
+                      "type": "string",
+                      "example": "CODIGODOCLIENTE-20210101"
+                    },
+                    "nm_integracao": {
+                      "type": "string",
+                      "example": "nome da integra\u00e7\u00e3o"
+                    },
+                    "url_webhook": {
+                      "type": "string",
+                      "example": "https://urldowebhook"
+                    },
+                    "cd_token": {
+                      "type": "string",
+                      "description": "Token de integra\u00e7\u00e3o (UUID)"
+                    },
+                    "is_enabled": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401APITokenNaoExiste"
+          },
+          "404": {
+            "description": "Token da API n\u00e3o encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Listar todos os webhooks da conta (v3)",
+        "operationId": "getWebhooksV3",
+        "description": "Obt\u00e9m dados de todos os webhooks do cliente, incluindo os desativados.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EcdtToken"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de todos os webhooks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "nomeIntegracao": {
+                        "type": "string",
+                        "example": "Teste integra\u00e7\u00e3o"
+                      },
+                      "urlWebhook": {
+                        "type": "string",
+                        "example": "http://webhook.com/codigowebhook"
+                      },
+                      "token": {
+                        "type": "string",
+                        "description": "Token de integra\u00e7\u00e3o (UUID)"
+                      },
+                      "ativo": {
+                        "type": "boolean",
+                        "example": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401EcdtTokenNaoAutorizado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Atualizar webhook (v3)",
+        "operationId": "updateWebhookV3",
+        "description": "Ativar ou desativar uma integra\u00e7\u00e3o, alterar sua URL e alterar seu nome.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "urlWebhook": {
+                    "type": "string",
+                    "example": "https://novaurl.com"
+                  },
+                  "nomeIntegracao": {
+                    "type": "string",
+                    "example": "Novo nome"
+                  },
+                  "ativo": {
+                    "type": "boolean",
+                    "example": false
+                  }
+                }
+              },
+              "example": {
+                "urlWebhook": "https://novaurl.com",
+                "nomeIntegracao": "Novo nome",
+                "ativo": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dados da integra\u00e7\u00e3o atualizados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nomeIntegracao": {
+                      "type": "string"
+                    },
+                    "urlWebhook": {
+                      "type": "string"
+                    },
+                    "ativo": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401APITokenNaoExiste"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Cadastrar novo webhook (v3)",
+        "operationId": "insertWebhookV3",
+        "description": "Permite adicionar um webhook por vez. Cada integra\u00e7\u00e3o possuir\u00e1 um token \u00fanico.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EcdtToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nomeIntegracao"
+                ],
+                "properties": {
+                  "webhookUrl": {
+                    "type": "string",
+                    "example": "https://urldowebhook.com",
+                    "description": "URL que receber\u00e1 os eventos do webhook"
+                  },
+                  "nomeIntegracao": {
+                    "type": "string",
+                    "example": "Teste da integra\u00e7\u00e3o",
+                    "description": "Nome exibido para esta integra\u00e7\u00e3o na plataforma"
+                  }
+                }
+              },
+              "example": {
+                "webhookUrl": "https://urldowebhook.com",
+                "nomeIntegracao": "Teste da integra\u00e7\u00e3o"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Novo webhook adicionado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nomeIntegracao": {
+                      "type": "string"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401EcdtTokenNaoAutorizado"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/update-lead": {
+      "post": {
+        "tags": [
+          "Tags"
+        ],
+        "summary": "Adicionar tags \u00e0s empresas (v3)",
+        "operationId": "updateLeadV3",
+        "description": "Para cada objeto no array \"empresas\", envie de 1 a 3 campos (CNPJ, email e/ou site). \u00c9 poss\u00edvel adicionar tags ao grupo econ\u00f4mico (sinalizarGrupoEconomico).\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/APIToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "empresas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "cnpj": {
+                          "type": "string",
+                          "example": "00.000.000/0000-00"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "email@email.com"
+                        },
+                        "site": {
+                          "type": "string",
+                          "example": "site.com.br"
+                        },
+                        "sinalizarGrupoEconomico": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "description": "Tags que ser\u00e3o adicionadas \u00e0s empresas.",
+                    "example": [
+                      "tag1",
+                      "tag2"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tags adicionadas com sucesso \u00e0s empresas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "example": [
+                    {
+                      "sucesso": true,
+                      "cnpj": "00.000.000/0000-01"
+                    },
+                    {
+                      "sucesso": false,
+                      "cnpj": "00.000.000/0000-02"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401APITokenNaoExiste"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompanySearchRequest": {
+        "type": "object",
+        "description": "Crit\u00e9rios de busca (pelo menos um obrigat\u00f3rio).",
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "example": "00.000.000/0000-00"
+          },
+          "site": {
+            "type": "string",
+            "example": "exemplo.com.br"
+          },
+          "email": {
+            "type": "string",
+            "example": "contato@empresa.com.br"
+          },
+          "raiz_cnpj": {
+            "type": "string",
+            "example": "00.000.000"
+          }
+        }
+      },
+      "CompanyResponse": {
+        "type": "object",
+        "description": "Dados da empresa retornados na busca.",
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "example": "17.948.237/0001-00"
+          },
+          "razaoSocial": {
+            "type": "string",
+            "example": "ECONODATA TECNOLOGIA DA INFORMACAO LTDA"
+          },
+          "nomeFantasia": {
+            "type": "string",
+            "example": "ECONODATA"
+          },
+          "tipoUnidade": {
+            "type": "string",
+            "example": "MATRIZ"
+          },
+          "logradouro": {
+            "type": "string"
+          },
+          "numero": {
+            "type": "string"
+          },
+          "bairro": {
+            "type": "string"
+          },
+          "cep": {
+            "type": "string"
+          },
+          "cidade": {
+            "type": "string"
+          },
+          "uf": {
+            "type": "string"
+          },
+          "melhorTelefone": {
+            "type": "string"
+          },
+          "melhorSite": {
+            "type": "string"
+          },
+          "atividadeEconomica": {
+            "type": "string"
+          },
+          "quantidadeFuncionarios": {
+            "type": "integer"
+          },
+          "situacao": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "description": "Resposta padronizada de erro da API.",
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "integer",
+                "description": "C\u00f3digo HTTP de status.",
+                "example": 400
+              },
+              "message": {
+                "type": "string",
+                "description": "Mensagem explicativa do erro.",
+                "example": "Par\u00e2metros com formato inv\u00e1lido."
+              },
+              "details": {
+                "type": "array",
+                "description": "Opcional; detalhes adicionais (ex. erros de valida\u00e7\u00e3o)."
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "401APITokenNaoExiste": {
+        "description": "Token inv\u00e1lido ou n\u00e3o informado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "error": {
+                "code": 401,
+                "message": "Token inv\u00e1lido."
+              }
+            }
+          }
+        }
+      },
+      "401EcdtTokenNaoAutorizado": {
+        "description": "Token inv\u00e1lido ou n\u00e3o informado.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "error": {
+                "code": 401,
+                "message": "Token inv\u00e1lido."
+              }
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "APIToken": {
+        "in": "header",
+        "name": "x-api-token",
+        "required": true,
+        "description": "O token da API que foi gerado no momento da cria\u00e7\u00e3o da integra\u00e7\u00e3o (formato exemplo xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "EcdtToken": {
+        "in": "header",
+        "name": "x-ecdt-token",
+        "required": true,
+        "description": "Token JWT obtido na Plataforma (ferramentas do desenvolvedor do navegador). N\u00e3o incluir exemplo de valor real.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "token"
+      }
+    }
+  }
+}

@@ -1,0 +1,1486 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EMC2 Apps - API de Encuestas de Satisfacci\u00f3n",
+    "description": "API para la gesti\u00f3n y carga automatizada de encuestas de satisfacci\u00f3n f\u00edsicas digitalizadas.\n\n## Flujo de autenticaci\u00f3n\n1. Realizar login en `/Usuarios/LogIn` para obtener token JWT\n2. Incluir el token en todas las llamadas posteriores: `Authorization: Bearer {token}`\n\n## Flujo principal\n### Fase inicial (una vez por sesi\u00f3n):\n1. Login \u2192 Obtener token\n2. GET /Cuestionarios \u2192 Cargar todos los cuestionarios\n3. GET /Remesas \u2192 Cargar todas las remesas y mapear con cuestionarios\n4. GET /TiposComentario \u2192 Cargar cat\u00e1logo de tipos\n\n### Fase por encuesta (repetir por cada encuesta):\n5. Identificar cuestionario de la encuesta f\u00edsica\n6. GET /Cuestionarios/{id} \u2192 Obtener preguntas\n7. GET /Cuestionarios/{id}/Departamentos \u2192 Obtener departamentos\n8. GET /Cuestionarios/{id}/Dimensiones \u2192 Obtener dimensiones\n9. GET /Etiquetas?cuestionarioId={id} \u2192 Obtener etiquetas\n10. POST /Remesas/{id}/Encuestas \u2192 Enviar encuesta procesada\n",
+    "version": "2.0.0",
+    "contact": {
+      "name": "MC2 Calidad - Soporte T\u00e9cnico",
+      "email": "soporte@mc2calidad.com"
+    },
+    "termsOfService": "https://www.emc2apps.com/terminos",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/keldai/emc2-apps-api-de-encuestas-de-satisfaccion/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.emc2apps.com/EMC2GeneralWS/resources",
+      "description": "Servidor de autenticaci\u00f3n"
+    },
+    {
+      "url": "https://api.emc2apps.com/EMC2WS/resources",
+      "description": "Servidor principal de API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticaci\u00f3n",
+      "description": "Endpoints de login y gesti\u00f3n de tokens"
+    },
+    {
+      "name": "Cat\u00e1logos",
+      "description": "Endpoints para cargar cat\u00e1logos generales (cuestionarios, remesas, tipos)"
+    },
+    {
+      "name": "Cuestionario",
+      "description": "Endpoints para obtener datos espec\u00edficos de un cuestionario"
+    },
+    {
+      "name": "Encuestas",
+      "description": "Endpoints para enviar encuestas procesadas"
+    }
+  ],
+  "paths": {
+    "/Usuarios/LogIn": {
+      "post": {
+        "tags": [
+          "Autenticaci\u00f3n"
+        ],
+        "summary": "Login de usuario",
+        "description": "Autenticaci\u00f3n de usuario para obtener token JWT.\nEl token debe incluirse en todas las llamadas posteriores.\n",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "examples": {
+                "ejemplo1": {
+                  "summary": "Login b\u00e1sico",
+                  "value": {
+                    "email": "usuario@ejemplo.com",
+                    "password": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Respuesta exitosa",
+                    "value": {
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                      "usuario": {
+                        "id": 123,
+                        "nombre": "Juan P\u00e9rez",
+                        "email": "usuario@ejemplo.com"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Formato de request incorrecto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales incorrectas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Cuestionarios": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Obtener todos los cuestionarios disponibles",
+        "description": "Retorna la lista completa de cuestionarios disponibles.\nLas preguntas vienen vac\u00edas en este endpoint, se obtienen individualmente.\n",
+        "operationId": "getCuestionarios",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cuestionarios obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuestionariosResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "cuestionarios": [
+                        {
+                          "id": 217,
+                          "nombre": "Ibizatours 2024",
+                          "isComentarioFinalOnline": false,
+                          "preguntas": []
+                        },
+                        {
+                          "id": 36,
+                          "nombre": "SIC Reducido 2020",
+                          "isComentarioFinalOnline": false,
+                          "preguntas": []
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/Remesas": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Obtener todas las remesas disponibles",
+        "description": "Retorna la lista completa de remesas con su relaci\u00f3n con cuestionarios.\nUsar para mapear qu\u00e9 remesas pertenecen a cada cuestionario.\n",
+        "operationId": "getRemesas",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de remesas obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemesasResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "remesas": [
+                        {
+                          "id": 7766,
+                          "fecha": "2026-01-01",
+                          "fechaCaducidad": null,
+                          "hotel": {
+                            "id": 114,
+                            "nombre": "Ibizatours",
+                            "cadena": {
+                              "id": 58,
+                              "nombre": "Ibizatours"
+                            }
+                          },
+                          "cuestionario": {
+                            "id": 217,
+                            "nombre": "Ibizatours 2024"
+                          },
+                          "numEncuestas": 0,
+                          "online": true,
+                          "cerrada": false,
+                          "anonima": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/TiposComentario": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Obtener tipos de comentario disponibles",
+        "description": "Cat\u00e1logo est\u00e1tico de tipos de comentario:\n- 1: Queja\n- 2: Sugerencia\n- 3: Felicitaci\u00f3n\n- 4: Comentario (gen\u00e9rico)\n",
+        "operationId": "getTiposComentario",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tipos de comentario obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiposComentarioResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "tiposComentario": [
+                        {
+                          "id": 1,
+                          "nombre": "Queja",
+                          "queja": true,
+                          "sugerencia": false,
+                          "felicitacion": false,
+                          "observacion": false
+                        },
+                        {
+                          "id": 2,
+                          "nombre": "Sugerencia",
+                          "queja": false,
+                          "sugerencia": true,
+                          "felicitacion": false,
+                          "observacion": false
+                        },
+                        {
+                          "id": 3,
+                          "nombre": "Felicitaci\u00f3n",
+                          "queja": false,
+                          "sugerencia": false,
+                          "felicitacion": true,
+                          "observacion": false
+                        },
+                        {
+                          "id": 4,
+                          "nombre": "Comentario",
+                          "queja": false,
+                          "sugerencia": false,
+                          "felicitacion": false,
+                          "observacion": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/Cuestionarios/{id}": {
+      "get": {
+        "tags": [
+          "Cuestionario"
+        ],
+        "summary": "Obtener detalles de un cuestionario espec\u00edfico",
+        "description": "Retorna el cuestionario con todas sus preguntas.\nUsar este endpoint para obtener las preguntas que se van a mapear.\n",
+        "operationId": "getCuestionario",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID del cuestionario",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 217
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cuestionario obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuestionarioDetalle"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "id": 217,
+                      "nombre": "Ibizatours 2024",
+                      "isComentarioFinalOnline": false,
+                      "preguntas": [
+                        {
+                          "id": 3184,
+                          "enunciado": "\u00bfC\u00f3mo valorar\u00eda la limpieza de su habitaci\u00f3n?",
+                          "subtitulo": null,
+                          "nombreCorto": "Limpieza Hab",
+                          "peso": 1.0,
+                          "pesoDepartamento": 1.0,
+                          "tipoPregunta": {
+                            "id": 1,
+                            "nombre": "Escala 1-5",
+                            "tipo": "ESCALA"
+                          },
+                          "dimension": {
+                            "id": 1,
+                            "nombre": "Instalaciones"
+                          },
+                          "departamento": {
+                            "id": 2,
+                            "nombre": "Pisos"
+                          },
+                          "isNivelSatisfaccion": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Cuestionario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Cuestionarios/{id}/Departamentos": {
+      "get": {
+        "tags": [
+          "Cuestionario"
+        ],
+        "summary": "Obtener departamentos de un cuestionario",
+        "description": "Lista de departamentos disponibles para este cuestionario espec\u00edfico",
+        "operationId": "getDepartamentos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID del cuestionario",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 217
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Departamentos obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartamentosResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "departamentos": [
+                        {
+                          "id": 9,
+                          "nombre": "Recepci\u00f3n",
+                          "url": "https://static.emc2apps.com/img/d_recepcion.png"
+                        },
+                        {
+                          "id": 2,
+                          "nombre": "Pisos",
+                          "url": "https://static.emc2apps.com/img/d_pisos.png"
+                        },
+                        {
+                          "id": 3,
+                          "nombre": "Comedor",
+                          "url": "https://static.emc2apps.com/img/d_comedor.png"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Cuestionario no encontrado"
+          }
+        }
+      }
+    },
+    "/Cuestionarios/{id}/Dimensiones": {
+      "get": {
+        "tags": [
+          "Cuestionario"
+        ],
+        "summary": "Obtener dimensiones de un cuestionario",
+        "description": "Lista jer\u00e1rquica de dimensiones disponibles para este cuestionario.\nLas dimensiones pueden tener subdimensiones anidadas.\n",
+        "operationId": "getDimensiones",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID del cuestionario",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 217
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dimensiones obtenidas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DimensionesResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "dimensiones": [
+                        {
+                          "id": 1,
+                          "nombre": "Instalaciones",
+                          "subdimensiones": [
+                            {
+                              "id": 3,
+                              "nombre": "Inst. comunes",
+                              "subdimensiones": [],
+                              "url": "https://static.emc2apps.com/img/dim_instalaciones.png"
+                            },
+                            {
+                              "id": 2,
+                              "nombre": "Habitaci\u00f3n",
+                              "subdimensiones": [
+                                {
+                                  "id": 13,
+                                  "nombre": "Confort",
+                                  "subdimensiones": [],
+                                  "url": null
+                                },
+                                {
+                                  "id": 14,
+                                  "nombre": "Equipamiento",
+                                  "subdimensiones": [],
+                                  "url": null
+                                }
+                              ],
+                              "url": "https://static.emc2apps.com/img/dim_habitacion.png"
+                            }
+                          ],
+                          "url": "https://static.emc2apps.com/img/dim_instalaciones.png"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Cuestionario no encontrado"
+          }
+        }
+      }
+    },
+    "/Etiquetas": {
+      "get": {
+        "tags": [
+          "Cuestionario"
+        ],
+        "summary": "Obtener etiquetas de un cuestionario",
+        "description": "Lista de etiquetas disponibles para un cuestionario espec\u00edfico.\nLas etiquetas vienen pre-asociadas con tipoComentario, dimensi\u00f3n y departamento.\n",
+        "operationId": "getEtiquetas",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cuestionarioId",
+            "in": "query",
+            "required": true,
+            "description": "ID del cuestionario",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 217
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Etiquetas obtenidas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtiquetasResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Ejemplo de respuesta",
+                    "value": {
+                      "etiquetas": [
+                        {
+                          "id": 527,
+                          "nombre": "Seguridad sanitaria",
+                          "descripcion": "Medidas de seguridad sanitaria inadecuadas/insuficientes",
+                          "tipoComentario": {
+                            "id": 1,
+                            "nombre": "Queja"
+                          },
+                          "dimension": {
+                            "id": 5,
+                            "nombre": "Servicio",
+                            "subdimensiones": [],
+                            "url": null
+                          },
+                          "departamento": {
+                            "id": 9,
+                            "nombre": "Recepci\u00f3n"
+                          }
+                        },
+                        {
+                          "id": 328,
+                          "nombre": "Personal amable",
+                          "descripcion": "El personal fue muy amable y servicial",
+                          "tipoComentario": {
+                            "id": 3,
+                            "nombre": "Felicitaci\u00f3n"
+                          },
+                          "dimension": {
+                            "id": 4,
+                            "nombre": "Personal"
+                          },
+                          "departamento": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/Remesas/{id}/Encuestas": {
+      "post": {
+        "tags": [
+          "Encuestas"
+        ],
+        "summary": "Crear/enviar una encuesta procesada",
+        "description": "Env\u00eda una encuesta f\u00edsica procesada al sistema.\n\n**IMPORTANTE:** Validar todos los IDs antes de enviar:\n- remesa.id existe y no est\u00e1 cerrada\n- cuestionario.id coincide con el de la remesa\n- Todos los pregunta.id existen en el cuestionario\n- Todos los tipoRespuesta.id son v\u00e1lidos\n- Todos los departamento.id, dimension.id y etiquetas.id existen\n\n**PENDIENTE CONFIRMAR:** \u00bfSe puede enviar array de encuestas o solo una?\n",
+        "operationId": "createEncuesta",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID de la remesa donde se carga la encuesta",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 7766
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EncuestaRequest"
+              },
+              "examples": {
+                "ejemplo1": {
+                  "summary": "Encuesta completa con respuestas y comentarios",
+                  "value": {
+                    "numEncuesta": 1,
+                    "remesa": {
+                      "id": 7766,
+                      "cuestionario": {
+                        "id": 217
+                      }
+                    },
+                    "respuestas": [
+                      {
+                        "pregunta": {
+                          "id": 3184
+                        },
+                        "tipoRespuesta": {
+                          "id": 3,
+                          "valor": "Muy contento"
+                        },
+                        "valor": null
+                      },
+                      {
+                        "pregunta": {
+                          "id": 3185
+                        },
+                        "tipoRespuesta": {
+                          "id": 4,
+                          "valor": "Contento"
+                        },
+                        "valor": null
+                      }
+                    ],
+                    "comentarios": [
+                      {
+                        "texto": "La habitaci\u00f3n estaba muy limpia y el personal fue muy amable",
+                        "tipoComentario": {
+                          "id": 3
+                        },
+                        "departamento": {
+                          "id": 2
+                        },
+                        "dimension": {
+                          "id": 1
+                        },
+                        "etiquetas": [
+                          {
+                            "id": 328
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Encuesta creada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EncuestaResponse"
+                },
+                "examples": {
+                  "ejemplo1": {
+                    "summary": "Respuesta exitosa",
+                    "value": {
+                      "id": 470791,
+                      "numEncuesta": 1,
+                      "remesa": {
+                        "id": 7766
+                      },
+                      "status": "PROCESADA",
+                      "fechaCreacion": "2026-01-13T10:30:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inv\u00e1lidos o formato incorrecto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "validacion": {
+                    "summary": "Error de validaci\u00f3n",
+                    "value": {
+                      "error": "Validaci\u00f3n fallida",
+                      "message": "El ID de pregunta 9999 no existe en el cuestionario 217",
+                      "code": "VALIDATION_ERROR"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Remesa o cuestionario no encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto - Encuesta duplicada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token JWT obtenido del endpoint /Usuarios/LogIn.\nIncluir en header: Authorization: Bearer {token}\n"
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Token no v\u00e1lido, expirado o no proporcionado",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "tokenInvalido": {
+                "summary": "Token inv\u00e1lido",
+                "value": {
+                  "error": "Unauthorized",
+                  "message": "Token JWT inv\u00e1lido o expirado",
+                  "code": "INVALID_TOKEN"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email del usuario",
+            "example": "usuario@ejemplo.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Contrase\u00f1a del usuario",
+            "example": "password123"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token JWT para autenticaci\u00f3n",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "usuario": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 123
+              },
+              "nombre": {
+                "type": "string",
+                "example": "Juan P\u00e9rez"
+              },
+              "email": {
+                "type": "string",
+                "example": "usuario@ejemplo.com"
+              }
+            }
+          }
+        }
+      },
+      "CuestionariosResponse": {
+        "type": "object",
+        "properties": {
+          "cuestionarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CuestionarioBasico"
+            }
+          }
+        }
+      },
+      "CuestionarioBasico": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID \u00fanico del cuestionario",
+            "example": 217
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre del cuestionario",
+            "example": "Ibizatours 2024"
+          },
+          "isComentarioFinalOnline": {
+            "type": "boolean",
+            "description": "Indica si permite comentario final online",
+            "example": false
+          },
+          "preguntas": {
+            "type": "array",
+            "description": "Array vac\u00edo en GET /Cuestionarios, con datos en GET /Cuestionarios/{id}",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "CuestionarioDetalle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 217
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Ibizatours 2024"
+          },
+          "isComentarioFinalOnline": {
+            "type": "boolean",
+            "example": false
+          },
+          "preguntas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pregunta"
+            }
+          }
+        }
+      },
+      "Pregunta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID \u00fanico de la pregunta",
+            "example": 3184
+          },
+          "enunciado": {
+            "type": "string",
+            "description": "Texto completo de la pregunta",
+            "example": "\u00bfC\u00f3mo valorar\u00eda la limpieza de su habitaci\u00f3n?"
+          },
+          "subtitulo": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "nombreCorto": {
+            "type": "string",
+            "description": "Nombre corto para identificaci\u00f3n",
+            "example": "Limpieza Hab"
+          },
+          "peso": {
+            "type": "number",
+            "format": "float",
+            "example": 1.0
+          },
+          "pesoDepartamento": {
+            "type": "number",
+            "format": "float",
+            "example": 1.0
+          },
+          "tipoPregunta": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "ESCALA",
+                  "TEXTO_LIBRE",
+                  "MULTIPLE_OPCION",
+                  "OPCION_UNICA"
+                ]
+              }
+            }
+          },
+          "dimension": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          },
+          "departamento": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          },
+          "isNivelSatisfaccion": {
+            "type": "boolean",
+            "description": "Indica si afecta al c\u00e1lculo de NPS",
+            "example": true
+          }
+        }
+      },
+      "RemesasResponse": {
+        "type": "object",
+        "properties": {
+          "remesas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Remesa"
+            }
+          }
+        }
+      },
+      "Remesa": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 7766
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01"
+          },
+          "fechaCaducidad": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null
+          },
+          "hotel": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "cadena": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "nombre": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "cuestionario": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          },
+          "numEncuestas": {
+            "type": "integer",
+            "example": 0
+          },
+          "online": {
+            "type": "boolean",
+            "example": true
+          },
+          "cerrada": {
+            "type": "boolean",
+            "description": "Si true, no se pueden enviar m\u00e1s encuestas",
+            "example": false
+          },
+          "anonima": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "TiposComentarioResponse": {
+        "type": "object",
+        "properties": {
+          "tiposComentario": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TipoComentario"
+            }
+          }
+        }
+      },
+      "TipoComentario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID del tipo:\n- 1: Queja\n- 2: Sugerencia\n- 3: Felicitaci\u00f3n\n- 4: Comentario\n",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Queja"
+          },
+          "queja": {
+            "type": "boolean"
+          },
+          "sugerencia": {
+            "type": "boolean"
+          },
+          "felicitacion": {
+            "type": "boolean"
+          },
+          "observacion": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DepartamentosResponse": {
+        "type": "object",
+        "properties": {
+          "departamentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Departamento"
+            }
+          }
+        }
+      },
+      "Departamento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 9
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Recepci\u00f3n"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://static.emc2apps.com/img/d_recepcion.png"
+          }
+        }
+      },
+      "DimensionesResponse": {
+        "type": "object",
+        "properties": {
+          "dimensiones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          }
+        }
+      },
+      "Dimension": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Instalaciones"
+          },
+          "subdimensiones": {
+            "type": "array",
+            "description": "Puede contener subdimensiones anidadas",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "example": "https://static.emc2apps.com/img/dim_instalaciones.png"
+          }
+        }
+      },
+      "EtiquetasResponse": {
+        "type": "object",
+        "properties": {
+          "etiquetas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Etiqueta"
+            }
+          }
+        }
+      },
+      "Etiqueta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 527
+          },
+          "nombre": {
+            "type": "string",
+            "example": "Seguridad sanitaria"
+          },
+          "descripcion": {
+            "type": "string",
+            "example": "Medidas de seguridad sanitaria inadecuadas/insuficientes"
+          },
+          "tipoComentario": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          },
+          "dimension": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              },
+              "subdimensiones": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "url": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "departamento": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nombre": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "EncuestaRequest": {
+        "type": "object",
+        "required": [
+          "numEncuesta",
+          "remesa",
+          "respuestas"
+        ],
+        "properties": {
+          "numEncuesta": {
+            "type": "integer",
+            "description": "N\u00famero \u00fanico de encuesta dentro de la remesa",
+            "example": 1
+          },
+          "remesa": {
+            "type": "object",
+            "required": [
+              "id",
+              "cuestionario"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID de la remesa",
+                "example": 7766
+              },
+              "cuestionario": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "ID del cuestionario (debe coincidir con el de la remesa)",
+                    "example": 217
+                  }
+                }
+              }
+            }
+          },
+          "respuestas": {
+            "type": "array",
+            "description": "Array de respuestas a las preguntas del cuestionario",
+            "items": {
+              "$ref": "#/components/schemas/RespuestaInput"
+            }
+          },
+          "comentarios": {
+            "type": "array",
+            "description": "Array opcional de comentarios de texto libre",
+            "items": {
+              "$ref": "#/components/schemas/ComentarioInput"
+            }
+          }
+        }
+      },
+      "RespuestaInput": {
+        "type": "object",
+        "required": [
+          "pregunta",
+          "tipoRespuesta"
+        ],
+        "properties": {
+          "pregunta": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID de la pregunta del cuestionario",
+                "example": 3184
+              }
+            }
+          },
+          "tipoRespuesta": {
+            "type": "object",
+            "required": [
+              "id",
+              "valor"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID del tipo de respuesta",
+                "example": 3
+              },
+              "valor": {
+                "type": "string",
+                "description": "Texto del valor de la respuesta",
+                "example": "Muy contento"
+              }
+            }
+          },
+          "valor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Valor adicional si aplica (puede ser null)",
+            "example": null
+          }
+        }
+      },
+      "ComentarioInput": {
+        "type": "object",
+        "required": [
+          "texto",
+          "tipoComentario"
+        ],
+        "properties": {
+          "texto": {
+            "type": "string",
+            "description": "Texto del comentario extra\u00eddo de la encuesta f\u00edsica",
+            "example": "La habitaci\u00f3n estaba muy limpia y el personal fue muy amable"
+          },
+          "tipoComentario": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID del tipo de comentario:\n- 1: Queja\n- 2: Sugerencia\n- 3: Felicitaci\u00f3n\n- 4: Comentario\n",
+                "example": 3
+              }
+            }
+          },
+          "departamento": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID del departamento relacionado (opcional)",
+                "example": 2
+              }
+            }
+          },
+          "dimension": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "ID de la dimensi\u00f3n relacionada (opcional)",
+                "example": 1
+              }
+            }
+          },
+          "etiquetas": {
+            "type": "array",
+            "description": "Array opcional de etiquetas asociadas",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 328
+                }
+              }
+            }
+          }
+        }
+      },
+      "EncuestaResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID de la encuesta creada en el sistema",
+            "example": 470791
+          },
+          "numEncuesta": {
+            "type": "integer",
+            "example": 1
+          },
+          "remesa": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 7766
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Estado de la encuesta",
+            "example": "PROCESADA"
+          },
+          "fechaCreacion": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-01-13T10:30:00Z"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Tipo de error",
+            "example": "Validation Error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensaje descriptivo del error",
+            "example": "El ID de pregunta 9999 no existe en el cuestionario 217"
+          },
+          "code": {
+            "type": "string",
+            "description": "C\u00f3digo de error para debugging",
+            "example": "VALIDATION_ERROR"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,557 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Imgflip API",
+    "description": "Imgflip API for getting popular meme templates and generating captioned memes. The get_memes endpoint is free and requires no auth; caption_image and other endpoints require an Imgflip account.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://imgflip.com/api",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://api.imgflip.com",
+      "description": "Imgflip API"
+    }
+  ],
+  "paths": {
+    "/get_memes": {
+      "get": {
+        "operationId": "getMemes",
+        "summary": "Get a list of popular meme templates (no auth required)",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "Filter by type: gif, image, or comma-separated for multiple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of popular meme templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "memes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MemeTemplate"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/caption_image": {
+      "post": {
+        "operationId": "captionImage",
+        "summary": "Generate a captioned meme image from a template",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["template_id", "username", "password"],
+                "properties": {
+                  "template_id": {
+                    "type": "string",
+                    "description": "Meme template ID"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Imgflip account username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Imgflip account password"
+                  },
+                  "text0": {
+                    "type": "string",
+                    "description": "Top text (alternative to boxes)"
+                  },
+                  "text1": {
+                    "type": "string",
+                    "description": "Bottom text (alternative to boxes)"
+                  },
+                  "font": {
+                    "type": "string",
+                    "description": "Font to use (default: impact)",
+                    "default": "impact"
+                  },
+                  "max_font_size": {
+                    "type": "integer",
+                    "description": "Maximum font size in pixels (default: 50)",
+                    "default": 50
+                  },
+                  "no_watermark": {
+                    "type": "boolean",
+                    "description": "Remove watermark (Premium feature)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated meme",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "description": "Direct URL to the meme image"
+                        },
+                        "page_url": {
+                          "type": "string",
+                          "description": "URL to the meme page on Imgflip"
+                        }
+                      }
+                    },
+                    "error_message": {
+                      "type": "string",
+                      "description": "Error message if success is false"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/caption_gif": {
+      "post": {
+        "operationId": "captionGif",
+        "summary": "Generate a captioned meme GIF from a template (Premium)",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["template_id", "username", "password"],
+                "properties": {
+                  "template_id": {
+                    "type": "string",
+                    "description": "GIF meme template ID"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Imgflip account username"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Imgflip account password"
+                  },
+                  "font": {
+                    "type": "string",
+                    "description": "Font to use",
+                    "default": "impact"
+                  },
+                  "max_font_size": {
+                    "type": "integer",
+                    "description": "Maximum font size in pixels",
+                    "default": 50
+                  },
+                  "no_watermark": {
+                    "type": "boolean",
+                    "description": "Remove watermark"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated meme GIF",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "page_url": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "error_message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search_memes": {
+      "post": {
+        "operationId": "searchMemes",
+        "summary": "Search the meme database by text query (Premium)",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "query"],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "query": {
+                    "type": "string",
+                    "description": "Search text"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Filter by type: gif or image"
+                  },
+                  "include_nsfw": {
+                    "type": "integer",
+                    "description": "Set to 1 to include adult content",
+                    "enum": [0, 1]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "memes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MemeTemplate"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_meme": {
+      "post": {
+        "operationId": "getMeme",
+        "summary": "Get a specific meme template by ID (Premium)",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "template_id"],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "template_id": {
+                    "type": "string",
+                    "description": "Meme template ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Meme template details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MemeTemplate"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automeme": {
+      "post": {
+        "operationId": "autoMeme",
+        "summary": "Automatically generate a meme from input text (Premium)",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "text"],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Input phrase - AI selects matching template"
+                  },
+                  "no_watermark": {
+                    "type": "boolean",
+                    "description": "Remove branding"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Auto-generated meme",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "page_url": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai_meme": {
+      "post": {
+        "operationId": "aiMeme",
+        "summary": "Generate an AI-powered meme with auto-selected text and template (Premium)",
+        "security": [
+          {
+            "imgflipAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "model": {
+                    "type": "string",
+                    "description": "AI model to use",
+                    "enum": ["openai", "classic"],
+                    "default": "openai"
+                  },
+                  "template_id": {
+                    "type": "string",
+                    "description": "Optional specific template ID (random if omitted)"
+                  },
+                  "prefix_text": {
+                    "type": "string",
+                    "description": "Topic seed text (max 64 characters)"
+                  },
+                  "no_watermark": {
+                    "type": "boolean",
+                    "description": "Remove branding"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI-generated meme",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "page_url": {
+                          "type": "string"
+                        },
+                        "template_id": {
+                          "type": "string"
+                        },
+                        "texts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "imgflipAuth": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "username",
+        "description": "Imgflip account credentials passed as username/password form fields in the POST body. This is a simplified representation; actual auth uses username + password fields in the request body."
+      }
+    },
+    "schemas": {
+      "MemeTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Template ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL of the template image"
+          },
+          "width": {
+            "type": "integer",
+            "description": "Image width in pixels"
+          },
+          "height": {
+            "type": "integer",
+            "description": "Image height in pixels"
+          },
+          "box_count": {
+            "type": "integer",
+            "description": "Number of text boxes in the template"
+          },
+          "captions": {
+            "type": "integer",
+            "description": "Number of captions created with this template"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,376 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NASA Mars Rover Photos API",
+    "description": "Access Mars rover imagery from Curiosity, Opportunity, and Spirit rovers. Also includes Astronomy Picture of the Day (APOD) and other NASA open data APIs. Uses api_key query parameter for authentication (DEMO_KEY available for testing).",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.nasa.gov/",
+    "x-jentic-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://api.nasa.gov"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "paths": {
+    "/mars-photos/api/v1/rovers/{rover}/photos": {
+      "get": {
+        "operationId": "getMarsRoverPhotos",
+        "summary": "Get photos from a Mars rover by sol (Martian day) or Earth date",
+        "parameters": [
+          {
+            "name": "rover",
+            "in": "path",
+            "required": true,
+            "description": "Rover name",
+            "schema": { "type": "string", "enum": ["curiosity", "opportunity", "spirit"] }
+          },
+          {
+            "name": "sol",
+            "in": "query",
+            "description": "Martian sol (day) number",
+            "schema": { "type": "integer", "example": 1000 }
+          },
+          {
+            "name": "earth_date",
+            "in": "query",
+            "description": "Earth date (YYYY-MM-DD format)",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "camera",
+            "in": "query",
+            "description": "Camera abbreviation (FHAZ, RHAZ, MAST, CHEMCAM, MAHLI, MARDI, NAVCAM, PANCAM, MINITES)",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination (25 items per page)",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "description": "NASA API key (use DEMO_KEY for testing)",
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of Mars rover photos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "sol": { "type": "integer" },
+                          "camera": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer" },
+                              "name": { "type": "string" },
+                              "rover_id": { "type": "integer" },
+                              "full_name": { "type": "string" }
+                            }
+                          },
+                          "img_src": { "type": "string", "format": "uri" },
+                          "earth_date": { "type": "string", "format": "date" },
+                          "rover": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer" },
+                              "name": { "type": "string" },
+                              "landing_date": { "type": "string", "format": "date" },
+                              "launch_date": { "type": "string", "format": "date" },
+                              "status": { "type": "string" },
+                              "max_sol": { "type": "integer" },
+                              "max_date": { "type": "string", "format": "date" },
+                              "total_photos": { "type": "integer" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid or rate-limited API key"
+          }
+        }
+      }
+    },
+    "/mars-photos/api/v1/rovers/{rover}/latest_photos": {
+      "get": {
+        "operationId": "getMarsRoverLatestPhotos",
+        "summary": "Get the most recent photos from a Mars rover",
+        "parameters": [
+          {
+            "name": "rover",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["curiosity", "opportunity", "spirit"] }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest photos from the rover",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "latest_photos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "sol": { "type": "integer" },
+                          "camera": { "type": "object" },
+                          "img_src": { "type": "string", "format": "uri" },
+                          "earth_date": { "type": "string", "format": "date" },
+                          "rover": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mars-photos/api/v1/manifests/{rover}": {
+      "get": {
+        "operationId": "getMarsRoverManifest",
+        "summary": "Get mission manifest for a Mars rover including photo counts per sol",
+        "parameters": [
+          {
+            "name": "rover",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["curiosity", "opportunity", "spirit"] }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rover mission manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photo_manifest": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "landing_date": { "type": "string", "format": "date" },
+                        "launch_date": { "type": "string", "format": "date" },
+                        "status": { "type": "string" },
+                        "max_sol": { "type": "integer" },
+                        "max_date": { "type": "string", "format": "date" },
+                        "total_photos": { "type": "integer" },
+                        "photos": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sol": { "type": "integer" },
+                              "earth_date": { "type": "string", "format": "date" },
+                              "total_photos": { "type": "integer" },
+                              "cameras": { "type": "array", "items": { "type": "string" } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/planetary/apod": {
+      "get": {
+        "operationId": "getAstronomyPictureOfTheDay",
+        "summary": "Get the Astronomy Picture of the Day",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "description": "Date of the APOD (YYYY-MM-DD), default is today",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Start of a date range for multiple APODs",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "End of a date range",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "description": "Return specified number of random APODs",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "thumbs",
+            "in": "query",
+            "description": "Return thumbnail URL for video APODs",
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Astronomy Picture of the Day data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": { "type": "string", "format": "date" },
+                    "explanation": { "type": "string" },
+                    "hdurl": { "type": "string", "format": "uri" },
+                    "media_type": { "type": "string" },
+                    "service_version": { "type": "string" },
+                    "title": { "type": "string" },
+                    "url": { "type": "string", "format": "uri" },
+                    "copyright": { "type": "string" },
+                    "thumbnail_url": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/neo/rest/v1/feed": {
+      "get": {
+        "operationId": "getNeoFeed",
+        "summary": "Get near-Earth object (asteroid) feed for a date range",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Start date (YYYY-MM-DD), default today",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "End date (YYYY-MM-DD), max 7 days after start",
+            "schema": { "type": "string", "format": "date" }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Near-Earth object data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "links": { "type": "object" },
+                    "element_count": { "type": "integer" },
+                    "near_earth_objects": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/neo/rest/v1/neo/{asteroid_id}": {
+      "get": {
+        "operationId": "getNeoLookup",
+        "summary": "Look up a specific near-Earth object by its ID",
+        "parameters": [
+          {
+            "name": "asteroid_id",
+            "in": "path",
+            "required": true,
+            "description": "Asteroid SPK-ID",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "default": "DEMO_KEY" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Near-Earth object details",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "query",
+        "description": "NASA API key. Register at https://api.nasa.gov/ or use DEMO_KEY for limited testing."
+      }
+    }
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mega Upload API",
+    "description": "API untuk mengupload file ke penyimpanan Mega.nz, mendapatkan link streaming,  dan manajemen file. Endpoint administratif dilindungi oleh Whitelist Key.",
+    "version": "1.0.1",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/arsilla/mega-upload-api/1.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://a.arsyilla.my.id",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Masukkan Whitelist Key (085380779466) di sini."
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/api/upload": {
+      "post": {
+        "summary": "Upload File Baru",
+        "description": "Upload file (maks 100MB). Memerlukan API Key.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload Berhasil",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "shortId": "a1b2c3",
+                    "streamUrl": "https://.../s/a1b2c3"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Akses Ditolak (Key Salah/Tidak Ada)"
+          }
+        }
+      }
+    },
+    "/s/{shortId}": {
+      "get": {
+        "summary": "Stream File (Public)",
+        "description": "Akses file langsung di browser (Video/Audio/Gambar). Tidak butuh Key.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "ID unik file (dari hasil upload)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File Stream",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/d/{shortId}": {
+      "get": {
+        "summary": "Download File (Public)",
+        "description": "Mendownload file ke device. Tidak butuh Key.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File Download"
+          }
+        }
+      }
+    },
+    "/info/{shortId}": {
+      "get": {
+        "summary": "Info File (Public)",
+        "description": "Melihat detail metadata file.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail File",
+            "content": {
+              "application/json": {
+                "example": {
+                  "filename": "video.mp4",
+                  "sizeFormatted": "15 MB"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files": {
+      "get": {
+        "summary": "Lihat Semua File",
+        "description": "Melihat daftar file yang tersimpan. Memerlukan API Key.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List File JSON"
+          }
+        }
+      }
+    },
+    "/api/stats": {
+      "get": {
+        "summary": "Statistik Server",
+        "description": "Melihat total penggunaan dan views. Memerlukan API Key.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data Statistik"
+          }
+        }
+      }
+    },
+    "/api/delete/{shortId}": {
+      "delete": {
+        "summary": "Hapus File",
+        "description": "Menghapus file (Soft Delete). Memerlukan API Key.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File Terhapus"
+          }
+        }
+      }
+    }
+  }
+}

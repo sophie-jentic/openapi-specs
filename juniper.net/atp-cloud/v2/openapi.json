@@ -1,0 +1,1428 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Juniper ATP Cloud API",
+    "description": "Juniper Advanced Threat Prevention (ATP) Cloud API for malware analysis, threat intelligence, and security policy management. Provides endpoints for submitting files for malware scanning, looking up threat scores by hash, managing blocklists and allowlists (IP, URL, domain), retrieving infected host data, and accessing STIX threat intelligence data.",
+    "version": "2.0.0",
+    "x-jentic-source-url": "https://www.juniper.net/documentation/us/en/software/atp-cloud/atp-cloud-api-setup/topics/concept/atp-cloud-api-overview.html"
+  },
+  "servers": [
+    {
+      "url": "https://api.sky.junipersecurity.net/v2/skyatp",
+      "description": "Juniper ATP Cloud API - US Region"
+    },
+    {
+      "url": "https://api-eu.sky.junipersecurity.net/v2/skyatp",
+      "description": "Juniper ATP Cloud API - EU Region"
+    },
+    {
+      "url": "https://api-apac.sky.junipersecurity.net/v2/skyatp",
+      "description": "Juniper ATP Cloud API - APAC Region"
+    },
+    {
+      "url": "https://api-canada.sky.junipersecurity.net/v2/skyatp",
+      "description": "Juniper ATP Cloud API - Canada Region"
+    }
+  ],
+  "paths": {
+    "/ping": {
+      "get": {
+        "operationId": "pingApi",
+        "summary": "Check API availability",
+        "description": "Determine if the ATP Cloud API is available and responding. Does not require authentication.",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "API is available"
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/infected_hosts": {
+      "get": {
+        "operationId": "getInfectedHosts",
+        "summary": "Retrieve all infected hosts feed entries",
+        "description": "Get all entries from the infected hosts feed, including blocklist and allowlist IP addresses.",
+        "tags": ["Infected Hosts"],
+        "parameters": [
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "description": "Originating client IP address",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Infected hosts feed retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfectedHostsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/infected_hosts/{listType}": {
+      "get": {
+        "operationId": "getInfectedHostsList",
+        "summary": "Retrieve infected hosts blocklist or allowlist",
+        "description": "Get entries from the infected hosts blocklist or allowlist.",
+        "tags": ["Infected Hosts"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list to retrieve",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "description": "Originating client IP address",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfectedHostsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateInfectedHostsList",
+        "summary": "Add IPs to infected hosts blocklist or allowlist",
+        "description": "Add IP addresses to the infected hosts blocklist or allowlist.",
+        "tags": ["Infected Hosts"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list to update",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfectedHostsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Update accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeInfectedHostsFromList",
+        "summary": "Remove IPs from infected hosts blocklist or allowlist",
+        "description": "Remove IP addresses from the infected hosts blocklist or allowlist.",
+        "tags": ["Infected Hosts"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list to remove entries from",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfectedHostsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Removal accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/lookup/hash/{hashString}": {
+      "get": {
+        "operationId": "lookupMalwareByHash",
+        "summary": "Look up malware score by SHA256 hash",
+        "description": "Query the malware analysis score for a file by its SHA256 hash. Optionally request a full detailed report including behavioral analysis.",
+        "tags": ["Threat Lookup"],
+        "parameters": [
+          {
+            "name": "hashString",
+            "in": "path",
+            "required": true,
+            "description": "64-character SHA256 hash of the file to look up",
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[a-fA-F0-9]{64}$"
+            }
+          },
+          {
+            "name": "full_report",
+            "in": "query",
+            "required": false,
+            "description": "Request a full detailed report including behavioral analysis",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Malware scan result retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid hash format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hash not found in database",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/lookup/stix/{hashString}": {
+      "get": {
+        "operationId": "lookupStixByHash",
+        "summary": "Retrieve STIX threat intelligence data for a sample",
+        "description": "Get STIX (Structured Threat Information Expression) formatted data for a previously analyzed file sample identified by its SHA256 hash.",
+        "tags": ["Threat Lookup"],
+        "parameters": [
+          {
+            "name": "hashString",
+            "in": "path",
+            "required": true,
+            "description": "64-character SHA256 hash of the file",
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[a-fA-F0-9]{64}$"
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "STIX data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StixResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid hash format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hash not found in database",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/submit/sample": {
+      "post": {
+        "operationId": "submitSampleForAnalysis",
+        "summary": "Submit a file for malware analysis",
+        "description": "Submit a file sample for malware analysis. The file is scanned and analyzed for malicious behavior. Optionally provide metadata about the source of the file.",
+        "tags": ["Sample Submission"],
+        "parameters": [
+          {
+            "name": "full_report",
+            "in": "query",
+            "required": false,
+            "description": "Request a full detailed report",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The file to submit for analysis"
+                  },
+                  "sample_url": {
+                    "type": "string",
+                    "description": "URL from which the sample was obtained"
+                  },
+                  "remote_ip": {
+                    "type": "string",
+                    "description": "Source IP address (IPv4 or IPv6) where the file originated"
+                  },
+                  "client_ip": {
+                    "type": "string",
+                    "description": "Client IP address (IPv4 or IPv6) that downloaded the file"
+                  },
+                  "client_hostname": {
+                    "type": "string",
+                    "description": "Fully qualified domain name of the client"
+                  },
+                  "username": {
+                    "type": "string",
+                    "description": "Username associated with the file download"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sample submitted and scan result returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{listType}/file/{serverType}": {
+      "get": {
+        "operationId": "getListByFile",
+        "summary": "Retrieve blocklist or allowlist entries",
+        "description": "Retrieve all entries from a blocklist or allowlist filtered by server type (IP, URL, or domain).",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entries in the list",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List entries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlocklistResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateListByFile",
+        "summary": "Add entries to blocklist or allowlist via CSV file",
+        "description": "Upload a CSV file containing server entries (IPs, URLs, or domains) to add to the specified blocklist or allowlist.",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entries",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV file with a single column of server entries"
+                  },
+                  "failOnError": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to fail the entire operation if any entry is invalid"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Update accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeFromListByFile",
+        "summary": "Remove entries from blocklist or allowlist via CSV file",
+        "description": "Upload a CSV file containing server entries to remove from the specified blocklist or allowlist.",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entries",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "CSV file with entries to remove"
+                  },
+                  "failOnError": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Removal accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/{listType}/param/{serverType}": {
+      "get": {
+        "operationId": "getListByParam",
+        "summary": "Retrieve blocklist or allowlist entries by parameter",
+        "description": "Retrieve all entries from a blocklist or allowlist for a specific server type.",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entries",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List entries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlocklistResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateListByParam",
+        "summary": "Add a single entry to blocklist or allowlist",
+        "description": "Add a single server entry (IP, URL, or domain) to the specified blocklist or allowlist.",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entry",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "server": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "The IP address, URL, or FQDN to add"
+                  }
+                },
+                "required": ["server"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Update accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "removeFromListByParam",
+        "summary": "Remove a single entry from blocklist or allowlist",
+        "description": "Remove a single server entry from the specified blocklist or allowlist.",
+        "tags": ["Blocklist / Allowlist"],
+        "parameters": [
+          {
+            "name": "listType",
+            "in": "path",
+            "required": true,
+            "description": "Type of list",
+            "schema": {
+              "type": "string",
+              "enum": ["blacklist", "whitelist"]
+            }
+          },
+          {
+            "name": "serverType",
+            "in": "path",
+            "required": true,
+            "description": "Type of server entry",
+            "schema": {
+              "type": "string",
+              "enum": ["ip", "url", "domain"]
+            }
+          },
+          {
+            "name": "X-Forwarded-For",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "server": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "description": "The IP address, URL, or FQDN to remove"
+                  }
+                },
+                "required": ["server"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Removal accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token generated via Juniper ATP Cloud Web UI (Administration > Application Tokens). Maximum 10 tokens per user, valid for one year."
+      }
+    },
+    "schemas": {
+      "ScanResult": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 10,
+            "description": "Malware score from -1 (unknown) to 10 (highly malicious)"
+          },
+          "scan_complete": {
+            "type": "boolean",
+            "description": "Whether the scan has completed"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA256 hash of the analyzed file"
+          },
+          "last_update": {
+            "type": "integer",
+            "description": "Timestamp of last scan update"
+          },
+          "threat_level": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "clean"],
+            "description": "Overall threat level classification"
+          },
+          "category": {
+            "type": "string",
+            "description": "Malware category classification"
+          },
+          "size": {
+            "type": "integer",
+            "description": "File size in bytes"
+          },
+          "malware_info": {
+            "type": "object",
+            "description": "Detailed malware classification information",
+            "properties": {
+              "ident": {
+                "type": "string",
+                "description": "Malware identification string"
+              },
+              "family": {
+                "type": "string",
+                "description": "Malware family name"
+              },
+              "mw_type": {
+                "type": "string",
+                "description": "Malware type (e.g., trojan, worm, ransomware)"
+              },
+              "platform": {
+                "type": "string",
+                "description": "Target platform"
+              },
+              "group": {
+                "type": "string",
+                "description": "Malware group"
+              },
+              "lang": {
+                "type": "string",
+                "description": "Programming language"
+              },
+              "cmplr": {
+                "type": "string",
+                "description": "Compiler information"
+              }
+            }
+          },
+          "scan_report": {
+            "type": "object",
+            "description": "Detailed scan report with behavioral analysis",
+            "properties": {
+              "behaviors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "behavior": {
+                      "type": "string",
+                      "description": "Description of observed malicious behavior"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "StixResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "minLength": 3,
+            "description": "STIX formatted threat intelligence data in XML"
+          }
+        }
+      },
+      "InfectedHostsResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Number of entries in the list"
+              },
+              "ip": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "Map of IP addresses and their details"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Unique request identifier for tracking"
+          }
+        }
+      },
+      "InfectedHostsUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of IP addresses to add or remove"
+          }
+        },
+        "required": ["ip"]
+      },
+      "BlocklistResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Number of entries in the list"
+              },
+              "servers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of server entries (IPs, URLs, or domains)"
+              }
+            }
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Unique request identifier"
+          }
+        }
+      },
+      "RequestIdResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Unique identifier to track the asynchronous operation"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "err_id": {
+            "type": "string",
+            "description": "Machine-readable error identifier"
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional error details"
+          }
+        }
+      }
+    }
+  }
+}

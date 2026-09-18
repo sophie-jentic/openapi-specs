@@ -1,0 +1,1233 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Order.co API - Legacy Auth",
+    "version": "2",
+    "description": "External API for placing orders and managing locations on Order.co, authenticated via Application Key and Secret Key.\n\nThis API uses a legacy header-based authentication scheme. Each request must include the four required headers listed below. For the newer Bearer Token authentication, see the Order.co API - Bearer Token Auth documentation.\n",
+    "contact": {
+      "email": "tech@order.co"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/orderco-01c/external-api-legacy/2"
+  },
+  "servers": [
+    {
+      "url": "https://app.order.co/api/"
+    }
+  ],
+  "paths": {
+    "/orders": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create an order from an external system.",
+        "operationId": "createOrder",
+        "description": "Creates a new order in Order.co on behalf of an external system. The organization is resolved from the authentication headers. Line items can either be fulfilled by Order.co (paid_by_order: true) or by the external provider (paid_by_order: false).\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApplicationKey"
+          },
+          {
+            "$ref": "#/components/parameters/XSecretKey"
+          },
+          {
+            "$ref": "#/components/parameters/ProviderName"
+          },
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              },
+              "example": {
+                "user_id": 4560,
+                "purchase_order_number": "PO-1234",
+                "location_id": 5,
+                "cost_center_id": 333,
+                "additional_instructions": "Leave it in front door",
+                "line_items": [
+                  {
+                    "paid_by_order": true,
+                    "product_id": 987,
+                    "external_product_id": "86578",
+                    "quantity": 2
+                  },
+                  {
+                    "paid_by_order": false,
+                    "sku": "8765432",
+                    "product_name": "Energizer Industrial Alkaline AA Batteries, Box Of 24",
+                    "external_product_id": "86578",
+                    "unit_price": 400,
+                    "currency": "USD",
+                    "quantity": 2,
+                    "vendor": {
+                      "name": "Amazon",
+                      "external_id": "11985"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/IllegalInput"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "409": {
+            "$ref": "#/components/responses/DuplicateOrder"
+          }
+        },
+        "callbacks": {
+          "Order approved": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/OrderApproved"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          },
+          "Order rejected": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/OrderRejected"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          },
+          "Order completed": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/OrderCompleted"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          },
+          "Order error": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/OrderError"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          },
+          "Shipping update": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ShippingUpdate"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          },
+          "Product receipt update": {
+            "{$request.body#/callback_url}": {
+              "post": {
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/ProductReceiptUpdate"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Your server returns this code if it accepts the callback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "appKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/locations": {
+      "post": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Create a new location for the organization.",
+        "operationId": "createLocation",
+        "description": "Creates a new location under the authenticated organization. The organization is resolved from the authentication headers.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApplicationKey"
+          },
+          {
+            "$ref": "#/components/parameters/XSecretKey"
+          },
+          {
+            "$ref": "#/components/parameters/ProviderName"
+          },
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationRequest"
+              },
+              "example": {
+                "location": {
+                  "value": "Main Office",
+                  "description": "Corporate headquarters",
+                  "address_attributes": {
+                    "line_1": "123 Main Street",
+                    "line_2": "Suite 400",
+                    "city": "New York",
+                    "state": "NY",
+                    "zipcode": "10001",
+                    "country": "US",
+                    "attn_to": "John Doe",
+                    "name": "HQ Reception",
+                    "phone_number": "212-555-0100",
+                    "delivery_instructions": "Use freight elevator"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Location created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/IllegalInput"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          }
+        },
+        "security": [
+          {
+            "appKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/locations/{id}": {
+      "put": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Update an existing location.",
+        "operationId": "updateLocation",
+        "description": "Updates an existing location within the authenticated organization. Only the fields provided in the request body will be updated.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApplicationKey"
+          },
+          {
+            "$ref": "#/components/parameters/XSecretKey"
+          },
+          {
+            "$ref": "#/components/parameters/ProviderName"
+          },
+          {
+            "$ref": "#/components/parameters/OrganizationId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The internal ID of the location in Order.co",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 42
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocationRequest"
+              },
+              "example": {
+                "location": {
+                  "value": "Main Office - Updated",
+                  "description": "Corporate headquarters (relocated)",
+                  "address_attributes": {
+                    "line_1": "456 Broadway",
+                    "city": "New York",
+                    "state": "NY",
+                    "zipcode": "10013",
+                    "country": "US"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Location updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/IllegalInput"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationError"
+          },
+          "404": {
+            "description": "Location not found within the organization."
+          }
+        },
+        "security": [
+          {
+            "appKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "appKey": {
+        "type": "apiKey",
+        "name": "X-Application-Key",
+        "in": "header",
+        "description": "Global API key for access authorization."
+      },
+      "secretKey": {
+        "type": "apiKey",
+        "name": "X-Secret-Key",
+        "in": "header",
+        "description": "Provider-specific secret key for access authorization."
+      }
+    },
+    "parameters": {
+      "XApplicationKey": {
+        "name": "X-Application-Key",
+        "in": "header",
+        "description": "Global API key for access authorization.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "your-application-key"
+        }
+      },
+      "XSecretKey": {
+        "name": "X-Secret-Key",
+        "in": "header",
+        "description": "Provider-specific secret key for access authorization.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "your-secret-key"
+        }
+      },
+      "ProviderName": {
+        "name": "Provider-Name",
+        "in": "header",
+        "description": "Name of the external provider as registered in Order.co. Used to identify the integration source.\n",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "Guidelight Health"
+        }
+      },
+      "OrganizationId": {
+        "name": "Organization-Id",
+        "in": "header",
+        "description": "Internal ID of the organization in Order.co. Must belong to the authenticated provider.\n",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "example": 57370
+        }
+      }
+    },
+    "schemas": {
+      "Order": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "purchase_order_number",
+          "location_id",
+          "line_items"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "description": "Internal ID for a user in Order.co.",
+            "example": 4560
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "A string that identifies the external PO. Must be unique per provider.",
+            "example": "PO-1234"
+          },
+          "location_id": {
+            "type": "number",
+            "description": "Internal ID for a location in Order.co.",
+            "example": 5
+          },
+          "cost_center_id": {
+            "type": "number",
+            "description": "Internal ID for a cost center in Order.co (optional).",
+            "example": 333
+          },
+          "additional_instructions": {
+            "type": "string",
+            "description": "Additional instructions for the order.",
+            "example": "Leave it in front door"
+          },
+          "line_items": {
+            "type": "array",
+            "description": "List of items for the order. Each item must specify paid_by_order to indicate whether Order.co fulfills it (true) or the external provider does (false).\n",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/LineItemsFulfilledByOrder"
+                },
+                {
+                  "$ref": "#/components/schemas/LineItems"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "LineItems": {
+        "title": "LineItems (paid_by_order = false)",
+        "description": "Line item fulfilled and paid by the external provider. Requires vendor information and pricing.\n",
+        "type": "object",
+        "required": [
+          "paid_by_order",
+          "product_name",
+          "sku",
+          "unit_price",
+          "external_product_id",
+          "quantity",
+          "vendor"
+        ],
+        "properties": {
+          "paid_by_order": {
+            "type": "boolean",
+            "description": "Must be false for externally fulfilled items.",
+            "example": false
+          },
+          "sku": {
+            "type": "string",
+            "description": "Vendor's product ID / SKU.",
+            "example": "8765432"
+          },
+          "product_name": {
+            "type": "string",
+            "description": "Display name of the product.",
+            "example": "Energizer Industrial Alkaline AA Batteries, Box Of 24"
+          },
+          "product_id": {
+            "type": "number",
+            "description": "Product ID in Order.co (optional).",
+            "example": 987
+          },
+          "external_product_id": {
+            "type": "string",
+            "description": "Product ID in the external system.",
+            "example": "86578"
+          },
+          "url": {
+            "type": "string",
+            "description": "URI to a public-facing product page.",
+            "example": "https://www.amazon.com/Energizer-Batteries-Combo-Pack-Count/dp/B087GMJXMC"
+          },
+          "photo_url": {
+            "type": "string",
+            "description": "URI to a public-facing photo of the product.",
+            "example": "https://m.media-amazon.com/images/I/91Y304VtQzL._AC_SL1500_.jpg"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "Unit price in USD cents.",
+            "example": 400
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "example": "USD"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity to order.",
+            "example": 2
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/Vendor"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/Brand"
+          }
+        }
+      },
+      "LineItemsFulfilledByOrder": {
+        "title": "LineItems (paid_by_order = true)",
+        "description": "Line item to be fulfilled from Order.co's catalog. Requires a valid product_id from Order.co.\n",
+        "type": "object",
+        "required": [
+          "paid_by_order",
+          "product_id",
+          "external_product_id",
+          "quantity"
+        ],
+        "properties": {
+          "paid_by_order": {
+            "type": "boolean",
+            "description": "Must be true for items fulfilled by Order.co.",
+            "example": true
+          },
+          "sku": {
+            "type": "string",
+            "description": "Vendor's product ID / SKU (optional).",
+            "example": "8765432"
+          },
+          "product_name": {
+            "type": "string",
+            "description": "Display name of the product (optional, resolved from catalog).",
+            "example": "Energizer Industrial Alkaline AA Batteries, Box Of 24"
+          },
+          "product_id": {
+            "type": "number",
+            "description": "Product ID in Order.co.",
+            "example": 987
+          },
+          "external_product_id": {
+            "type": "string",
+            "description": "Product ID in the external system.",
+            "example": "86578"
+          },
+          "url": {
+            "type": "string",
+            "description": "URI to a public-facing product page.",
+            "example": "https://www.amazon.com/Energizer-Batteries-Combo-Pack-Count/dp/B087GMJXMC"
+          },
+          "photo_url": {
+            "type": "string",
+            "description": "URI to a public-facing photo of the product.",
+            "example": "https://m.media-amazon.com/images/I/91Y304VtQzL._AC_SL1500_.jpg"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "Unit price in USD cents (optional for catalog items).",
+            "example": 400
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "example": "USD"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity to order.",
+            "example": 2
+          },
+          "vendor": {
+            "$ref": "#/components/schemas/Vendor"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/Brand"
+          }
+        }
+      },
+      "Vendor": {
+        "title": "Vendor",
+        "type": "object",
+        "required": [
+          "name",
+          "external_id"
+        ],
+        "description": "Minimum supplier information that Order.co requires when managing orders and products. Required if paid_by_order is false.\n",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Vendor's name in Order.co.",
+            "example": "Amazon"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Vendor's unique identifier in the external system.",
+            "example": "11985"
+          },
+          "logo_url": {
+            "type": "string",
+            "description": "URL to the vendor's logo.",
+            "example": "https://amazon.com/uploads/logo.jpg"
+          },
+          "url": {
+            "type": "string",
+            "description": "Vendor's website URL.",
+            "example": "https://amazon.com/"
+          }
+        }
+      },
+      "Brand": {
+        "title": "Brand",
+        "type": "object",
+        "description": "Brand information from the external provider (optional).",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Brand name from the external provider.",
+            "example": "Energizer"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Brand's unique identifier in the external system.",
+            "example": "18976"
+          },
+          "logo_url": {
+            "type": "string",
+            "description": "URL to the brand's logo.",
+            "example": "https://energizer.com/uploads/logo.jpg"
+          },
+          "url": {
+            "type": "string",
+            "description": "Brand's website URL.",
+            "example": "https://energizer.com/"
+          }
+        }
+      },
+      "LocationRequest": {
+        "type": "object",
+        "required": [
+          "location"
+        ],
+        "properties": {
+          "location": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "string",
+                "description": "Location name.",
+                "example": "Main Office"
+              },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of the location.",
+                "example": "Corporate headquarters"
+              },
+              "deactivated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Set to deactivate the location. Null or omitted means active.\n",
+                "example": null
+              },
+              "address_attributes": {
+                "$ref": "#/components/schemas/AddressAttributes"
+              }
+            }
+          }
+        }
+      },
+      "AddressAttributes": {
+        "type": "object",
+        "description": "Physical address details for the location.",
+        "properties": {
+          "line_1": {
+            "type": "string",
+            "description": "Street address line 1.",
+            "example": "123 Main Street"
+          },
+          "line_2": {
+            "type": "string",
+            "description": "Street address line 2 (suite, floor, etc.).",
+            "example": "Suite 400"
+          },
+          "city": {
+            "type": "string",
+            "example": "New York"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province code.",
+            "example": "NY"
+          },
+          "zipcode": {
+            "type": "string",
+            "example": "10001"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code.",
+            "example": "US"
+          },
+          "attn_to": {
+            "type": "string",
+            "description": "Attention to (recipient name).",
+            "example": "John Doe"
+          },
+          "name": {
+            "type": "string",
+            "description": "Address label or name.",
+            "example": "HQ Reception"
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "212-555-0100"
+          },
+          "delivery_instructions": {
+            "type": "string",
+            "description": "Special instructions for deliveries.",
+            "example": "Use freight elevator"
+          }
+        }
+      },
+      "LocationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Internal location ID in Order.co.",
+            "example": 42
+          },
+          "value": {
+            "type": "string",
+            "description": "Location name.",
+            "example": "Main Office"
+          },
+          "description": {
+            "type": "string",
+            "example": "Corporate headquarters"
+          },
+          "organization_id": {
+            "type": "integer",
+            "example": 57370
+          },
+          "deactivated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": null
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-18T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-18T12:00:00Z"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "description": "Physical address associated with the location.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 101
+          },
+          "line_1": {
+            "type": "string",
+            "example": "123 Main Street"
+          },
+          "line_2": {
+            "type": "string",
+            "example": "Suite 400"
+          },
+          "city": {
+            "type": "string",
+            "example": "New York"
+          },
+          "state": {
+            "type": "string",
+            "example": "NY"
+          },
+          "zipcode": {
+            "type": "string",
+            "example": "10001"
+          },
+          "country": {
+            "type": "string",
+            "example": "US"
+          },
+          "attn_to": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "name": {
+            "type": "string",
+            "example": "HQ Reception"
+          },
+          "phone_number": {
+            "type": "string",
+            "example": "212-555-0100"
+          },
+          "delivery_instructions": {
+            "type": "string",
+            "example": "Use freight elevator"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-18T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-18T12:00:00Z"
+          }
+        }
+      },
+      "OrderCreatedResponse": {
+        "title": "Order Created Response",
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order in Order.co.",
+            "example": 123456
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Location can't be blank"
+            ]
+          }
+        }
+      },
+      "DuplicateOrderError": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "An order with this purchase_order_number already exists."
+            ]
+          }
+        }
+      },
+      "AuthenticationError": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Unauthorized"
+          }
+        }
+      },
+      "OrderApproved": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "approved"
+          }
+        }
+      },
+      "OrderRejected": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "rejected"
+          }
+        }
+      },
+      "OrderCompleted": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "completed"
+          }
+        }
+      },
+      "OrderError": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error detail message.",
+            "example": "[Generic Error]"
+          }
+        }
+      },
+      "ShippingUpdate": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "shipping_update"
+          },
+          "message": {
+            "$ref": "#/components/schemas/ShippingUpdateMessage"
+          }
+        }
+      },
+      "ShippingUpdateMessage": {
+        "type": "object",
+        "properties": {
+          "tracking_number": {
+            "type": "string",
+            "example": "TBA315278803477"
+          },
+          "courier": {
+            "type": "string",
+            "example": "FedEx"
+          },
+          "vendor_order_id": {
+            "type": "number",
+            "example": 1809138
+          },
+          "vendor_name": {
+            "type": "string",
+            "example": "Amazon"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Tracking record creation date.",
+            "example": "2024-08-26T14:30:00Z"
+          },
+          "estimated_delivery": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-08-30T14:30:00Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Shipment status. Possible values: confirmed, confirmed_no_tracking, delayed, delivered, failed, in_transit, out_for_delivery, pending, ready, unknown.\n",
+            "example": "in_transit"
+          },
+          "shipment_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-08-26T14:30:00Z"
+          },
+          "shipment_delivery_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-08-30T14:30:00Z"
+          },
+          "subtag_message": {
+            "type": "string",
+            "description": "Detailed shipment status message.",
+            "example": "Arrival scan"
+          },
+          "courier_tracking_link": {
+            "type": "string",
+            "description": "URL to track the shipment on the courier's website.",
+            "example": "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400136106051713242025"
+          },
+          "first_attempted_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-08-28T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-08-28T10:00:00Z"
+          }
+        }
+      },
+      "ProductReceiptUpdate": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "number",
+            "description": "Internal ID for the order.",
+            "example": 1765345
+          },
+          "purchase_order_number": {
+            "type": "string",
+            "description": "The external PO identifier.",
+            "example": "PO-1234"
+          },
+          "status": {
+            "type": "string",
+            "example": "product_receipt_update"
+          },
+          "message": {
+            "$ref": "#/components/schemas/ProductReceiptUpdateMessage"
+          }
+        }
+      },
+      "ProductReceiptUpdateMessage": {
+        "type": "object",
+        "properties": {
+          "product_receipt_id": {
+            "type": "number",
+            "example": 3477
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation date on the product receipt.",
+            "example": "2024-08-26T14:30:00Z"
+          },
+          "vendor_order_id": {
+            "type": "number",
+            "example": 1809138
+          },
+          "vendor_name": {
+            "type": "string",
+            "example": "Amazon"
+          },
+          "product_receipt_url": {
+            "type": "string",
+            "description": "URL to view the product receipt in Order.co.",
+            "example": "https://app.order.co/n/orders/98/product_receipts"
+          },
+          "line_items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductReceiptLineItem"
+            }
+          }
+        }
+      },
+      "ProductReceiptLineItem": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "string",
+            "description": "Product name.",
+            "example": "Strap Wrench Bottle Opener Adjustable 2Pcs (Red)"
+          },
+          "total_quantity": {
+            "type": "number",
+            "description": "Total quantity purchased.",
+            "example": 7
+          },
+          "quantity_remained": {
+            "type": "number",
+            "description": "Remaining quantity not yet received.",
+            "example": 3
+          },
+          "total_quantity_received": {
+            "type": "number",
+            "description": "Quantity received so far.",
+            "example": 2
+          }
+        }
+      }
+    },
+    "responses": {
+      "IllegalInput": {
+        "description": "The input is invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "AuthenticationError": {
+        "description": "Invalid authentication credentials.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthenticationError"
+            }
+          }
+        }
+      },
+      "DuplicateOrder": {
+        "description": "An order with this purchase_order_number already exists for this provider.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DuplicateOrderError"
+            }
+          }
+        }
+      }
+    }
+  }
+}

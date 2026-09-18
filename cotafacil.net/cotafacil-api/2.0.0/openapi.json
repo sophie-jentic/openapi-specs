@@ -1,0 +1,3936 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CotaFacil API",
+    "description": "API completa do sistema CotaFacil para integra\u00e7\u00e3o de vendedores e administradores.\n\n## Autentica\u00e7\u00e3o\nA API utiliza **Token Bearer** com armazenamento seguro em banco de dados. Ap\u00f3s o login bem-sucedido, um token \u00fanico \u00e9 retornado e deve ser utilizado nas requisi\u00e7\u00f5es subsequentes atrav\u00e9s do header `Authorization: Bearer {token}`.\n\n### Caracter\u00edsticas do Sistema de Tokens\n- **Validade:** 30 dias a partir da cria\u00e7\u00e3o\n- **Formato:** 64 caracteres hexadecimais (256 bits de entropia)\n- **Armazenamento:** Banco de dados com tracking de IP e User-Agent\n- **Revoga\u00e7\u00e3o:** Autom\u00e1tica no logout ou manual via endpoint espec\u00edfico\n- **M\u00faltiplos tokens:** Cada login gera um novo token v\u00e1lido\n\n## Perfis de Acesso\n\n### Vendedor/Fornecedor\n- Visualizar cota\u00e7\u00f5es abertas e fechadas\n- Enviar ofertas\n- Visualizar ofertas ganhas\n- Visualizar estat\u00edsticas do dashboard\n\n### Administrador\n- Todas as funcionalidades de CRUD (Fornecedores, Grupos, Produtos, Prazos)\n- Criar e fechar cota\u00e7\u00f5es\n- Visualizar e gerenciar ofertas\n- Importar e exportar dados\n- Gerar relat\u00f3rios\n- Configurar fechamento autom\u00e1tico\n\n## Seguran\u00e7a\n- Todas as requisi\u00e7\u00f5es devem ser feitas via HTTPS\n- Os tokens de autentica\u00e7\u00e3o **expiram ap\u00f3s 30 dias**\n- Tokens s\u00e3o **revogados imediatamente no logout**\n- Valida\u00e7\u00e3o de permiss\u00f5es por perfil de usu\u00e1rio\n- Prote\u00e7\u00e3o contra CSRF e XSS\n- Tracking completo de IP e User-Agent para auditoria\n",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Suporte CotaFacil",
+      "email": "suporte@cotafacil.net"
+    },
+    "license": {
+      "name": "Proprietary"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/grinfo/cotafacil-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://app.cotafacil.net/api/v2",
+      "description": "Servidor de Produ\u00e7\u00e3o"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autentica\u00e7\u00e3o",
+      "description": "Endpoints de autentica\u00e7\u00e3o e gest\u00e3o de sess\u00e3o"
+    },
+    {
+      "name": "Vendedor - Cota\u00e7\u00f5es",
+      "description": "Endpoints para vendedores consultarem cota\u00e7\u00f5es"
+    },
+    {
+      "name": "Vendedor - Ofertas",
+      "description": "Endpoints para vendedores gerenciarem ofertas"
+    },
+    {
+      "name": "Admin - Fornecedores",
+      "description": "CRUD completo de fornecedores (Admin)"
+    },
+    {
+      "name": "Admin - Grupos",
+      "description": "CRUD completo de grupos (Admin)"
+    },
+    {
+      "name": "Admin - Produtos",
+      "description": "CRUD completo de produtos (Admin)"
+    },
+    {
+      "name": "Admin - Prazos",
+      "description": "CRUD completo de prazos de entrega (Admin)"
+    },
+    {
+      "name": "Admin - Cota\u00e7\u00f5es",
+      "description": "Gest\u00e3o completa de cota\u00e7\u00f5es (Admin)"
+    },
+    {
+      "name": "Admin - Ofertas",
+      "description": "Visualiza\u00e7\u00e3o e gest\u00e3o de ofertas (Admin)"
+    },
+    {
+      "name": "Admin - Fechamento",
+      "description": "Processamento e fechamento de cota\u00e7\u00f5es (Admin)"
+    },
+    {
+      "name": "Admin - Importa\u00e7\u00e3o/Exporta\u00e7\u00e3o",
+      "description": "Importa\u00e7\u00e3o e exporta\u00e7\u00e3o de dados em massa (Admin)"
+    },
+    {
+      "name": "Admin - Relat\u00f3rios",
+      "description": "Gera\u00e7\u00e3o de relat\u00f3rios (Admin)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Token",
+        "description": "Token de 64 caracteres hexadecimais v\u00e1lido por 30 dias. Obtido via login e armazenado em banco de dados."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Descri\u00e7\u00e3o do erro"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Opera\u00e7\u00e3o realizada com sucesso"
+          }
+        }
+      },
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "vendedor"
+            ]
+          },
+          "supermercado": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nome": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Empresa": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "supermercado",
+              "fornecedor"
+            ]
+          }
+        }
+      },
+      "Fornecedor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome_empresa": {
+            "type": "string"
+          },
+          "cnpj": {
+            "type": "string"
+          },
+          "nome_responsavel": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "tel": {
+            "type": "string"
+          },
+          "cep": {
+            "type": "string"
+          },
+          "endereco": {
+            "type": "string"
+          },
+          "cidade": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "ativo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "supermercado_id": {
+            "type": "integer"
+          },
+          "grupos_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "Grupo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome_grupo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "supermercado_id": {
+            "type": "integer"
+          },
+          "ativo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        }
+      },
+      "Produto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "cod_prod": {
+            "type": "string"
+          },
+          "nome_prod": {
+            "type": "string"
+          },
+          "marca_prod": {
+            "type": "string"
+          },
+          "unidade_prod": {
+            "type": "string"
+          },
+          "ultimo_preco": {
+            "type": "number",
+            "format": "float"
+          },
+          "supermercado_id": {
+            "type": "integer"
+          },
+          "ativo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "grupos_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "Prazo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "dias": {
+            "type": "integer"
+          },
+          "ativo": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        }
+      },
+      "Cotacao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "identificador": {
+            "type": "string"
+          },
+          "data_abertura": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data_fechamento": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "aberta",
+              "fechada"
+            ]
+          },
+          "supermercado_id": {
+            "type": "integer"
+          },
+          "total_itens": {
+            "type": "integer"
+          },
+          "total_ofertas": {
+            "type": "integer"
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CotacaoItem"
+            }
+          }
+        }
+      },
+      "CotacaoItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "cotacao_id": {
+            "type": "integer"
+          },
+          "produto_id": {
+            "type": "integer"
+          },
+          "quantidade": {
+            "type": "number",
+            "format": "float"
+          },
+          "cod_prod": {
+            "type": "string"
+          },
+          "nome_prod": {
+            "type": "string"
+          },
+          "marca_prod": {
+            "type": "string"
+          },
+          "unidade_prod": {
+            "type": "string"
+          },
+          "ultimo_preco": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "Oferta": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "cotacao_item_id": {
+            "type": "integer"
+          },
+          "fornecedor_id": {
+            "type": "integer"
+          },
+          "supermercado_id": {
+            "type": "integer"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "format": "float"
+          },
+          "preco_total": {
+            "type": "number",
+            "format": "float"
+          },
+          "prazo_entrega": {
+            "type": "integer"
+          },
+          "disponibilidade": {
+            "type": "string",
+            "enum": [
+              "disponivel",
+              "indisponivel",
+              "sob_consulta"
+            ]
+          },
+          "observacoes": {
+            "type": "string",
+            "nullable": true
+          },
+          "selecionada": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "data_oferta": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fornecedor_nome": {
+            "type": "string"
+          },
+          "fornecedor_cnpj": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/empresas/{email}/{tipo}": {
+      "get": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Buscar empresas por e-mail",
+        "description": "Retorna lista de empresas vinculadas ao e-mail do usu\u00e1rio",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "example": "usuario@example.com"
+          },
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "vendedor"
+              ]
+            },
+            "example": "admin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de empresas retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Empresa"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Par\u00e2metros inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhuma empresa encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/admin": {
+      "post": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Login de administrador",
+        "description": "Autentica um administrador (supermercado/usu\u00e1rio) e retorna token v\u00e1lido por 30 dias",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "supermercado_id",
+                  "email",
+                  "senha"
+                ],
+                "properties": {
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@supermercado.com"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "senha123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login realizado com sucesso"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0",
+                          "description": "Token de 64 caracteres hexadecimais"
+                        },
+                        "tipo_usuario": {
+                          "type": "string",
+                          "example": "admin"
+                        },
+                        "supermercado_id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "usuario_id": {
+                          "type": "integer",
+                          "example": 15
+                        },
+                        "expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-03-19T10:30:00.000Z",
+                          "description": "Data de expira\u00e7\u00e3o do token (30 dias)"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inv\u00e1lidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/vendedor": {
+      "post": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Login de vendedor/fornecedor",
+        "description": "Autentica um vendedor/fornecedor e retorna token v\u00e1lido por 30 dias",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "supermercado_id",
+                  "email",
+                  "senha"
+                ],
+                "properties": {
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "vendedor@fornecedor.com"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "senha123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Login realizado com sucesso"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4e3d2c1b0",
+                          "description": "Token de 64 caracteres hexadecimais"
+                        },
+                        "tipo_usuario": {
+                          "type": "string",
+                          "example": "vendedor"
+                        },
+                        "fornecedor_id": {
+                          "type": "integer",
+                          "example": 5
+                        },
+                        "nome": {
+                          "type": "string",
+                          "example": "Jo\u00e3o Silva"
+                        },
+                        "expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-03-19T10:30:00.000Z",
+                          "description": "Data de expira\u00e7\u00e3o do token (30 dias)"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inv\u00e1lidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/renovar-token": {
+      "post": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Renovar token de autentica\u00e7\u00e3o",
+        "description": "Renova um token existente antes da expira\u00e7\u00e3o, estendendo sua validade por mais 30 dias",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token renovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token renovado com sucesso"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0",
+                          "description": "Novo token de 64 caracteres hexadecimais"
+                        },
+                        "expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-03-19T10:30:00.000Z",
+                          "description": "Nova data de expira\u00e7\u00e3o (30 dias a partir de agora)"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inv\u00e1lido ou expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/trocar-empresa": {
+      "post": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Trocar empresa",
+        "description": "Permite trocar de empresa sem necessidade de nova autentica\u00e7\u00e3o",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "supermercado_id",
+                  "email",
+                  "tipo"
+                ],
+                "properties": {
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "usuario@example.com"
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "vendedor"
+                    ],
+                    "example": "admin"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Troca realizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string"
+                        },
+                        "usuario": {
+                          "$ref": "#/components/schemas/Usuario"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Empresa n\u00e3o encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Logout",
+        "description": "Revoga o token atual imediatamente no banco de dados, impedindo seu uso posterior",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso e token revogado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Logout realizado com sucesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inv\u00e1lido ou j\u00e1 revogado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/check": {
+      "get": {
+        "tags": [
+          "Autentica\u00e7\u00e3o"
+        ],
+        "summary": "Verificar autentica\u00e7\u00e3o",
+        "description": "Verifica se o usu\u00e1rio est\u00e1 autenticado",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usu\u00e1rio autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "logged_in": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "tipo_usuario": {
+                          "type": "string",
+                          "example": "admin"
+                        },
+                        "nome": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/dashboard": {
+      "get": {
+        "tags": [
+          "Vendedor - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Dashboard do vendedor",
+        "description": "Retorna estat\u00edsticas para o dashboard do vendedor",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estat\u00edsticas retornadas com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cotacoes_abertas": {
+                          "type": "integer"
+                        },
+                        "ofertas_enviadas": {
+                          "type": "integer"
+                        },
+                        "ofertas_ganhas": {
+                          "type": "integer"
+                        },
+                        "valor_total_ganho": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Par\u00e2metros inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/cotacoes-abertas": {
+      "get": {
+        "tags": [
+          "Vendedor - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Listar cota\u00e7\u00f5es abertas",
+        "description": "Lista todas as cota\u00e7\u00f5es abertas para o vendedor",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cota\u00e7\u00f5es retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cotacao"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/cotacoes-fechadas": {
+      "get": {
+        "tags": [
+          "Vendedor - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Listar cota\u00e7\u00f5es fechadas",
+        "description": "Lista todas as cota\u00e7\u00f5es fechadas para o vendedor",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cota\u00e7\u00f5es retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cotacao"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/cotacao/{cotacaoId}": {
+      "get": {
+        "tags": [
+          "Vendedor - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Detalhes de uma cota\u00e7\u00e3o",
+        "description": "Retorna detalhes completos de uma cota\u00e7\u00e3o espec\u00edfica",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cotacaoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhes da cota\u00e7\u00e3o retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Cotacao"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cota\u00e7\u00e3o n\u00e3o encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/salvar-ofertas": {
+      "post": {
+        "tags": [
+          "Vendedor - Ofertas"
+        ],
+        "summary": "Salvar ofertas",
+        "description": "Salva ou atualiza ofertas do vendedor",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fornecedor_id",
+                  "ofertas"
+                ],
+                "properties": {
+                  "fornecedor_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "ofertas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "cotacao_item_id": {
+                          "type": "integer"
+                        },
+                        "preco_unitario": {
+                          "type": "number",
+                          "format": "float"
+                        },
+                        "prazo_entrega": {
+                          "type": "integer"
+                        },
+                        "disponibilidade": {
+                          "type": "string",
+                          "enum": [
+                            "disponivel",
+                            "indisponivel",
+                            "sob_consulta"
+                          ]
+                        },
+                        "observacoes": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "fornecedor_id": 1,
+                "ofertas": [
+                  {
+                    "cotacao_item_id": 10,
+                    "preco_unitario": 25.9,
+                    "prazo_entrega": 7,
+                    "disponibilidade": "disponivel",
+                    "observacoes": "Produto em estoque"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ofertas salvas com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendedor/prazos": {
+      "get": {
+        "tags": [
+          "Vendedor - Ofertas"
+        ],
+        "summary": "Listar prazos de entrega",
+        "description": "Lista todos os prazos de entrega dispon\u00edveis",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de prazos retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Prazo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/{supermercadoId}": {
+      "get": {
+        "tags": [
+          "Admin - Fornecedores"
+        ],
+        "summary": "Listar fornecedores",
+        "description": "Lista todos os fornecedores do supermercado (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Termo de busca"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de fornecedores retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Fornecedor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/show/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Fornecedores"
+        ],
+        "summary": "Buscar fornecedor",
+        "description": "Retorna detalhes de um fornecedor espec\u00edfico (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fornecedor retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Fornecedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores": {
+      "post": {
+        "tags": [
+          "Admin - Fornecedores"
+        ],
+        "summary": "Criar fornecedor",
+        "description": "Cria um novo fornecedor (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome_empresa",
+                  "supermercado_id"
+                ],
+                "properties": {
+                  "nome_empresa": {
+                    "type": "string",
+                    "example": "Distribuidora ABC"
+                  },
+                  "cnpj": {
+                    "type": "string",
+                    "example": "12.345.678/0001-90"
+                  },
+                  "nome_responsavel": {
+                    "type": "string",
+                    "example": "Jo\u00e3o Silva"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "contato@distribuidora.com"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "senha123"
+                  },
+                  "tel": {
+                    "type": "string",
+                    "example": "11987654321"
+                  },
+                  "cep": {
+                    "type": "string",
+                    "example": "01310-100"
+                  },
+                  "endereco": {
+                    "type": "string",
+                    "example": "Av. Paulista, 1000"
+                  },
+                  "cidade": {
+                    "type": "string",
+                    "example": "S\u00e3o Paulo"
+                  },
+                  "estado": {
+                    "type": "string",
+                    "example": "SP"
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "grupos": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "example": [
+                      1,
+                      2
+                    ]
+                  },
+                  "ativo": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fornecedor criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Fornecedor criado com sucesso"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Fornecedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/{id}": {
+      "put": {
+        "tags": [
+          "Admin - Fornecedores"
+        ],
+        "summary": "Atualizar fornecedor",
+        "description": "Atualiza um fornecedor existente (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Fornecedor"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fornecedor atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Fornecedor"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Fornecedores"
+        ],
+        "summary": "Deletar fornecedor",
+        "description": "Deleta um fornecedor (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fornecedor deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grupos/{supermercadoId}": {
+      "get": {
+        "tags": [
+          "Admin - Grupos"
+        ],
+        "summary": "Listar grupos",
+        "description": "Lista todos os grupos do supermercado (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de grupos retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Grupo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grupos/show/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Grupos"
+        ],
+        "summary": "Buscar grupo",
+        "description": "Retorna detalhes de um grupo espec\u00edfico (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grupo retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Grupo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupo n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grupos": {
+      "post": {
+        "tags": [
+          "Admin - Grupos"
+        ],
+        "summary": "Criar grupo",
+        "description": "Cria um novo grupo (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome_grupo",
+                  "supermercado_id"
+                ],
+                "properties": {
+                  "nome_grupo": {
+                    "type": "string",
+                    "example": "Alimentos"
+                  },
+                  "descricao": {
+                    "type": "string",
+                    "example": "Produtos aliment\u00edcios em geral"
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "ativo": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Grupo criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Grupo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grupos/{id}": {
+      "put": {
+        "tags": [
+          "Admin - Grupos"
+        ],
+        "summary": "Atualizar grupo",
+        "description": "Atualiza um grupo existente (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grupo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Grupo atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Grupo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Grupos"
+        ],
+        "summary": "Deletar grupo",
+        "description": "Deleta um grupo (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grupo deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos/{supermercadoId}": {
+      "get": {
+        "tags": [
+          "Admin - Produtos"
+        ],
+        "summary": "Listar produtos",
+        "description": "Lista todos os produtos do supermercado (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de produtos retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Produto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos/show/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Produtos"
+        ],
+        "summary": "Buscar produto",
+        "description": "Retorna detalhes de um produto espec\u00edfico (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Produto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos": {
+      "post": {
+        "tags": [
+          "Admin - Produtos"
+        ],
+        "summary": "Criar produto",
+        "description": "Cria um novo produto (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome_prod",
+                  "supermercado_id"
+                ],
+                "properties": {
+                  "cod_prod": {
+                    "type": "string",
+                    "example": "001"
+                  },
+                  "nome_prod": {
+                    "type": "string",
+                    "example": "Arroz Branco 5kg"
+                  },
+                  "marca_prod": {
+                    "type": "string",
+                    "example": "Tio Jo\u00e3o"
+                  },
+                  "unidade_prod": {
+                    "type": "string",
+                    "example": "UN"
+                  },
+                  "ultimo_preco": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 25.9
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "grupos": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "example": [
+                      1,
+                      2
+                    ]
+                  },
+                  "ativo": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produto criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Produto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos/{id}": {
+      "put": {
+        "tags": [
+          "Admin - Produtos"
+        ],
+        "summary": "Atualizar produto",
+        "description": "Atualiza um produto existente (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Produto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produto atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Produto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Produtos"
+        ],
+        "summary": "Deletar produto",
+        "description": "Deleta um produto (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prazos": {
+      "get": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Listar todos os prazos",
+        "description": "Lista todos os prazos cadastrados (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de prazos retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Prazo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Criar prazo",
+        "description": "Cria um novo prazo de entrega (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "dias"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "example": "7 dias"
+                  },
+                  "dias": {
+                    "type": "integer",
+                    "example": 7
+                  },
+                  "ativo": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Prazo criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Prazo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prazos/ativos": {
+      "get": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Listar prazos ativos",
+        "description": "Lista apenas os prazos ativos (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de prazos ativos retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Prazo"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prazos/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Buscar prazo",
+        "description": "Retorna detalhes de um prazo espec\u00edfico (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prazo retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Prazo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Atualizar prazo",
+        "description": "Atualiza um prazo existente (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prazo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prazo atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Prazo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Prazos"
+        ],
+        "summary": "Deletar prazo",
+        "description": "Deleta um prazo (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prazo deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cotacoes/verificar-identificador/{supermercadoId}/{identificador}": {
+      "get": {
+        "tags": [
+          "Admin - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Verificar disponibilidade de identificador",
+        "description": "Verifica se um identificador de cota\u00e7\u00e3o est\u00e1 dispon\u00edvel (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "identificador",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verifica\u00e7\u00e3o realizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "disponivel": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cotacoes/{supermercadoId}/abertas": {
+      "get": {
+        "tags": [
+          "Admin - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Listar cota\u00e7\u00f5es abertas",
+        "description": "Lista todas as cota\u00e7\u00f5es abertas do supermercado (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cota\u00e7\u00f5es retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cotacao"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cotacoes/{supermercadoId}/fechadas": {
+      "get": {
+        "tags": [
+          "Admin - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Listar cota\u00e7\u00f5es fechadas",
+        "description": "Lista todas as cota\u00e7\u00f5es fechadas do supermercado (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercadoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cota\u00e7\u00f5es retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cotacao"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cotacoes/show/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Buscar cota\u00e7\u00e3o",
+        "description": "Retorna detalhes completos de uma cota\u00e7\u00e3o (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cota\u00e7\u00e3o retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Cotacao"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cota\u00e7\u00e3o n\u00e3o encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cotacoes": {
+      "post": {
+        "tags": [
+          "Admin - Cota\u00e7\u00f5es"
+        ],
+        "summary": "Criar cota\u00e7\u00e3o",
+        "description": "Cria uma nova cota\u00e7\u00e3o com itens (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "identificador",
+                  "supermercado_id",
+                  "itens"
+                ],
+                "properties": {
+                  "identificador": {
+                    "type": "string",
+                    "example": "COT-2026-001"
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "observacoes": {
+                    "type": "string",
+                    "example": "Cota\u00e7\u00e3o urgente"
+                  },
+                  "itens": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "produto_id",
+                        "quantidade"
+                      ],
+                      "properties": {
+                        "produto_id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "quantidade": {
+                          "type": "number",
+                          "format": "float",
+                          "example": 100
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cota\u00e7\u00e3o criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Cotacao"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ofertas/item/{cotacaoItemId}": {
+      "get": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Listar ofertas por item",
+        "description": "Lista todas as ofertas de um item espec\u00edfico da cota\u00e7\u00e3o (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cotacaoItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ofertas retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Oferta"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ofertas/cotacao/{cotacaoId}": {
+      "get": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Listar ofertas por cota\u00e7\u00e3o",
+        "description": "Lista todas as ofertas de uma cota\u00e7\u00e3o (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cotacaoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de ofertas retornada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Oferta"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ofertas/{id}": {
+      "get": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Buscar oferta",
+        "description": "Retorna detalhes de uma oferta espec\u00edfica (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Oferta retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Oferta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Atualizar oferta",
+        "description": "Atualiza uma oferta existente (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preco_unitario": {
+                    "type": "number",
+                    "format": "float"
+                  },
+                  "prazo_entrega": {
+                    "type": "integer"
+                  },
+                  "disponibilidade": {
+                    "type": "string"
+                  },
+                  "observacoes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Oferta atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Oferta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Deletar oferta",
+        "description": "Deleta uma oferta (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Oferta deletada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ofertas": {
+      "post": {
+        "tags": [
+          "Admin - Ofertas"
+        ],
+        "summary": "Criar oferta",
+        "description": "Cria uma nova oferta (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cotacao_item_id",
+                  "fornecedor_id",
+                  "supermercado_id",
+                  "preco_unitario"
+                ],
+                "properties": {
+                  "cotacao_item_id": {
+                    "type": "integer",
+                    "example": 10
+                  },
+                  "fornecedor_id": {
+                    "type": "integer",
+                    "example": 5
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "preco_unitario": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 25.9
+                  },
+                  "prazo_entrega": {
+                    "type": "integer",
+                    "example": 7
+                  },
+                  "disponibilidade": {
+                    "type": "string",
+                    "enum": [
+                      "disponivel",
+                      "indisponivel",
+                      "sob_consulta"
+                    ],
+                    "example": "disponivel"
+                  },
+                  "observacoes": {
+                    "type": "string",
+                    "example": "Produto em estoque"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Oferta criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Oferta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fechamento/processar/{cotacaoId}": {
+      "get": {
+        "tags": [
+          "Admin - Fechamento"
+        ],
+        "summary": "Processar fechamento autom\u00e1tico",
+        "description": "Processa o fechamento autom\u00e1tico e retorna preview de vencedores e empates (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cotacaoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Processamento realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cotacao_id": {
+                          "type": "integer"
+                        },
+                        "cotacao": {
+                          "$ref": "#/components/schemas/Cotacao"
+                        },
+                        "tolerancia_percentual": {
+                          "type": "number",
+                          "format": "float"
+                        },
+                        "vencedores": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "empates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "total_ofertas": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cota\u00e7\u00e3o inv\u00e1lida ou j\u00e1 fechada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cota\u00e7\u00e3o n\u00e3o encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fechamento/fechar": {
+      "post": {
+        "tags": [
+          "Admin - Fechamento"
+        ],
+        "summary": "Fechar cota\u00e7\u00e3o",
+        "description": "Fecha a cota\u00e7\u00e3o com os itens selecionados (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cotacao_id",
+                  "fechamentos"
+                ],
+                "properties": {
+                  "cotacao_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "fechamentos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "oferta_id": {
+                          "type": "integer"
+                        },
+                        "fornecedor_id": {
+                          "type": "integer"
+                        },
+                        "criterio_desempate": {
+                          "type": "string",
+                          "enum": [
+                            "preco",
+                            "prazo",
+                            "qualidade"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cota\u00e7\u00e3o fechada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Cota\u00e7\u00e3o fechada com sucesso"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/importacao-exportacao/exportar": {
+      "get": {
+        "tags": [
+          "Admin - Importa\u00e7\u00e3o/Exporta\u00e7\u00e3o"
+        ],
+        "summary": "Exportar dados",
+        "description": "Exporta dados para CSV ou Excel (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "produtos",
+                "fornecedores",
+                "grupos",
+                "prazos"
+              ]
+            },
+            "example": "produtos"
+          },
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "grupo_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Filtrar por grupo (opcional)"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "default": "csv"
+            },
+            "example": "csv"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arquivo gerado com sucesso",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Par\u00e2metros inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/importacao-exportacao/importar": {
+      "post": {
+        "tags": [
+          "Admin - Importa\u00e7\u00e3o/Exporta\u00e7\u00e3o"
+        ],
+        "summary": "Importar dados",
+        "description": "Importa dados de arquivo CSV ou Excel (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "supermercado_id",
+                  "file"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "produtos",
+                      "fornecedores",
+                      "grupos",
+                      "prazos"
+                    ],
+                    "example": "produtos"
+                  },
+                  "supermercado_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "grupo_id": {
+                    "type": "integer",
+                    "description": "Associar itens importados a um grupo (opcional)"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Importa\u00e7\u00e3o conclu\u00edda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "imported": {
+                      "type": "integer",
+                      "example": 50
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Arquivo ou par\u00e2metros inv\u00e1lidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/importacao-exportacao/template/{type}": {
+      "get": {
+        "tags": [
+          "Admin - Importa\u00e7\u00e3o/Exporta\u00e7\u00e3o"
+        ],
+        "summary": "Baixar template de importa\u00e7\u00e3o",
+        "description": "Baixa um template de exemplo para importa\u00e7\u00e3o (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "produtos",
+                "fornecedores",
+                "grupos",
+                "prazos"
+              ]
+            },
+            "example": "produtos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Template gerado com sucesso",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Tipo inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/cotacoes-abertas": {
+      "get": {
+        "tags": [
+          "Admin - Relat\u00f3rios"
+        ],
+        "summary": "Relat\u00f3rio de cota\u00e7\u00f5es abertas",
+        "description": "Gera relat\u00f3rio de cota\u00e7\u00f5es abertas com filtros (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relat\u00f3rio gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/cotacoes-fechadas": {
+      "get": {
+        "tags": [
+          "Admin - Relat\u00f3rios"
+        ],
+        "summary": "Relat\u00f3rio de cota\u00e7\u00f5es fechadas",
+        "description": "Gera relat\u00f3rio de cota\u00e7\u00f5es fechadas com filtros (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relat\u00f3rio gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/produtos": {
+      "get": {
+        "tags": [
+          "Admin - Relat\u00f3rios"
+        ],
+        "summary": "Relat\u00f3rio de produtos",
+        "description": "Gera relat\u00f3rio de produtos com estat\u00edsticas (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "grupo_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ativo",
+                "inativo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relat\u00f3rio gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/itens-ganhos-fornecedor": {
+      "get": {
+        "tags": [
+          "Admin - Relat\u00f3rios"
+        ],
+        "summary": "Relat\u00f3rio de itens ganhos por fornecedor",
+        "description": "Gera relat\u00f3rio de ofertas ganhas por fornecedor (Admin)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "supermercado_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relat\u00f3rio gerado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fornecedor_id": {
+                            "type": "integer"
+                          },
+                          "fornecedor_nome": {
+                            "type": "string"
+                          },
+                          "fornecedor_cnpj": {
+                            "type": "string"
+                          },
+                          "cotacao_numero": {
+                            "type": "string"
+                          },
+                          "data_cotacao": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "total_itens_ganhos": {
+                            "type": "integer"
+                          },
+                          "valor_total": {
+                            "type": "number",
+                            "format": "float"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

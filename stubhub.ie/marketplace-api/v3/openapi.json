@@ -1,0 +1,2557 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "StubHub International Marketplace API",
+    "description": "StubHub International (IE) ticket marketplace API for sellers and partners. Provides endpoints for event catalog search, inventory/listing management, order tracking, sales fulfillment, venue configuration, and webhook subscriptions.",
+    "version": "3.0.0",
+    "x-jentic-source-url": "https://developer.stubhub.ie/get-started"
+  },
+  "servers": [
+    {
+      "url": "https://api.stubcloudprod.com",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/sellers/oauth/accesstoken": {
+      "post": {
+        "operationId": "getBearerToken",
+        "summary": "Get Bearer Token",
+        "description": "Authenticates a StubHub International user account through their application Client Token and Secret. Returns an access token and refresh token valid for 6 months.",
+        "tags": ["Identity"],
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "User account email address",
+                    "example": "user@domain.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "User account password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed - invalid client credentials or user credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/search/bulk/events/v3": {
+      "get": {
+        "operationId": "getAllEvents",
+        "summary": "Get All Events",
+        "description": "Retrieves all active events in the catalog. Results are paginated at 500 per request. Includes concerts, sporting matches, festivals, and other ticketed events.",
+        "tags": ["Advanced Event Catalog"],
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Pagination start index",
+            "schema": {
+              "type": "integer",
+              "example": 0
+            }
+          },
+          {
+            "name": "rows",
+            "in": "query",
+            "description": "Number of results per page (max 500)",
+            "schema": {
+              "type": "integer",
+              "example": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Events retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkEventsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/events/v3/{eventId}/stocktypes": {
+      "get": {
+        "operationId": "getEventStockTypes",
+        "summary": "Get Stock Types for Event",
+        "description": "Returns the permitted stock types (ticket delivery methods) for a specific event.",
+        "tags": ["Advanced Event Catalog"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Event identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock types retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "Event ID"
+                    },
+                    "stockTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "List of permitted stock types"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/events/v3/{eventId}/status": {
+      "get": {
+        "operationId": "getEventStatus",
+        "summary": "Get Event Status",
+        "description": "Returns the current status of a specific event.",
+        "tags": ["Advanced Event Catalog"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Event identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event status retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/search/events/v3": {
+      "get": {
+        "operationId": "searchEvents",
+        "summary": "Search Events",
+        "description": "Searches the event catalog by city, keyword, or other criteria.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "description": "City to search events in",
+            "schema": {
+              "type": "string",
+              "example": "Dublin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/search/locations/v3": {
+      "get": {
+        "operationId": "searchLocations",
+        "summary": "Search Locations",
+        "description": "Searches for event locations/cities by name.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "description": "City name to search",
+            "schema": {
+              "type": "string",
+              "example": "Bilbao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/search/performers/v3/": {
+      "get": {
+        "operationId": "searchPerformers",
+        "summary": "Search Performers",
+        "description": "Searches for performers/artists by name.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Performer name to search",
+            "schema": {
+              "type": "string",
+              "example": "Iron Maiden"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Performer search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformerSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/search/venues/v3": {
+      "get": {
+        "operationId": "searchVenues",
+        "summary": "Search Venues",
+        "description": "Searches for event venues.",
+        "tags": ["Catalog"],
+        "responses": {
+          "200": {
+            "description": "Venue search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/catalog/events/v3/{eventId}/seatTraits": {
+      "get": {
+        "operationId": "getEventSeatTraits",
+        "summary": "Get Event Seat Traits",
+        "description": "Retrieves seat trait information for a specific event.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Event identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seat traits retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "seatTraits": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/catalog/events/v3/{eventId}/sectionZones": {
+      "get": {
+        "operationId": "getEventSectionZones",
+        "summary": "Get Section Zones",
+        "description": "Retrieves section and zone mapping for a specific event venue.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Event identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Section zones retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "zones": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "sections": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/search/listings/v3": {
+      "get": {
+        "operationId": "findListingsForEvent",
+        "summary": "Find Listings for Event",
+        "description": "Searches available ticket inventory for a specific event on StubHub.",
+        "tags": ["Catalog"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "query",
+            "description": "Event identifier to search listings for",
+            "schema": {
+              "type": "integer",
+              "example": 105283016
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/listings/v3/": {
+      "post": {
+        "operationId": "createListing",
+        "summary": "Create Listing",
+        "description": "Allows an authenticated seller to create a new ticket listing on StubHub.",
+        "tags": ["Inventory Management"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listing created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid listing data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getAllListings",
+        "summary": "Get All Listings",
+        "description": "Retrieves all listings for the authenticated seller.",
+        "tags": ["Inventory Management"],
+        "responses": {
+          "200": {
+            "description": "Listings retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SellerListingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/listings/v3/{listingId}": {
+      "get": {
+        "operationId": "getListing",
+        "summary": "Get Listing Details",
+        "description": "Retrieves details of a single listing by its ID.",
+        "tags": ["Inventory Management"],
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "description": "Listing identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid listing ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateListing",
+        "summary": "Update Listing",
+        "description": "Updates an existing listing's price, seats, traits, or other details.",
+        "tags": ["Inventory Management"],
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "description": "Listing identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Listing updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "externalListingId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid update data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteListing",
+        "summary": "Delete Listing",
+        "description": "Deletes a listing from StubHub.",
+        "tags": ["Inventory Management"],
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "description": "Listing identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "DELETED"
+                    },
+                    "externalListingId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid listing ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/listings/summary/v3": {
+      "get": {
+        "operationId": "getListingsSummary",
+        "summary": "Get Listings Summary",
+        "description": "Retrieves a comprehensive summary of all seller listings with pricing and status information.",
+        "tags": ["Advanced Inventory Management"],
+        "responses": {
+          "200": {
+            "description": "Listings summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingsSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/listings/modified/v3": {
+      "get": {
+        "operationId": "getModifiedListings",
+        "summary": "Get Modified Listings",
+        "description": "Retrieves listings modified within the last 7 days.",
+        "tags": ["Advanced Inventory Management"],
+        "responses": {
+          "200": {
+            "description": "Modified listings retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingsSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/orders/v3": {
+      "get": {
+        "operationId": "getAllOrders",
+        "summary": "Get All Orders",
+        "description": "Retrieves all orders for the authenticated seller.",
+        "tags": ["Order Management"],
+        "responses": {
+          "200": {
+            "description": "Orders retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/orders/details/v3/{orderId}": {
+      "get": {
+        "operationId": "getOrderDetails",
+        "summary": "Get Order Details",
+        "description": "Retrieves detailed information about a specific order including items, payment, and delivery details.",
+        "tags": ["Order Management"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "Order identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/sales/v3": {
+      "get": {
+        "operationId": "getAllSales",
+        "summary": "Get All Sales",
+        "description": "Retrieves all sales for the authenticated seller. Returns a maximum of 200 records.",
+        "tags": ["Sales Management"],
+        "responses": {
+          "200": {
+            "description": "Sales retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/events/sales/v3/{eventId}": {
+      "get": {
+        "operationId": "getSalesByEvent",
+        "summary": "Get Sales by Event",
+        "description": "Retrieves all sales for a specific event.",
+        "tags": ["Sales Management"],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Event identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales for event retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid event ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/events/summary/v3": {
+      "get": {
+        "operationId": "getSalesSummary",
+        "summary": "Get Sales Summary",
+        "description": "Retrieves a summary of sales across all events.",
+        "tags": ["Sales Management"],
+        "responses": {
+          "200": {
+            "description": "Sales summary retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/sales/payments/v3": {
+      "get": {
+        "operationId": "getAllPayments",
+        "summary": "Get All Payments",
+        "description": "Retrieves all payment records for the seller's sales.",
+        "tags": ["Sales Management"],
+        "responses": {
+          "200": {
+            "description": "Payments retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "numFound": {
+                      "type": "integer"
+                    },
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Sale"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/sales/confirm/v3/{saleId}": {
+      "post": {
+        "operationId": "confirmOfflineDelivery",
+        "summary": "Confirm Offline Delivery",
+        "description": "Confirms offline ticket delivery for a sale with a confirmation number.",
+        "tags": ["Sales Management"],
+        "parameters": [
+          {
+            "name": "saleId",
+            "in": "path",
+            "required": true,
+            "description": "Sale identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmationNumber": {
+                    "type": "string",
+                    "description": "Delivery confirmation number"
+                  },
+                  "mobileUrls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Mobile transfer URLs"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sale"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sellers/sales/v3/{orderId}": {
+      "put": {
+        "operationId": "changeDeliveryMethod",
+        "summary": "Change Delivery Method",
+        "description": "Changes the delivery/stock type for a sale.",
+        "tags": ["Sales Management"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "Order identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stockType": {
+                    "type": "string",
+                    "description": "New stock/delivery type",
+                    "example": "MOBILETRANSFER"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery method changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sale"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/venue-configurations/v3/{venueConfigId}": {
+      "get": {
+        "operationId": "getVenueConfiguration",
+        "summary": "Get Venue Configuration",
+        "description": "Retrieves details about a venue configuration including section maps and seating information.",
+        "tags": ["Venue Catalog"],
+        "parameters": [
+          {
+            "name": "venueConfigId",
+            "in": "path",
+            "required": true,
+            "description": "Venue configuration identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Venue configuration retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VenueConfigurationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid venue config ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/webhooks/v3": {
+      "post": {
+        "operationId": "subscribeWebhook",
+        "summary": "Subscribe Webhook",
+        "description": "Creates a new webhook subscription for listing_sale and listing_status events.",
+        "tags": ["Webhook Subscription"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid webhook configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getAllWebhooks",
+        "summary": "Get All Webhooks",
+        "description": "Retrieves all webhook subscriptions for the authenticated partner.",
+        "tags": ["Webhook Subscription"],
+        "responses": {
+          "200": {
+            "description": "Webhooks retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WebhookResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/webhooks/v3/{subscriptionId}": {
+      "get": {
+        "operationId": "getWebhook",
+        "summary": "Get Webhook",
+        "description": "Retrieves a specific webhook subscription by ID.",
+        "tags": ["Webhook Subscription"],
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Webhook subscription identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid subscription ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateWebhook",
+        "summary": "Update Webhook",
+        "description": "Updates an existing webhook subscription.",
+        "tags": ["Webhook Subscription"],
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Webhook subscription identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid webhook configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhook",
+        "summary": "Delete Webhook",
+        "description": "Deletes a webhook subscription.",
+        "tags": ["Webhook Subscription"],
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "description": "Webhook subscription identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid subscription ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token obtained from the /sellers/oauth/accesstoken endpoint. Must be refreshed every 6 months."
+      },
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Base64-encoded consumer key and secret separated by a colon. Used only for token generation."
+      }
+    },
+    "schemas": {
+      "AccessTokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Bearer access token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Refresh token"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Token type (Bearer)"
+          },
+          "expires_in": {
+            "type": "string",
+            "description": "Token expiry time in seconds"
+          },
+          "refresh_token_expires_in": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "application_name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "user_guid": {
+            "type": "string"
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "api_product_list": {
+            "type": "string"
+          }
+        }
+      },
+      "BulkEventsResponse": {
+        "type": "object",
+        "properties": {
+          "numFound": {
+            "type": "integer",
+            "description": "Total number of events matching query"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          }
+        }
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "webURI": {
+            "type": "string"
+          },
+          "eventDateLocal": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventDateUTC": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUpdatedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "venue": {
+            "$ref": "#/components/schemas/Venue"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "ancestors": {
+            "type": "object",
+            "properties": {
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" }
+                  }
+                }
+              },
+              "groupings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" }
+                  }
+                }
+              },
+              "performers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "performers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" }
+              }
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "hideEventDate": {
+            "type": "boolean"
+          },
+          "hideEventTime": {
+            "type": "boolean"
+          },
+          "currencyCode": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "Venue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "venueConfigId": {
+            "type": "integer"
+          },
+          "venueConfigName": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      },
+      "EventSearchResponse": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          }
+        }
+      },
+      "LocationSearchResponse": {
+        "type": "object",
+        "properties": {
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "geoNameId": {
+                  "type": "integer"
+                },
+                "city": {
+                  "type": "string"
+                },
+                "stateCode": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "countryCode": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": "string"
+                },
+                "timeZone": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" }
+                  }
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "longitude": {
+                  "type": "number"
+                },
+                "score": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PerformerSearchResponse": {
+        "type": "object",
+        "properties": {
+          "performers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" },
+                "webURI": { "type": "string" },
+                "status": { "type": "string" },
+                "eventCount": { "type": "integer" },
+                "description": { "type": "string" },
+                "images": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "url": { "type": "string" },
+                      "type": { "type": "string" }
+                    }
+                  }
+                },
+                "score": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "VenueSearchResponse": {
+        "type": "object",
+        "properties": {
+          "venues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" },
+                "webURI": { "type": "string" },
+                "status": { "type": "string" },
+                "timezone": { "type": "string" },
+                "latitude": { "type": "number" },
+                "longitude": { "type": "number" },
+                "address": {
+                  "type": "object",
+                  "properties": {
+                    "city": { "type": "string" },
+                    "state": { "type": "string" },
+                    "country": { "type": "string" }
+                  }
+                },
+                "eventCount": { "type": "integer" },
+                "description": { "type": "string" },
+                "score": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "ListingSearchResponse": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "integer"
+          },
+          "totalListings": {
+            "type": "integer"
+          },
+          "totalTickets": {
+            "type": "integer"
+          },
+          "minQuantity": {
+            "type": "integer"
+          },
+          "maxQuantity": {
+            "type": "integer"
+          },
+          "start": {
+            "type": "integer"
+          },
+          "rows": {
+            "type": "integer"
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchListing"
+            }
+          }
+        }
+      },
+      "SearchListing": {
+        "type": "object",
+        "properties": {
+          "listingId": { "type": "integer" },
+          "quantity": { "type": "integer" },
+          "sellerSectionName": { "type": "string" },
+          "sectionName": { "type": "string" },
+          "zoneId": { "type": "integer" },
+          "zone": { "type": "string" },
+          "deliveryOptionId": { "type": "integer" },
+          "sellerType": { "type": "string" },
+          "isGA": { "type": "integer" },
+          "splitOption": { "type": "string" },
+          "isSectionMapped": { "type": "boolean" },
+          "pricePerProduct": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "splitQuantity": { "type": "string" },
+          "buyQuantityOptions": {
+            "type": "array",
+            "items": { "type": "integer" }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": { "type": "string" },
+                "seat": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "CreateListingRequest": {
+        "type": "object",
+        "required": ["eventId", "pricePerProduct", "quantity", "section"],
+        "properties": {
+          "eventId": { "type": "integer", "description": "Event identifier" },
+          "pricePerProduct": { "$ref": "#/components/schemas/Price" },
+          "faceValue": { "$ref": "#/components/schemas/Price" },
+          "purchasePrice": { "$ref": "#/components/schemas/Price" },
+          "quantity": { "type": "integer", "description": "Ticket quantity" },
+          "section": { "type": "string", "description": "Section name" },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "externalId": { "type": "string" },
+                "row": { "type": "string" },
+                "productType": { "type": "string" },
+                "ga": { "type": "boolean" },
+                "faceValue": { "$ref": "#/components/schemas/Price" }
+              }
+            }
+          },
+          "externalListingId": { "type": "string" },
+          "splitOption": { "type": "string", "enum": ["NOSINGLES", "MULTIPLES", "ANY"] },
+          "splitQuantity": { "type": "integer" },
+          "stockTypes": { "type": "array", "items": { "type": "string" } },
+          "adjustPrice": { "type": "boolean" },
+          "hideSeats": { "type": "boolean" },
+          "paymentType": { "type": "integer" },
+          "comments": { "type": "string" },
+          "internalNote": { "type": "string" }
+        }
+      },
+      "UpdateListingRequest": {
+        "type": "object",
+        "properties": {
+          "pricePerProduct": { "$ref": "#/components/schemas/Price" },
+          "purchasePrice": { "$ref": "#/components/schemas/Price" },
+          "inhandDate": { "type": "string", "format": "date-time" },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": { "type": "string" },
+                "seat": { "type": "string" },
+                "externalId": { "type": "string" },
+                "operation": { "type": "string" }
+              }
+            }
+          },
+          "ticketTraits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "name": { "type": "string" },
+                "operation": { "type": "string" }
+              }
+            }
+          },
+          "hideSeats": { "type": "boolean" },
+          "splitOption": { "type": "string" },
+          "comments": { "type": "string" },
+          "salesTaxPaid": { "type": "boolean" }
+        }
+      },
+      "ListingResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "status": { "type": "string" },
+          "eventId": { "type": "integer" },
+          "eventDescription": { "type": "string" },
+          "eventDate": { "type": "string", "format": "date-time" },
+          "quantity": { "type": "integer" },
+          "quantityRemain": { "type": "integer" },
+          "section": { "type": "string" },
+          "rows": { "type": "string" },
+          "seats": { "type": "string" },
+          "pricePerTicket": { "$ref": "#/components/schemas/Price" },
+          "faceValue": { "$ref": "#/components/schemas/Price" },
+          "payoutPerTicket": { "$ref": "#/components/schemas/Price" },
+          "deliveryOption": { "type": "string" },
+          "splitOption": { "type": "string" },
+          "externalListingId": { "type": "string" },
+          "preDelivered": { "type": "boolean" },
+          "dateLastModified": { "type": "string", "format": "date-time" },
+          "venueDescription": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" }
+        }
+      },
+      "SellerListingsResponse": {
+        "type": "object",
+        "properties": {
+          "listings": {
+            "type": "object",
+            "properties": {
+              "numFound": { "type": "integer" },
+              "listing": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ListingResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ListingsSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "numFound": { "type": "integer" },
+          "listings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": { "type": "integer" },
+                "status": { "type": "string" },
+                "section": { "type": "string" },
+                "quantity": { "type": "integer" },
+                "quantityRemain": { "type": "integer" },
+                "eventDateLocal": { "type": "string", "format": "date-time" },
+                "eventName": { "type": "string" },
+                "venue": { "type": "string" },
+                "externalListingId": { "type": "string" },
+                "splitOption": { "type": "string" },
+                "dateAdded": { "type": "string", "format": "date-time" },
+                "dateLastModified": { "type": "string", "format": "date-time" },
+                "saleEndDate": { "type": "string", "format": "date-time" },
+                "expectedInhandDate": { "type": "string", "format": "date-time" },
+                "pricePerProduct": { "$ref": "#/components/schemas/Price" },
+                "preDelivered": { "type": "boolean" },
+                "seats": { "type": "string" },
+                "row": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "OrdersResponse": {
+        "type": "object",
+        "properties": {
+          "numFound": { "type": "integer" },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Order ID" },
+          "orderDate": { "type": "string", "format": "date-time" },
+          "orderStatus": { "type": "string" },
+          "totalCost": { "$ref": "#/components/schemas/Price" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventId": { "type": "integer" },
+                "eventName": { "type": "string" },
+                "venue": { "type": "string" },
+                "section": { "type": "string" },
+                "row": { "type": "string" },
+                "quantity": { "type": "integer" }
+              }
+            }
+          },
+          "isCart": { "type": "boolean" },
+          "transferredOrder": { "type": "boolean" }
+        }
+      },
+      "OrderDetailResponse": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "integer" },
+          "orderDate": { "type": "string", "format": "date-time" },
+          "orderStatus": { "type": "string" },
+          "totalCost": { "$ref": "#/components/schemas/Price" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventId": { "type": "integer" },
+                "eventName": { "type": "string" },
+                "venue": { "type": "string" },
+                "section": { "type": "string" },
+                "row": { "type": "string" },
+                "seats": { "type": "string" },
+                "quantity": { "type": "integer" },
+                "deliveryOption": { "type": "string" }
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "cardType": { "type": "string" },
+              "lastFourDigits": { "type": "string" },
+              "type": { "type": "string" }
+            }
+          }
+        }
+      },
+      "SalesResponse": {
+        "type": "object",
+        "properties": {
+          "numFound": { "type": "integer" },
+          "sales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sale"
+            }
+          }
+        }
+      },
+      "Sale": {
+        "type": "object",
+        "properties": {
+          "saleId": { "type": "integer" },
+          "eventId": { "type": "integer" },
+          "listingId": { "type": "integer" },
+          "performerId": { "type": "integer" },
+          "status": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "section": { "type": "string" },
+          "rows": { "type": "string" },
+          "seats": { "type": "string" },
+          "saleDate": { "type": "string", "format": "date-time" },
+          "eventDate": { "type": "string", "format": "date-time" },
+          "inhandDate": { "type": "string", "format": "date-time" },
+          "dateLastModified": { "type": "string", "format": "date-time" },
+          "pricePerTicket": { "$ref": "#/components/schemas/Price" },
+          "payoutPerTicket": { "$ref": "#/components/schemas/Price" },
+          "totalPayout": { "$ref": "#/components/schemas/Price" },
+          "deliveryOption": { "type": "string" },
+          "deliveryMethod": { "type": "string" },
+          "fulfillmentMethod": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" },
+          "venue": { "type": "string" },
+          "externalListingId": { "type": "string" },
+          "paymentType": { "type": "integer" },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seatId": { "type": "integer" },
+                "row": { "type": "string" },
+                "seat": { "type": "string" },
+                "ga": { "type": "boolean" },
+                "productType": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "VenueConfigurationResponse": {
+        "type": "object",
+        "properties": {
+          "venueConfigurations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "venueId": { "type": "integer" },
+                "active": { "type": "boolean" },
+                "staticImageCompleteUrl": { "type": "string" },
+                "generalAdmissionOnly": { "type": "boolean" },
+                "sectionZoneMetas": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "zoneName": { "type": "string" },
+                      "sectionType": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "WebhookBody": {
+        "type": "object",
+        "properties": {
+          "callback": {
+            "type": "object",
+            "properties": {
+              "url": { "type": "string", "description": "Callback endpoint URL" },
+              "auth": {
+                "type": "object",
+                "properties": {
+                  "authType": { "type": "string" },
+                  "tokenEndPoint": { "type": "string" },
+                  "oauthRequest": {
+                    "type": "object",
+                    "properties": {
+                      "clientId": { "type": "string" },
+                      "clientSecret": { "type": "string" },
+                      "grantType": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "subscription": {
+            "type": "object",
+            "properties": {
+              "listing": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Event types to subscribe to (listing_sale, listing_status)"
+              }
+            }
+          }
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "Subscription identifier" },
+          "name": { "type": "string" },
+          "webhook": { "type": "object" },
+          "status": { "type": "string" }
+        }
+      },
+      "Price": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Monetary amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error type"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Identity",
+      "description": "Authentication and token management"
+    },
+    {
+      "name": "Advanced Event Catalog",
+      "description": "Bulk event retrieval and event metadata"
+    },
+    {
+      "name": "Catalog",
+      "description": "Event, performer, venue, and listing search"
+    },
+    {
+      "name": "Inventory Management",
+      "description": "Ticket listing CRUD operations"
+    },
+    {
+      "name": "Advanced Inventory Management",
+      "description": "Listing summaries and modification tracking"
+    },
+    {
+      "name": "Order Management",
+      "description": "Order retrieval and details"
+    },
+    {
+      "name": "Sales Management",
+      "description": "Sales tracking, fulfillment, and payment management"
+    },
+    {
+      "name": "Venue Catalog",
+      "description": "Venue configuration and seating maps"
+    },
+    {
+      "name": "Webhook Subscription",
+      "description": "Webhook subscription management for event notifications"
+    }
+  ]
+}

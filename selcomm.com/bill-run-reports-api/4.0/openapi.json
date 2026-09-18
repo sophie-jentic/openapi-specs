@@ -1,0 +1,1110 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bill Run Reports API",
+    "description": "API for accessing pre-generated Excel billing reports from the bill run process.\n\nBill run reports are Excel workbooks containing multiple worksheets with billing data\nincluding summaries, financial transactions, aged receivables, customer details, and more.\n\n## File Naming Convention\nFiles follow the pattern: `KC_reports_{YYYYMM}_{BillCycle}_{Currency}.xlsx`\n- **YYYYMM**: Bill period (e.g., 202009 = September 2020)\n- **BillCycle**: Billing cycle code (e.g., CM = Calendar Monthly)\n- **Currency**: Currency code (e.g., AUD, USD)\n\n## Authentication\nAll endpoints require authentication via one of:\n- **JWT Bearer Token**: `Authorization: Bearer <token>`\n- **API Key**: `X-API-Key: <key>`\n\n## Worksheets\nTypical bill run reports contain up to 18 worksheets:\n- BillSumm - Bill Summary with period comparisons\n- FinancialTran - Financial transaction types\n- FinancialTranDtls - Transaction details\n- AgedFinTrans - Aged receivables by aging bucket\n- BilledAccts - Billed accounts\n- BilledServices - Services with margins\n- CustDetail - Customer detail (largest dataset)\n- And more...\n\n## Error Handling\nAll errors return a standard JSON response with `errorCode` and `errorMessage` fields.\nSee the Error Codes section at the bottom of this document for complete list.\n",
+    "version": "4.0",
+    "contact": {
+      "name": "API Support",
+      "email": "gielisg@selectsoftware.com.au"
+    },
+    "license": {
+      "name": "Proprietary"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/Selcomm/BillRunReports/4.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.selcomm.com/Reports/v4",
+      "description": "Production"
+    },
+    {
+      "url": "https://ua-api.selcomm.com/Reports/v4",
+      "description": "UAT"
+    },
+    {
+      "url": "http://localhost:5105/Reports/v4",
+      "description": "Development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Bill Run Files",
+      "description": "List and access bill run report files"
+    },
+    {
+      "name": "Sheet Data",
+      "description": "Retrieve worksheet data with filtering and pagination"
+    },
+    {
+      "name": "Export",
+      "description": "Export reports in various formats"
+    },
+    {
+      "name": "Administration",
+      "description": "Register and manage bill run files"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "apiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/billrun/files": {
+      "get": {
+        "tags": [
+          "Bill Run Files"
+        ],
+        "summary": "List available bill run report files",
+        "description": "Returns a list of bill run report files available to the authenticated user.\nResults can be filtered by domain, business unit, bill cycle, period, or currency.\n",
+        "operationId": "getBillRunFiles",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "description": "Filter by domain (defaults to user's domain from token)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "demo3"
+            }
+          },
+          {
+            "name": "business-unit",
+            "in": "query",
+            "description": "Filter by business unit code",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "MN"
+            }
+          },
+          {
+            "name": "bill-cycle",
+            "in": "query",
+            "description": "Filter by bill cycle code",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "CM",
+              "enum": [
+                "CM",
+                "M1",
+                "M2",
+                "M3",
+                "M4",
+                "M5",
+                "M6",
+                "M7",
+                "M8",
+                "M9",
+                "M10",
+                "M11",
+                "M12"
+              ]
+            }
+          },
+          {
+            "name": "bill-period",
+            "in": "query",
+            "description": "Filter by bill period in YYYYMM format",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{6}$",
+              "example": "202009"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "Filter by currency code",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "AUD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of bill run files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillRunFileListResponse"
+                },
+                "example": {
+                  "files": [
+                    {
+                      "fileId": "KC_reports_202009_CM_AUD",
+                      "fileName": "KC_reports_202009_CM_AUD.xlsx",
+                      "domain": "demo3",
+                      "businessUnit": "MN",
+                      "billCycle": "CM",
+                      "billPeriod": "202009",
+                      "currency": "AUD",
+                      "generatedDate": "2020-10-05T12:30:47Z",
+                      "fileSize": 245760,
+                      "sheetCount": 18,
+                      "status": "Active"
+                    }
+                  ],
+                  "totalCount": 1
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/billrun/files/{file-id}": {
+      "get": {
+        "tags": [
+          "Bill Run Files"
+        ],
+        "summary": "Get bill run file metadata and sheet list",
+        "description": "Returns detailed metadata for a specific bill run file including\nthe list of all worksheets with their row/column counts.\n",
+        "operationId": "getBillRunFileDetail",
+        "parameters": [
+          {
+            "name": "file-id",
+            "in": "path",
+            "description": "File identifier (filename without .xlsx extension)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "KC_reports_202009_CM_AUD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata with sheet list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillRunFileDetailResponse"
+                },
+                "example": {
+                  "fileId": "KC_reports_202009_CM_AUD",
+                  "fileName": "KC_reports_202009_CM_AUD.xlsx",
+                  "metadata": {
+                    "database": "korpcom",
+                    "billPeriod": "202009",
+                    "generatedDate": "2020-10-05T12:30:47Z",
+                    "billCycle": "CM",
+                    "businessUnit": "MN"
+                  },
+                  "sheets": [
+                    {
+                      "name": "BillSumm",
+                      "displayName": "Bill Summary",
+                      "rowCount": 4,
+                      "columnCount": 10
+                    },
+                    {
+                      "name": "CustDetail",
+                      "displayName": "Customer Detail",
+                      "rowCount": 2631,
+                      "columnCount": 30
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/billrun/files/{file-id}/sheets/{sheet-name}": {
+      "get": {
+        "tags": [
+          "Sheet Data"
+        ],
+        "summary": "Get worksheet data with filtering and pagination",
+        "description": "Retrieves data from a specific worksheet with support for:\n- **Pagination**: Use `skip` and `take` parameters\n- **Sorting**: Use `sort-by` and `sort-dir` parameters\n- **Filtering**: Use `filter[ColumnName]=value` query parameters\n- **Column Selection**: Use `columns` parameter to limit returned columns\n\nData is returned as an array of objects where keys are column names.\n",
+        "operationId": "getBillRunSheetData",
+        "parameters": [
+          {
+            "name": "file-id",
+            "in": "path",
+            "description": "File identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "KC_reports_202009_CM_AUD"
+            }
+          },
+          {
+            "name": "sheet-name",
+            "in": "path",
+            "description": "Worksheet name (case-sensitive)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "FinancialTranDtls"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "Number of rows to skip (for pagination)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "example": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "Number of rows to return (max 1000)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "example": 100
+            }
+          },
+          {
+            "name": "sort-by",
+            "in": "query",
+            "description": "Column name to sort by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Transaction Date"
+            }
+          },
+          {
+            "name": "sort-dir",
+            "in": "query",
+            "description": "Sort direction",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc",
+              "example": "desc"
+            }
+          },
+          {
+            "name": "columns",
+            "in": "query",
+            "description": "Comma-separated list of column names to include in response",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "Debtor Code,Transaction Date,Amount ($, inc Tax)"
+            }
+          },
+          {
+            "name": "filter[{columnName}]",
+            "in": "query",
+            "description": "Filter rows where column value contains the specified text.\nReplace `{columnName}` with actual column name.\nMultiple filters can be applied (AND logic).\n",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "byDebtorCode": {
+                "summary": "Filter by debtor code",
+                "value": "filter[Debtor Code]=40000004"
+              },
+              "byTransactionType": {
+                "summary": "Filter by transaction type",
+                "value": "filter[Transaction Type Code]=R"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sheet data with pagination info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillRunSheetDataResponse"
+                },
+                "example": {
+                  "sheetName": "FinancialTranDtls",
+                  "displayName": "Financial Transaction Details",
+                  "metadata": {
+                    "database": "korpcom",
+                    "billPeriod": "202009",
+                    "generatedDate": "2020-10-05T12:31:01Z"
+                  },
+                  "columns": [
+                    {
+                      "name": "Debtor Code",
+                      "type": "string",
+                      "index": 0
+                    },
+                    {
+                      "name": "Transaction Date",
+                      "type": "date",
+                      "index": 5
+                    },
+                    {
+                      "name": "Amount ($, inc Tax)",
+                      "type": "decimal",
+                      "index": 11
+                    }
+                  ],
+                  "totalRows": 42,
+                  "skip": 0,
+                  "take": 100,
+                  "data": [
+                    {
+                      "Debtor Code": "40000004",
+                      "Last/Business Name": "Sales Trailers & General Welding",
+                      "Transaction Date": "2020-09-07",
+                      "Amount ($, inc Tax)": 22.0
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/billrun/files/{file-id}/export": {
+      "post": {
+        "tags": [
+          "Export"
+        ],
+        "summary": "Export bill run report sheets",
+        "description": "Exports one or more worksheets from a bill run report to the specified format.\n\nSupported formats:\n- **xlsx**: Excel workbook (original format)\n- **pdf**: PDF document with formatting\n- **csv**: Comma-separated values (single sheet only)\n\nFilters can be applied per-sheet to limit exported data.\n",
+        "operationId": "exportBillRunSheets",
+        "parameters": [
+          {
+            "name": "file-id",
+            "in": "path",
+            "description": "File identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "KC_reports_202009_CM_AUD"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillRunExportRequest"
+              },
+              "examples": {
+                "exportAllAsExcel": {
+                  "summary": "Export all sheets as Excel",
+                  "value": {
+                    "format": "xlsx",
+                    "includeHeader": true,
+                    "includeLogo": true
+                  }
+                },
+                "exportSpecificSheetsAsPdf": {
+                  "summary": "Export specific sheets as PDF",
+                  "value": {
+                    "format": "pdf",
+                    "sheets": [
+                      "BillSumm",
+                      "FinancialTranDtls"
+                    ],
+                    "includeHeader": true,
+                    "includeLogo": true
+                  }
+                },
+                "exportWithFilters": {
+                  "summary": "Export with filters applied",
+                  "value": {
+                    "format": "xlsx",
+                    "sheets": [
+                      "FinancialTranDtls"
+                    ],
+                    "includeHeader": true,
+                    "filters": {
+                      "FinancialTranDtls": {
+                        "Transaction Type Code": "R"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exported file download",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"KC_reports_202009_CM_AUD.xlsx\""
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/billrun/files/register": {
+      "post": {
+        "tags": [
+          "Administration"
+        ],
+        "summary": "Register a new bill run file",
+        "description": "Registers a new bill run Excel file in the system.\nThe file must already exist at the specified path.\n\n**Note**: In DevMode, files can be registered without database storage.\n",
+        "operationId": "registerBillRunFile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillRunRegisterRequest"
+              },
+              "example": {
+                "domain": "demo3",
+                "businessUnit": "MN",
+                "billCycle": "CM",
+                "billPeriod": "202009",
+                "currency": "AUD",
+                "filePath": "C:\\Reports\\Documentation\\KC_reports_202009_CM_AUD.xlsx"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillRunFileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from Authentication API"
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for service-to-service authentication"
+      }
+    },
+    "schemas": {
+      "BillRunFileResponse": {
+        "type": "object",
+        "description": "Bill run report file information",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "Unique file identifier (filename without extension)",
+            "example": "KC_reports_202009_CM_AUD"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Full filename including extension",
+            "example": "KC_reports_202009_CM_AUD.xlsx"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Domain the report belongs to",
+            "example": "demo3"
+          },
+          "businessUnit": {
+            "type": "string",
+            "description": "Business unit code",
+            "example": "MN"
+          },
+          "billCycle": {
+            "type": "string",
+            "description": "Bill cycle code",
+            "example": "CM"
+          },
+          "billPeriod": {
+            "type": "string",
+            "description": "Bill period in YYYYMM format",
+            "example": "202009"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "AUD"
+          },
+          "generatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the report was generated",
+            "example": "2020-10-05T12:30:47Z"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "File size in bytes",
+            "example": 245760
+          },
+          "sheetCount": {
+            "type": "integer",
+            "description": "Number of worksheets in the file",
+            "example": 18
+          },
+          "status": {
+            "type": "string",
+            "description": "File status",
+            "enum": [
+              "Active",
+              "Archived",
+              "Deleted"
+            ],
+            "example": "Active"
+          }
+        }
+      },
+      "BillRunFileListResponse": {
+        "type": "object",
+        "description": "List of bill run report files",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillRunFileResponse"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "description": "Total number of files matching the filter",
+            "example": 1
+          }
+        }
+      },
+      "BillRunSheetInfo": {
+        "type": "object",
+        "description": "Worksheet information",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Worksheet tab name",
+            "example": "FinancialTranDtls"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name from row 1",
+            "example": "Financial Transaction Details"
+          },
+          "rowCount": {
+            "type": "integer",
+            "description": "Number of data rows (excluding header/metadata)",
+            "example": 42
+          },
+          "columnCount": {
+            "type": "integer",
+            "description": "Number of columns with data",
+            "example": 20
+          }
+        }
+      },
+      "BillRunSheetMetadata": {
+        "type": "object",
+        "description": "Metadata extracted from worksheet header rows",
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "Source database name",
+            "example": "korpcom"
+          },
+          "billPeriod": {
+            "type": "string",
+            "description": "Bill period in YYYYMM format",
+            "example": "202009"
+          },
+          "generatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Report generation timestamp",
+            "example": "2020-10-05T12:30:47Z"
+          },
+          "billCycle": {
+            "type": "string",
+            "description": "Bill cycle code",
+            "example": "CM"
+          },
+          "businessUnit": {
+            "type": "string",
+            "description": "Business unit code",
+            "example": "MN"
+          },
+          "additionalInfo": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional key-value metadata pairs"
+          }
+        }
+      },
+      "BillRunColumnInfo": {
+        "type": "object",
+        "description": "Column definition",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Column header name",
+            "example": "Amount ($, inc Tax)"
+          },
+          "type": {
+            "type": "string",
+            "description": "Detected data type",
+            "enum": [
+              "string",
+              "integer",
+              "decimal",
+              "date",
+              "datetime",
+              "boolean"
+            ],
+            "example": "decimal"
+          },
+          "index": {
+            "type": "integer",
+            "description": "Zero-based column index",
+            "example": 11
+          }
+        }
+      },
+      "BillRunFileDetailResponse": {
+        "type": "object",
+        "description": "File metadata with list of worksheets",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "File identifier",
+            "example": "KC_reports_202009_CM_AUD"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Full filename",
+            "example": "KC_reports_202009_CM_AUD.xlsx"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/BillRunSheetMetadata"
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillRunSheetInfo"
+            }
+          }
+        }
+      },
+      "BillRunSheetDataResponse": {
+        "type": "object",
+        "description": "Worksheet data with pagination",
+        "properties": {
+          "sheetName": {
+            "type": "string",
+            "description": "Worksheet name",
+            "example": "FinancialTranDtls"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name",
+            "example": "Financial Transaction Details"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/BillRunSheetMetadata"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillRunColumnInfo"
+            }
+          },
+          "totalRows": {
+            "type": "integer",
+            "description": "Total data rows (before pagination)",
+            "example": 42
+          },
+          "skip": {
+            "type": "integer",
+            "description": "Rows skipped",
+            "example": 0
+          },
+          "take": {
+            "type": "integer",
+            "description": "Rows returned",
+            "example": 100
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "Array of row objects with column name keys"
+          }
+        }
+      },
+      "BillRunExportRequest": {
+        "type": "object",
+        "description": "Export request options",
+        "properties": {
+          "format": {
+            "type": "string",
+            "description": "Export format",
+            "enum": [
+              "xlsx",
+              "pdf",
+              "csv"
+            ],
+            "default": "xlsx",
+            "example": "xlsx"
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of sheet names to export (null/empty = all sheets)",
+            "example": [
+              "BillSumm",
+              "FinancialTranDtls"
+            ]
+          },
+          "includeHeader": {
+            "type": "boolean",
+            "description": "Include column headers",
+            "default": true,
+            "example": true
+          },
+          "includeLogo": {
+            "type": "boolean",
+            "description": "Include company logo (PDF/Word only)",
+            "default": true,
+            "example": true
+          },
+          "filters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "description": "Filters per sheet (sheet name -> column filters)",
+            "example": {
+              "FinancialTranDtls": {
+                "Transaction Type Code": "R"
+              }
+            }
+          }
+        }
+      },
+      "BillRunRegisterRequest": {
+        "type": "object",
+        "description": "File registration request",
+        "required": [
+          "domain",
+          "businessUnit",
+          "billCycle",
+          "billPeriod",
+          "currency",
+          "filePath"
+        ],
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Domain for the file",
+            "example": "demo3"
+          },
+          "businessUnit": {
+            "type": "string",
+            "description": "Business unit code",
+            "example": "MN"
+          },
+          "billCycle": {
+            "type": "string",
+            "description": "Bill cycle code",
+            "example": "CM"
+          },
+          "billPeriod": {
+            "type": "string",
+            "description": "Bill period in YYYYMM format",
+            "pattern": "^\\d{6}$",
+            "example": "202009"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "AUD"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Full file path on disk",
+            "example": "C:\\Reports\\Documentation\\KC_reports_202009_CM_AUD.xlsx"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error response",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "Error code for programmatic handling",
+            "example": "BILLRUN_FILE_NOT_FOUND"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "Bill run file 'KC_reports_202099_CM_AUD' not found"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "invalidBillPeriod": {
+                "summary": "Invalid bill period format",
+                "value": {
+                  "errorCode": "BILLRUN_INVALID_REQUEST",
+                  "errorMessage": "Invalid bill period format. Expected YYYYMM."
+                }
+              },
+              "invalidExcelFile": {
+                "summary": "Invalid Excel file",
+                "value": {
+                  "errorCode": "BILLRUN_INVALID_FILE",
+                  "errorMessage": "Invalid Excel file: The file is corrupted or not a valid Excel format."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required or token expired",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "missingToken": {
+                "summary": "Missing authentication",
+                "value": {
+                  "errorCode": "UNAUTHORIZED",
+                  "errorMessage": "Authentication token is missing"
+                }
+              },
+              "expiredToken": {
+                "summary": "Expired token",
+                "value": {
+                  "errorCode": "UNAUTHORIZED",
+                  "errorMessage": "Authentication token has expired"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Access denied - insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "errorCode": "BILLRUN_ACCESS_DENIED",
+              "errorMessage": "Access denied to this file"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "fileNotFound": {
+                "summary": "Bill run file not found",
+                "value": {
+                  "errorCode": "BILLRUN_FILE_NOT_FOUND",
+                  "errorMessage": "Bill run file not found: KC_reports_202099_CM_AUD"
+                }
+              },
+              "fileMissing": {
+                "summary": "File missing from disk",
+                "value": {
+                  "errorCode": "BILLRUN_FILE_MISSING",
+                  "errorMessage": "Bill run file not found on disk"
+                }
+              },
+              "sheetNotFound": {
+                "summary": "Sheet not found",
+                "value": {
+                  "errorCode": "BILLRUN_SHEET_NOT_FOUND",
+                  "errorMessage": "Sheet not found: InvalidSheetName"
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "examples": {
+              "listError": {
+                "summary": "Error listing files",
+                "value": {
+                  "errorCode": "BILLRUN_LIST_ERROR",
+                  "errorMessage": "Error retrieving bill run files"
+                }
+              },
+              "readError": {
+                "summary": "Error reading file",
+                "value": {
+                  "errorCode": "BILLRUN_READ_ERROR",
+                  "errorMessage": "Error reading bill run file"
+                }
+              },
+              "sheetReadError": {
+                "summary": "Error reading sheet data",
+                "value": {
+                  "errorCode": "BILLRUN_SHEET_READ_ERROR",
+                  "errorMessage": "Error reading sheet data"
+                }
+              },
+              "exportError": {
+                "summary": "Error exporting file",
+                "value": {
+                  "errorCode": "BILLRUN_EXPORT_ERROR",
+                  "errorMessage": "Error exporting file"
+                }
+              },
+              "registerError": {
+                "summary": "Error registering file",
+                "value": {
+                  "errorCode": "BILLRUN_REGISTER_ERROR",
+                  "errorMessage": "Failed to register file in database"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
