@@ -1,0 +1,2043 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Access Services Repository API",
+    "description": "This API serves as the central repository for all accessibility Document of the different UEs.\nThe UEs are known in the API as tenants. A user and also a service client may belong to one or more\nTenants.\nTo login you can use oauth2 to retrieve a token.\nTo retrieve your Bearer Token via command line use this:\n```\ncurl -u  <clientId>:<client-secret> -d 'grant_type=client_credentials'  https://citizenjournalist.eu.auth0.com/oauth/token\n```\n\nYou will receive a message containing the access token:\n```\n{\n  \"token_type\": \"Bearer\",\n  \"expires_in\": 3600,\n  \"access_token\": \"eyJra...\",\n  \"scope\": \"audio-descriptions\"\n}\n```\nThen just set the access_token field as Authorization Header when doing further requests.\n\nThe API is structured into 3 Levels.\n1. Reference Asset - contains the placeholder assets like movie productions that are proxies for the original videos\n   They are referenced by their referenceId that is commonly used within the UEs in Swiss Television environment.\n2. Attachment - We can add multiple Files to The Reference Asset. Those are called Attachments. An Attachment can be a subtitle file\n   in the most common formats, or an audio description audio file or a video containing SignLanguage.\n   Each Attachment has multiple metadata fields. It has a referenceId, a type (eg. TEXT or VIDEO) a format (eg. SRT, WEBVTT, MP4).\n   A name for the file. And also which ReferenceAsset it belongs to and which Tenant (UE).\n   The upload is possible either via base64 encoded file field or via multipart upload. The json field should only be used for text files.\n   Unless there is a specific reason users should just use the multipart upload (click on content type in the resource to see description)\n   To retrieve the file of an attachment please use the download endpoint. This will return a signed link, valid for a certain period.\n3. Tenant - The tenant represents a UE within the siwss television Organizational Units.\n   You can only create Attachments and ReferenceAsset for your assigned UEs.\n\nExample\n---\nTo upload an attachment via api use the multipart upload. (ACCESS_TOKEN is the access_token field from the login instruction.\nThe file field contains/references the actual file. The metadata field should be a json in same structure as the attachment object.\n```\ncurl -XPOST -H \"Authorization: Bearer $ACCESS_TOKEN\" -H \"ContentType: multipart/form-data\" -F file='@sintel_part.mp4' -F metadata='{\"name\": \"sintel-x.mp4\", \"type\":\"VIDEO\", \"format\":\"MP4\", \"language\": \"GERMAN\", \"tenant\":{\"id\":1, \"name\":\"SWISSTXT\"}}'  \"https://repository.citizenjournalist.io/api/attachments\"\n```\n",
+    "termsOfService": "",
+    "contact": {
+      "name": "Robin Ribback",
+      "url": "https://www.swisstxt.ch",
+      "email": "robin.ribback@swisstxt.ch"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://mit-license.org/"
+    },
+    "version": "0.0.1",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/swiss-51f/access-services-repository-api/0.0.1"
+  },
+  "servers": [
+    {
+      "url": "/services/ascmsrepository",
+      "description": "added by global filter"
+    }
+  ],
+  "paths": {
+    "/api/tenants/{id}": {
+      "get": {
+        "tags": [
+          "tenant-resource"
+        ],
+        "description": "Get single Tenant by id",
+        "operationId": "getTenant",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reference-assets/{id}": {
+      "get": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "getReferenceAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceAssetDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "updateReferenceAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAssetDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceAssetDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "deleteReferenceAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "partialUpdateReferenceAsset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAssetDTO"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAssetDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceAssetDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/{id}": {
+      "get": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "getAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "updateAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "deleteAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "partialUpdateAttachment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentDTO"
+              }
+            },
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tenants": {
+      "get": {
+        "tags": [
+          "tenant-resource"
+        ],
+        "description": "retrieve a list of all tenants (ues)",
+        "operationId": "getAllTenants",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reference-assets": {
+      "get": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "getAllReferenceAssets",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "eagerload",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceAssetDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Creates a new ReferenceAsset. After this attachments can be added to it by referencing it's id",
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "createReferenceAsset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceAssetDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceAssetDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments": {
+      "get": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "getAllAttachments",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "eagerload",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "description": "Create new Attachment and Upload. Important the field referenceAsset only needs the id the other fields can be left empty.",
+        "operationId": "createAttachment_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentDTO"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file",
+                  "metadata"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "metadata": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/reindex": {
+      "post": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "reindexAllAttachments",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/public/v1/reference-assets": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Returns a List of ReferenceAssets. A ReferenceAsset represents for example a movie a tv show or a live event. It is a proxy so it does not contain the actual movie, it just contains information about the movie. A ReferenceAsset contains a list of Attachments. Those are references to actual media files or documents.  The files can be subtitle files (eg. in srt or webvtt format), audio descriptions (eg. mp3 format), synthesized accessibility files, or video files (eg. Source video file on which the accessbility file is based on). An attachment can also be a sign language video.  You can generate a download Link for each of the attachments via the attachment's download url and download the file. The endpoint is pageable and sortable and allows the client to iterate through the data.",
+        "operationId": "getAllReferenceAssets_1",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceAsset \ud83d\udcda"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/v1/reference-assets/{id}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Returns a single ReferenceAssets by it's id. A ReferenceAsset represents for example a movie a tv show or a live event. It is a proxy so it does not contain the actual movie, it just contains information about the movie. A ReferenceAsset contains a list of Attachments. Those are references to actual media files or documents.  The files can be subtitle files (eg. in srt or webvtt format), audio descriptions (eg. mp3 format), synthesized accessibility files, or video files (eg. Source video file on which the accessbility file is based on). An attachment can also be a sign language video.  You can generate a download Link for each of the attachments via the attachment's download url and download the file. The endpoint is pageable and sortable and allows the client to iterate through the data.",
+        "operationId": "getReferenceAsset_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceAsset \ud83d\udcda"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/v1/attachments/{attachmentId}/download": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Returns a download link for the attachment! The link expires after 15 Minutes. Inside attachmentId please provide the id from the attachment list inside the ReferenceAsset.",
+        "operationId": "downloadItemPublic",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDownloadVM"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/v1/_search/reference-assets": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "This is a search endpoint to search inside the accessibility files library.  You can search by any field, or also inside the Attachments. A simple example to search anything is '*'. You can search also for full words within ReferenceAsset's or Attachments descriptions or names. (eg. 'Sintel')  Additionally it is possible to search by specific fields (id:5). Also we can combine the queries. eg.  `name:Sintel AND description:*test* `.  We can also search inside the attachments list. For example `attachments.type:VIDEO`An overview of how the syntax works can be found here:https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax  A ReferenceAsset represents for example a movie a tv show or a live event. The Reference is a proxy so it does not contain the actual movie, it just contains information about the movie. A ReferenceAsset contains a list of Attachments. Those are references to actual media files or documents.  The files can be subtitle files (eg. in srt or webvtt format), audio descriptions (eg. mp3 format), synthesized accessibility files, or video files (eg. Source video file on which the accessbility file is based on). An attachment can also be a sign language video.  You can generate a download Link for each of the attachments via the attachment's download url and download the file. The endpoint is pageable and sortable and allows the client to iterate through the data. Users also have the possibility to search based on content. For this you search by for example  attachments.content:\"Olympic\". This will  deliver all entries that contain Olympic in its subtitle text.",
+        "operationId": "searchReferenceAssets",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceAsset \ud83d\udcda"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/download-requests": {
+      "get": {
+        "tags": [
+          "download-request-resource"
+        ],
+        "operationId": "getAllDownloadRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "eagerload",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadRequestDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/download-requests/{id}": {
+      "get": {
+        "tags": [
+          "download-request-resource"
+        ],
+        "operationId": "getDownloadRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadRequestDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachmentId}/download": {
+      "get": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "summary": "Returns a download link for the attachment! The link expires after 15 Minutes. Inside attachmentId please provide the id from the attachment list inside the ReferenceAsset.",
+        "operationId": "downloadItem",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentDownloadVM"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/_search/tenants": {
+      "get": {
+        "tags": [
+          "tenant-resource"
+        ],
+        "description": "find tenants eg. use as query param name:SWISSTXT, wildcard queries are also possible like SWISS*",
+        "operationId": "searchTenants",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/_search/reference-assets": {
+      "get": {
+        "tags": [
+          "reference-asset-resource"
+        ],
+        "operationId": "searchReferenceAssets_1",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceAssetDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/_search/download-requests": {
+      "get": {
+        "tags": [
+          "download-request-resource"
+        ],
+        "operationId": "searchDownloadRequests",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DownloadRequestDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/_search/attachments": {
+      "get": {
+        "tags": [
+          "attachment-resource"
+        ],
+        "operationId": "searchAttachments",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TenantDTO": {
+        "description": "A tenant is an organization that has access to the system. They can own many Reference Assets and attachments. Examples are RTS, SRF",
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ReferenceAssetDTO": {
+        "description": "Container for actual references to files that belong to a programm. For example Could be the Proxy for a Movie. It will contain description. It is treated as a container for the accessibility files.",
+        "required": [
+          "referenceId",
+          "tenant"
+        ],
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "string",
+            "readOnly": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "referenceId": {
+            "description": "Can be any string in the tenant's system. Should be used to uniquely identify Reference assets. Its common to use urn identifier schemes, but its not required.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantDTO"
+          }
+        }
+      },
+      "AttachmentDTO": {
+        "description": "An Attachment is a file that usually contains some kind of accessibility media. For example an attachment  could be a subtitle for a show in FRENCH. Another Attachment could be a subtitle for the same show but in SPANISH.  Another attachment could also be a video file with sign language of the show.  In short an attachment can be any media file but usually it is an accessbility media.  DOWNLOAD INSTRUCTIONS: this entity is a description/proxy for the actual file. The file can be downloaded by doing a GET Request on the download endpoint. For example if the attachment has the id 1000 you can do a GET Request on /api/v1/public/attachments/{insert attachment id}/download. This will return an object the contains the download link. No simply follow the link to download the file.",
+        "required": [
+          "format",
+          "name",
+          "tenant",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "createdBy": {
+            "type": "string",
+            "readOnly": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "name of the file. For example: sintel_en.srt"
+          },
+          "referenceId": {
+            "type": "string",
+            "description": "An internally used referenceId to match onto the files in other systems or apis"
+          },
+          "type": {
+            "type": "string",
+            "description": "Describes the type of the file. (eg. TEXT, VIDEO, AUDIO, OTHER",
+            "enum": [
+              "VIDEO",
+              "AUDIO",
+              "TEXT",
+              "OTHER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Describe the status of the Attachment. OK means the actual file is available for download. PENDING means the attachment was created as placeholder, but the real file was not yet uploaded.",
+            "enum": [
+              "OK",
+              "PENDING"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "description": "The actual file format of the file (MP4, SRT, MP3...) . Usually matches with the file extension.",
+            "enum": [
+              "STL",
+              "SRT",
+              "WEBVTT",
+              "OTHER",
+              "MP3",
+              "FLAC",
+              "WAV",
+              "MP4",
+              "MOV",
+              "WEBM",
+              "MXF",
+              "TTML"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "description": "The language of the file content. For example in case of french subtitles it would be 'FRENCH'",
+            "enum": [
+              "GERMAN",
+              "FRENCH",
+              "ITALIAN",
+              "ENGLISH",
+              "ROMANIC",
+              "AFAR",
+              "ABKHAZ",
+              "AVESTAN",
+              "AFRIKAANS",
+              "AKAN",
+              "AMHARIC",
+              "ARAGONESE",
+              "ARABIC",
+              "ASSAMESE",
+              "AVARIC",
+              "AYMARA",
+              "AZERBAIJANI",
+              "SOUTH",
+              "BASHKIR",
+              "BELARUSIAN",
+              "BULGARIAN",
+              "BIHARI",
+              "BISLAMA",
+              "BAMBARA",
+              "BENGALI",
+              "TIBETAN_STANDARD",
+              "BRETON",
+              "BOSNIAN",
+              "CATALAN",
+              "CHECHEN",
+              "CHAMORRO",
+              "CORSICAN",
+              "CREE",
+              "CZECH",
+              "CHUVASH",
+              "WELSH",
+              "DANISH",
+              "DIVEHI",
+              "DZONGKHA",
+              "EWE",
+              "GREEK",
+              "ESPERANTO",
+              "SPANISH",
+              "ESTONIAN",
+              "BASQUE",
+              "PERSIAN_FARSI",
+              "FULA",
+              "FINNISH",
+              "FIJIAN",
+              "FAROESE",
+              "WESTERN_FRISIAN",
+              "IRISH",
+              "SCOTTISH_GAELIC",
+              "GALICIAN",
+              "GUARANI",
+              "GUJARATI",
+              "MANX",
+              "HAUSA",
+              "HEBREW",
+              "HINDI",
+              "HIRI",
+              "MOTU",
+              "CROATIAN",
+              "HAITIAN",
+              "HUNGARIAN",
+              "ARMENIAN",
+              "HERERO",
+              "INTERLINGUA",
+              "INDONESIAN",
+              "INTERLINGUE",
+              "IGBO",
+              "NUOSU",
+              "INUPIAQ",
+              "IDO",
+              "ICELANDIC",
+              "INUKTITUT",
+              "JAPANESE",
+              "JAVANESE",
+              "GEORGIAN",
+              "KONGO",
+              "KIKUYU_GIKUYU",
+              "KWANYAMA_KUANYAMA",
+              "KAZAKH",
+              "KALAALLISUT_GREENLANDIC",
+              "KHMER",
+              "KANNADA",
+              "KOREAN",
+              "KANURI",
+              "KASHMIRI",
+              "KURDISH",
+              "KOMI",
+              "CORNISH",
+              "KYRGYZ",
+              "LATIN",
+              "LUXEMBOURGISH",
+              "GANDA",
+              "LIMBURGISH",
+              "LINGALA",
+              "LAO",
+              "LITHUANIAN",
+              "LUBA_KATANGA",
+              "LATVIAN",
+              "MALAGASY",
+              "MARSHALLESE",
+              "MAORI",
+              "MACEDONIAN",
+              "MALAYALAM",
+              "MONGOLIAN",
+              "MARATHI",
+              "MALAY",
+              "MALTESE",
+              "BURMESE",
+              "NAURU",
+              "NORTH_NDEBELE",
+              "NEPALI",
+              "NDONGA",
+              "DUTCH",
+              "NORWEGIAN",
+              "SOUTH_NDEBELE",
+              "NAVAJO",
+              "CHICHEWA",
+              "OCCITAN",
+              "OJIBWE",
+              "OROMO",
+              "ORIYA",
+              "OSSETIAN",
+              "PUNJABI",
+              "POLISH",
+              "PASHTO",
+              "PORTUGUESE",
+              "QUECHUA",
+              "ROMANSH",
+              "KIRUNDI",
+              "ROMANIAN",
+              "RUSSIAN",
+              "KINYARWANDA",
+              "SANSKRIT",
+              "SARDINIAN",
+              "SINDHI",
+              "NORTHERN",
+              "SAMI",
+              "SANGO",
+              "SINHALA",
+              "SLOVAK",
+              "SLOVENE",
+              "SAMOAN",
+              "SHONA",
+              "SOMALI",
+              "ALBANIAN",
+              "SERBIAN",
+              "SWATI",
+              "SOUTHERN_SOTHO",
+              "SUNDANESE",
+              "SWEDISH",
+              "SWAHILI",
+              "TAMIL",
+              "TELUGU",
+              "TAJIK",
+              "THAI",
+              "TIGRINYA",
+              "TURKMEN",
+              "TAGALOG",
+              "TSWANA",
+              "TONGA",
+              "TURKISH",
+              "TSONGA",
+              "TATAR",
+              "TWI",
+              "TAHITIAN",
+              "UYGHUR",
+              "UKRAINIAN",
+              "URDU",
+              "UZBEK",
+              "VENDA",
+              "VIETNAMESE",
+              "VOLAPUEK",
+              "WALLOON",
+              "WOLOF",
+              "XHOSA",
+              "YIDDISH",
+              "YORUBA",
+              "ZHUANG",
+              "CHINESE",
+              "ZULU"
+            ]
+          },
+          "fileContentType": {
+            "type": "string",
+            "description": "Technical content type / meme type"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "Size of the file in bytes.",
+            "format": "int64"
+          },
+          "characters": {
+            "type": "integer",
+            "description": "Count of characters in the file. Spaces are counted as characters as well.",
+            "format": "int32"
+          },
+          "durationInMillis": {
+            "type": "integer",
+            "description": "How long is the file in milliseconds. For subtitles it is the end timecode of the last subtitle else it is the duration of the video/audio. This field is optional",
+            "format": "int64"
+          },
+          "file": {
+            "type": "array",
+            "description": "can be left empty and file uploaded later on via multipart upload",
+            "items": {
+              "type": "string",
+              "description": "can be left empty and file uploaded later on via multipart upload",
+              "format": "byte"
+            }
+          },
+          "originalDownloadUrl": {
+            "type": "string"
+          },
+          "downloadFileRetries": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "overallSentiment": {
+            "type": "string",
+            "enum": [
+              "VERY_NEGATIVE",
+              "NEGATIVE",
+              "NEUTRAL",
+              "POSITIVE",
+              "VERY_POSITIVE"
+            ]
+          },
+          "sentimentScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "referenceAsset": {
+            "$ref": "#/components/schemas/ReferenceAssetDTO"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/TenantDTO"
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "rel": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string"
+          },
+          "hreflang": {
+            "type": "string"
+          },
+          "media": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "deprecation": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "description": "describes a set of links that have a relation to this file.  For example inside of the downlaod link we provide the relative url to the download enpoint for this attachment"
+      },
+      "PublicAttachmentDTO": {
+        "required": [
+          "format",
+          "name",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "name of the file. For example: sintel_en.srt"
+          },
+          "referenceId": {
+            "type": "string",
+            "description": "An internally used referenceId to match onto the files in other systems or apis"
+          },
+          "type": {
+            "type": "string",
+            "description": "Describes the type of the file. (eg. TEXT, VIDEO, AUDIO, OTHER",
+            "enum": [
+              "VIDEO",
+              "AUDIO",
+              "TEXT",
+              "OTHER"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Describe the status of the Attachment. OK means the actual file is available for download. PENDING means the attachment was created as placeholder, but the real file was not yet uploaded.",
+            "enum": [
+              "OK",
+              "PENDING"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "description": "The actual file format of the file (MP4, SRT, MP3...) . Usually matches with the file extension.",
+            "enum": [
+              "STL",
+              "SRT",
+              "WEBVTT",
+              "OTHER",
+              "MP3",
+              "FLAC",
+              "WAV",
+              "MP4",
+              "MOV",
+              "WEBM",
+              "MXF",
+              "TTML"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "description": "The language of the file content. For example in case of french subtitles it would be 'FRENCH'",
+            "enum": [
+              "GERMAN",
+              "FRENCH",
+              "ITALIAN",
+              "ENGLISH",
+              "ROMANIC",
+              "AFAR",
+              "ABKHAZ",
+              "AVESTAN",
+              "AFRIKAANS",
+              "AKAN",
+              "AMHARIC",
+              "ARAGONESE",
+              "ARABIC",
+              "ASSAMESE",
+              "AVARIC",
+              "AYMARA",
+              "AZERBAIJANI",
+              "SOUTH",
+              "BASHKIR",
+              "BELARUSIAN",
+              "BULGARIAN",
+              "BIHARI",
+              "BISLAMA",
+              "BAMBARA",
+              "BENGALI",
+              "TIBETAN_STANDARD",
+              "BRETON",
+              "BOSNIAN",
+              "CATALAN",
+              "CHECHEN",
+              "CHAMORRO",
+              "CORSICAN",
+              "CREE",
+              "CZECH",
+              "CHUVASH",
+              "WELSH",
+              "DANISH",
+              "DIVEHI",
+              "DZONGKHA",
+              "EWE",
+              "GREEK",
+              "ESPERANTO",
+              "SPANISH",
+              "ESTONIAN",
+              "BASQUE",
+              "PERSIAN_FARSI",
+              "FULA",
+              "FINNISH",
+              "FIJIAN",
+              "FAROESE",
+              "WESTERN_FRISIAN",
+              "IRISH",
+              "SCOTTISH_GAELIC",
+              "GALICIAN",
+              "GUARANI",
+              "GUJARATI",
+              "MANX",
+              "HAUSA",
+              "HEBREW",
+              "HINDI",
+              "HIRI",
+              "MOTU",
+              "CROATIAN",
+              "HAITIAN",
+              "HUNGARIAN",
+              "ARMENIAN",
+              "HERERO",
+              "INTERLINGUA",
+              "INDONESIAN",
+              "INTERLINGUE",
+              "IGBO",
+              "NUOSU",
+              "INUPIAQ",
+              "IDO",
+              "ICELANDIC",
+              "INUKTITUT",
+              "JAPANESE",
+              "JAVANESE",
+              "GEORGIAN",
+              "KONGO",
+              "KIKUYU_GIKUYU",
+              "KWANYAMA_KUANYAMA",
+              "KAZAKH",
+              "KALAALLISUT_GREENLANDIC",
+              "KHMER",
+              "KANNADA",
+              "KOREAN",
+              "KANURI",
+              "KASHMIRI",
+              "KURDISH",
+              "KOMI",
+              "CORNISH",
+              "KYRGYZ",
+              "LATIN",
+              "LUXEMBOURGISH",
+              "GANDA",
+              "LIMBURGISH",
+              "LINGALA",
+              "LAO",
+              "LITHUANIAN",
+              "LUBA_KATANGA",
+              "LATVIAN",
+              "MALAGASY",
+              "MARSHALLESE",
+              "MAORI",
+              "MACEDONIAN",
+              "MALAYALAM",
+              "MONGOLIAN",
+              "MARATHI",
+              "MALAY",
+              "MALTESE",
+              "BURMESE",
+              "NAURU",
+              "NORTH_NDEBELE",
+              "NEPALI",
+              "NDONGA",
+              "DUTCH",
+              "NORWEGIAN",
+              "SOUTH_NDEBELE",
+              "NAVAJO",
+              "CHICHEWA",
+              "OCCITAN",
+              "OJIBWE",
+              "OROMO",
+              "ORIYA",
+              "OSSETIAN",
+              "PUNJABI",
+              "POLISH",
+              "PASHTO",
+              "PORTUGUESE",
+              "QUECHUA",
+              "ROMANSH",
+              "KIRUNDI",
+              "ROMANIAN",
+              "RUSSIAN",
+              "KINYARWANDA",
+              "SANSKRIT",
+              "SARDINIAN",
+              "SINDHI",
+              "NORTHERN",
+              "SAMI",
+              "SANGO",
+              "SINHALA",
+              "SLOVAK",
+              "SLOVENE",
+              "SAMOAN",
+              "SHONA",
+              "SOMALI",
+              "ALBANIAN",
+              "SERBIAN",
+              "SWATI",
+              "SOUTHERN_SOTHO",
+              "SUNDANESE",
+              "SWEDISH",
+              "SWAHILI",
+              "TAMIL",
+              "TELUGU",
+              "TAJIK",
+              "THAI",
+              "TIGRINYA",
+              "TURKMEN",
+              "TAGALOG",
+              "TSWANA",
+              "TONGA",
+              "TURKISH",
+              "TSONGA",
+              "TATAR",
+              "TWI",
+              "TAHITIAN",
+              "UYGHUR",
+              "UKRAINIAN",
+              "URDU",
+              "UZBEK",
+              "VENDA",
+              "VIETNAMESE",
+              "VOLAPUEK",
+              "WALLOON",
+              "WOLOF",
+              "XHOSA",
+              "YIDDISH",
+              "YORUBA",
+              "ZHUANG",
+              "CHINESE",
+              "ZULU"
+            ]
+          },
+          "fileContentType": {
+            "type": "string",
+            "description": "Technical content type / meme type"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "Size of the file in bytes.",
+            "format": "int64"
+          },
+          "characters": {
+            "type": "integer",
+            "description": "Count of characters in the file. Spaces are counted as characters as well.",
+            "format": "int32"
+          },
+          "durationInMillis": {
+            "type": "integer",
+            "description": "How long is the file in milliseconds. For subtitles it is the end timecode of the last subtitle else it is the duration of the video/audio. This field is optional",
+            "format": "int64"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "overallSentiment": {
+            "type": "string",
+            "description": "Returns the overall sentiment of this attachment. Primarily applies to text based attachments, like subtitles.The Sentiment is determined with an AI model.",
+            "enum": [
+              "VERY_NEGATIVE",
+              "NEGATIVE",
+              "NEUTRAL",
+              "POSITIVE",
+              "VERY_POSITIVE"
+            ]
+          },
+          "sentimentScore": {
+            "type": "number",
+            "description": "The overall sentiment score of this attachment. 5 means VERY_POSITIVE, 1 means VERY_NEGATIVE.",
+            "format": "double"
+          },
+          "links": {
+            "type": "array",
+            "description": "describes a set of links that have a relation to this file.  For example inside of the downlaod link we provide the relative url to the download enpoint for this attachment",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        },
+        "description": "An Attachment is a file that usually contains some kind of accessibility media. For example an attachment  could be a subtitle for a show in FRENCH. Another Attachment could be a subtitle for the same show but in SPANISH.  Another attachment could also be a video file with sign language of the show.  In short an attachment can be any media file but usually it is an accessbility media.  DOWNLOAD INSTRUCTIONS: this entity is a description/proxy for the actual file. The file can be downloaded by doing a GET Request on the download endpoint. For example if the attachment has the id 1000 you can do a GET Request on /api/v1/public/attachments/{insert attachment id}/download. This will return an object the contains the download link. No simply follow the link to download the file."
+      },
+      "ReferenceAsset \ud83d\udcda": {
+        "type": "object",
+        "properties": {
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "lastModifiedDate": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id": {
+            "type": "integer",
+            "description": "Unique id of this entry",
+            "format": "int64"
+          },
+          "referenceId": {
+            "type": "string",
+            "description": "The internal referenceId of the Asset"
+          },
+          "name": {
+            "type": "string",
+            "description": "A human readable name of the referenced Asset"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the Asset. It could be a show description and also contain further information."
+          },
+          "tenant": {
+            "type": "string",
+            "description": "Describes which business unit uploaded or created this ReferenceAsset"
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Contains a list of attached files that would be available for download. This can be video/audio/text or other types of documents. For example an attachment with type TEXT and format 'SRT' would be a subtitle file.",
+            "items": {
+              "$ref": "#/components/schemas/PublicAttachmentDTO"
+            }
+          }
+        },
+        "description": "This is a container for a collection of accessiblity files. It usually refers to a show or movie or streaming media or broadcast. Many accessiblity files can be created for such an item.  Those are stored inside the attachments list.  Some examples of possible attachments are sign language videos, audio descriptions, subtitle files..."
+      },
+      "AttachmentDownloadVM": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The actual url to download an attachment",
+            "format": "url"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Describes whether the file is actually available for download."
+          },
+          "characters": {
+            "type": "integer",
+            "description": "Amount of characters in file. Can be null be careful when using the field.",
+            "format": "int64"
+          },
+          "durationInMillis": {
+            "type": "integer",
+            "description": "How long is the attachment in terms or duration. For a subtitle it will correspond to the duration of the matching reference Asset (VIDEO)",
+            "format": "int64"
+          }
+        },
+        "description": "Returns as content the actual link to download an attachment inside the url."
+      },
+      "ServiceInfoVM": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string"
+          },
+          "serverTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "DownloadRequestDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "date": {
+            "type": "string",
+            "description": "readonly fields, please dont generate in forms",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "string",
+            "description": "readonly fields, please dont generate in forms"
+          },
+          "email": {
+            "type": "string",
+            "description": "readonly fields, please dont generate in forms"
+          },
+          "appName": {
+            "type": "string",
+            "description": "readonly fields, please dont generate in forms"
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/AttachmentDTO"
+          }
+        }
+      }
+    }
+  }
+}

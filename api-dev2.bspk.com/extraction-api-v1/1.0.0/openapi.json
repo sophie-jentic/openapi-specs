@@ -1,0 +1,2086 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EXTRACTION API V1",
+    "version": "1.0.0",
+    "contact": {
+      "name": "BSPK API Support",
+      "email": "bspk-support@bspk.com"
+    },
+    "description": "\n# Introduction\n\nThe BSPK RESTful JSON API gives you access to your company's BSPK data.\nFor all BSPK API related questions please email: *bspk-support@bspk.com*\n\n\n### Authentication\n\nBSPK uses Token-Based API Authentication. API keys can be managed from the API Keys section in your admin interface. All unauthenticated requests will return an HTTP 401 response.\n\n**Important:**  Developers with BSPK API keys will be granted full access to the data in each endpoint. Access to this data is binary: everything or nothing.\n\n**Authorization header**\nYour  `Authorization`  header should be in the following format:\n```\nAuthorization: Bearer [API_KEY]\n```\n\n\n### Filter params\n\n`client_ids`: Accept multiple ids in a comma separated way, eg.: `client_ids=CLI1,CLI2` and can't be combined with `sales_associate_ids` filter param.\n  Example: To filter messages by Sales Associates CL1 and CL2 you should do `https://api.bspk.com/api/extraction/v1/messages?client_ids=CLI1,CLI2`.\n\n`sales_associate_ids`: Accept multiple ids in a comma separated way, eg.: `sales_associate_ids=SA1,SA2` and can't be combined with `client_ids` filter param.\n  Example: To filter messages by Sales Associates SA1 and SA2 you should do `https://api.bspk.com/api/extraction/v1/messages?sales_associate_ids=SA1,SA2`.\n\n`from`: Accepts date-time value (YYYY-MM-DDTHH:MM:SS) to filter records created after the specified value (boundaries included).\n  Example: To filter messages by a Sales Associate from July 16, 2020 till the present date you should do `https://api.bspk.com/api/extraction/v1/messages?sales_associate_ids=SA1&from=2020-07-16T00:00:00`.\n\n`to`: Accepts date-time value (YYYY-MM-DDTHH:MM:SS) to filter records created before the specified value (boundaries included).\n  Example: To filter messages by a Sales Associate since the begining till July 16, 2020 (inclusive) you should do `https://api.bspk.com/api/extraction/v1/messages?sales_associate_ids=SA1&from=2020-07-16T23:59:59`.\n\n`page`: Accepts a page number to filter records, defaults to `1`.\n  Example: To return the second page of messages created you should do `https://api.bspk.com/api/v1/messages?page=2`.\n\n`per_page`: Accepts a number of records per page to filter records, defaults to `100` (maximum of `1000`).\n  Example: To return the `30` messages per page you should do `https://api.bspk.com/api/extraction/v1/messages?per_page=30`.\n\n### Pagination information\n\nWe basically expose the pagination information all via header attributes, as follows:\n\n- Information about the total records the query will return in total (all pages) you can find the attribute `x-total-count` in the header.\n\n- Information about pagination is provided in the [Link header](https://datatracker.ietf.org/doc/html/rfc5988) of an API call.\n\nFor example, let's make a curl request to the messages API, to find out how many message we have for the client CLI1:\n`$ curl -I \"https://api.bspk.com/api/extraction/v1/messages?client_ids=CLI1\"`\n\nThe `-I` parameter indicates that we only care about the headers, not the actual content. In examining the result, you'll notice some information in the Link header that looks like this:\n\n```\nLink: <https://api.bspk.com/api/extraction/v1/messages?client_ids=CLI1&page=2>; rel=\"next\",\n      <https://api.bspk.com/api/extraction/v1/messages?client_ids=CLI1&page=30>; rel=\"last\"\n```\n\nSince by default, all paginated queries start at page 1. rel=\"last\" provides some more information, stating that the last page of results is on page 30. Thus, we have 29 more pages of information about messages from client CLI1 that we can consume.\n\nAlways rely on these link relations provided to you. Don't try to guess or construct your own URL.\n\n\n### Throttling\n\nAPI requests are limited to the amount specified in the returned `X-RateLimit-Limit` header (per 10 seconds). Exceeding that limit will cause BSPK to return an `HTTP 429` response. Check the `X-RateLimit-Limit` and `X-RateLimit-Remaining` headers to see how many more requests you are allowed until throttling kicks in.\n\n\n### Error Codes\n\n- 400 - Bad Request.\n- 401 - Unauthorized \u2013 Invalid BSPK API key.\n- 404 - Not Found \u2013 Resource not found.\n- 422 - Unprocessable entity.\n- 429 - Throttle Limit reached.\n- 500 - BSPK Internal Server Error\n\n### Validation\n\nMethods that take input will validate all parameters. Any parameter that fails validation will trigger an error response with status HTTP 422. The response body will be a JSON object like the example below which includes a list of fields that failed validation.\n\n`{'errors':[{'title': 'No clients found with IDs: [NON_EXISTING_ID, OTHER_NON_EXISTING_ID]','code':'not_found'}]}`\n\n\n### Additional Information\n\n- Fields without a value will return null\n- Timestamps are rendered in ISO-8601 format (e.g. 2018-07-21T17:32:28Z)\n- BSPK reserves the right to add more properties to objects, but will never change or remove them. Any breaking changes will result in a major API version update.\n     ",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/BSPK/extraction-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-dev2.bspk.com",
+      "description": "Development"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local"
+    }
+  ],
+  "paths": {
+    "/api/extraction/v1/appointments": {
+      "get": {
+        "summary": "List Appointments",
+        "tags": [
+          "Appointments"
+        ],
+        "description": "List appointments",
+        "operationId": "listAppointments",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show appointments updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show appointments updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of appointments",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-44",
+                    "store_name": "Store-53",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-75 LastName-75",
+                    "client_id": "CL_01",
+                    "client_name": "FirstName-76 LastName-76",
+                    "title": "Some title",
+                    "body": "Some notes\n here.",
+                    "starts_at": "2024-08-08T00:00:00.000Z",
+                    "ends_at": null,
+                    "is_done": false,
+                    "is_done_at": null,
+                    "notes": "Some notes\n here.",
+                    "created_at": "2024-08-07T12:29:22.984Z",
+                    "updated_at": "2024-08-07T12:29:22.984Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/appointment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/calls": {
+      "get": {
+        "summary": "List Calls",
+        "tags": [
+          "Calls"
+        ],
+        "description": "List calls",
+        "operationId": "listCalls",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show calls updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show calls updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of calls",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-47",
+                    "store_name": "Store-56",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-79 LastName-79",
+                    "client_id": "EXTERNAL_ID_145",
+                    "client_name": "FirstName-80 LastName-80",
+                    "to": null,
+                    "created_at": "2024-08-07T12:29:23.594Z"
+                  },
+                  {
+                    "store_id": "Store-external_id-47",
+                    "store_name": "Store-56",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-79 LastName-79",
+                    "client_id": "EXTERNAL_ID_145",
+                    "client_name": "FirstName-80 LastName-80",
+                    "to": null,
+                    "created_at": "2024-08-07T12:29:23.599Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/call"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/clients": {
+      "get": {
+        "summary": "List Clients",
+        "tags": [
+          "Clients"
+        ],
+        "description": "List clients",
+        "operationId": "listClients",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show clients updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show clients updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of clients",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "bspk_id": 12345,
+                    "current_sales_associate_id": "SA_01",
+                    "current_sales_associate_name": "FirstName-84 LastName-84",
+                    "current_store_id": null,
+                    "current_store_name": null,
+                    "client_id": "EXTERNAL_ID_150",
+                    "name": "FirstName-85 LastName-85",
+                    "first_name": "FirstName-85",
+                    "last_name": "LastName-85",
+                    "email": "someone92@example.com",
+                    "mobile_phone": "+14153400067",
+                    "other_phone": "+14153400067",
+                    "birthday": null,
+                    "gender": null,
+                    "nationality": null,
+                    "passport_number": null,
+                    "language": null,
+                    "title": null,
+                    "address": "",
+                    "addresses": [
+                      {
+                        "address": null,
+                        "address_2": null,
+                        "address_3": null,
+                        "address_4": null,
+                        "city": null,
+                        "state": null,
+                        "zip": null,
+                        "country_code": null
+                      }
+                    ],
+                    "preferred_contact_channel": null,
+                    "communication_preferences": {
+                      "chat_opt_in": true,
+                      "email_opt_in": true,
+                      "phone_opt_in": true,
+                      "whatsapp_opt_in": false,
+                      "wechat_opt_in": false,
+                      "line_opt_in": false,
+                      "opt_out": false
+                    },
+                    "preferences": [],
+                    "interests": [],
+                    "preferred_journey": null,
+                    "segment": null,
+                    "referred_by_client_id": null,
+                    "referred_at": null,
+                    "consent": false,
+                    "notify_of_new_collection": false,
+                    "last_contacted_at": "2024-08-02T12:29:24.068Z",
+                    "created_at": "2024-08-07T12:29:24.099Z",
+                    "updated_at": "2024-08-07T12:29:24.099Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/client"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/emails": {
+      "get": {
+        "summary": "List Emails",
+        "tags": [
+          "Emails"
+        ],
+        "description": "List emails",
+        "operationId": "listEmails",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show emails updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show emails updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of emails",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-51",
+                    "store_name": "Store-60",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-89 LastName-89",
+                    "client_id": "EXTERNAL_ID_156",
+                    "client_name": "FirstName-90 LastName-90",
+                    "template_id": "2",
+                    "template_name": "Test Template",
+                    "slice_id": null,
+                    "media": [],
+                    "created_at": "2024-08-07T12:29:24.731Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/email"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/ideabook_actions": {
+      "get": {
+        "summary": "Get clients' ideabook actions (likes, dislikes, wishlists)",
+        "tags": [
+          "Ideabook"
+        ],
+        "description": "Gets a list of ideabook actions for specified clients. The actions include all reactions to ideabook objects (ideabook object can stand for an item or simply attachment shared by sales associate like image or video). Among type of actions that might be performed by client there are:\n- like\n- dislike\n- adding to wishlist\n- like removal\n- dislike removal\n- removing from wishlist\n\nIf there are no clients found with given client IDs the API returns an error about no records found.\n\nIf among passed clients IDs in the query parameter there is at least one client who exists in the database the API will return an object with client IDs as keys and an array of ideabook actions as values. IDs of the clients that weren't found in the DB will not be returned in the response object.",
+        "operationId": "getClientsIdeabookActions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": true,
+            "description": "Format: `/api/extraction/v1/ideabook_actions?client_ids=CLIENT_ID_1,CLIENT_ID_2`",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get clients' ideabook actions",
+            "content": {
+              "application/json": {
+                "example": {
+                  "CLIENT_ID_2": [
+                    {
+                      "created_by_sales_associate_id": "SALES_ASOCIATE_ID_1",
+                      "skus": [
+                        "SKU_3",
+                        "SKU_4"
+                      ],
+                      "created_date": "2021-03-30T12:40:30.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.370Z",
+                      "feedback_type": "Remove like",
+                      "item_id": "ITEM_ID_2",
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/007/original/file-name-7."
+                    },
+                    {
+                      "created_by_sales_associate_id": null,
+                      "skus": null,
+                      "created_date": "2021-04-01T17:25:10.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.399Z",
+                      "feedback_type": "Remove dislike",
+                      "item_id": null,
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/008/original/file-name-8."
+                    },
+                    {
+                      "created_by_sales_associate_id": "SALES_ASOCIATE_ID_1",
+                      "skus": [
+                        "SKU_3",
+                        "SKU_4"
+                      ],
+                      "created_date": "2021-04-03T20:10:20.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.406Z",
+                      "feedback_type": "Remove from wishlist",
+                      "item_id": "ITEM_ID_2",
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/007/original/file-name-7."
+                    }
+                  ],
+                  "CLIENT_ID_1": [
+                    {
+                      "created_by_sales_associate_id": "SALES_ASOCIATE_ID_1",
+                      "skus": [
+                        "SKU_1",
+                        "SKU_2"
+                      ],
+                      "created_date": "2021-03-30T12:40:30.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.190Z",
+                      "feedback_type": "Like",
+                      "item_id": "ITEM_ID_1",
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/005/original/file-name-5."
+                    },
+                    {
+                      "created_by_sales_associate_id": null,
+                      "skus": null,
+                      "created_date": "2021-04-01T17:25:10.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.291Z",
+                      "feedback_type": "Dislike",
+                      "item_id": null,
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/006/original/file-name-6."
+                    },
+                    {
+                      "created_by_sales_associate_id": "SALES_ASOCIATE_ID_1",
+                      "skus": [
+                        "SKU_1",
+                        "SKU_2"
+                      ],
+                      "created_date": "2021-04-03T20:10:20.000Z",
+                      "feedback_date": "2024-08-07T12:29:25.337Z",
+                      "feedback_type": "Add to wishlist",
+                      "item_id": "ITEM_ID_1",
+                      "image_url": "https://fake.cdn.aws.com/media/000/000/005/original/file-name-5."
+                    }
+                  ],
+                  "NON_EXISTING_CLIENT_ID": []
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No clients with given IDs found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "errors": [
+                    {
+                      "title": "No clients found with IDs: [NON_EXISTING_ID, OTHER_NON_EXISTING_ID]",
+                      "code": "not_found"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/messages": {
+      "get": {
+        "summary": "List Messages",
+        "tags": [
+          "Messages"
+        ],
+        "description": "List messages",
+        "operationId": "listMessages",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show messages updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show messages updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of messages",
+            "content": {
+              "application/json": {
+                "example": [],
+                "schema": {
+                  "$ref": "#/components/schemas/message"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/notes": {
+      "get": {
+        "summary": "List Notes",
+        "tags": [
+          "Notes"
+        ],
+        "description": "List notes",
+        "operationId": "listNotes",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand, supply",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show notes updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show notes updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of notes",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-56",
+                    "store_name": "Store-65",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-102 LastName-102",
+                    "client_id": "EXTERNAL_ID_174",
+                    "client_name": "FirstName-103 LastName-103",
+                    "body": "Test notes",
+                    "media": [],
+                    "created_at": "2024-08-07T12:29:26.577Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/note"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/reminders": {
+      "get": {
+        "summary": "List Reminders",
+        "tags": [
+          "Reminders"
+        ],
+        "description": "List reminders",
+        "operationId": "listReminders",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_ids",
+            "in": "query",
+            "required": false,
+            "description": "Client id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show reminders updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show reminders updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of reminders",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-61",
+                    "store_name": "Store-70",
+                    "sales_associate_id": "SA_01",
+                    "sales_associate_name": "FirstName-106 LastName-106",
+                    "client_id": "CL_01",
+                    "client_name": "FirstName-107 LastName-107",
+                    "title": "Some title",
+                    "body": "Some notes\n here.",
+                    "starts_at": "2024-08-08T00:00:00.000Z",
+                    "ends_at": null,
+                    "is_done": false,
+                    "is_done_at": null,
+                    "notes": "Some notes\n here.",
+                    "created_at": "2024-08-07T12:29:27.187Z",
+                    "updated_at": "2024-08-07T12:29:27.187Z"
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/reminder"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/sales_associates": {
+      "get": {
+        "summary": "List Sales Associates",
+        "tags": [
+          "Sales Associates"
+        ],
+        "description": "List Sales Associates",
+        "operationId": "listSalesAssociates",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show reminders updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show reminders updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of Sales Associates",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "created_at": "2024-08-07T12:29:27.668Z",
+                    "updated_at": "2024-08-07T12:29:27.668Z",
+                    "current_store_id": "Store-external_id-65",
+                    "associate_id": null,
+                    "associate_id_2": null,
+                    "sales_associate_name": "FirstName-110 LastName-110",
+                    "username": "username-41",
+                    "email": "someone117@example.com",
+                    "mobile_phone": null,
+                    "job_title": "Manager",
+                    "imessage_enabled": false,
+                    "wechat_enabled": false,
+                    "wechat_code": null,
+                    "line_enabled": false,
+                    "adyen_enabled": false
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/sales_associate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extraction/v1/slices": {
+      "get": {
+        "summary": "List Slices",
+        "tags": [
+          "Slices"
+        ],
+        "description": "List slices",
+        "operationId": "listSlices",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sales_associate_ids",
+            "in": "query",
+            "required": false,
+            "description": "Sales Associate id owned by the brand",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Only show slices updated after the given time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Combined with the `from` parameter, only show slices updated whitin the given range (from..to) time. This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number of the results to fetch. Default: 1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (max 100). Default: 30",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response, returns array of slices",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "store_id": "Store-external_id-68",
+                    "store_name": "Store-77",
+                    "created_by_sales_associate_id": "SA_01",
+                    "created_by_sales_associate_name": "FirstName-113 LastName-113",
+                    "title": null,
+                    "body": null,
+                    "created_at": "2024-08-07T12:29:28.363Z",
+                    "updated_at": "2024-08-07T12:29:28.363Z",
+                    "item_ids": [
+                      "ITEM_OO1"
+                    ]
+                  }
+                ],
+                "schema": {
+                  "$ref": "#/components/schemas/slice"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "appointment": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get appointment details scheduled between a sales associate and a client",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the appointment was created (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the appointment was created (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the appointment"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the appointment"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that the appointment is with"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that the appointment is with"
+            },
+            "title": {
+              "type": "string",
+              "nullable": true,
+              "description": "Short description of the appointment added by the associate"
+            },
+            "body": {
+              "type": "string",
+              "nullable": true,
+              "description": "TODO: Details added to the appointment by the associate"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the appointment was created"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the appointment was last updated"
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the appointment was scheduled to start"
+            },
+            "ends_at": {
+              "type": "string",
+              "format": "date_time",
+              "nullable": true,
+              "description": "Timestamp of when the appointment was scheduled to end"
+            },
+            "is_done": {
+              "type": "boolean",
+              "description": "Whether or not the appointment was marked as done by the associate. If the appointment is marked as done this will be `true`, otherwise defaults to `false`"
+            },
+            "is_done_at": {
+              "type": "string",
+              "nullable": true,
+              "format": "date_time",
+              "description": "Timestamp of when the appointment was marked as done by the associate"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "client_name",
+            "title",
+            "body",
+            "created_at",
+            "updated_at",
+            "starts_at",
+            "ends_at",
+            "is_done",
+            "is_done_at"
+          ]
+        }
+      },
+      "reminder": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about all notifications (reminders) scheduled by the sales associate on a clients profile",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the reminder was created (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the reminder was created (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the reminder"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the reminder"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that the reminder is with"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that the reminder is with"
+            },
+            "title": {
+              "type": "string",
+              "nullable": true,
+              "description": "Short description of the reminder added by the associate"
+            },
+            "body": {
+              "type": "string",
+              "nullable": true,
+              "description": "Details added to the reminder by the associate"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the reminder was created"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the reminder was last updated"
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the reminder was scheduled to start"
+            },
+            "ends_at": {
+              "type": "string",
+              "format": "date_time",
+              "nullable": true,
+              "description": "Timestamp of when the reminder was scheduled to end"
+            },
+            "is_done": {
+              "type": "boolean",
+              "description": "Whether or not the reminder was marked as done by the associate. If the reminder is marked as done this will be `true`, otherwise defaults to `false`"
+            },
+            "is_done_at": {
+              "type": "string",
+              "nullable": true,
+              "format": "date_time",
+              "description": "Timestamp of when the reminder was marked as done by the associate"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "client_name",
+            "title",
+            "body",
+            "created_at",
+            "updated_at",
+            "starts_at",
+            "ends_at",
+            "is_done",
+            "is_done_at"
+          ]
+        }
+      },
+      "slice": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about all slices (a curation of images) created and shared from sales associates to their clients",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the slice was created (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "description": "Store name of where the slice was created (based on associate assignment)"
+            },
+            "created_by_sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the slice"
+            },
+            "created_by_sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the slice"
+            },
+            "title": {
+              "type": "string",
+              "nullable": true,
+              "description": "Short description of the slice added by the original associate"
+            },
+            "body": {
+              "type": "string",
+              "nullable": true,
+              "description": "Details added to the slice by the original associate"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the slice was created"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the slice was last updated"
+            },
+            "item_ids": {
+              "type": "array",
+              "description": "Unique identifiers of the items that were included in the slice",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "created_by_sales_associate_id",
+            "created_by_sales_associate_name",
+            "title",
+            "body",
+            "created_at",
+            "updated_at",
+            "item_ids"
+          ]
+        }
+      },
+      "email": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about emails started from the BSPK application",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the email originated from (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the email originated from (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the email"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the email"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that the email was sent to"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that the email was sent to"
+            },
+            "template_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the template that was used for the email"
+            },
+            "template_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Name of the template that was used for the email"
+            },
+            "slice_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the Slice that was include in the email (if any)"
+            },
+            "media": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "content_type": {
+                    "type": "string",
+                    "description": "The mime type of the media"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The url of the images, videos or collection items included in the email"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "The size in KBs of the media"
+                  }
+                },
+                "required": [
+                  "content_type",
+                  "url",
+                  "size"
+                ]
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the email was created"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "client_name",
+            "template_id",
+            "template_name",
+            "slice_id",
+            "media",
+            "created_at"
+          ]
+        }
+      },
+      "call": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about phone calls started from the BSPK application",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the call originated from (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the call originated from (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that started the call"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who started the call"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that was called"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that was called"
+            },
+            "to": {
+              "type": "string",
+              "nullable": true,
+              "description": "Phone number the call was to (clients phone number)"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the call was started"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "client_name",
+            "to",
+            "created_at"
+          ]
+        }
+      },
+      "message": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about all messages sent by sales associates via Chat, Apple Messages, WhatsApp, WeChat or Line",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the message was created (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the message was created (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the message"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the message"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that the message is to"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that the message is to"
+            },
+            "body": {
+              "type": "string",
+              "nullable": true,
+              "description": "The text included in the message"
+            },
+            "channel": {
+              "type": "string",
+              "description": "The channel in which the message was sent from"
+            },
+            "template_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the template that was used for the message"
+            },
+            "template_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Name of the template that was used for the message"
+            },
+            "slice_id": {
+              "type": "integer",
+              "nullable": true,
+              "description": "Unique identifier of the Slice that was include in the email (if any)"
+            },
+            "media": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "content_type": {
+                    "type": "string",
+                    "description": "The mime type of the media"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The url of the images, videos or collection items included in the message"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "The size in KBs of the media"
+                  }
+                },
+                "required": [
+                  "content_type",
+                  "url",
+                  "size"
+                ]
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the message was created"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "slice_id",
+            "client_name",
+            "body",
+            "channel",
+            "template_id",
+            "template_name",
+            "media",
+            "created_at"
+          ]
+        }
+      },
+      "note": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about all notes made on a client profile by sales associates",
+          "properties": {
+            "store_id": {
+              "type": "string",
+              "description": "Unique identifier of the store where the note was created (based on associate assignment)"
+            },
+            "store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Store name of where the note was created (based on associate assignment)"
+            },
+            "sales_associate_id": {
+              "type": "string",
+              "description": "Unique identifier of the associate that created the note"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "description": "Full name of the associate who created the note"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client that the note was for"
+            },
+            "client_name": {
+              "type": "string",
+              "description": "Full name of the client that the note was for"
+            },
+            "body": {
+              "type": "string",
+              "description": "The text included in the note"
+            },
+            "media": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "content_type": {
+                    "type": "string",
+                    "description": "The mime type of the media"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "The url of the images, videos or collection items included in the message"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "The size in KBs of the media"
+                  }
+                },
+                "required": [
+                  "content_type",
+                  "url",
+                  "size"
+                ]
+              }
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the note was created"
+            }
+          },
+          "required": [
+            "store_id",
+            "store_name",
+            "sales_associate_id",
+            "sales_associate_name",
+            "client_id",
+            "client_name",
+            "body",
+            "media",
+            "created_at"
+          ]
+        }
+      },
+      "client": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "bspk_id": {
+              "type": "integer",
+              "description": "BSPK internal unique identifier of the client"
+            },
+            "client_id": {
+              "type": "string",
+              "description": "Unique identifier of the client"
+            },
+            "name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Full name of the client",
+              "deprecated": true
+            },
+            "first_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "First name of the client"
+            },
+            "last_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Last name of the client"
+            },
+            "title": {
+              "type": "string",
+              "nullable": true,
+              "description": "Title of the client"
+            },
+            "address": {
+              "type": "string",
+              "nullable": true,
+              "description": "Address of the client consolidated",
+              "deprecated": true
+            },
+            "addresses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Address street of the client"
+                  },
+                  "address_2": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Address street of the client"
+                  },
+                  "address_3": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Address street of the client"
+                  },
+                  "address_4": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Address street of the client"
+                  },
+                  "city": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "City of the client"
+                  },
+                  "state": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "State of the client"
+                  },
+                  "country_code": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Country code of the client"
+                  }
+                },
+                "required": [
+                  "address",
+                  "address_2",
+                  "address_3",
+                  "address_4",
+                  "city",
+                  "state",
+                  "country_code"
+                ]
+              }
+            },
+            "email": {
+              "type": "string",
+              "nullable": true,
+              "description": "Email of the client"
+            },
+            "mobile_phone": {
+              "type": "string",
+              "nullable": true,
+              "description": "Mobile phone of the client"
+            },
+            "other_phone": {
+              "type": "string",
+              "nullable": true,
+              "description": "Other phone of the client"
+            },
+            "birthday": {
+              "type": "string",
+              "format": "date_time",
+              "nullable": true,
+              "description": "Birthday of the client"
+            },
+            "gender": {
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "M",
+                "F",
+                "NB",
+                null
+              ],
+              "description": "Gender of the client"
+            },
+            "nationality": {
+              "type": "string",
+              "nullable": true,
+              "description": "Nationality of the client"
+            },
+            "passport_number": {
+              "type": "string",
+              "nullable": true,
+              "description": "Passport Number of the client"
+            },
+            "language": {
+              "type": "string",
+              "nullable": true,
+              "description": "Language of the client"
+            },
+            "preferred_contact_channel": {
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "chat",
+                "email",
+                "line",
+                "whastapp",
+                "wechat",
+                "call",
+                null
+              ],
+              "description": "The preferred channel of the client"
+            },
+            "current_sales_associate_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the associate that the client is assigned to"
+            },
+            "current_sales_associate_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Full name of the associate that the client is assigned to"
+            },
+            "current_store_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the store that the client is assigned to"
+            },
+            "current_store_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Name of the store that the client is assigned to"
+            },
+            "communication_preferences": {
+              "type": "object",
+              "properties": {
+                "chat_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by Chat or Messages"
+                },
+                "email_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by Email"
+                },
+                "phone_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by Phone Call"
+                },
+                "whatsapp_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by WhatsApp"
+                },
+                "wechat_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by WeChat"
+                },
+                "line_opt_in": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has enabled being contacted by Line"
+                },
+                "opt_out": {
+                  "type": "boolean",
+                  "description": "Whether or not the client has opted-out of being contacted"
+                }
+              },
+              "required": [
+                "chat_opt_in",
+                "email_opt_in",
+                "phone_opt_in",
+                "whatsapp_opt_in",
+                "wechat_opt_in",
+                "line_opt_in",
+                "opt_out"
+              ]
+            },
+            "preferences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the preference"
+                  },
+                  "value": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Value of the preference"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ]
+              }
+            },
+            "segment": {
+              "type": "string",
+              "nullable": true,
+              "description": "The Segmentention which the client is assigned to"
+            },
+            "preferred_journey": {
+              "type": "string",
+              "nullable": true,
+              "description": "The Journey which the client is assigned to"
+            },
+            "referred_by_client_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the client that referred this client"
+            },
+            "referred_at": {
+              "type": "string",
+              "nullable": true,
+              "description": "The date when the client referral was recorded in BSPK"
+            },
+            "consent": {
+              "type": "boolean",
+              "description": "Whether or not the client has given consent"
+            },
+            "notify_of_new_collection": {
+              "type": "boolean",
+              "description": "Whether or not the client wants to be notified of new collections"
+            },
+            "last_contacted_at": {
+              "type": "string",
+              "format": "date_time",
+              "nullable": true,
+              "description": "The last date the client was contacted by a Sales Associate"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the client was created"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the client was updated"
+            }
+          },
+          "required": [
+            "bspk_id",
+            "client_id",
+            "name",
+            "title",
+            "address",
+            "addresses",
+            "email",
+            "mobile_phone",
+            "other_phone",
+            "birthday",
+            "gender",
+            "nationality",
+            "passport_number",
+            "language",
+            "preferred_contact_channel",
+            "current_sales_associate_id",
+            "current_sales_associate_name",
+            "current_store_id",
+            "current_store_name",
+            "communication_preferences",
+            "preferences",
+            "segment",
+            "preferred_journey",
+            "referred_by_client_id",
+            "referred_at",
+            "consent",
+            "notify_of_new_collection",
+            "last_contacted_at",
+            "created_at",
+            "updated_at"
+          ]
+        }
+      },
+      "sales_associate": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "description": "Get details about all sales associates",
+          "properties": {
+            "current_store_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the store where associate is assigned to"
+            },
+            "associate_id": {
+              "type": "string",
+              "nullable": true,
+              "description": "Unique identifier of the associate"
+            },
+            "associate_id_2": {
+              "type": "string",
+              "nullable": true,
+              "description": "Second unique identifier of the associate"
+            },
+            "sales_associate_name": {
+              "type": "string",
+              "nullable": true,
+              "description": "Full name of the associate"
+            },
+            "username": {
+              "type": "string",
+              "nullable": true,
+              "description": "Associate's username that they use to login to BSPK"
+            },
+            "email": {
+              "type": "string",
+              "nullable": true,
+              "description": "Associate's email"
+            },
+            "mobile_phone": {
+              "type": "string",
+              "nullable": true,
+              "description": "Associate's mobile phone"
+            },
+            "job_title": {
+              "type": "string",
+              "nullable": true,
+              "description": "Associate's job title"
+            },
+            "wechat_enabled": {
+              "type": "boolean",
+              "nullable": true,
+              "description": "Whether or not the associate has wechat enabled"
+            },
+            "wechat_code": {
+              "type": "string",
+              "nullable": true,
+              "description": "Wechat code whenever it has wechat enable."
+            },
+            "imessage_enabled": {
+              "type": "boolean",
+              "nullable": true,
+              "description": "Whether or not the associate has Apple Messages enabled"
+            },
+            "line_enabled": {
+              "type": "boolean",
+              "nullable": true,
+              "description": "Whether or not the associate has Line enabled"
+            },
+            "adyen_enabled": {
+              "type": "boolean",
+              "nullable": true,
+              "description": "Whether or not the associate has Adyen Pay by Link enabled"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the note was created"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date_time",
+              "description": "Timestamp of when the note was updated"
+            }
+          },
+          "required": [
+            "current_store_id",
+            "associate_id",
+            "associate_id_2",
+            "sales_associate_name",
+            "username",
+            "email",
+            "mobile_phone",
+            "job_title",
+            "imessage_enabled",
+            "wechat_enabled",
+            "wechat_code",
+            "line_enabled",
+            "adyen_enabled",
+            "created_at",
+            "updated_at"
+          ]
+        }
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "TODO: Add business description"
+                },
+                "code": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title",
+                "code"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

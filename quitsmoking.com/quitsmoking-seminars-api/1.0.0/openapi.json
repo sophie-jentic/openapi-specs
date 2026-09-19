@@ -1,0 +1,649 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "QuitSmoking Seminars API",
+    "description": "API for managing educational seminars and events",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Frontend Team"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/other-a29-596/quitsmoking-seminars-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.quitsmoking.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/seminars": {
+      "get": {
+        "summary": "Get All Seminars",
+        "description": "Get paginated list of seminars with optional filters",
+        "operationId": "getSeminars",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by title, speaker, or location"
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter seminars from this date"
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter seminars until this date"
+          },
+          {
+            "name": "speaker",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by speaker name"
+          },
+          {
+            "name": "upcoming",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Show only upcoming seminars"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of seminars",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Seminar"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "currentPage": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "integer",
+                              "example": 5
+                            },
+                            "totalItems": {
+                              "type": "integer",
+                              "example": 48
+                            },
+                            "itemsPerPage": {
+                              "type": "integer",
+                              "example": 10
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add New Seminar",
+        "description": "Create a new seminar",
+        "operationId": "createSeminar",
+        "tags": [
+          "Seminars"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeminarInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Seminar created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Seminar created successfully"
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "sem_123456"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seminars/{id}": {
+      "get": {
+        "summary": "Get Seminar Details",
+        "description": "Get detailed information about a specific seminar",
+        "operationId": "getSeminarById",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Seminar ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seminar details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Seminar"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Seminar not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Seminar",
+        "description": "Update an existing seminar",
+        "operationId": "updateSeminar",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Seminar ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeminarInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seminar updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Seminar updated successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Seminar not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Seminar",
+        "description": "Delete a seminar",
+        "operationId": "deleteSeminar",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Seminar ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seminar deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Seminar deleted successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Seminar not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/seminars/{id}/register": {
+      "post": {
+        "summary": "Register for Seminar",
+        "description": "Register current user for a seminar",
+        "operationId": "registerForSeminar",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Seminar ID"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name for registration (if different from profile)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Successfully registered for seminar"
+                        },
+                        "registrationId": {
+                          "type": "string",
+                          "example": "reg_123456"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Already registered or seminar full",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel Registration",
+        "description": "Cancel user's registration for a seminar",
+        "operationId": "cancelRegistration",
+        "tags": [
+          "Seminars"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Seminar ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Registration cancelled successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "Logout User",
+        "description": "Invalidate user session",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "example": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Seminar": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sem_123456"
+          },
+          "title": {
+            "type": "string",
+            "example": "How to Quit Smoking: A Scientific Approach",
+            "description": "Seminar title"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe",
+            "description": "Name of registered attendee (optional, for backward compatibility)"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-03-15"
+          },
+          "time": {
+            "type": "string",
+            "example": "18:00 - 20:00"
+          },
+          "location": {
+            "type": "string",
+            "example": "Cairo Marriott Hotel, Zamalek"
+          },
+          "speaker": {
+            "type": "string",
+            "example": "Dr. Ahmed Hassan, Pulmonologist"
+          },
+          "description": {
+            "type": "string",
+            "example": "Join us for an informative session about smoking cessation techniques..."
+          },
+          "capacity": {
+            "type": "integer",
+            "example": 50,
+            "description": "Maximum number of attendees"
+          },
+          "registeredCount": {
+            "type": "integer",
+            "example": 32,
+            "description": "Number of registered attendees"
+          },
+          "isRegistered": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether current user is registered"
+          }
+        }
+      },
+      "SeminarInput": {
+        "type": "object",
+        "required": [
+          "title",
+          "date",
+          "location",
+          "speaker"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 5,
+            "maxLength": 200,
+            "example": "How to Quit Smoking: A Scientific Approach"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2024-03-15"
+          },
+          "time": {
+            "type": "string",
+            "example": "18:00 - 20:00"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 3,
+            "example": "Cairo Marriott Hotel, Zamalek"
+          },
+          "speaker": {
+            "type": "string",
+            "minLength": 3,
+            "example": "Dr. Ahmed Hassan, Pulmonologist"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Join us for an informative session about smoking cessation techniques..."
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "example": 50
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Error message"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Seminars",
+      "description": "Seminar management and registration operations"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication operations"
+    }
+  ]
+}

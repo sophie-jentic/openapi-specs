@@ -1,0 +1,2280 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "The ISL Credential Interface.\n\nChange log:\n- 1.2.0.5\n  - Modified \"Credential GET method\" to include FP Matching Status API.\n- 1.2.0.4\n  - Modified \"GET Method\" to include fields for Agent Registration.\n- 1.2.0.3\n  - Added new \"POST Method\" for Agent authentication.\n- 1.2.0.2:\n  - Modified \"Credential GET method\" to get Agent registration status.\n- 1.2.0.1:\n  - Added \"POST method\" for Agent registration.\n  - Modified Credential schema to complete POST - Agent registration API.\n\n- 1.2.0:\n  - Change date to date-time\n  - Add the impressionType, mimeType to biometricData\n  - Do not mix fixed properties and additional properties, use a subobject for the additional properties\n  - Add credentialNumber, issuingAuthority, issuingPlace to the credential\n  - Add quality, qualityFormat, algorithm, vendor, templateRef fields to biometricData\n  - Add fields credentialNumber and deliveryOffice to requestData\n  - Add field credentialIds to credentialRequest\n  - Mark some fields (ID, etc.) as readOnly\n  - Rename entity Credential as CredentialData\n  - Remove deleteCredentialRequest and replace it with cancelCredentialRequest\n  - Change the type of priority from string to integer to be consistent with other OSIA interfaces\n- 1.1.0:\n  - Add error structure on 400 errors\n  - Add signature in biometricType\n  - Force additionalProperties to false when extension is not allowed\n  - Add fields on BiometricData: instance, metadata, comment, missing, template (needed when inserted in the credential)\n  - Add a requestData entity to group the request of data\n  - Extend the allowed values for the status\n  - Add a service to change the status\n- 1.0.0: Initial version\n",
+    "version": "1.2.0.5",
+    "title": "ISL Credential Interface",
+    "license": {
+      "name": "SIA",
+      "url": "https://raw.githubusercontent.com/SecureIdentityAlliance/osia/master/LICENSE"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/PIPULPANT_1/isl-credential-interface/1.2.0.5"
+  },
+  "tags": [
+    {
+      "name": "Credential Request"
+    },
+    {
+      "name": "Credential"
+    },
+    {
+      "name": "Credential Profile"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://frodo.mobile-technologies.com:8083/ISL_EAI/"
+    }
+  ],
+  "paths": {
+    "/v1/credentialRequests/agentRegistration/{credentialRequestId}": {
+      "post": {
+        "tags": [
+          "Credential Request"
+        ],
+        "summary": "Create a request for Agent Registration",
+        "operationId": "createAgentRegistrationRequest",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.request.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialRequestId",
+            "in": "path",
+            "description": "the id of the credential request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operation not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult404"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Enrollment ID already exist in ISL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult410"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error i.e. Service Unavailable \\ Request TimeOut",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentialRequests/{credentialRequestId}/": {
+      "get": {
+        "tags": [
+          "Credential Request"
+        ],
+        "summary": "Read a credential request",
+        "operationId": "readCredentialRequest",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.request.read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialRequestId",
+            "in": "path",
+            "description": "the id of the credential request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attributes",
+            "in": "query",
+            "description": "The (optional) set of attributes to retrieve",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "lastname"
+              ]
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Read not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Credential Request"
+        ],
+        "summary": "Update a credential request",
+        "operationId": "updateCredentialRequest",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.request.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialRequestId",
+            "in": "path",
+            "description": "the id of the credential request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Update successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Update not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentialRequests/{credentialRequestId}/cancel": {
+      "post": {
+        "tags": [
+          "Credential Request"
+        ],
+        "summary": "Cancel a credential request",
+        "operationId": "cancelCredentialRequest",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.request.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialRequestId",
+            "in": "path",
+            "description": "the id of the credential request",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Cancel successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cancel not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Retrieve a list of credentials that match the given search criteria",
+        "operationId": "findCredentials",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attributes",
+            "in": "query",
+            "description": "The (optional) set of required attributes to retrieve",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Expressions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Read successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialData"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Read not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials/AuthorizationStatus/{credentialId}": {
+      "get": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "This API will be used to get Agent authorization status OR can also be use to get FP Matching status",
+        "operationId": "readCredential",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "description": "This will be the MSISDN or the unique Reference Code.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attributes",
+            "in": "query",
+            "description": "The (optional) set of required attributes to retrieve",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialData"
+                },
+                "examples": {
+                  "AGENT_REGISTRATION_STATUS": {
+                    "$ref": "#/components/schemas/CredentialData"
+                  },
+                  "AGENT_FP_MATCHING_RESULT": {
+                    "$ref": "#/components/examples/AgentFPResponseResult200"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Fingerprints not match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult402"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Read not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult403"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown Record.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Transaction failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error501"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error503"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials/{credentialId}/suspend": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Suspend a credential",
+        "operationId": "suspendCredential",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "description": "the id of the credential",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "the reason for suspension"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Update successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Update not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials/{credentialId}/unsuspend": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Unsuspend a credential",
+        "operationId": "unsuspendCredential",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "description": "the id of the credential",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "the reason for unsuspension"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Update successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Update not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials/{credentialId}/revoke": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Revoke a credential",
+        "operationId": "revokeCredential",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "description": "the id of the credential",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "the reason for revocation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Update successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Update not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials/{credentialId}/status": {
+      "post": {
+        "tags": [
+          "Credential"
+        ],
+        "summary": "Change the status of a credential",
+        "operationId": "setCredentialStatus",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.credential.write"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "credentialId",
+            "in": "path",
+            "description": "the id of the credential",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "The new status of the credential"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "The reason for the change of status"
+                  },
+                  "requester": {
+                    "type": "string",
+                    "description": "The ID/name of the entity requesting the change"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "description": "A free comment"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Operation successful"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Operation not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentialProfiles": {
+      "post": {
+        "tags": [
+          "Credential Profile"
+        ],
+        "summary": "Retrieve a list of credential profiles that match the given search criteria",
+        "operationId": "findCredentialProfiles",
+        "security": [
+          {
+            "BearerAuth": [
+              "cms.profile.read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "attributes",
+            "in": "query",
+            "description": "The (optional) set of required attributes to retrieve",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "transactionId",
+            "in": "query",
+            "description": "The id of the transaction",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Expressions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Read successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialProfile"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Read not allowed"
+          },
+          "404": {
+            "description": "Unknown record"
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/enrollments/agent-Authentication/": {
+      "post": {
+        "tags": [
+          "MT API"
+        ],
+        "summary": "This API will be used to get the details of an Agent along with agent permissions.",
+        "description": "Supported Operations:\n  * Authenticate the Agent",
+        "requestBody": {
+          "description": "Agent authentication request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/agentAuthenticationReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/agentAuthenticationRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseResult404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error i.e. Service Unavailable \\ Request TimeOut",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "examples": {
+      "AgentFPResponseResult200": {
+        "value": {
+          "credentialId": null,
+          "status": null,
+          "statusOther": null,
+          "credentialNumber": null,
+          "personId": null,
+          "credentialProfileId": null,
+          "issuedDate": null,
+          "expiryDate": null,
+          "serialNumber": null,
+          "issuingAuthority": null,
+          "issuingPlace": null,
+          "agentfirstName": null,
+          "agentmiddleName": null,
+          "agentlastName": null,
+          "agentbirthDate": null,
+          "agentNationality": null,
+          "agentGender": null,
+          "agentVisaExpireDate": null,
+          "code": 200,
+          "message": "FP Matching Successful"
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Error code",
+            "type": "string"
+          },
+          "message": {
+            "description": "Error message",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult204": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 204
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Update Successful"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult402": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 402
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Fingerprints do not match."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult403": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 403
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Update not allowed"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult404": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 404
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Unknown record"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error400": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 400
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Bad Request"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error500": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 500
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Unexpected error"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error501": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 501
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "The transaction failed by bad request."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error503": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 503
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Service unavailable."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Error701": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 701
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Authentication failed."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult200": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 200
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Transaction is successful"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult401": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 401
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Not Authorized"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResponseResult410": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Response code",
+            "type": "string",
+            "example": 410
+          },
+          "message": {
+            "description": "Response message",
+            "type": "string",
+            "example": "Enrollment ID already exist in ISL"
+          }
+        },
+        "additionalProperties": false
+      },
+      "agentAuthenticationRes": {
+        "type": "object",
+        "properties": {
+          "loginCredentials": {
+            "type": "object",
+            "properties": {
+              "publicIdentifier": {
+                "type": "string",
+                "example": 89432823493,
+                "description": "dealer/agent msisdn using which the authentication is initiated."
+              },
+              "agentId": {
+                "type": "string",
+                "example": "dealer01",
+                "description": "dealer id created in authentication system"
+              }
+            }
+          },
+          "agentPermission": {
+            "type": "object",
+            "properties": {
+              "regPerm": {
+                "type": "string",
+                "example": true,
+                "description": "allowed for registration. mapped to REG_PERM"
+              },
+              "simSwapPerm": {
+                "type": "string",
+                "example": true,
+                "description": "allowed for simswap.mapped to SIM_SWAP_PERM"
+              },
+              "pinResetPerm": {
+                "type": "string",
+                "example": true,
+                "description": "allowed for pinreset.mapped to PIN_RESET_FLAG"
+              },
+              "isAmbassador": {
+                "type": "string",
+                "example": true,
+                "description": "flag value to indicate if agent is ambassador .mapped to AMBASSADOR_FLAG"
+              }
+            }
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "the city of the address"
+          },
+          "state": {
+            "type": "string",
+            "description": "the state of the address"
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "city": "Libourne",
+          "state": "Gironde"
+        }
+      },
+      "BiographicData": {
+        "type": "object",
+        "description": "The set of biographic data.",
+        "additionalProperties": false,
+        "required": [
+          "firstName",
+          "lastName",
+          "dateOfBirth",
+          "gender",
+          "nationality",
+          "idNumber",
+          "visaExpiaryDate",
+          "preferredLangauge"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "Accept [a-z], [A-Z], [0-9], [-], [_], [.], [@] and spaces </br> Max Field Length = 50 </br> \n"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doo",
+            "description": "Accept [a-z], [A-Z], [0-9], [-], [_], [.], [@] and spaces </br> Max Field Length = 50 </br> \n"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date",
+            "example": "2010-11-30",
+            "description": ""
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ],
+            "example": "MALE",
+            "description": ""
+          },
+          "nationality": {
+            "type": "string",
+            "example": "Isb",
+            "description": "List of cities configured. Mnadatory only if subscriber nationality is Foreigner.\n"
+          },
+          "idNumber": {
+            "type": "string",
+            "example": "ABCD98327",
+            "description": "Format of the ID Number: \nAccept numbers [0-9] <br/> Max Field Length 255 </br>\n"
+          },
+          "visaExpiaryDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-11-30",
+            "description": "Mandatory only if subscriber nationality is Foreigner\n"
+          },
+          "preferredLangauge": {
+            "type": "string",
+            "example": "Eng"
+          },
+          "geometry": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "string",
+                "description": "X coordinate value",
+                "example": 2330.33
+              },
+              "y": {
+                "type": "string",
+                "description": "Y coordinate value",
+                "example": 2330.33
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "BiometricData": {
+        "type": "object",
+        "required": [
+          "biometricType"
+        ],
+        "properties": {
+          "biometricType": {
+            "$ref": "#/components/schemas/BiometricType"
+          },
+          "biometricSubType": {
+            "$ref": "#/components/schemas/BiometricSubType"
+          },
+          "instance": {
+            "type": "string",
+            "description": "Used to separate two distincts biometric items of the same type and subtype"
+          },
+          "encounterId": {
+            "type": "string",
+            "description": "the id of the encounter owner of this biometric"
+          },
+          "image": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded image"
+          },
+          "imageRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI to an image",
+            "example": "http://imageserver.com/image?id=00003"
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2019-05-21T12:00:00Z"
+          },
+          "captureDevice": {
+            "type": "string",
+            "description": "A string identifying the device used to capture the biometric"
+          },
+          "impressionType": {
+            "$ref": "#/components/schemas/ImpressionType"
+          },
+          "width": {
+            "type": "integer",
+            "description": "the width of the image"
+          },
+          "height": {
+            "type": "integer",
+            "description": "the height of the image"
+          },
+          "bitdepth": {
+            "type": "integer"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "the nature and format of the image. The mime type definitions should be in compliance with RFC 6838."
+          },
+          "resolution": {
+            "type": "integer",
+            "description": "the image resolution (in DPI)"
+          },
+          "compression": {
+            "$ref": "#/components/schemas/CompressionType"
+          },
+          "missing": {
+            "description": "Optional properties indicating if a part of the biometric data is missing",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissingType"
+            }
+          },
+          "metadata": {
+            "type": "string",
+            "description": "An optional string used to convey information vendor-specific"
+          },
+          "comment": {
+            "type": "string",
+            "description": "A comment about the biometric data"
+          },
+          "template": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded template"
+          },
+          "templateRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI to the template when it is managed in a dedicated data server",
+            "example": "http://dataserver.com/template?id=00014"
+          },
+          "templateFormat": {
+            "$ref": "#/components/schemas/TemplateFormat"
+          },
+          "quality": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Quality, as a number, of the biometric"
+          },
+          "qualityFormat": {
+            "$ref": "#/components/schemas/QualityFormat"
+          },
+          "algorithm": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentData": {
+        "type": "object",
+        "required": [
+          "documentType",
+          "parts"
+        ],
+        "properties": {
+          "documentType": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "documentTypeOther": {
+            "type": "string",
+            "description": "Details about the type of document when OTHER is used."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Used to separate two distincts documents of the same type (ex: two passports)"
+          },
+          "parts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/DocumentPart"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentPart": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "pages": {
+            "type": "array",
+            "description": "The pages included in this part. Can be a single page number, or a list.",
+            "minItems": 1,
+            "items": {
+              "type": "integer"
+            }
+          },
+          "data": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded data of the document. Image Data should be in binary and format can be of any type  jpg, gif, png, bmp."
+          },
+          "dataRef": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI to the data",
+            "example": "http://server.com/buffer?id=00003"
+          },
+          "width": {
+            "type": "integer",
+            "description": "the width of the image in pixels. Maximum is 1024."
+          },
+          "height": {
+            "type": "integer",
+            "description": "the height of the image in pixels. Maximum is 1024."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "the nature and format of the document. The mime type definitions should be in compliance with RFC 6838."
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2019-05-21T12:00:00Z"
+          },
+          "captureDevice": {
+            "type": "string",
+            "description": "A string identifying the device used to capture the document part"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocumentType": {
+        "type": "string",
+        "description": "Type of document.",
+        "enum": [
+          "ID_FRONT",
+          "AGENT_PHOTO",
+          "AGENT_APPLICATION_FORM",
+          "SHOP_PHOTO",
+          "OTHER"
+        ],
+        "example": "ID_FRONT"
+      },
+      "TemplateFormat": {
+        "type": "string",
+        "description": "Format of the template.\nOne of ISO_19794_2, ISO_19794_2_NS, ISO_19794_2_CS, ISO_19794_2_2011, ANSI_378_2009 or ANSI_378.\nCan be extended to include additional proprietary template format\n"
+      },
+      "QualityFormat": {
+        "type": "string",
+        "description": "Format of the quality.\nOne of ISO_19794, NFIQ, or NFIQ2.\nCan be extended to include additional proprietary quality format\n"
+      },
+      "MissingType": {
+        "type": "object",
+        "properties": {
+          "biometricSubType": {
+            "$ref": "#/components/schemas/BiometricSubType"
+          },
+          "presence": {
+            "type": "string",
+            "enum": [
+              "BANDAGED",
+              "AMPUTATED",
+              "DAMAGED"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImpressionType": {
+        "type": "string",
+        "enum": [
+          "LIVE_SCAN_PLAIN",
+          "LIVE_SCAN_ROLLED",
+          "NONLIVE_SCAN_PLAIN",
+          "NONLIVE_SCAN_ROLLED",
+          "LATENT_IMPRESSION",
+          "LATENT_TRACING",
+          "LATENT_PHOTO",
+          "LATENT_LIFT",
+          "LIVE_SCAN_SWIPE",
+          "LIVE_SCAN_VERTICAL_ROLL",
+          "LIVE_SCAN_PALM",
+          "NONLIVE_SCAN_PALM",
+          "LATENT_PALM_IMPRESSION",
+          "LATENT_PALM_TRACING",
+          "LATENT_PALM_PHOTO",
+          "LATENT_PALM_LIFT",
+          "LIVE_SCAN_OPTICAL_CONTACTLESS_PLAIN",
+          "OTHER",
+          "UNKNOWN"
+        ]
+      },
+      "BiometricType": {
+        "type": "string",
+        "enum": [
+          "FACE",
+          "FINGER",
+          "IRIS",
+          "SIGNATURE",
+          "UNKNOWN"
+        ],
+        "example": "FINGER"
+      },
+      "BiometricSubType": {
+        "type": "string",
+        "enum": [
+          "UNKNOWN",
+          "RIGHT_THUMB",
+          "RIGHT_INDEX",
+          "RIGHT_MIDDLE",
+          "RIGHT_RING",
+          "RIGHT_LITTLE",
+          "LEFT_THUMB",
+          "LEFT_INDEX",
+          "LEFT_MIDDLE",
+          "LEFT_RING",
+          "LEFT_LITTLE",
+          "PLAIN_RIGHT_FOUR_FINGERS",
+          "PLAIN_LEFT_FOUR_FINGERS",
+          "PLAIN_THUMBS",
+          "UNKNOWN_PALM",
+          "RIGHT_FULL_PALM",
+          "RIGHT_WRITERS_PALM",
+          "LEFT_FULL_PALM",
+          "LEFT_WRITERS_PALM",
+          "RIGHT_LOWER_PALM",
+          "RIGHT_UPPER_PALM",
+          "LEFT_LOWER_PALM",
+          "LEFT_UPPER_PALM",
+          "RIGHT_OTHER",
+          "LEFT_OTHER",
+          "RIGHT_INTERDIGITAL",
+          "RIGHT_THENAR",
+          "LEFT_INTERDIGITAL",
+          "LEFT_THENAR",
+          "LEFT_HYPOTHENAR",
+          "RIGHT_INDEX_AND_MIDDLE",
+          "RIGHT_MIDDLE_AND_RING",
+          "RIGHT_RING_AND_LITTLE",
+          "LEFT_INDEX_AND_MIDDLE",
+          "LEFT_MIDDLE_AND_RING",
+          "LEFT_RING_AND_LITTLE",
+          "RIGHT_INDEX_AND_LEFT_INDEX",
+          "RIGHT_INDEX_AND_MIDDLE_AND_RING",
+          "RIGHT_MIDDLE_AND_RING_AND_LITTLE",
+          "LEFT_INDEX_AND_MIDDLE_AND_RING",
+          "LEFT_MIDDLE_AND_RING_AND_LITTLE",
+          "EYE_UNDEF",
+          "EYE_RIGHT",
+          "EYE_LEFT",
+          "PORTRAIT",
+          "LEFT_PROFILE",
+          "RIGHT_PROFILE"
+        ],
+        "example": "RIGHT_INDEX"
+      },
+      "CompressionType": {
+        "type": "string",
+        "enum": [
+          "NONE",
+          "WSQ",
+          "JPEG",
+          "JPEG2000",
+          "PNG"
+        ],
+        "example": "WSQ"
+      },
+      "RequestData": {
+        "type": "object",
+        "description": "The data describing the request itself",
+        "required": [
+          "priority",
+          "credentialProfileId",
+          "requestType"
+        ],
+        "properties": {
+          "deliveryAddress": {
+            "$ref": "#/components/schemas/Address",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false,
+        "example": {
+          "deliveryAddress": {
+            "city": "Libourne",
+            "state": "33500"
+          }
+        }
+      },
+      "ContextualData": {
+        "type": "object",
+        "required": [
+          "MSISDN"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "MSISDN": {
+            "type": "string",
+            "example": 9647523456789,
+            "description": "can accept only numbers [0-9] <br/>\nHas to start with 96475 prefix in Creation <br/>\nFixed length = 13 <br/>\n"
+          }
+        }
+      },
+      "CredentialRequest": {
+        "type": "object",
+        "description": "A request for a credential",
+        "required": [
+          "biographicData",
+          "requestData"
+        ],
+        "properties": {
+          "credentialType": {
+            "type": "string",
+            "enum": [
+              "AGENT_NEW_REG"
+            ],
+            "example": "AGENT_NEW_REG"
+          },
+          "requestData": {
+            "$ref": "#/components/schemas/RequestData"
+          },
+          "contextualData": {
+            "$ref": "#/components/schemas/ContextualData"
+          },
+          "biographicData": {
+            "$ref": "#/components/schemas/BiographicData"
+          },
+          "documentData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocumentData"
+            },
+            "example": [
+              {
+                "documentType": "ID_FRONT",
+                "documentTypeOther": null,
+                "instance": null,
+                "parts": {
+                  "pages": [
+                    0
+                  ],
+                  "data": "235AASASAS...23508235ASDTGDA",
+                  "dataRef": null,
+                  "width": 1024,
+                  "height": 1024,
+                  "mimeType": null,
+                  "captureDate": null,
+                  "captureDevice": null,
+                  "description": "Image can be of any type i.e.  jpg, gif, png, bmp. But Image should be in binary form."
+                }
+              },
+              {
+                "documentType": "AGENT_PHOTO",
+                "description": "Mandatory only if idType = National",
+                "documentTypeOther": null,
+                "instance": null,
+                "parts": {
+                  "pages": [
+                    0
+                  ],
+                  "data": null,
+                  "dataRef": null,
+                  "width": 1024,
+                  "height": 1024,
+                  "mimeType": null,
+                  "captureDate": null,
+                  "captureDevice": null,
+                  "description": "Image can be of any type i.e.  jpg, gif, png, bmp. But Image should be in binary form."
+                }
+              },
+              {
+                "documentType": "AGENT_APPLICATION_FORM",
+                "description": "Mandatory only if idType = National",
+                "documentTypeOther": null,
+                "instance": null,
+                "parts": {
+                  "pages": [
+                    0
+                  ],
+                  "data": null,
+                  "dataRef": null,
+                  "width": 1024,
+                  "height": 1024,
+                  "mimeType": null,
+                  "captureDate": null,
+                  "captureDevice": null,
+                  "description": "Image can be of any type i.e.  jpg, gif, png, bmp. But Image should be in binary form."
+                }
+              },
+              {
+                "documentType": "SHOP_PHOTO",
+                "description": "Mandatory only if idType = International",
+                "documentTypeOther": null,
+                "instance": null,
+                "parts": {
+                  "pages": [
+                    0
+                  ],
+                  "data": "235AASASAS...23508235ASDTGDA",
+                  "dataRef": null,
+                  "width": 1024,
+                  "height": 1024,
+                  "mimeType": null,
+                  "captureDate": null,
+                  "captureDevice": null,
+                  "description": "Image can be of any type i.e. jpg, gif, png, bmp. But Image should be in binary form."
+                }
+              }
+            ]
+          },
+          "credentialIds": {
+            "type": "array",
+            "description": "The id of the credentials created for this request.",
+            "items": {
+              "type": "string",
+              "description": "The unique id of the credential"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "agentAuthenticationReq": {
+        "type": "object",
+        "properties": {
+          "loginCredentials": {
+            "type": "object",
+            "properties": {
+              "publicIdentifier": {
+                "type": "string",
+                "example": 89432823493,
+                "description": "dealer/agent msisdn using which the authentication is initiated."
+              },
+              "agentId": {
+                "type": "string",
+                "example": "dealer01",
+                "description": "dealer id created in authentication system"
+              },
+              "agentPassword": {
+                "type": "string",
+                "example": "dadsdss1231ddsss1233",
+                "description": "dealer password for authentication. this should be in base64 encrypted with salt"
+              }
+            },
+            "required": [
+              "agentId",
+              "agentPassword",
+              "publicIdentifier"
+            ]
+          }
+        }
+      },
+      "CredentialData": {
+        "description": "A credential",
+        "type": "object",
+        "required": [
+          "credentialId",
+          "status",
+          "personId",
+          "credentialProfileId"
+        ],
+        "properties": {
+          "credentialId": {
+            "type": "string",
+            "description": "The unique id for this credential e.g. MSISDN.",
+            "example": 1234567890,
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the credential",
+            "enum": [
+              "NEW",
+              "ACTIVE",
+              "SUSPENDED",
+              "REVOKED",
+              "OTHER"
+            ],
+            "readOnly": true
+          },
+          "statusOther": {
+            "type": "string",
+            "description": "This field will be used to send Agent Authorization Status.",
+            "enum": [
+              "AUTHORIZED",
+              "NOT_AUTHORIZED"
+            ],
+            "readOnly": true
+          },
+          "credentialNumber": {
+            "type": "string",
+            "description": "The number attached to the credential (ex: passport number)"
+          },
+          "personId": {
+            "type": "string",
+            "description": "The unique id of the person that the credential request is for"
+          },
+          "credentialProfileId": {
+            "type": "string",
+            "description": "The unique id of the credential profile"
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date and time that this credential was issued"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date and time that this credential expires"
+          },
+          "serialNumber": {
+            "type": "string",
+            "description": "the serial number of the credential"
+          },
+          "issuingAuthority": {
+            "type": "string",
+            "description": "The authority issuing the credential (ex: the Ministry of Interior)"
+          },
+          "issuingPlace": {
+            "type": "string",
+            "description": "The place where the credential was issued (ex: Paris)"
+          },
+          "agentfirstName": {
+            "type": "string",
+            "description": "The first name of agent.",
+            "example": "John"
+          },
+          "agentmiddleName": {
+            "type": "string",
+            "description": "The middle name of agent.",
+            "example": "John"
+          },
+          "agentlastName": {
+            "type": "string",
+            "description": "The last name of agent.",
+            "example": "John"
+          },
+          "agentbirthDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The birth date of agent.",
+            "example": "2000-11-30"
+          },
+          "agentNationality": {
+            "type": "string",
+            "description": "The nationality of agent.",
+            "example": "Pakistani"
+          },
+          "agentGender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ],
+            "description": "The gender of agent.",
+            "example": "Male"
+          },
+          "agentVisaExpireDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The visa expiary date of agent.",
+            "example": "2023-11-30"
+          },
+          "code": {
+            "type": "string",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "description": "The response message.",
+            "example": "Successful"
+          },
+          "others": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "getAgentAuthorizationStatus": {
+        "properties": {
+          "msisdn": {
+            "type": "string",
+            "example": 256774638539
+          },
+          "transactionDate": {
+            "type": "string",
+            "example": "20210205T10:52:48",
+            "description": "transation date and is mandatory"
+          },
+          "agentAuthorized": {
+            "type": "string",
+            "enum": [
+              true,
+              false
+            ],
+            "example": "false.",
+            "description": "It will show either agent is Authorized or not authorized."
+          },
+          "code": {
+            "type": "string",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "successfull"
+          }
+        }
+      },
+      "CredentialProfile": {
+        "description": "A credential profile",
+        "type": "object",
+        "properties": {
+          "credentialProfileId": {
+            "type": "string",
+            "description": "The unique id for this credential profile"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the credential profile"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the credential profile"
+          },
+          "credentialType": {
+            "description": "The type of credential that this profile will issue",
+            "type": "string",
+            "enum": [
+              "SMARTCARD",
+              "VIRTUAL_SMARTCARD",
+              "MOBILE",
+              "PASSPORT",
+              "ID_CARD"
+            ]
+          },
+          "defaultLifetime": {
+            "type": "integer",
+            "description": "The default number of days that this credential will be considered valid for after issuance."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Expression": {
+        "type": "object",
+        "required": [
+          "attributeName",
+          "operator",
+          "value"
+        ],
+        "properties": {
+          "attributeName": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "<",
+              ">",
+              "=",
+              ">=",
+              "<=",
+              "!="
+            ]
+          },
+          "value": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Expressions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Expression"
+        }
+      }
+    }
+  }
+}

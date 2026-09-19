@@ -1,0 +1,361 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MagicScraper API",
+    "description": "A generic, schema-first web scraping API. Extract data from any website into  structured JSON using LLM-powered extraction, without worrying about proxies or unblockers.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@magicscraper.io"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/student-060/magicscraper-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.magicscraper.io/v1",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/scrape": {
+      "post": {
+        "summary": "Synchronous Scraping",
+        "description": "Scrapes a single URL and returns data immediately. Best for real-time applications. Maximum timeout is 60 seconds.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful extraction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/ExtractionError"
+          }
+        }
+      }
+    },
+    "/async": {
+      "post": {
+        "summary": "Asynchronous Scraping",
+        "description": "Submit a scraping job and get a Job ID. Recommended for complex sites,  large extraction schemas, or bulk operations.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Job accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/crawl": {
+      "post": {
+        "summary": "Domain Discovery (Crawl)",
+        "description": "Finds all sub-pages within a domain matching specific patterns.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrawlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Crawl job started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job/{jobId}": {
+      "get": {
+        "summary": "Get Job Status/Result",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current status or final data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ScrapeResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/JobStatus"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ScrapeRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://www.amazon.com/dp/B08H75RTZ8"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Flexible JSON object defining the desired output structure.",
+            "example": {
+              "product_name": "string",
+              "price": "number",
+              "features": [
+                "string"
+              ],
+              "is_prime": "boolean"
+            }
+          },
+          "options": {
+            "$ref": "#/components/schemas/ScrapeOptions"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BrowserAction"
+            }
+          }
+        }
+      },
+      "ScrapeOptions": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "markdown",
+              "html",
+              "screenshot"
+            ],
+            "default": "json"
+          },
+          "geo": {
+            "type": "string",
+            "description": "ISO country code for proxy location.",
+            "example": "US"
+          },
+          "render_js": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use a headless browser for JavaScript execution."
+          },
+          "premium_proxy": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use residential proxies for tough targets."
+          },
+          "wait_for": {
+            "type": "string",
+            "description": "CSS selector to wait for before extraction.",
+            "example": ".price-tag"
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "BrowserAction": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "click",
+              "scroll",
+              "wait",
+              "type"
+            ]
+          },
+          "selector": {
+            "type": "string",
+            "description": "Required for click and type."
+          },
+          "text": {
+            "type": "string",
+            "description": "Text to type into the selector."
+          },
+          "milliseconds": {
+            "type": "integer",
+            "description": "Wait time for 'wait' action."
+          }
+        }
+      },
+      "ScrapeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "description": "The extracted data matching requested schema."
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "cost": {
+                "type": "number"
+              },
+              "time_taken": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "CrawlRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "max_depth": {
+            "type": "integer",
+            "default": 1
+          },
+          "include_pattern": {
+            "type": "string",
+            "example": "/blog/*"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 50
+          }
+        }
+      },
+      "AsyncJobResponse": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing"
+            ]
+          },
+          "eta": {
+            "type": "integer"
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ]
+          },
+          "progress": {
+            "type": "integer",
+            "description": "Percentage complete"
+          }
+        }
+      }
+    },
+    "responses": {
+      "ExtractionError": {
+        "description": "Extraction failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3509 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LuckPerms REST API",
+    "description": "The LuckPerms REST API allows developers to query LuckPerms data using HTTP calls.",
+    "version": "1.0",
+    "contact": {
+      "name": "LuckPerms Team",
+      "url": "https://luckperms.net"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/LuckPerms/LuckPerms/blob/master/LICENSE.txt"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/jeeukko/luckperms-rest-api/1.0"
+  },
+  "servers": [
+    {
+      "url": "../"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "API methods for LuckPerms users."
+    },
+    {
+      "name": "Groups",
+      "description": "API methods for LuckPerms groups."
+    },
+    {
+      "name": "Tracks",
+      "description": "API methods for LuckPerms tracks."
+    },
+    {
+      "name": "Actions",
+      "description": "API methods for LuckPerms actions."
+    },
+    {
+      "name": "Messaging",
+      "description": "API methods for LuckPerms messaging."
+    },
+    {
+      "name": "Events",
+      "description": "API methods for LuckPerms events."
+    },
+    {
+      "name": "Misc",
+      "description": "Miscellaneous API methods."
+    }
+  ],
+  "paths": {
+    "/user": {
+      "get": {
+        "summary": "Get all existing users",
+        "operationId": "get-users",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/components/schemas/UniqueId"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      "c1d60c50-70b5-4722-8057-87767557e50d"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns an array of all known users.",
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "summary": "Create a new user",
+        "operationId": "create-user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerSaveResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "outcomes": [
+                        "username_updated",
+                        "other_unique_ids_present_for_username"
+                      ],
+                      "previousUsername": "Luck",
+                      "otherUniqueIds": [
+                        "c1d60c50-70b5-4722-8057-87767557e50d"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerSaveResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "outcomes": [
+                        "clean_insert"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUser"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                    "username": "Luck"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Create a new user.",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/user/lookup": {
+      "get": {
+        "summary": "Search for a user with the given username or unique id",
+        "operationId": "get-user-lookup",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uniqueId": {
+                      "$ref": "#/components/schemas/UniqueId"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                      "username": "Luck"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Lookup the unique id or username of a user with the given username or unique id.\n\nYou must specify one of the query parameters in the request.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "example": "Luck"
+            },
+            "in": "query",
+            "name": "username",
+            "description": "The username to search for"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "example": "c1d60c50-70b5-4722-8057-87767557e50d"
+            },
+            "in": "query",
+            "name": "uniqueId",
+            "description": "The unique id to search for"
+          }
+        ]
+      },
+      "parameters": []
+    },
+    "/user/search": {
+      "get": {
+        "summary": "Search for users with given nodes",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSearchResult"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                        "results": [
+                          {
+                            "key": "minecraft.command.ban",
+                            "type": "permission",
+                            "value": true,
+                            "context": [
+                              {
+                                "key": "server",
+                                "value": "survival"
+                              }
+                            ],
+                            "expiry": 1658428395
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-user-search",
+        "description": "Search for users with given nodes.\n\nYou must specify one of the query parameters in the request.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "key",
+            "description": "Search for nodes with a key equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "keyStartsWith",
+            "description": "Search for nodes with a key starting with"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "metaKey",
+            "description": "Search for meta nodes with a meta key equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "regex_permission",
+                "inheritance",
+                "prefix",
+                "suffix",
+                "meta",
+                "weight",
+                "display_name"
+              ]
+            },
+            "in": "query",
+            "name": "type",
+            "description": "Search for nodes with a type equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "group",
+            "description": "Search for inheritance nodes with the given group name"
+          }
+        ]
+      }
+    },
+    "/user/{uniqueId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "get": {
+        "summary": "Get a users data",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                      "username": "Luck",
+                      "nodes": [
+                        {
+                          "key": "group.default",
+                          "type": "inheritance",
+                          "value": true,
+                          "context": []
+                        },
+                        {
+                          "key": "minecraft.command.ban",
+                          "type": "permission",
+                          "value": true,
+                          "context": [
+                            {
+                              "key": "server",
+                              "value": "survival"
+                            }
+                          ],
+                          "expiry": 1658428395
+                        }
+                      ],
+                      "metadata": {
+                        "meta": {
+                          "nametag-color": "red",
+                          "fly-speed": "5"
+                        },
+                        "prefix": "[Admin] ",
+                        "suffix": " [the great]",
+                        "primaryGroup": "default"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "operationId": "get-user",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/uniqueId"
+          }
+        ],
+        "description": "Get a user by unique id (UUID)."
+      },
+      "patch": {
+        "summary": "Update a users data",
+        "operationId": "patch-user",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Update a user's data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "username": {
+                        "type": "string",
+                        "minLength": 1,
+                        "example": "Luck"
+                      }
+                    }
+                  }
+                ],
+                "type": "object"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "username": "Luck"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a user",
+        "operationId": "delete-user",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Delete a user",
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "playerDataOnly",
+            "description": "if only player data should be deleted",
+            "required": false
+          }
+        ],
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/user/{uniqueId}/nodes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "get": {
+        "summary": "Get a users nodes (permissions data)",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "group.default",
+                        "type": "inheritance",
+                        "value": true,
+                        "context": []
+                      },
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "operationId": "get-user-nodes",
+        "parameters": [],
+        "description": "Get a users nodes."
+      },
+      "post": {
+        "summary": "Add a node to a user",
+        "operationId": "add-user-node",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/temporaryNodeMergeStrategy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok - returns the updated nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Add a single node to the user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewNode"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "key": "minecraft.command.ban",
+                    "value": true,
+                    "context": [
+                      {
+                        "key": "server",
+                        "value": "survival"
+                      }
+                    ],
+                    "expiry": 1658428395
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "summary": "Add multiple nodes to a user",
+        "operationId": "add-user-nodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/temporaryNodeMergeStrategy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok - returns the updated nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Add multiple nodes to the user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "put": {
+        "summary": "Replace (set) a users nodes",
+        "operationId": "set-user-nodes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Override the users nodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "summary": "Remove nodes from a user",
+        "operationId": "clear-user-nodes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Delete some or all of the nodes from a user.",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "description": "Specify the nodes to be deleted.\n\nIf the request body is empty, all nodes will be deleted."
+        }
+      }
+    },
+    "/user/{uniqueId}/meta": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "get": {
+        "summary": "Get a users metadata",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "meta": {
+                        "nametag-color": "red",
+                        "fly-speed": "5"
+                      },
+                      "prefix": "[Admin] ",
+                      "suffix": " [the great]",
+                      "primaryGroup": "default"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "operationId": "get-user-meta",
+        "description": "Get a users metadata"
+      }
+    },
+    "/user/{uniqueId}/permission-check": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "get": {
+        "summary": "Run a permission check against a user",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCheckResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "result": "true",
+                      "node": {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "operationId": "get-user-permission-check",
+        "description": "Run a permission check against a user",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "permission",
+            "description": "The permission to check for",
+            "required": true
+          }
+        ]
+      },
+      "post": {
+        "summary": "Run a permission check against a user with custom query options",
+        "operationId": "post-user-permission-check",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCheckResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "result": "true",
+                      "node": {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User doesn't exist"
+          }
+        },
+        "description": "Run a permission check against a user with custom query options",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionCheckRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "permission": "minecraft.command.ban",
+                    "queryOptions": {
+                      "contexts": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{uniqueId}/promote": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "post": {
+        "summary": "Promote a user along a track",
+        "operationId": "user-promote",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "success": true,
+                      "status": "success",
+                      "groupFrom": "mvp",
+                      "groupTo": "vip"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User or track doesn't exist"
+          }
+        },
+        "description": "Promote a user along a track",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "track": "staff"
+                  }
+                },
+                "example-2": {
+                  "value": {
+                    "track": "staff",
+                    "context": [
+                      {
+                        "key": "server",
+                        "value": "survival"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/{uniqueId}/demote": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "post": {
+        "summary": "Demote a user along a track",
+        "operationId": "user-demote",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemotionResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "success": true,
+                      "status": "success",
+                      "groupFrom": "vip",
+                      "groupTo": "mvp"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "User or track doesn't exist"
+          }
+        },
+        "description": "Demote a user along a track",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrackRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "track": "staff"
+                  }
+                },
+                "example-2": {
+                  "value": {
+                    "track": "staff",
+                    "context": [
+                      {
+                        "key": "server",
+                        "value": "survival"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/group": {
+      "get": {
+        "summary": "Get all existing groups",
+        "operationId": "get-groups",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/components/schemas/GroupName"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      "admin"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get all known groups",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "post": {
+        "summary": "Create a new group",
+        "operationId": "create-group",
+        "responses": {
+          "201": {
+            "description": "Group created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "name": "admin",
+                      "nodes": [],
+                      "metadata": {
+                        "meta": {}
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "409": {
+            "description": "Group already exists"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewGroup"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "name": "admin"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Create a new group.",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/group/search": {
+      "get": {
+        "summary": "Search for groups with given nodes",
+        "tags": [
+          "Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupSearchResult"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "name": "admin",
+                        "results": [
+                          {
+                            "key": "minecraft.command.ban",
+                            "type": "permission",
+                            "value": true,
+                            "context": [
+                              {
+                                "key": "server",
+                                "value": "survival"
+                              }
+                            ],
+                            "expiry": 1658428395
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-group-search",
+        "description": "Search for groups with given nodes.\n\nYou must specify one of the query parameters in the request.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "key",
+            "description": "Search for nodes with a key equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "keyStartsWith",
+            "description": "Search for nodes with a key starting with"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "metaKey",
+            "description": "Search for meta nodes with a meta key equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "regex_permission",
+                "inheritance",
+                "prefix",
+                "suffix",
+                "meta",
+                "weight",
+                "display_name"
+              ]
+            },
+            "in": "query",
+            "name": "type",
+            "description": "Search for nodes with a type equal to"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "group",
+            "description": "Search for inheritance nodes with the given group name"
+          }
+        ]
+      }
+    },
+    "/group/{groupName}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/groupName"
+        }
+      ],
+      "get": {
+        "summary": "Get a groups data",
+        "operationId": "get-group",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "name": "admin",
+                      "displayName": "Admin",
+                      "weight": 10,
+                      "nodes": [
+                        {
+                          "key": "minecraft.command.ban",
+                          "type": "permission",
+                          "value": true,
+                          "context": [
+                            {
+                              "key": "server",
+                              "value": "survival"
+                            }
+                          ],
+                          "expiry": 1658428395
+                        }
+                      ],
+                      "metadata": {
+                        "meta": {
+                          "nametag-color": "red",
+                          "fly-speed": "5"
+                        },
+                        "prefix": "[Admin] ",
+                        "suffix": " [the great]",
+                        "primaryGroup": "admin"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Get a group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a group",
+        "operationId": "delete-group",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Delete a group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/group/{groupName}/nodes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/groupName"
+        }
+      ],
+      "get": {
+        "summary": "Get a groups nodes (permissions data)",
+        "tags": [
+          "Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "operationId": "get-group-nodes",
+        "parameters": [],
+        "description": "Get a groups nodes."
+      },
+      "post": {
+        "summary": "Add a node to a group",
+        "operationId": "add-group-node",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/temporaryNodeMergeStrategy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok - returns the updated nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Add a single node to the group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewNode"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "key": "minecraft.command.ban",
+                    "value": true,
+                    "context": [
+                      {
+                        "key": "server",
+                        "value": "survival"
+                      }
+                    ],
+                    "expiry": 1658428395
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Groups"
+        ]
+      },
+      "patch": {
+        "summary": "Add multiple Group Nodes",
+        "operationId": "add-group-nodes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/temporaryNodeMergeStrategy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok - returns the updated nodes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeMap"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Add multiple nodes to the group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "tags": [
+          "Groups"
+        ]
+      },
+      "put": {
+        "summary": "Replace (set) a groups nodes",
+        "operationId": "set-group-nodes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Override the groups nodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Groups"
+        ]
+      },
+      "delete": {
+        "summary": "Remove nodes from a group",
+        "operationId": "clear-group-nodes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Delete some or all of the nodes from a group.\n\nIf the request body is empty, all nodes will be deleted.",
+        "tags": [
+          "Groups"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NewNode"
+                }
+              },
+              "examples": {
+                "example-1": {
+                  "value": [
+                    {
+                      "key": "minecraft.command.ban",
+                      "value": true,
+                      "context": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ],
+                      "expiry": 1658428395
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "description": "Specify the nodes to be deleted.\n\nIf the request body is empty, all nodes will be deleted."
+        }
+      }
+    },
+    "/group/{groupName}/meta": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/groupName"
+        }
+      ],
+      "get": {
+        "summary": "Get a groups metadata",
+        "tags": [
+          "Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "meta": {
+                        "nametag-color": "red",
+                        "fly-speed": "5"
+                      },
+                      "prefix": "[Admin] ",
+                      "suffix": " [the great]",
+                      "primaryGroup": "admin"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "operationId": "get-group-meta",
+        "description": "Get the groups metadata"
+      }
+    },
+    "/group/{groupName}/permission-check": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/groupName"
+        }
+      ],
+      "get": {
+        "summary": "Run a permission check against a group",
+        "tags": [
+          "Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCheckResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "result": "true",
+                      "node": {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "operationId": "get-group-permission-check",
+        "description": "Run a permission check against a group",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "permission",
+            "description": "The permission to check for",
+            "required": true
+          }
+        ]
+      },
+      "post": {
+        "summary": "Run a permission check against a group with custom query options",
+        "operationId": "post-group-permission-check",
+        "tags": [
+          "Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCheckResult"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "result": "true",
+                      "node": {
+                        "key": "minecraft.command.ban",
+                        "type": "permission",
+                        "value": true,
+                        "context": [
+                          {
+                            "key": "server",
+                            "value": "survival"
+                          }
+                        ],
+                        "expiry": 1658428395
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Group doesn't exist"
+          }
+        },
+        "description": "Run a permission check against a group with custom query options",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PermissionCheckRequest"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "permission": "minecraft.command.ban",
+                    "queryOptions": {
+                      "contexts": [
+                        {
+                          "key": "server",
+                          "value": "survival"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/track": {
+      "get": {
+        "summary": "Get all existing tracks",
+        "operationId": "get-tracks",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/components/schemas/TrackName"
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": [
+                      "staff"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get all known tracks",
+        "tags": [
+          "Tracks"
+        ]
+      },
+      "post": {
+        "summary": "Create a new track",
+        "operationId": "create-track",
+        "responses": {
+          "201": {
+            "description": "Track created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Track"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "name": "staff",
+                      "groups": [
+                        "moderator",
+                        "admin",
+                        "owner"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "409": {
+            "description": "Track already exists"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewTrack"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "name": "staff"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Create a new track.",
+        "tags": [
+          "Tracks"
+        ]
+      }
+    },
+    "/track/{trackName}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/trackName"
+        }
+      ],
+      "get": {
+        "summary": "Get a tracks data",
+        "operationId": "get-track",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Track"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "name": "staff",
+                      "groups": [
+                        "moderator",
+                        "admin",
+                        "owner"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Track doesn't exist"
+          }
+        },
+        "description": "Get a track",
+        "tags": [
+          "Tracks"
+        ]
+      },
+      "patch": {
+        "summary": "Update a track",
+        "operationId": "patch-track",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Missing required information"
+          },
+          "404": {
+            "description": "Track doesn't exist"
+          }
+        },
+        "description": "Update a track",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/GroupName"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "type": "object"
+              },
+              "examples": {
+                "example-1": {
+                  "value": {
+                    "groups": [
+                      "moderator",
+                      "admin",
+                      "owner"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "tags": [
+          "Tracks"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a track",
+        "operationId": "delete-track",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Track doesn't exist"
+          }
+        },
+        "description": "Delete a track",
+        "tags": [
+          "Tracks"
+        ]
+      }
+    },
+    "/action": {
+      "get": {
+        "summary": "Query actions",
+        "operationId": "get-actions",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Action"
+                      }
+                    },
+                    "overallSize": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "entries": [
+                        {
+                          "timestamp": 1658428395,
+                          "source": {
+                            "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                            "name": "Luck"
+                          },
+                          "target": {
+                            "uniqueId": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+                            "name": "Notch",
+                            "type": "user"
+                          },
+                          "description": "permission set minecraft.command.ban true"
+                        }
+                      ],
+                      "overallSize": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required information"
+          }
+        },
+        "description": "Query actions from the action logger.\n\nIf pageSize or pageNumber are specified, both must be specified.\nIf neither are specified, no pagination will be used and all results will be returned.\n",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "query",
+            "name": "pageSize",
+            "description": "The number of actions to return on each page"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "query",
+            "name": "pageNumber",
+            "description": "The page to return"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "source",
+            "description": "Filter by source user unique id"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "user",
+            "description": "Filter by target user unique id"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "group",
+            "description": "Filter by target group name"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "track",
+            "description": "Filter by target track name"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "search",
+            "description": "Filter by search value in source name, target name or description."
+          }
+        ],
+        "tags": [
+          "Actions"
+        ]
+      },
+      "post": {
+        "summary": "Submit a new action",
+        "operationId": "submit-action",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Missing required information"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Action"
+              }
+            }
+          }
+        },
+        "description": "Submit a new action to the action logger.",
+        "tags": [
+          "Actions"
+        ]
+      }
+    },
+    "/messaging/update": {
+      "post": {
+        "summary": "Push an update via the messaging service",
+        "operationId": "messaging-push-update",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "501": {
+            "description": "Messaging service not supported"
+          }
+        },
+        "description": "Push an update via the messaging service.",
+        "tags": [
+          "Messaging"
+        ]
+      }
+    },
+    "/messaging/update/{uniqueId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/uniqueId"
+        }
+      ],
+      "post": {
+        "summary": "Push a user update via the messaging service",
+        "operationId": "messaging-push-user-update",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "501": {
+            "description": "Messaging service not supported"
+          }
+        },
+        "description": "Push a user update via the messaging service.",
+        "tags": [
+          "Messaging"
+        ]
+      }
+    },
+    "/messaging/custom": {
+      "post": {
+        "summary": "Send a custom message via the messaging service",
+        "operationId": "messaging-custom-message",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "501": {
+            "description": "Messaging service not supported"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomMessage"
+              }
+            }
+          }
+        },
+        "description": "Send a custom message via the messaging service.",
+        "tags": [
+          "Messaging"
+        ]
+      }
+    },
+    "/event/log-broadcast": {
+      "get": {
+        "summary": "Subscribe to the LogBroadcastEvent",
+        "operationId": "get-event-log-broadcast",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/LogBroadcastEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{\"entry\":{\"timestamp\":1658428395,\"source\":{\"uniqueId\":\"c1d60c50-70b5-4722-8057-87767557e50d\",\"name\":\"Luck\"},\"target\":{\"uniqueId\":\"c1d60c50-70b5-4722-8057-87767557e50d\",\"name\":\"Luck\",\"type\":\"user\"},\"description\":\"permission set minecraft.command.ban true\"},\"origin\":\"local\"}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the LogBroadcastEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/event/post-network-sync": {
+      "get": {
+        "summary": "Subscribe to the PostNetworkSyncEvent",
+        "operationId": "get-event-post-network-sync",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/PostNetworkSyncEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{\"syncId\":\"8ff071c2-f772-4c16-a5d2-17a401d4e2f1\",\"type\":\"specific_user\",\"didSyncOccur\":true,\"specificUserUniqueId\":\"c1d60c50-70b5-4722-8057-87767557e50d\"}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the PostNetworkSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/event/post-sync": {
+      "get": {
+        "summary": "Subscribe to the PostSyncEvent",
+        "operationId": "get-event-post-sync",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/PostSyncEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the PostSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/event/pre-network-sync": {
+      "get": {
+        "summary": "Subscribe to the PreNetworkSyncEvent",
+        "operationId": "get-event-pre-network-sync",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/PreNetworkSyncEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{\"syncId\":\"8ff071c2-f772-4c16-a5d2-17a401d4e2f1\",\"type\":\"specific_user\",\"specificUserUniqueId\":\"c1d60c50-70b5-4722-8057-87767557e50d\"}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the PreNetworkSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/event/pre-sync": {
+      "get": {
+        "summary": "Subscribe to the PreSyncEvent",
+        "operationId": "get-event-pre-sync",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/PreSyncEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the PreSyncEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/event/custom-message-receive": {
+      "get": {
+        "summary": "Subscribe to the CustomMessageReceiveEvent",
+        "operationId": "get-event-custom-message-receive",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "array",
+                  "format": "event-stream",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "message"
+                        ]
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/CustomMessageReceiveEvent"
+                      }
+                    },
+                    "required": [
+                      "event",
+                      "data"
+                    ]
+                  }
+                },
+                "examples": {
+                  "example-1": {
+                    "value": "event: message\ndata: '{\"channelId\": \"superranks:notifications\", \"payload\": \"custom payload message goes here\"}'\n"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Subscribes to the CustomMessageReceiveEvent using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events)",
+        "tags": [
+          "Events"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Get the current health status of the app",
+        "operationId": "get-health",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "health": true,
+                      "details": {
+                        "storageConnected": true,
+                        "storagePing": 15
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                },
+                "examples": {
+                  "example-1": {
+                    "value": {
+                      "health": false,
+                      "details": {
+                        "reason": "storage is disconnected"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns the current health status of the app",
+        "tags": [
+          "Misc"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Node": {
+        "type": "object",
+        "description": "Represents a LuckPerms \"node\".\n\nNodes encapsulate more than just permission assignments. Nodes are used to store data about inherited groups, as well as assigned prefixes, suffixes and meta values.",
+        "title": "",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "example": "minecraft.command.ban"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "permission",
+              "regex_permission",
+              "inheritance",
+              "prefix",
+              "suffix",
+              "meta",
+              "weight",
+              "display_name"
+            ]
+          },
+          "value": {
+            "type": "boolean",
+            "default": true
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextSet"
+          },
+          "expiry": {
+            "type": "integer",
+            "example": 1658428395,
+            "description": "The instant the node will expire, in epoch seconds."
+          }
+        },
+        "required": [
+          "key",
+          "type",
+          "value",
+          "context"
+        ]
+      },
+      "NewNode": {
+        "type": "object",
+        "x-examples": {
+          "example-1": {
+            "key": "example.node",
+            "type": "permission",
+            "value": true,
+            "context": {},
+            "expiry": 1000000
+          }
+        },
+        "description": "Represents a LuckPerms \"node\".\n\nNodes encapsulate more than just permission assignments. Nodes are used to store data about inherited groups, as well as assigned prefixes, suffixes and meta values.",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "example": "minecraft.command.ban"
+          },
+          "value": {
+            "type": "boolean",
+            "default": true
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextSet"
+          },
+          "expiry": {
+            "type": "integer",
+            "example": 1658428395,
+            "description": "The instant the node will expire, in epoch seconds."
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "Context": {
+        "type": "object",
+        "x-examples": {
+          "example-1": {
+            "key": "server",
+            "value": "survival"
+          }
+        },
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "example": "server",
+            "pattern": "^[a-z0-9]+$"
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "example": "survival",
+            "pattern": "^[a-z0-9]+$"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "description": "A context pair."
+      },
+      "ContextSet": {
+        "title": "ContextSet",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Context"
+        },
+        "description": "A set of context pairs.",
+        "x-examples": {}
+      },
+      "Group": {
+        "title": "Group",
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/GroupName"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Admin"
+          },
+          "weight": {
+            "type": "integer"
+          },
+          "nodes": {
+            "$ref": "#/components/schemas/NodeMap"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/Metadata"
+          }
+        },
+        "required": [
+          "name",
+          "nodes",
+          "metadata"
+        ]
+      },
+      "Track": {
+        "title": "Track",
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/GroupName"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupName"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "groups"
+        ]
+      },
+      "NewGroup": {
+        "title": "NewGroup",
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/GroupName"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "NewTrack": {
+        "title": "NewTrack",
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/GroupName"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "User": {
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "$ref": "#/components/schemas/UniqueId"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Luck"
+          },
+          "parentGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupName"
+            }
+          },
+          "nodes": {
+            "$ref": "#/components/schemas/NodeMap"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/Metadata"
+          }
+        },
+        "required": [
+          "uniqueId",
+          "nodes",
+          "metadata"
+        ]
+      },
+      "NewUser": {
+        "title": "NewUser",
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "$ref": "#/components/schemas/UniqueId"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Luck"
+          }
+        },
+        "required": [
+          "uniqueId",
+          "username"
+        ]
+      },
+      "NodeMap": {
+        "title": "NodeMap",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Node"
+        },
+        "description": "A map (array) of nodes."
+      },
+      "Metadata": {
+        "title": "Metadata",
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "object"
+          },
+          "prefix": {
+            "type": "string",
+            "example": "[Admin] "
+          },
+          "suffix": {
+            "type": "string",
+            "example": " [the great]"
+          },
+          "primaryGroup": {
+            "type": "string",
+            "example": "default",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "meta"
+        ],
+        "x-examples": {
+          "example-1": {
+            "meta": {
+              "nametag-color": "red",
+              "fly-speed": "5"
+            },
+            "prefix": "[Admin] ",
+            "suffix": " [the great]",
+            "primaryGroup": "default"
+          }
+        },
+        "description": "Metadata about a user or group."
+      },
+      "UniqueId": {
+        "type": "string",
+        "title": "Unique Id",
+        "description": "A player unique id (UUID)",
+        "example": "c1d60c50-70b5-4722-8057-87767557e50d",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      },
+      "GroupName": {
+        "type": "string",
+        "title": "Name",
+        "description": "A group name",
+        "example": "admin",
+        "pattern": "^[a-z0-9]+$",
+        "minLength": 1
+      },
+      "TrackName": {
+        "type": "string",
+        "title": "Name",
+        "description": "A group name",
+        "example": "staff",
+        "pattern": "^[a-z0-9]+$",
+        "minLength": 1
+      },
+      "PermissionCheckResult": {
+        "title": "PermissionCheckResult",
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false",
+              "undefined"
+            ],
+            "example": "true"
+          },
+          "node": {
+            "$ref": "#/components/schemas/Node"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "description": "The result returned after running a permission check."
+      },
+      "PermissionCheckRequest": {
+        "title": "PermissionCheckRequest",
+        "type": "object",
+        "description": "The request parameters for a permission check.",
+        "properties": {
+          "permission": {
+            "type": "string",
+            "example": "minecraft.command.ban",
+            "minLength": 1,
+            "description": "The permission to check for"
+          },
+          "queryOptions": {
+            "$ref": "#/components/schemas/QueryOptions"
+          }
+        },
+        "required": [
+          "permission"
+        ],
+        "x-examples": {
+          "example-1": {
+            "permission": "minecraft.command.ban",
+            "queryOptions": {
+              "contexts": [
+                {
+                  "key": "server",
+                  "value": "survival"
+                }
+              ]
+            }
+          },
+          "example-2": {
+            "permission": "minecraft.command.ban",
+            "queryOptions": {
+              "mode": "contextual",
+              "flags": [
+                "resolve_inheritance",
+                "include_nodes_without_server_context",
+                "include_nodes_without_world_context",
+                "apply_inheritance_nodes_without_server_context",
+                "apply_inheritance_nodes_without_world_context"
+              ],
+              "contexts": [
+                {
+                  "key": "server",
+                  "value": "survival"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "QueryOptions": {
+        "title": "QueryOptions",
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "default": "contextual",
+            "enum": [
+              "contextual",
+              "non_contextual"
+            ]
+          },
+          "flags": {
+            "$ref": "#/components/schemas/QueryFlags"
+          },
+          "contexts": {
+            "$ref": "#/components/schemas/ContextSet"
+          }
+        }
+      },
+      "QueryFlags": {
+        "title": "QueryFlags",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "resolve_inheritance",
+            "include_nodes_without_server_context",
+            "include_nodes_without_world_context",
+            "apply_inheritance_nodes_without_server_context",
+            "apply_inheritance_nodes_without_world_context"
+          ]
+        },
+        "default": [
+          "resolve_inheritance",
+          "include_nodes_without_server_context",
+          "include_nodes_without_world_context",
+          "apply_inheritance_nodes_without_server_context",
+          "apply_inheritance_nodes_without_world_context"
+        ]
+      },
+      "Action": {
+        "title": "Action",
+        "type": "object",
+        "x-examples": {
+          "example-1": {
+            "timestamp": 1658428395,
+            "source": {
+              "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+              "name": "Luck"
+            },
+            "target": {
+              "uniqueId": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+              "name": "Notch",
+              "type": "user"
+            },
+            "description": "permission set minecraft.command.ban true"
+          }
+        },
+        "description": "",
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "description": "The time when the action happened, defaults to the current time",
+            "example": 1658428395
+          },
+          "source": {
+            "type": "object",
+            "description": "Who performed the action",
+            "required": [
+              "uniqueId",
+              "name"
+            ],
+            "properties": {
+              "uniqueId": {
+                "$ref": "#/components/schemas/UniqueId"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "example": "Luck"
+              }
+            }
+          },
+          "target": {
+            "type": "object",
+            "description": "Who/what was the action performed on",
+            "required": [
+              "name",
+              "type"
+            ],
+            "properties": {
+              "uniqueId": {
+                "$ref": "#/components/schemas/UniqueId"
+              },
+              "name": {
+                "type": "string",
+                "example": "Luck"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "group",
+                  "track"
+                ]
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "example": "permission set minecraft.command.ban true",
+            "description": "A description of the action"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "description"
+        ]
+      },
+      "PromotionResult": {
+        "title": "PromotionResult",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "added_to_first_group",
+              "malformed_track",
+              "end_of_track",
+              "ambiguous_call",
+              "undefined_failure"
+            ],
+            "example": "success"
+          },
+          "groupFrom": {
+            "type": "string",
+            "minLength": 1,
+            "example": "mvp"
+          },
+          "groupTo": {
+            "type": "string",
+            "minLength": 1,
+            "example": "vip"
+          }
+        },
+        "required": [
+          "success",
+          "status"
+        ],
+        "description": "The result of promoting a user."
+      },
+      "DemotionResult": {
+        "title": "DemotionResult",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "removed_from_first_group",
+              "malformed_track",
+              "not_on_track",
+              "ambiguous_call",
+              "undefined_failure"
+            ],
+            "example": "success"
+          },
+          "groupFrom": {
+            "type": "string",
+            "minLength": 1,
+            "example": "vip"
+          },
+          "groupTo": {
+            "type": "string",
+            "minLength": 1,
+            "example": "mvp"
+          }
+        },
+        "required": [
+          "success",
+          "status"
+        ],
+        "description": "The result of demoting a user."
+      },
+      "TrackRequest": {
+        "title": "TrackRequest",
+        "type": "object",
+        "properties": {
+          "track": {
+            "type": "string",
+            "example": "staff",
+            "minLength": 1
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextSet"
+          }
+        },
+        "required": [
+          "track"
+        ],
+        "x-examples": {
+          "example-1": {
+            "track": "staff"
+          }
+        },
+        "description": "A request to promote or demote a user along a track."
+      },
+      "UserSearchResult": {
+        "title": "UserSearchResult",
+        "type": "object",
+        "properties": {
+          "uniqueId": {
+            "$ref": "#/components/schemas/UniqueId"
+          },
+          "results": {
+            "$ref": "#/components/schemas/NodeMap"
+          }
+        },
+        "description": ""
+      },
+      "GroupSearchResult": {
+        "title": "GroupSearchResult",
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/GroupName"
+          },
+          "results": {
+            "$ref": "#/components/schemas/NodeMap"
+          }
+        },
+        "description": ""
+      },
+      "TemporaryNodeMergeStrategy": {
+        "title": "TemporaryNodeMergeStrategy",
+        "type": "string",
+        "description": "Controls how the implementation should behave when new temporary nodes are set that would otherwise conflict with existing entries.",
+        "enum": [
+          "add_new_duration_to_existing",
+          "replace_existing_if_duration_longer",
+          "none"
+        ],
+        "default": "none"
+      },
+      "Health": {
+        "title": "Health",
+        "type": "object",
+        "description": "The health status of the app",
+        "properties": {
+          "health": {
+            "type": "boolean",
+            "description": "if the app is healthy"
+          },
+          "details": {
+            "type": "object",
+            "description": "extra information about the healthcheck result"
+          }
+        },
+        "required": [
+          "health",
+          "details"
+        ]
+      },
+      "PlayerSaveResult": {
+        "title": "PlayerSaveResult",
+        "type": "object",
+        "description": "The result of an operation to save data about a player",
+        "properties": {
+          "outcomes": {
+            "type": "array",
+            "description": "if the app is healthy",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/PlayerSaveResultOutcome"
+            }
+          },
+          "previousUsername": {
+            "type": "string",
+            "description": "the previous username involved in the result (only applies for the username_updated outcome)",
+            "minLength": 1,
+            "example": "Luck"
+          },
+          "otherUniqueIds": {
+            "type": "array",
+            "description": "the other unique ids involved in the result (only applies for the other_unique_ids_present_for_username outcome)",
+            "items": {
+              "$ref": "#/components/schemas/UniqueId"
+            }
+          }
+        },
+        "required": [
+          "outcomes"
+        ]
+      },
+      "PlayerSaveResultOutcome": {
+        "title": "PlayerSaveResultOutcome",
+        "type": "string",
+        "enum": [
+          "clean_insert",
+          "no_change",
+          "username_updated",
+          "other_unique_ids_present_for_username"
+        ],
+        "description": "The statuses returned in a PlayerSaveResult"
+      },
+      "CustomMessage": {
+        "title": "CustomMessage",
+        "type": "object",
+        "description": "A custom message to send via the messaging service",
+        "properties": {
+          "channelId": {
+            "type": "string",
+            "example": "superranks:notifications",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "string",
+            "example": "custom payload message goes here",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "channelId",
+          "payload"
+        ],
+        "x-examples": {
+          "example-1": {
+            "channelId": "superranks:notifications",
+            "payload": "custom payload message goes here"
+          }
+        }
+      },
+      "LogBroadcastEvent": {
+        "title": "LogBroadcastEvent",
+        "type": "object",
+        "description": "Called when a log entry is about to be sent to notifiable players on the platform",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/LogBroadcastEventOrigin"
+          }
+        },
+        "required": [
+          "entry",
+          "origin"
+        ],
+        "x-examples": {
+          "example-1": {
+            "entry": {
+              "timestamp": 1658428395,
+              "source": {
+                "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                "name": "Luck"
+              },
+              "target": {
+                "uniqueId": "c1d60c50-70b5-4722-8057-87767557e50d",
+                "name": "Luck",
+                "type": "user"
+              },
+              "description": "permission set minecraft.command.ban true"
+            },
+            "origin": "local"
+          }
+        }
+      },
+      "LogBroadcastEventOrigin": {
+        "title": "LogBroadcastEventOrigin",
+        "type": "string",
+        "enum": [
+          "local",
+          "local_api",
+          "remote"
+        ],
+        "description": "Represents where a log entry is from"
+      },
+      "SyncType": {
+        "title": "SyncType",
+        "type": "string",
+        "description": "Represents the type of synchronisation task",
+        "enum": [
+          "full",
+          "specific_user"
+        ]
+      },
+      "PostNetworkSyncEvent": {
+        "title": "PostNetworkSyncEvent",
+        "type": "object",
+        "description": "Called after a network synchronisation task has been completed",
+        "required": [
+          "syncId",
+          "type",
+          "didSyncOccur"
+        ],
+        "properties": {
+          "syncId": {
+            "$ref": "#/components/schemas/UniqueId"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SyncType"
+          },
+          "didSyncOccur": {
+            "type": "boolean"
+          },
+          "specificUserUniqueId": {
+            "$ref": "#/components/schemas/UniqueId"
+          }
+        },
+        "x-examples": {
+          "example-1": {
+            "syncId": "8ff071c2-f772-4c16-a5d2-17a401d4e2f1",
+            "type": "specific_user",
+            "didSyncOccur": true,
+            "specificUserUniqueId": "c1d60c50-70b5-4722-8057-87767557e50d"
+          }
+        }
+      },
+      "PostSyncEvent": {
+        "title": "PostSyncEvent",
+        "type": "object",
+        "description": "Called after a full synchronisation task has been completed",
+        "properties": {},
+        "x-examples": {
+          "example-1": {}
+        }
+      },
+      "PreNetworkSyncEvent": {
+        "title": "PreNetworkSyncEvent",
+        "type": "object",
+        "description": "Called after a request for synchronisation has been received via the messaging service, but before it has actually been completed",
+        "required": [
+          "syncId",
+          "type"
+        ],
+        "properties": {
+          "syncId": {
+            "$ref": "#/components/schemas/UniqueId"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SyncType"
+          },
+          "specificUserUniqueId": {
+            "$ref": "#/components/schemas/UniqueId"
+          }
+        },
+        "x-examples": {
+          "example-1": {
+            "syncId": "8ff071c2-f772-4c16-a5d2-17a401d4e2f1",
+            "type": "specific_user",
+            "specificUserUniqueId": "c1d60c50-70b5-4722-8057-87767557e50d"
+          }
+        }
+      },
+      "PreSyncEvent": {
+        "title": "PreSyncEvent",
+        "type": "object",
+        "description": "Called just before a full synchronisation task runs",
+        "properties": {},
+        "x-examples": {
+          "example-1": {}
+        }
+      },
+      "CustomMessageReceiveEvent": {
+        "title": "CustomMessageReceiveEvent",
+        "type": "object",
+        "description": "Called when a custom payload message is received via the messaging service",
+        "properties": {
+          "channelId": {
+            "type": "string",
+            "example": "superranks:notifications",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "string",
+            "example": "custom payload message goes here",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "channelId",
+          "payload"
+        ],
+        "x-examples": {
+          "example-1": {
+            "channelId": "superranks:notifications",
+            "payload": "custom payload message goes here"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apikey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API Key used to authenticate"
+      }
+    },
+    "requestBodies": {},
+    "parameters": {
+      "uniqueId": {
+        "name": "uniqueId",
+        "in": "path",
+        "schema": {
+          "$ref": "#/components/schemas/UniqueId"
+        },
+        "required": true,
+        "description": "A player unique id (UUID)"
+      },
+      "groupName": {
+        "name": "groupName",
+        "in": "path",
+        "schema": {
+          "$ref": "#/components/schemas/GroupName"
+        },
+        "required": true,
+        "description": "A group name"
+      },
+      "trackName": {
+        "name": "trackName",
+        "in": "path",
+        "schema": {
+          "$ref": "#/components/schemas/TrackName"
+        },
+        "required": true,
+        "description": "A track name"
+      },
+      "temporaryNodeMergeStrategy": {
+        "name": "temporaryNodeMergeStrategy",
+        "in": "query",
+        "schema": {
+          "$ref": "#/components/schemas/TemporaryNodeMergeStrategy"
+        },
+        "required": false,
+        "description": "The node merge strategy"
+      }
+    }
+  },
+  "security": [
+    {
+      "apikey": []
+    }
+  ]
+}

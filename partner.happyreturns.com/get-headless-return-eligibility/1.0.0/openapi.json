@@ -1,0 +1,1407 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Get headless return eligibility",
+    "description": "<div class=\"notices warning\"><img src=\"/images/warning.svg?featherlight=false\" /><p>This is only for headless merchants. Please see the <a href=\"/guides/headless-returns/\" target=\"_blank\">implementation guide</a> for more details.</p></div>\n\n## Overview\nFor partners and merchants who want to keep their own return flow, but use Happy Returns to manage return shipments across various drop-off methods.  This endpoint evaluates which headless return methods are available based on the contents of the return and responds with eligibility and available locations.  View the <a href=\"/guides/headless-returns/\" target=\"_blank\">implementation guide</a> for more details.\n\n## Authentication\nPartners can authenticate for this endpoint by following the steps here: <a href=\"../#authentication\" target=\"_blank\">API set up</a>.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/vijaytvb1/get-headless-return-eligibility/1.0.0",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://partner.happyreturns.com",
+      "description": ""
+    }
+  ],
+  "paths": {
+    "/return_eligibility": {
+      "summary": "Get Headless Return Eligibility",
+      "description": "This endpoint will take a JSON body defined below and determine the eligibility of the return for configured dropoff methods. It will determine the eligibility for a return bar and/or in-store locations based on the configuration.\n\nIf a return is eligible for one of the methods, then it may provide the nearby location details for the order shipment zipcode.\n\nIf a return is ineligible for one the methods, then it will provide one or more validation failures for the dropoff method.",
+      "post": {
+        "requestBody": {
+          "description": "Request body to send to check return eligibility",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnEligibilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "name": "X-Hr-Apikey",
+            "description": "A partner\u2019s API key. The partner must be authorized by Happy Returns to check return eligibility for  headless returns. Contact Happy Returns to grant permission.",
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReturnEligibilityResponseType"
+                }
+              }
+            },
+            "description": "Successful response for return eligibility request"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadRequestError"
+                }
+              }
+            },
+            "description": "Bad request error"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InvalidAPIKey"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NoPermissionReturnEligibility"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Error message sent when partner does not have permission or missing/invalid X-Hr-Apikey"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerError"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Return Eligibility",
+        "description": "Checks eligibility for a return for headless retailers. https://partner.happyreturns.com/return_eligibility"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ReturnEligibilityRequest": {
+        "title": "Return Eligibility Request",
+        "description": "Return Eligibility Request",
+        "required": [
+          "retailer_id",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "retailer_id": {
+            "description": "The identifier of the retailer for the returning items. This needs to match an already existing retailer, cannot be arbitrary.",
+            "type": "string"
+          },
+          "email": {
+            "description": "The email address on the order for sending email confirmations for the return",
+            "type": "string"
+          },
+          "return_fee": {
+            "description": "Return fee amount with currency code",
+            "type": "string"
+          },
+          "returning": {
+            "description": "The purchases being returned",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReturnDetails"
+            }
+          },
+          "shipping_method_id": {
+            "description": "Shipping method ID of the retailer",
+            "type": "string"
+          },
+          "mail_destination_address": {
+            "description": "Mail Destination address of the retailer",
+            "type": "object",
+            "$ref": "#/components/schemas/MailDestinationAddress"
+          },
+          "ups_dap_child_account_number": {
+            "description": "Retailer\u2019s UPS account for applying partner DAP rates. Use only if enrolled in UPS Digital Access Program.",
+            "type": "string"
+          }
+        },
+        "example": {
+          "retailer_id": "modern-retailer",
+          "email": "customer@example.com",
+          "return_fee": "5.00 USD",
+          "shipping_method_id": "567",
+          "mail_destination_address": {
+            "name": "Modern retailer warehouse",
+            "phone": "14247894567,",
+            "address1": "2910 Wilshire Boulevard",
+            "address2": "",
+            "city": "Santa Monica",
+            "country": "United States",
+            "province": "California",
+            "country_code": "US",
+            "province_code": "CA",
+            "zip_code": "90401"
+          },
+          "returning": [
+            {
+              "id": "12950087565378-3-1",
+              "order_number": "342263",
+              "external_rma_id": "RET2024XYZ999",
+              "name": "Nomadic Coast Short",
+              "price": "50.00 USD",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0552/3557/5874/products/olive_shorts.jpg?v=1661958339"
+              ],
+              "when": "2024-01-21T20:19:24Z",
+              "details": {
+                "serialNumber": "ABC-34",
+                "weight": 2.4,
+                "weightUnit": "lb"
+              },
+              "display": [
+                {
+                  "label": "Color",
+                  "value": "Orange"
+                }
+              ],
+              "reason": "damaged",
+              "reason_type": "damaged",
+              "shipping_address": {
+                "address1": "2910 Wilshire Boulevard",
+                "address2": "",
+                "city": "Santa Monica",
+                "country": "United States",
+                "province": "California",
+                "country_code": "US",
+                "province_code": "CA",
+                "zip_code": "90401"
+              },
+              "zip_code": "90401",
+              "refund_methods_offered": [
+                "refund",
+                "store credit",
+                "exchange - same price point",
+                "exchange - upsell"
+              ]
+            },
+            {
+              "id": "12950087565378-3-1",
+              "order_number": "342263",
+              "external_rma_id": "RET2024XYZ999",
+              "name": "Nomadic Coast Short",
+              "price": "50.00 USD",
+              "images": [
+                "https://cdn.shopify.com/s/files/1/0552/3557/5874/products/olive_shorts.jpg?v=1661958339"
+              ],
+              "when": "2024-01-21T20:19:24Z",
+              "details": {
+                "serialNumber": "ABC-34",
+                "weight": 2.4,
+                "weightUnit": "lb"
+              },
+              "display": [
+                {
+                  "label": "Color",
+                  "value": "Orange"
+                }
+              ],
+              "reason": "damaged",
+              "reason_type": "damaged",
+              "shipping_address": {
+                "address1": "2910 Wilshire Boulevard",
+                "address2": "",
+                "city": "Santa Monica",
+                "country": "United States",
+                "province": "California",
+                "country_code": "US",
+                "province_code": "CA",
+                "zip_code": "90401"
+              },
+              "zip_code": "90401",
+              "refund_methods_offered": [
+                "refund",
+                "store credit",
+                "exchange - same price point",
+                "exchange - upsell"
+              ]
+            }
+          ]
+        }
+      },
+      "ReturnDetails": {
+        "title": "Return Details",
+        "description": "",
+        "required": [
+          "zip_code",
+          "id",
+          "order_number",
+          "name",
+          "sku",
+          "images",
+          "when",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Unique ID for the line item the purchase came from. Can also use the SKU - does not need to be unique in the return",
+            "type": "string"
+          },
+          "order_number": {
+            "description": "Order number of the order the purchase belongs to.",
+            "type": "string"
+          },
+          "external_rma_id": {
+            "description": "The unique identifier for the return generated by the retailer's or partner's internal systems.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the product.",
+            "type": "string"
+          },
+          "price": {
+            "description": "The price of the product with currency, invalid format will be ignored.",
+            "type": "string"
+          },
+          "images": {
+            "description": "Images used to identify the purchase being returned",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "when": {
+            "format": "date-time",
+            "description": "The date when the order the purchase belongs to was placed. This date is used to determine whether the order is inside the return window (if the return window is managed by Happy Returns).",
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/Detail",
+            "description": "Additional details that can be provided about the purchase",
+            "properties": {
+              "serialNumber": {
+                "type": "string"
+              },
+              "weight": {
+                "format": "double",
+                "type": "number"
+              },
+              "weightUnit": {
+                "type": "string"
+              }
+            }
+          },
+          "display": {
+            "description": "The display values for the product, such as Color, Size, Material, Fitting, etc. that distinguishes this product from other products. This is displayed to identify the product being returned.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Display"
+            }
+          },
+          "reason": {
+            "description": "The reason the customer is returning the purchase",
+            "type": "string"
+          },
+          "reason_type": {
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/components/schemas/ShippingAddress",
+            "description": "Shipping Address",
+            "properties": {
+              "address1": {
+                "type": "string"
+              },
+              "address2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              },
+              "province": {
+                "type": "string"
+              },
+              "country_code": {
+                "type": "string"
+              },
+              "province_code": {
+                "type": "string"
+              },
+              "zip_code": {
+                "type": "string"
+              }
+            }
+          },
+          "zip_code": {
+            "description": "Zip code for the order",
+            "type": "string"
+          },
+          "refund_methods_offered": {
+            "description": "Can be one or more from the following `refund`, `store credit`, `exchange - same price point` or `exchange - upsell`\n`refund` - shopper receives a refund to their original form of payment\n`store credit` - shopper receives a refund in the form of store credit or e-gift card\n`exchange - same price point` - shopper receives an even exchange for a similar item\n`exchange - upsell` - shopper receives different price point exchange typically shopping for new/unrelated items",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sku": {
+            "description": "The SKU of the product, used for display and reporting.",
+            "type": "string"
+          },
+          "upc": {
+            "description": "The UPC of the product, if available to use for display and reporting.",
+            "type": "string"
+          }
+        },
+        "example": {
+          "id": "12950087565378-3-1",
+          "order_number": "342263",
+          "external_rma_id": "RET2024XYZ999",
+          "name": "Nomadic Coast Short",
+          "price": "50.00 USD",
+          "images": [
+            "https://cdn.shopify.com/s/files/1/0552/3557/5874/products/olive_shorts.jpg?v=1661958339"
+          ],
+          "when": "2024-01-21T20:19:24Z",
+          "details": {
+            "serialNumber": "ABC-34",
+            "weight": 2.4,
+            "weightUnit": "lb"
+          },
+          "display": [
+            {
+              "label": "Color",
+              "value": "Orange"
+            }
+          ],
+          "reason": "damaged",
+          "reason_type": "damaged",
+          "shipping_address": {
+            "address1": "2910 Wilshire Boulevard",
+            "address2": "",
+            "city": "Santa Monica",
+            "country": "United States",
+            "province": "California",
+            "country_code": "US",
+            "province_code": "CA",
+            "zip_code": "90401"
+          },
+          "zip_code": "90401",
+          "refund_methods_offered": [
+            "refund",
+            "store credit",
+            "exchange - same price point",
+            "exchange - upsell"
+          ]
+        }
+      },
+      "Detail": {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "description": "A product ID is a unique identifier for a product in the purchase.",
+            "type": "string"
+          },
+          "serialNmber": {
+            "description": "A serial number is a unique identifier for the product in the purchase",
+            "type": "string"
+          },
+          "weight": {
+            "format": "double",
+            "description": "Weight of the product without the unit (Must supply `weight_unit` along with it, otherwise it will be ignored)",
+            "type": "number"
+          },
+          "weightUnit": {
+            "description": "Unit of the weight must be lb, oz, g, kg (Must supply `weight` along with it, otherwise it will be ignored)",
+            "type": "string"
+          }
+        }
+      },
+      "Display": {
+        "description": "",
+        "required": [
+          "label",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "label": {
+            "description": "The display label for coupons like \"Promotions\"",
+            "type": "string"
+          },
+          "value": {
+            "description": "The display value for coupons like \"$10 off your qualifying in-store purchase of $40 or more\"",
+            "type": "string"
+          }
+        }
+      },
+      "ShippingAddress": {
+        "title": "Shipping Address",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "address1": {
+            "description": "Shipping address line 1 for the customer",
+            "type": "string"
+          },
+          "address2": {
+            "description": "Shipping address line 2 for the customer",
+            "type": "string"
+          },
+          "city": {
+            "description": "Shipping city for the customer",
+            "type": "string"
+          },
+          "country": {
+            "description": "Shipping country for the customer",
+            "type": "string"
+          },
+          "latitude": {
+            "format": "double",
+            "description": "Shipping latitude coordinate for the customer",
+            "type": "number"
+          },
+          "longitude": {
+            "format": "double",
+            "description": "Shipping longitude coordinate for the customer",
+            "type": "number"
+          },
+          "province": {
+            "description": "Shipping province/state for the customer",
+            "type": "string"
+          },
+          "country_code": {
+            "description": "Shipping country 2 letter ISO code for the customer",
+            "type": "string"
+          },
+          "province_code": {
+            "description": "Shipping province/state code for the customer",
+            "type": "string"
+          },
+          "zip_code": {
+            "description": "The Zip Code of the order\u2019s shipping address",
+            "type": "string"
+          }
+        },
+        "example": {
+          "address1": "100 Willshire",
+          "address2": "",
+          "city": "Santa Monica",
+          "country": "United States",
+          "latitude": 34.010929,
+          "longitude": -118.491508,
+          "province": "California",
+          "country_code": "US",
+          "province_code": "CA",
+          "zip_code": "90401"
+        }
+      },
+      "MailDestinationAddress": {
+        "title": "Mail Destination Address",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the retailer's destination",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone number of the retailer's destination",
+            "type": "string"
+          },
+          "address1": {
+            "description": "Destination address line 1 for the retailer",
+            "type": "string"
+          },
+          "address2": {
+            "description": "Destination address line 2 for the retailer",
+            "type": "string"
+          },
+          "city": {
+            "description": "Destination city for the retailer",
+            "type": "string"
+          },
+          "country": {
+            "description": "Destination country for the retailer",
+            "type": "string"
+          },
+          "province": {
+            "description": "Destination province/state for the retailer",
+            "type": "string"
+          },
+          "country_code": {
+            "description": "Destination country 2 letter ISO code for the retailer",
+            "type": "string"
+          },
+          "province_code": {
+            "description": "Destination province/state code for the retailer",
+            "type": "string"
+          },
+          "zip_code": {
+            "description": "The Zip Code of the retailer's mail destination address (ex: 90401 or 90401-1234)",
+            "type": "string"
+          }
+        },
+        "example": {
+          "address1": "100 Willshire",
+          "address2": "",
+          "city": "Santa Monica",
+          "country": "United States",
+          "province": "California",
+          "country_code": "US",
+          "province_code": "CA",
+          "zip_code": "90401"
+        }
+      },
+      "ReturnEligibilityResponseType": {
+        "title": "Return Eligibility Response",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "dropoffMethods": {
+            "description": "Return eligibility for configured dropoff methods",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DropoffMethod"
+            }
+          }
+        },
+        "example": {
+          "dropoffMethods": [
+            {
+              "id": "return-bar",
+              "eligible": true,
+              "locations": [
+                {
+                  "name": "Petco",
+                  "address": {
+                    "id": 55485,
+                    "type": "location_shipping",
+                    "name": "PetCo 5121",
+                    "address": "1402 Wilshire Blvd",
+                    "city": "Santa Monica",
+                    "state": "CA",
+                    "zipcode": "90403",
+                    "countryCode": "US"
+                  },
+                  "openingHours": [
+                    {
+                      "dayOfWeek": 1,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 2,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 3,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 4,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 5,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 6,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 7,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    }
+                  ],
+                  "timeZone": "America/Los_Angeles",
+                  "hoursMayVary": false,
+                  "distance": 0.6471,
+                  "display": [
+                    {
+                      "label": "Promotions",
+                      "value": "$10 off your qualifying in-store purchase of $40 or more"
+                    }
+                  ],
+                  "id": "pc5121",
+                  "lat": 34.0267814,
+                  "lng": -118.4884885
+                },
+                {
+                  "name": "The UPS Store",
+                  "address": {
+                    "id": 65332,
+                    "type": "location",
+                    "name": "UPS 7160",
+                    "address": "1212 Fifth St",
+                    "address2": "Ste 1",
+                    "city": "Santa Monica",
+                    "state": "CA",
+                    "zipcode": "90401",
+                    "countryCode": "US"
+                  },
+                  "openingHours": [
+                    {
+                      "dayOfWeek": 1,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 2,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 3,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 4,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 5,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 6,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T17:00:00-07:00"
+                    }
+                  ],
+                  "timeZone": "America/Los_Angeles",
+                  "hoursMayVary": false,
+                  "distance": 0.3876,
+                  "id": "TUPSSUS7160",
+                  "lat": 34.0193805,
+                  "lng": -118.4971165
+                },
+                {
+                  "name": "Ulta Beauty",
+                  "address": {
+                    "id": 17895,
+                    "type": "location",
+                    "name": "Ulta 1213",
+                    "address": "1234 Wilshire Blvd",
+                    "city": "Santa Monica",
+                    "state": "CA",
+                    "zipcode": "90403",
+                    "countryCode": "US"
+                  },
+                  "directions": "Go to the cashwrap to return your items.",
+                  "openingHours": [
+                    {
+                      "dayOfWeek": 1,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 2,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 3,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 4,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 5,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 6,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 7,
+                      "openingTime": "2024-06-11T11:00:00-07:00",
+                      "closingTime": "2024-06-11T18:00:00-07:00"
+                    }
+                  ],
+                  "timeZone": "America/Los_Angeles",
+                  "hoursMayVary": false,
+                  "distance": 0.5569,
+                  "display": [
+                    {
+                      "label": "Promotions",
+                      "value": "Save $5 off any qualifying $15 in store purchase."
+                    }
+                  ],
+                  "id": "ub1213",
+                  "lat": 34.0256281,
+                  "lng": -118.4898844
+                }
+              ]
+            },
+            {
+              "id": "retailer-store",
+              "eligible": false,
+              "eligibilityError": [
+                "This return is not eligible for In Store drop off."
+              ]
+            },
+            {
+              "id": "mail",
+              "eligible": true
+            },
+            {
+              "id": "mail-nolabel",
+              "eligible": true,
+              "locations": [
+                {
+                  "name": "Staples",
+                  "address": {
+                    "id": 12345,
+                    "type": "location",
+                    "name": "Staples 1234",
+                    "address": "1402 Wilshire Blvd",
+                    "city": "Santa Monica",
+                    "state": "CA",
+                    "zipcode": "90403",
+                    "countryCode": "US"
+                  },
+                  "openingHours": [
+                    {
+                      "dayOfWeek": 1,
+                      "openingTime": "2024-06-11T08:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 2,
+                      "openingTime": "2024-06-11T08:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 3,
+                      "openingTime": "2024-06-11T08:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 4,
+                      "openingTime": "2024-06-11T08:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 5,
+                      "openingTime": "2024-06-11T08:00:00-07:00",
+                      "closingTime": "2024-06-11T20:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 6,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T18:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 7,
+                      "openingTime": "2024-06-11T10:00:00-07:00",
+                      "closingTime": "2024-06-11T17:00:00-07:00"
+                    }
+                  ],
+                  "timeZone": "America/Los_Angeles",
+                  "hoursMayVary": false,
+                  "distance": 0.6471,
+                  "display": [
+                    {
+                      "label": "Promotions",
+                      "value": "$10 off your qualifying in-store purchase of $40 or more"
+                    }
+                  ],
+                  "id": "staples1234",
+                  "lat": 34.0267814,
+                  "lng": -118.4884885
+                },
+                {
+                  "name": "The UPS Store",
+                  "address": {
+                    "id": 65332,
+                    "type": "location",
+                    "name": "UPS 7160",
+                    "address": "1212 Fifth St",
+                    "address2": "Ste 1",
+                    "city": "Santa Monica",
+                    "state": "CA",
+                    "zipcode": "90401",
+                    "countryCode": "US"
+                  },
+                  "openingHours": [
+                    {
+                      "dayOfWeek": 1,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 2,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 3,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 4,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 5,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T19:00:00-07:00"
+                    },
+                    {
+                      "dayOfWeek": 6,
+                      "openingTime": "2024-06-11T09:00:00-07:00",
+                      "closingTime": "2024-06-11T17:00:00-07:00"
+                    }
+                  ],
+                  "timeZone": "America/Los_Angeles",
+                  "hoursMayVary": false,
+                  "distance": 0.3876,
+                  "id": "TUPSSUS7160",
+                  "lat": 34.0193805,
+                  "lng": -118.4971165
+                }
+              ]
+            },
+            {
+              "id": "mail-nobox-nolabel",
+              "eligible": false,
+              "eligibilityError": [
+                "Mail no box no label dropoff method is ineligible when return bar is available."
+              ]
+            }
+          ]
+        }
+      },
+      "DropoffMethod": {
+        "title": "Dropoff method",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Dropoff method id of `return-bar`, `in-store`, `mail`, `mail-nolabel`, or `mail-nobox-nolabel` (Defaults to `return-bar` if not specified).",
+            "type": "string"
+          },
+          "eligible": {
+            "description": "Whether the return is eligible for the current dropoff method.",
+            "type": "boolean"
+          },
+          "eligibilityError": {
+            "description": "Any eligibility errors for the current dropoff method. Only sent if `eligible = false`. <br/> <br/> Here are some of the expected eligibility errors. <br/> <br/> For Return Bar Returns: <ul>\n  <li>This return is not eligible for Return Bar drop off as it contains more than 9 item(s).</li>\n  <li>This return is not eligible for Return Bar drop off as it contains high value item(s).</li>\n  <li>This return is not eligible for Return Bar drop off as no locations are available for the shopper.</li>\n  <li>This return is not eligible for Return Bar drop off.</li>\n</ul>\nFor In-Store Returns: <ul>\n  <li>This return is not eligible for In Store drop off.</li>\n</ul>\nFor Mail Returns: <ul>\n  <li>This return is not eligible for Mail drop off.</li>\n  <li>Missing or Invalid Shipping Address.</li>\n  <li>Missing return shipment shipping options. Returned when there are no shipping options configured for the retailer and dropoff method.</li>\n</ul>\nFor Mail No Label Returns: <ul>\n  <li>This return is not eligible for Mail No Label drop off.</li>\n  <li>Missing or Invalid Shipping Address.</li>\n  <li>Missing return shipment shipping options. Returned when there are no shipping options configured for the retailer and dropoff method.</li>\n</ul>\nFor Mail No Box No Label Returns: <ul>\n  <li>Mail no box no label dropoff method is ineligible when return bar is available.</li>\n  <li>This return is not eligible for Mail No Box No Label drop off.</li>\n</ul>",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "locations": {
+            "description": "Locations available for dropoff methods. This field is only returned for <code>return-bar</code>, <code>mail-nolabel</code>, and <code>mail-nobox-nolabel</code> drop off methods.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Location"
+            }
+          }
+        },
+        "example": {
+          "id": "return-bar",
+          "eligible": false,
+          "eligibilityError": [
+            "This return is not eligible for In Store drop off."
+          ],
+          "locations": [
+            {
+              "name": "Petco",
+              "address": {
+                "id": 55485,
+                "type": "location_shipping",
+                "name": "PetCo 5121",
+                "address": "1402 Wilshire Blvd",
+                "city": "Santa Monica",
+                "state": "CA",
+                "zipcode": "90403",
+                "countryCode": "US"
+              },
+              "openingHours": [
+                {
+                  "dayOfWeek": 1,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 2,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 3,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 4,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 5,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 6,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 7,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                }
+              ],
+              "timeZone": "America/Los_Angeles",
+              "hoursMayVary": false,
+              "distance": 0.6471,
+              "display": [
+                {
+                  "label": "Promotions",
+                  "value": "$10 off your qualifying in-store purchase of $40 or more"
+                }
+              ],
+              "id": "pc5121",
+              "lat": 34.0267814,
+              "lng": -118.4884885
+            },
+            {
+              "name": "The UPS Store",
+              "address": {
+                "id": 65332,
+                "type": "location",
+                "name": "UPS 7160",
+                "address": "1212 Fifth St",
+                "address2": "Ste 1",
+                "city": "Santa Monica",
+                "state": "CA",
+                "zipcode": "90401",
+                "countryCode": "US"
+              },
+              "openingHours": [
+                {
+                  "dayOfWeek": 1,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 2,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 3,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 4,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 5,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 6,
+                  "openingTime": "2024-06-11T09:00:00-07:00",
+                  "closingTime": "2024-06-11T17:00:00-07:00"
+                }
+              ],
+              "timeZone": "America/Los_Angeles",
+              "hoursMayVary": false,
+              "distance": 0.3876,
+              "id": "TUPSSUS7160",
+              "lat": 34.0193805,
+              "lng": -118.4971165
+            },
+            {
+              "name": "Ulta Beauty",
+              "address": {
+                "id": 17895,
+                "type": "location",
+                "name": "Ulta 1213",
+                "address": "1234 Wilshire Blvd",
+                "city": "Santa Monica",
+                "state": "CA",
+                "zipcode": "90403",
+                "countryCode": "US"
+              },
+              "directions": "Go to the cashwrap to return your items.",
+              "openingHours": [
+                {
+                  "dayOfWeek": 1,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 2,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 3,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 4,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T19:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 5,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T20:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 6,
+                  "openingTime": "2024-06-11T10:00:00-07:00",
+                  "closingTime": "2024-06-11T20:00:00-07:00"
+                },
+                {
+                  "dayOfWeek": 7,
+                  "openingTime": "2024-06-11T11:00:00-07:00",
+                  "closingTime": "2024-06-11T18:00:00-07:00"
+                }
+              ],
+              "timeZone": "America/Los_Angeles",
+              "hoursMayVary": false,
+              "distance": 0.5569,
+              "display": [
+                {
+                  "label": "Promotions",
+                  "value": "Save $5 off any qualifying $15 in store purchase."
+                }
+              ],
+              "id": "ub1213",
+              "lat": 34.0256281,
+              "lng": -118.4898844
+            }
+          ]
+        }
+      },
+      "Location": {
+        "title": "Location details",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Location store name",
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/LocationAddress",
+            "description": "Location address",
+            "properties": {
+              "id": {
+                "format": "int",
+                "type": "integer"
+              },
+              "type": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "address": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "zipcode": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              }
+            }
+          },
+          "openingHours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dayOfWeek": {
+                  "format": "int",
+                  "type": "integer"
+                },
+                "openingTime": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "closingTime": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "timeZone": {
+            "description": "Location timezone",
+            "type": "string"
+          },
+          "hoursMayVary": {
+            "description": "Whether hours vary",
+            "type": "boolean"
+          },
+          "distance": {
+            "format": "double",
+            "description": "Distance to the location",
+            "type": "number"
+          },
+          "display": {
+            "description": "Location promotion details",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Display"
+            }
+          },
+          "id": {
+            "description": "Location id",
+            "type": "string"
+          },
+          "lat": {
+            "format": "double",
+            "description": "Latitude of the location",
+            "type": "number"
+          },
+          "lng": {
+            "format": "double",
+            "description": "Longitude of the location",
+            "type": "number"
+          }
+        },
+        "example": {
+          "name": "Petco",
+          "address": {
+            "id": 55485,
+            "type": "location_shipping",
+            "name": "PetCo 5121",
+            "address": "1402 Wilshire Blvd",
+            "city": "Santa Monica",
+            "state": "CA",
+            "zipcode": "90403",
+            "countryCode": "US"
+          },
+          "openingHours": [
+            {
+              "dayOfWeek": 1,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 2,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 3,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 4,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 5,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 6,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            },
+            {
+              "dayOfWeek": 7,
+              "openingTime": "2024-06-11T10:00:00-07:00",
+              "closingTime": "2024-06-11T19:00:00-07:00"
+            }
+          ],
+          "timeZone": "America/Los_Angeles",
+          "hoursMayVary": false,
+          "distance": 0.6471,
+          "display": [
+            {
+              "label": "Promotions",
+              "value": "$10 off your qualifying in-store purchase of $40 or more"
+            }
+          ],
+          "id": "pc5121",
+          "lat": 34.0267814,
+          "lng": -118.4884885
+        }
+      },
+      "LocationAddress": {
+        "title": "Location address",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Address id",
+            "type": "integer"
+          },
+          "type": {
+            "description": "Type of the location",
+            "type": "string"
+          },
+          "name": {
+            "description": "Store location name",
+            "type": "string"
+          },
+          "address": {
+            "description": "Location street address",
+            "type": "string"
+          },
+          "city": {
+            "description": "Location city",
+            "type": "string"
+          },
+          "state": {
+            "description": "Location state",
+            "type": "string"
+          },
+          "zipcode": {
+            "description": "Location zip code",
+            "type": "string"
+          },
+          "countryCode": {
+            "description": "Location country code",
+            "type": "string"
+          }
+        },
+        "example": {
+          "id": 55485,
+          "type": "location_shipping",
+          "name": "PetCo 5121",
+          "address": "1402 Wilshire Blvd",
+          "city": "Santa Monica",
+          "state": "CA",
+          "zipcode": "90403",
+          "countryCode": "US"
+        }
+      },
+      "LocationHours": {
+        "title": "Location operating hours",
+        "description": "",
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "description": "Day of the week where \n{\n `1`: `Monday`,\n `2`: `Tuesday`,\n `3`: `Wednesday`,\n `4`: `Thursday`,\n `5`: `Friday`,\n `6`: `Saturday`,\n `7`: `Sunday`\n}\n",
+            "type": "integer"
+          },
+          "openingTime": {
+            "format": "date-time",
+            "description": "Opening time of the location",
+            "type": "string"
+          },
+          "closingTime": {
+            "format": "date-time",
+            "description": "Closing time of the location",
+            "type": "string"
+          }
+        },
+        "example": {
+          "dayOfWeek": 1,
+          "openingTime": "2024-06-11T10:00:00-07:00",
+          "closingTime": "2024-06-11T19:00:00-07:00"
+        }
+      },
+      "InvalidAPIKey": {
+        "title": "Invalid API key is sent or API key is missing",
+        "description": "Invalid API key is sent or API key is missing",
+        "type": "object",
+        "properties": {
+          "errorMessage": {
+            "description": "Error message",
+            "type": "string"
+          },
+          "errorCode": {
+            "description": "Error code",
+            "type": "string"
+          }
+        },
+        "example": {
+          "errorMessage": "invalid credentials: record not found",
+          "errorCode": "004"
+        }
+      },
+      "NoPermissionReturnEligibility": {
+        "title": "No permission to check return eligibility",
+        "description": "Error message sent when partner does not have permission to check return eligibility",
+        "type": "string",
+        "example": "Partner no-access-partner does not have permission to check return eligibility"
+      },
+      "InternalServerError": {
+        "description": "Error sent when there was an server error",
+        "type": "string",
+        "example": "Error getting return dropoff methods"
+      },
+      "BadRequestError": {
+        "description": "Error sent when there is a bad request sent",
+        "type": "string",
+        "example": "Bad request"
+      }
+    },
+    "responses": {
+      "ReturnEligibilityResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReturnEligibilityResponseType"
+            }
+          }
+        },
+        "description": ""
+      }
+    }
+  }
+}

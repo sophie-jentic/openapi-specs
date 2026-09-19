@@ -1,0 +1,477 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "QuitSmoking Stories Moderation API",
+    "description": "API for moderating user stories (approve/reject with pagination and search)",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Frontend Team"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/other-a29-596/quitsmoking-stories-moderation-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.quitsmoking.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/stories": {
+      "get": {
+        "summary": "Get Stories",
+        "description": "Get paginated list of stories with optional filters",
+        "operationId": "getStories",
+        "tags": [
+          "Stories Moderation"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "rejected",
+                "all"
+              ],
+              "default": "pending"
+            },
+            "description": "Filter by story status"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in author name or story text"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "createdAt",
+                "author"
+              ],
+              "default": "createdAt"
+            },
+            "description": "Sort field"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            },
+            "description": "Sort order"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of stories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Story"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "currentPage": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "integer",
+                              "example": 5
+                            },
+                            "totalItems": {
+                              "type": "integer",
+                              "example": 48
+                            },
+                            "itemsPerPage": {
+                              "type": "integer",
+                              "example": 10
+                            }
+                          }
+                        },
+                        "filters": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "integer",
+                              "example": 12,
+                              "description": "Count of pending stories"
+                            },
+                            "approved": {
+                              "type": "integer",
+                              "example": 156,
+                              "description": "Count of approved stories"
+                            },
+                            "rejected": {
+                              "type": "integer",
+                              "example": 8,
+                              "description": "Count of rejected stories"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{id}/status": {
+      "put": {
+        "summary": "Update Story Status",
+        "description": "Approve or reject a pending story",
+        "operationId": "updateStoryStatus",
+        "tags": [
+          "Stories Moderation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Story ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "rejected"
+                    ],
+                    "example": "approved",
+                    "description": "New status for the story"
+                  },
+                  "rejectionReason": {
+                    "type": "string",
+                    "description": "Required if status is rejected",
+                    "example": "Contains inappropriate content"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Story approved successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status or story already processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Story not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{id}": {
+      "get": {
+        "summary": "Get Story Details",
+        "description": "Get detailed information about a specific story",
+        "operationId": "getStoryById",
+        "tags": [
+          "Stories Moderation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Story ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Story details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Story"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Story not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Story",
+        "description": "Delete a story (admin only)",
+        "operationId": "deleteStory",
+        "tags": [
+          "Stories Moderation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Story ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Story deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Story deleted successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Story not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "Logout User",
+        "description": "Invalidate user session",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "example": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Story": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "story_123456"
+          },
+          "author": {
+            "type": "string",
+            "example": "Sarah Ahmed",
+            "description": "Author name (optional for anonymous)"
+          },
+          "text": {
+            "type": "string",
+            "example": "I quit smoking 6 months ago and saved over 5000 EGP!",
+            "description": "Story content"
+          },
+          "content": {
+            "type": "string",
+            "example": "I quit smoking 6 months ago and saved over 5000 EGP!",
+            "description": "Alias for text (for backward compatibility)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-25T14:30:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "example": "pending"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "example": "Contains inappropriate content",
+            "description": "Reason for rejection (if rejected)"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Error message"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Stories Moderation",
+      "description": "Story moderation operations for admins"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication operations"
+    }
+  ]
+}

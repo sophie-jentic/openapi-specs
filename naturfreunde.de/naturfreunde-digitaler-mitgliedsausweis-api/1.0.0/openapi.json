@@ -1,0 +1,574 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Naturfreunde Digitaler Mitgliedsausweis API",
+    "description": "REST API f\u00fcr den digitalen Mitgliedsausweis der Naturfreunde Deutschlands e.V. Erm\u00f6glicht Erstabruf, Wallet-Generierung, QR-Scan-Verifikation und Verwaltung.\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/DWALTMANN/naturfreunde-digitaler-mitgliedsausweis-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.naturfreunde.de",
+      "description": "Produktionsserver"
+    },
+    {
+      "url": "https://staging.api.naturfreunde.de",
+      "description": "Staging/Testserver"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Claim",
+      "description": "Abruflink f\u00fcr erstmaligen Ausweis"
+    },
+    {
+      "name": "Card",
+      "description": "Mitgliedsausweisverwaltung"
+    },
+    {
+      "name": "Verification",
+      "description": "QR-Code Verifikation"
+    },
+    {
+      "name": "Admin",
+      "description": "Verwaltung/Logs"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Member": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "membership_number": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "local_group": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "expired"
+            ]
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date"
+          },
+          "photo_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "membership_number",
+          "first_name",
+          "last_name",
+          "local_group",
+          "status",
+          "valid_until",
+          "updated_at"
+        ]
+      },
+      "MemberCard": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string"
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "member_id",
+          "token",
+          "issued_at",
+          "expires_at",
+          "revoked"
+        ]
+      },
+      "ClaimToken": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "member_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "used": {
+            "type": "boolean"
+          },
+          "used_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "token",
+          "member_id",
+          "expires_at",
+          "used"
+        ]
+      },
+      "VerificationResult": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "local_group": {
+            "type": "string"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date"
+          },
+          "revoked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "name",
+          "local_group",
+          "valid_until",
+          "revoked"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/claim/{claim_token}": {
+      "get": {
+        "tags": [
+          "Claim"
+        ],
+        "summary": "Ruft den Claim-Link f\u00fcr den Erstabruf ab",
+        "description": "Validiert den Claim-Token, pr\u00fcft Ablauf, Status und liefert Infos zur Abrufseite.\n",
+        "parameters": [
+          {
+            "name": "claim_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Claim g\u00fcltig",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimToken"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltiger Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Token nicht gefunden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Token abgelaufen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cards/issue": {
+      "post": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Erzeugt einen digitalen Mitgliedsausweis",
+        "description": "Wandelt einen Claim-Token in einen echten MemberCard-Ausweis um.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "claim_token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "claim_token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ausweis erstellt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberCard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltiger oder bereits verwendeter Claim-Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cards/{member_card_token}/apple": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Generiert Apple Wallet Pass f\u00fcr einen MemberCard-Token",
+        "parameters": [
+          {
+            "name": "member_card_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apple Wallet Pass (.pkpass)",
+            "content": {
+              "application/vnd.apple.pkpass": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltiger Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ausweis nicht gefunden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cards/{member_card_token}/google": {
+      "get": {
+        "tags": [
+          "Card"
+        ],
+        "summary": "Generiert Google Wallet Pass f\u00fcr einen MemberCard-Token",
+        "parameters": [
+          {
+            "name": "member_card_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Google Wallet Pass (JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "example": {
+                    "jwt": "eyJhbGciOi..."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltiger Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ausweis nicht gefunden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify/{member_card_token}": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Verifiziert einen Mitgliedsausweis per QR-Code",
+        "parameters": [
+          {
+            "name": "member_card_token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verifikation erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ausweis nicht gefunden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cards/revoke": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Sperrt einen digitalen Ausweis",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_card_token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "member_card_token"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ausweis erfolgreich gesperrt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revoked": {
+                      "type": "boolean"
+                    },
+                    "revoked_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ausweis nicht gefunden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logs/verification": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Zeigt Verifikationslogs (Admin)",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste der Verifikationslogs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string"
+                      },
+                      "verified_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "source_ip": {
+                        "type": "string"
+                      },
+                      "user_agent": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

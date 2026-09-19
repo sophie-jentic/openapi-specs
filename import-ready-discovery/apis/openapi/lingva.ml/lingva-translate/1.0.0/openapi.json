@@ -1,0 +1,269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Lingva Translate API",
+    "description": "Lingva Translate is an alternative front-end for Google Translate, serving as a free and open-source translator with over a hundred languages available. This API provides translation, text-to-speech audio, and language listing capabilities.",
+    "version": "1.0.0",
+    "license": {
+      "name": "AGPL-3.0",
+      "url": "https://github.com/thedaviddelta/lingva-translate/blob/main/LICENSE"
+    },
+    "contact": {
+      "name": "Lingva Translate",
+      "url": "https://github.com/thedaviddelta/lingva-translate"
+    },
+    "x-jentic-source-url": "https://github.com/thedaviddelta/lingva-translate"
+  },
+  "servers": [
+    {
+      "url": "https://lingva.ml",
+      "description": "Official Lingva Translate instance"
+    }
+  ],
+  "paths": {
+    "/api/v1/{source}/{target}/{query}": {
+      "get": {
+        "operationId": "translate",
+        "summary": "Translate text",
+        "description": "Translate text from source language to target language.",
+        "tags": [
+          "Translation"
+        ],
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source language code (e.g., 'en', 'es', 'auto' for auto-detect)."
+          },
+          {
+            "name": "target",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Target language code (e.g., 'en', 'es')."
+          },
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Text to translate (URL-encoded)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Translation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "translation": {
+                      "type": "string",
+                      "description": "The translated text."
+                    },
+                    "info": {
+                      "type": "object",
+                      "description": "Additional translation information including definitions, examples, and similar translations.",
+                      "properties": {
+                        "definitions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "list": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "extraTranslations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string"
+                              },
+                              "list": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "pronunciation": {
+                          "type": "object",
+                          "properties": {
+                            "query": {
+                              "type": "string"
+                            },
+                            "translation": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid language code or query"
+          },
+          "500": {
+            "description": "Internal server error - translation service unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/audio/{lang}/{query}": {
+      "get": {
+        "operationId": "getAudio",
+        "summary": "Get audio pronunciation",
+        "description": "Get text-to-speech audio for the given text in the specified language.",
+        "tags": [
+          "Audio"
+        ],
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Language code for the audio pronunciation."
+          },
+          {
+            "name": "query",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Text to convert to speech (URL-encoded)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audio data as an array of byte values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "audio": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "description": "Audio data as an array of byte values (can be converted to a Blob or Buffer)."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid language code or query"
+          },
+          "500": {
+            "description": "Internal server error - audio service unavailable"
+          }
+        }
+      }
+    },
+    "/api/v1/languages/{type}": {
+      "get": {
+        "operationId": "getLanguages",
+        "summary": "List available languages",
+        "description": "Get the list of available source or target languages.",
+        "tags": [
+          "Languages"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "source",
+                "target"
+              ]
+            },
+            "description": "Whether to list source or target languages."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available languages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "languages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "description": "Language code (e.g., 'en', 'es')."
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Human-readable language name."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  },
+  "tags": [
+    {
+      "name": "Translation",
+      "description": "Text translation endpoints"
+    },
+    {
+      "name": "Audio",
+      "description": "Text-to-speech audio endpoints"
+    },
+    {
+      "name": "Languages",
+      "description": "Language listing endpoints"
+    }
+  ],
+  "x-jentic-no-auth-reason": "Lingva Translate is a free, open-source translation frontend with no authentication required for its public API."
+}

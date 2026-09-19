@@ -1,0 +1,1138 @@
+{
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "MoneyBadger Payments API",
+    "title": "MoneyBadger Payments API",
+    "termsOfService": "https://moneybadger.co.za/terms",
+    "contact": {
+      "email": "info@moneybadger.co.za"
+    },
+    "license": {
+      "name": "MoneyBadger",
+      "url": "https://moneybadger.co.za/license"
+    },
+    "version": "2.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/DUBEDIVINE/moneybadger-payments-api/2.0.0"
+  },
+  "host": "api.cryptoqr.net",
+  "basePath": "/api/v2",
+  "paths": {
+    "/health": {
+      "get": {
+        "security": [],
+        "description": "Returns health check status",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "info"
+        ],
+        "summary": "Health check",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "build": {
+                  "description": "API build",
+                  "type": "string"
+                },
+                "message": {
+                  "description": "Health check message",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoice": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "merchantCode": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Request a new Invoice",
+        "operationId": "requestInvoice",
+        "parameters": [
+          {
+            "description": "Invoice request details",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InvoiceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "405": {
+            "description": "Invalid input"
+          },
+          "422": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/invoices/": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "description": "Returns an array of Invoice objects according to query parameters",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Get invoice history with various filters",
+        "operationId": "getInvoiceHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "only show invoices created after this date/time (UTC)",
+            "name": "startTime",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "only show invoices created before this date/time (UTC)",
+            "name": "endTime",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Maximum number of objects to return",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Number of invoices to skip",
+            "name": "skip",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter invoices by status (REQUESTED, AUTHORIZED, CONFIRMED, TIMED_OUT, CANCELLED, ERROR). Provide value as comma-separated list.",
+            "name": "statusList",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Invoice"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          }
+        }
+      }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "merchantCode": []
+          }
+        ],
+        "description": "Returns a single invoice",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Find invoice by ID or merchant order ID",
+        "operationId": "getInvoice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of invoice or merchant order ID or lightning invoice",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "enum": [
+              "ID",
+              "ORDER_ID",
+              "LIGHTNING_INVOICE"
+            ],
+            "type": "string",
+            "description": "Retrieve invoice by (id or orderId)",
+            "name": "by",
+            "in": "query"
+          },
+          {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer",
+            "description": "wait the specified number of seconds until invoice state changes ( max 10 seconds. The current invoice record will be returned once the 'wait' timeout has expired. ).",
+            "name": "wait",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/cancel": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Cancel an invoice",
+        "operationId": "cancelInvoice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of invoice or merchant order ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "enum": [
+              "id",
+              "orderId"
+            ],
+            "type": "string",
+            "description": "Retrieve invoice by (id or orderId)",
+            "name": "by",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/confirm": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Confirm an invoice",
+        "operationId": "confirmInvoice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of invoice or merchant order ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "enum": [
+              "id",
+              "orderId"
+            ],
+            "type": "string",
+            "description": "Retrieve invoice by (id or orderId)",
+            "name": "by",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/payment_methods": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "merchantCode": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Update payment method for an invoice",
+        "operationId": "updatePaymentMethod",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of invoice or merchant order ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "updated payment method",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InvoiceUpdatePaymentMethod"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/invoices/{id}/user_cancel": {
+      "post": {
+        "security": [],
+        "description": "This action is only allowed while the invoice is in the 'REQUESTED' state.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "User cancel an invoice",
+        "operationId": "userCancelInvoice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of invoice or merchant order ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "enum": [
+              "id",
+              "orderId"
+            ],
+            "type": "string",
+            "description": "Retrieve invoice by (id or orderId)",
+            "name": "by",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Invoice"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/merchants": {
+      "get": {
+        "security": [],
+        "description": "Returns merchant information",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "merchant"
+        ],
+        "summary": "Get merchant information",
+        "operationId": "getMerchantInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The merchant's unique URL code resembling the merchant's name",
+            "name": "code",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Merchant"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Merchant not found"
+          }
+        }
+      }
+    },
+    "/qrpng/{id}.png": {
+      "get": {
+        "security": [],
+        "description": "Returns the QR code PNG image associated with the given ID",
+        "produces": [
+          "image/png"
+        ],
+        "tags": [
+          "png"
+        ],
+        "summary": "Get QR code as a PNG image.",
+        "operationId": "getQrPng",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the qr code",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A PNG image of the QR code.",
+            "schema": {
+              "type": "file",
+              "format": "binary"
+            }
+          },
+          "404": {
+            "description": "Invoice not found"
+          }
+        }
+      }
+    },
+    "/refund": {
+      "post": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          },
+          {
+            "merchantCode": []
+          }
+        ],
+        "description": "Create a refund for a previously created invoice.\n\n## Authentication & Request Signing\n\nThis endpoint requires three headers:\n\n- `X-API-Key`: Your API key.\n- `X-Timestamp`: UNIX timestamp (seconds).\n- `X-Signature`: `Base64(HMAC_SHA256(secret, \"<METHOD>\\n<PATH>\\n<TIMESTAMP>\"))`\n\n**Canonical string to sign** for this operation:\n\n```\nPOST\n/refund\n<UNIX_SECONDS_TIMESTAMP>\n```\n\nExample:\n\nMethod:    `POST`\nPath:      `/refund`\nTimestamp: `1234567890`\nSecret:    `test-secret-key`\n\nString to sign (including newlines):\n```\nPOST\n/refund\n1234567890\n```\n\nBase64(HMAC-SHA256(secret, string)) =\n`kJo7ZC9/S2oMN2LjdboCE5Ut5bFttpCc+QrDReKIXbA=`\n",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Request a new Refund",
+        "operationId": "requestRefund",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "X-Api-Key",
+            "in": "header",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Unix timestamp used for HMAC signature",
+            "name": "X-Timestamp",
+            "in": "header",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "HMAC signature of method, path, and timestamp",
+            "name": "X-Signature",
+            "in": "header",
+            "required": true
+          },
+          {
+            "description": "Refund request details",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RefundRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Refund"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Invoice Not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "405": {
+            "description": "Invalid input",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "422": {
+            "description": "Unprocessable content",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/refunds/{id}": {
+      "get": {
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "description": "Returns a single refund",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "invoice"
+        ],
+        "summary": "Get refund by ID",
+        "operationId": "getRefund",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of refund",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/Refund"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Refund not found",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/swagger.json": {
+      "get": {
+        "security": [],
+        "description": "Returns API swagger spec",
+        "produces": [
+          "text/plain"
+        ],
+        "tags": [
+          "info"
+        ],
+        "summary": "Get API swagger spec",
+        "operationId": "getSwaggerSpec",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ErrorResponse": {
+      "type": "object",
+      "title": "ErrorResponse is an error response.",
+      "required": [
+        "code",
+        "error"
+      ],
+      "properties": {
+        "code": {
+          "description": "The code representing the error.",
+          "type": "string",
+          "enum": [
+            "ErrUnknown",
+            "ErrNotFound",
+            "ErrForbidden",
+            "ErrAuthentication",
+            "ErrProcessing",
+            "ErrInternal",
+            "ErrInsufficientFunds",
+            "ErrInvalidInvoiceState",
+            "ErrRefundDeclined",
+            "ErrRefundBelowMinAmount",
+            "ErrRefundInvalidRecipient"
+          ],
+          "example": "ErrUnknown"
+        },
+        "detail": {
+          "description": "Optional extra information about this error.",
+          "type": "string"
+        },
+        "error": {
+          "description": "The error message.",
+          "type": "string"
+        }
+      }
+    },
+    "Invoice": {
+      "type": "object",
+      "properties": {
+        "amount_cents": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "expires_at": {
+          "description": "when this invoice will expire (UTC Time)",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string"
+        },
+        "merchant_code": {
+          "type": "string"
+        },
+        "merchant_name": {
+          "type": "string"
+        },
+        "order_description": {
+          "type": "string"
+        },
+        "order_id": {
+          "description": "Merchant's order ID",
+          "type": "string"
+        },
+        "paid_at": {
+          "description": "when this invoice was paid (UTC Time)",
+          "type": "string",
+          "format": "date-time"
+        },
+        "payment_link": {
+          "type": "string"
+        },
+        "payment_request": {
+          "$ref": "#/definitions/PaymentRequest"
+        },
+        "redirect_url": {
+          "description": "URL that MoneyBadger will redirect to after payment",
+          "type": "string"
+        },
+        "refunds": {
+          "description": "Array of all associated refunds for this invoice",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Refund"
+          }
+        },
+        "status": {
+          "description": "Invoice Status",
+          "type": "string",
+          "enum": [
+            "REQUESTED",
+            "AUTHORIZED",
+            "CONFIRMED",
+            "TIMED_OUT",
+            "CANCELLED",
+            "ERROR"
+          ]
+        },
+        "status_webhook_url": {
+          "type": "string"
+        },
+        "sub_merchant": {
+          "description": "Sub Merchant information",
+          "$ref": "#/definitions/SubMerchant"
+        }
+      }
+    },
+    "InvoiceRequest": {
+      "type": "object",
+      "required": [
+        "amount_cents"
+      ],
+      "properties": {
+        "allowed_payment_methods": {
+          "description": "Optional/Advanced usage: Allowed payment methods, in preferred order",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "lightning"
+          }
+        },
+        "amount_cents": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount_sats": {
+          "description": "Amount in sats. This is needed for LNURL payments, when an exact sats amount is required.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "auto_confirm": {
+          "description": "Automatically confirm the invoice when paid",
+          "type": "boolean",
+          "example": false
+        },
+        "currency": {
+          "description": "Invoice currency code. If none specified, merchant default is used, otherwise 'ZAR'",
+          "type": "string",
+          "example": "ZAR"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "order_description": {
+          "type": "string"
+        },
+        "order_id": {
+          "type": "string"
+        },
+        "payment_currencies": {
+          "description": "Optional/Advanced usage: Allowed payment currencies, in order of preference. If none specified, merchant default and/or value store default is used, otherwise 'BTC'. NB: Not all value stores support multiple currencies.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "BTC"
+          }
+        },
+        "redirect_url": {
+          "description": "URL to redirect to after payment",
+          "type": "string"
+        },
+        "refund_recipient": {
+          "description": "Recipient to refund to (optional, dependent on payment method)",
+          "$ref": "#/definitions/RefundRecipient"
+        },
+        "scan_id": {
+          "type": "string"
+        },
+        "status_webhook_url": {
+          "type": "string"
+        },
+        "sub_merchant": {
+          "description": "Sub Merchant information",
+          "$ref": "#/definitions/SubMerchant"
+        },
+        "timeout_in_seconds": {
+          "type": "integer"
+        },
+        "transaction_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        }
+      }
+    },
+    "InvoiceStatusUpdate": {
+      "type": "object",
+      "properties": {
+        "invoice": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/Invoice/properties/id"
+            },
+            "order_id": {
+              "$ref": "#/definitions/Invoice/properties/order_id"
+            }
+          }
+        }
+      }
+    },
+    "InvoiceUpdatePaymentMethod": {
+      "type": "object",
+      "properties": {
+        "payment_currencies": {
+          "description": "Allowed payment currencies, in order of preference. If none specified, merchant default and/or value store default is used, otherwise 'BTC'. NB: Not all value stores support multiple currencies.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "BTC"
+          }
+        },
+        "payment_method": {
+          "description": "Payment method to use for invoice",
+          "type": "string",
+          "example": "lightning"
+        },
+        "refund_recipient": {
+          "description": "Recipient to refund to (optional, dependent on payment method)",
+          "$ref": "#/definitions/RefundRecipient"
+        },
+        "transaction_id": {
+          "description": "Transaction ID for payment method",
+          "type": "string"
+        }
+      }
+    },
+    "Merchant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "logoUrl": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "PaymentRequest": {
+      "description": "Payment request details. This is what needs to be provided to the user to make payment",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "example": 100.00007
+        },
+        "currency": {
+          "type": "string",
+          "example": "BTC"
+        },
+        "data": {
+          "description": "encoded data for use by app/value store. e.g. lightning invoice, deeplink, etc.",
+          "type": "string"
+        },
+        "deeplink": {
+          "description": "deeplink for app to open and complete payment",
+          "type": "string"
+        },
+        "denomination": {
+          "type": "string",
+          "example": "sats"
+        },
+        "exchange_rate": {
+          "description": "Conversion rate from fiat to crypto",
+          "type": "number",
+          "format": "double",
+          "example": 0.05
+        },
+        "expires_at": {
+          "description": "when this payment will expire (UTC Time). May differ from the Invoice (e.g. for lightning)",
+          "type": "string",
+          "format": "date-time"
+        },
+        "over_payment": {
+          "description": "Overpayment amount in fiat currency of invoice",
+          "type": "number",
+          "example": 0.01
+        },
+        "payment_methods": {
+          "description": "list of payment method types with payment instruction data the client can use to complete payment",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "example": {
+            "luno|XBT": "currency=xbt&amount=0.013"
+          }
+        },
+        "qr_code_content": {
+          "description": "QR code content (string, usually a URL or encoded data)",
+          "type": "string"
+        },
+        "qr_code_url": {
+          "description": "Url for QR code representation of encoded data (for use in webpage)",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "UserID is the id used by the partner to identify their user",
+          "type": "string"
+        },
+        "value_store": {
+          "type": "string",
+          "example": "binance"
+        }
+      }
+    },
+    "Refund": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "ID is the id of the refund",
+          "type": "string"
+        },
+        "invoice_id": {
+          "description": "Invoice ID is the id of the invoice to refund",
+          "type": "string"
+        },
+        "refund_amount": {
+          "type": "number"
+        },
+        "refund_currency": {
+          "type": "string"
+        },
+        "request_amount_cents": {
+          "type": "integer"
+        },
+        "request_currency": {
+          "type": "string"
+        },
+        "status": {
+          "description": "Status is the status of the refund",
+          "type": "string",
+          "enum": [
+            "pending",
+            "complete",
+            "failed"
+          ]
+        },
+        "status_webhook_url": {
+          "description": "webhook url to call when refund status change. If not set the webhook url on the related invoice will be used to notify of status updates.",
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "RefundRecipient": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "Address to send refund to",
+          "type": "string"
+        }
+      }
+    },
+    "RefundRequest": {
+      "type": "object",
+      "properties": {
+        "amount_cents": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "invoice_id": {
+          "description": "Invoice ID is the id of the invoice to refund",
+          "type": "string"
+        },
+        "status_webhook_url": {
+          "description": "(optional) webhook url to call when refund status change. If not set the webhook url on the related invoice will be used to notify of status updates.",
+          "type": "string"
+        }
+      }
+    },
+    "RefundStatusUpdate": {
+      "type": "object",
+      "properties": {
+        "refund": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "ID is the id of the refund",
+              "type": "string"
+            },
+            "order_id": {
+              "description": "Merchant's invoice order ID",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "SubMerchant": {
+      "description": "Sub Merchant details.",
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "mcc"
+      ],
+      "properties": {
+        "id": {
+          "description": "Sub Merchant unique id",
+          "type": "string"
+        },
+        "mcc": {
+          "description": "Sub Merchant category code",
+          "type": "string"
+        },
+        "name": {
+          "description": "Sub Merchant name",
+          "type": "string"
+        },
+        "site_id": {
+          "description": "Sub Merchant site ID. The site id provides a granular identifier for the submerchant, for example, a specific store location of this sub merchant. This is an optional field.",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "APIKeyHeader": {
+      "type": "apiKey",
+      "name": "X-API-Key",
+      "in": "header"
+    },
+    "merchantCode": {
+      "type": "apiKey",
+      "name": "X-Merchant-Code",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "APIKeyHeader": []
+    }
+  ],
+  "tags": [
+    {
+      "description": "About",
+      "name": "info",
+      "externalDocs": {
+        "description": "More info",
+        "url": "https://www.moneybadger.co.za/"
+      }
+    }
+  ]
+}

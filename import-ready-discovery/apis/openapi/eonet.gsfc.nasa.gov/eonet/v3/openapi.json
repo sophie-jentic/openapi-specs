@@ -1,0 +1,436 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NASA EONET - Earth Observatory Natural Event Tracker",
+    "description": "The Earth Observatory Natural Event Tracker (EONET) provides a curated source of continuously updated natural event metadata, including wildfires, volcanoes, severe storms, and other natural events.",
+    "version": "3.0.0",
+    "contact": {
+      "name": "NASA EONET",
+      "url": "https://eonet.gsfc.nasa.gov"
+    },
+    "x-jentic-source-url": "https://eonet.gsfc.nasa.gov/docs/v3",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://eonet.gsfc.nasa.gov/api/v3",
+      "description": "NASA EONET v3 API"
+    }
+  ],
+  "paths": {
+    "/events": {
+      "get": {
+        "operationId": "getEvents",
+        "summary": "Get natural events",
+        "description": "Returns a list of natural events with optional filtering by source, category, status, date range, magnitude, and bounding box.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Comma-separated source IDs (OR logic)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Comma-separated category IDs (OR logic)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Event status filter",
+            "schema": {
+              "type": "string",
+              "enum": ["open", "closed", "all"],
+              "default": "open"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit number of events returned",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "description": "Number of prior days to include (inclusive)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "description": "Start date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "End date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "magID",
+            "in": "query",
+            "description": "Magnitude type ID filter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "magMin",
+            "in": "query",
+            "description": "Minimum magnitude value",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "magMax",
+            "in": "query",
+            "description": "Maximum magnitude value",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "description": "Bounding box: min_lon,max_lat,max_lon,min_lat",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of natural events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "link": {
+                      "type": "string"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Event"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/geojson": {
+      "get": {
+        "operationId": "getEventsGeoJSON",
+        "summary": "Get natural events as GeoJSON",
+        "description": "Returns natural events in GeoJSON format for mapping applications.",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["open", "closed", "all"]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON FeatureCollection of natural events",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "getCategories",
+        "summary": "List event categories",
+        "description": "Returns all available event type categories such as wildfires, volcanoes, severe storms, etc.",
+        "responses": {
+          "200": {
+            "description": "List of event categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "link": {
+                      "type": "string"
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "link": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "layers": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "operationId": "getSources",
+        "summary": "List event sources",
+        "description": "Returns all available event data sources.",
+        "responses": {
+          "200": {
+            "description": "List of event sources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "sources": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "link": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layers": {
+      "get": {
+        "operationId": "getLayers",
+        "summary": "List web service imagery layers",
+        "description": "Returns available web service imagery layers that can be used to visualize events.",
+        "responses": {
+          "200": {
+            "description": "List of imagery layers"
+          }
+        }
+      }
+    },
+    "/magnitudes": {
+      "get": {
+        "operationId": "getMagnitudes",
+        "summary": "List magnitude types",
+        "description": "Returns available magnitude types used to describe event intensity.",
+        "responses": {
+          "200": {
+            "description": "List of magnitude types"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "closed": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "geometry": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "magnitudeValue": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "magnitudeUnit": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

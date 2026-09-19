@@ -1,0 +1,506 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "IMF Data API",
+    "description": "Access International Monetary Fund datasets including World Economic Outlook, International Financial Statistics, Balance of Payments, Government Finance Statistics, and more. This is a public API that does not require authentication.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "International Monetary Fund",
+      "url": "https://datahelp.imf.org/knowledgebase/articles/667681-using-json-restful-web-service"
+    },
+    "x-jentic-source-url": "https://datahelp.imf.org/knowledgebase/articles/667681-using-json-restful-web-service"
+  },
+  "x-jentic-provenance": "jentic-generated",
+  "servers": [
+    {
+      "url": "https://dataservices.imf.org/REST/SDMX_JSON.svc",
+      "description": "IMF SDMX JSON REST Service"
+    }
+  ],
+  "paths": {
+    "/Dataflow": {
+      "get": {
+        "operationId": "getDataflows",
+        "summary": "List all available IMF datasets",
+        "description": "Returns a list of all available IMF dataflows (datasets) with their identifiers and descriptions. Use these identifiers in other endpoints to retrieve specific data.",
+        "responses": {
+          "200": {
+            "description": "List of available dataflows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataflowResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/DataStructure/{datasetId}": {
+      "get": {
+        "operationId": "getDataStructure",
+        "summary": "Get structure of a specific dataset",
+        "description": "Returns the data structure definition for a specified dataset, including dimensions, attributes, and code lists. Use this to understand available filter parameters before querying data.",
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "description": "Dataset identifier (e.g., IFS for International Financial Statistics, BOP for Balance of Payments, WEO for World Economic Outlook)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "IFS"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data structure definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataStructureResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dataset not found"
+          }
+        }
+      }
+    },
+    "/CodeList/{codeListId}": {
+      "get": {
+        "operationId": "getCodeList",
+        "summary": "Get code list values for a dimension",
+        "description": "Returns the available code values for a given dimension code list. These values can be used to filter data in the CompactData endpoint.",
+        "parameters": [
+          {
+            "name": "codeListId",
+            "in": "path",
+            "required": true,
+            "description": "Code list identifier from the data structure definition (e.g., CL_INDICATOR_IFS for IFS indicator codes, CL_AREA_IFS for IFS area codes)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "CL_AREA_IFS"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Code list values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Code list not found"
+          }
+        }
+      }
+    },
+    "/CompactData/{datasetId}/{dimensions}": {
+      "get": {
+        "operationId": "getCompactData",
+        "summary": "Retrieve time series data from a dataset",
+        "description": "Returns time series data for the specified dataset filtered by dimension values. Dimensions are period-separated values corresponding to the dataset's structure. Use DataStructure endpoint first to understand the dimension order.",
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "description": "Dataset identifier (e.g., IFS, BOP, DOT, WEO, PCPS)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "IFS"
+          },
+          {
+            "name": "dimensions",
+            "in": "path",
+            "required": true,
+            "description": "Period-separated dimension filter values. Use + for multiple values in one dimension, empty between periods for all values. Format depends on dataset structure.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "Q.US.PCPI_IX"
+          },
+          {
+            "name": "startPeriod",
+            "in": "query",
+            "required": false,
+            "description": "Start period for data (e.g., 2020, 2020-Q1, 2020-01)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "2020"
+          },
+          {
+            "name": "endPeriod",
+            "in": "query",
+            "required": false,
+            "description": "End period for data",
+            "schema": {
+              "type": "string"
+            },
+            "example": "2024"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Time series data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompactDataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid dimension filter"
+          },
+          "404": {
+            "description": "Dataset not found"
+          }
+        }
+      }
+    },
+    "/GenericData/{datasetId}/{dimensions}": {
+      "get": {
+        "operationId": "getGenericData",
+        "summary": "Retrieve data in generic SDMX format",
+        "description": "Returns data in the generic SDMX-JSON format with full observation-level attributes. Similar to CompactData but with a different response structure.",
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "description": "Dataset identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dimensions",
+            "in": "path",
+            "required": true,
+            "description": "Period-separated dimension filter values",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startPeriod",
+            "in": "query",
+            "required": false,
+            "description": "Start period",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endPeriod",
+            "in": "query",
+            "required": false,
+            "description": "End period",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generic SDMX data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "GenericData": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/GetMaxSeriesInResult": {
+      "get": {
+        "operationId": "getMaxSeriesInResult",
+        "summary": "Get maximum series limit per request",
+        "description": "Returns the maximum number of time series that can be returned in a single data request.",
+        "responses": {
+          "200": {
+            "description": "Maximum series count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "GetMaxSeriesInResult": {
+                      "type": "integer",
+                      "description": "Maximum number of series per result"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/GetDataAvailability/{datasetId}": {
+      "get": {
+        "operationId": "getDataAvailability",
+        "summary": "Check data availability for a dataset",
+        "description": "Returns information about data availability for the specified dataset.",
+        "parameters": [
+          {
+            "name": "datasetId",
+            "in": "path",
+            "required": true,
+            "description": "Dataset identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data availability information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DataflowResponse": {
+        "type": "object",
+        "properties": {
+          "Structure": {
+            "type": "object",
+            "properties": {
+              "Dataflows": {
+                "type": "object",
+                "properties": {
+                  "Dataflow": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "@id": {
+                          "type": "string",
+                          "description": "Dataset identifier"
+                        },
+                        "Name": {
+                          "type": "object",
+                          "properties": {
+                            "#text": {
+                              "type": "string",
+                              "description": "Dataset name"
+                            }
+                          }
+                        },
+                        "KeyFamilyRef": {
+                          "type": "object",
+                          "properties": {
+                            "KeyFamilyID": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "DataStructureResponse": {
+        "type": "object",
+        "properties": {
+          "Structure": {
+            "type": "object",
+            "properties": {
+              "KeyFamilies": {
+                "type": "object",
+                "properties": {
+                  "KeyFamily": {
+                    "type": "object",
+                    "properties": {
+                      "@id": {
+                        "type": "string"
+                      },
+                      "Name": {
+                        "type": "object"
+                      },
+                      "Components": {
+                        "type": "object",
+                        "properties": {
+                          "Dimension": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "@conceptRef": {
+                                  "type": "string",
+                                  "description": "Dimension name"
+                                },
+                                "@codelist": {
+                                  "type": "string",
+                                  "description": "Reference to code list ID"
+                                }
+                              }
+                            }
+                          },
+                          "TimeDimension": {
+                            "type": "object",
+                            "properties": {
+                              "@conceptRef": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "PrimaryMeasure": {
+                            "type": "object",
+                            "properties": {
+                              "@conceptRef": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CodeListResponse": {
+        "type": "object",
+        "properties": {
+          "Structure": {
+            "type": "object",
+            "properties": {
+              "CodeLists": {
+                "type": "object",
+                "properties": {
+                  "CodeList": {
+                    "type": "object",
+                    "properties": {
+                      "@id": {
+                        "type": "string"
+                      },
+                      "Name": {
+                        "type": "object"
+                      },
+                      "Code": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "@value": {
+                              "type": "string",
+                              "description": "Code value to use in queries"
+                            },
+                            "Description": {
+                              "type": "object",
+                              "properties": {
+                                "#text": {
+                                  "type": "string",
+                                  "description": "Human-readable description"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CompactDataResponse": {
+        "type": "object",
+        "properties": {
+          "CompactData": {
+            "type": "object",
+            "properties": {
+              "DataSet": {
+                "type": "object",
+                "properties": {
+                  "Series": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "@FREQ": {
+                          "type": "string",
+                          "description": "Frequency code"
+                        },
+                        "@REF_AREA": {
+                          "type": "string",
+                          "description": "Country/area code"
+                        },
+                        "@INDICATOR": {
+                          "type": "string",
+                          "description": "Indicator code"
+                        },
+                        "Obs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "@TIME_PERIOD": {
+                                "type": "string",
+                                "description": "Time period"
+                              },
+                              "@OBS_VALUE": {
+                                "type": "string",
+                                "description": "Observation value"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

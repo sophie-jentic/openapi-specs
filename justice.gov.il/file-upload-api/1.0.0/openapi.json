@@ -1,0 +1,323 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "File Upload API",
+    "description": "API for secure file upload management",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/NEALPTME_1/file-upload-api/1.0.0"
+  },
+  "x-amazon-apigateway-request-validators": {
+    "all": {
+      "validateRequestBody": true,
+      "validateRequestParameters": true
+    }
+  },
+  "x-amazon-apigateway-request-validator": "all",
+  "x-amazon-apigateway-gateway-responses": {
+    "BAD_REQUEST_BODY": {
+      "statusCode": 400,
+      "responseTemplates": {
+        "application/json": "{\"message\": \"$context.error.validationErrorString\", \"businessErrorCode\": \"INVALID_REQUEST_BODY\"}"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.justice.gov.il/v1"
+    }
+  ],
+  "paths": {
+    "/signed-url": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUrlResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-request-validator": "all",
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "${signed_url_lambda_invoke_arn}"
+        }
+      }
+    },
+    "/complete-multipart-upload": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteMultipartUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteMultipartUploadResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-request-validator": "all",
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "${complete_multipart_upload_lambda_invoke_arn}"
+        }
+      }
+    },
+    "/abort-multipart-upload": {
+      "delete": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbortMultipartUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AbortMultipartUploadResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-request-validator": "all",
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "uri": "${abort_multipart_upload_lambda_invoke_arn}"
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GetUrlRequest": {
+        "type": "object",
+        "required": [
+          "appId",
+          "file"
+        ],
+        "properties": {
+          "appId": {
+            "type": "string"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileRequest"
+          }
+        }
+      },
+      "FileRequest": {
+        "type": "object",
+        "required": [
+          "fileName",
+          "fileType",
+          "fileSize",
+          "parts"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "fileType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "number"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilePart"
+            }
+          }
+        }
+      },
+      "FilePart": {
+        "type": "object",
+        "required": [
+          "partNumber",
+          "checksum"
+        ],
+        "properties": {
+          "partNumber": {
+            "type": "integer"
+          },
+          "checksum": {
+            "type": "string"
+          }
+        }
+      },
+      "GetUrlResponse": {
+        "type": "object",
+        "required": [
+          "fileId",
+          "urls"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "uploadId": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "urls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartUrl"
+            }
+          }
+        }
+      },
+      "PartUrl": {
+        "type": "object",
+        "required": [
+          "partNumber",
+          "url"
+        ],
+        "properties": {
+          "partNumber": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CompleteMultipartUploadRequest": {
+        "type": "object",
+        "required": [
+          "fileId",
+          "uploadId",
+          "key",
+          "parts"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "uploadId": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompletedPart"
+            }
+          }
+        }
+      },
+      "CompletedPart": {
+        "type": "object",
+        "required": [
+          "eTag",
+          "partNumber"
+        ],
+        "properties": {
+          "eTag": {
+            "type": "string"
+          },
+          "partNumber": {
+            "type": "integer"
+          },
+          "checksumSHA256": {
+            "type": "string"
+          }
+        }
+      },
+      "CompleteMultipartUploadResponse": {
+        "type": "object",
+        "required": [
+          "fileId",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AbortMultipartUploadRequest": {
+        "type": "object",
+        "required": [
+          "fileId",
+          "uploadId",
+          "key"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "uploadId": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          }
+        }
+      },
+      "AbortMultipartUploadResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

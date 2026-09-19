@@ -1,0 +1,920 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Payment Gateway API",
+    "version": "1.0.0",
+    "description": "The Payment Gateway API lets you create transactions and query or verify existing transactions.\n\n## Authentication\n\nTo connect to the payment gateway API, you must authenticate your requests with an API as bearer token.\nTo learn about API keys see [TODO](TODO).\n\n`curl -H \"Authorization: Bearer <token>\" -H \"Content-Type: application/json\" ...`\n",
+    "contact": {
+      "name": "Oolio Pay Developers",
+      "url": "https://github.com/oolio-group"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/FLETCHERCFALLARIA/payment-gateway-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://pay.oolio.io/api/v0/gateway"
+    },
+    {
+      "url": "https://pay.oolio.dev/api/v0/gateway"
+    },
+    {
+      "url": "http://localhost:5200/gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "transactions"
+    }
+  ],
+  "paths": {
+    "/transactions/{merchantId}": {
+      "get": {
+        "summary": "Get a list of transactions",
+        "description": "Get a list of transactions with various filters applied",
+        "operationId": "get-transactions",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "description": "timestamp in ms"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "description": "timestamp in ms"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "tradingDateFrom",
+            "schema": {
+              "type": "string",
+              "description": "tradingDateFrom accepts date in format of DD/MM/YYYY when this field is provided will overwrite the from and to params of txn query and the txns will be returned basis of from and to of trading date provided with the trading end-time added to the date range"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "tradingDateTo",
+            "schema": {
+              "type": "string",
+              "description": "tradingDateTo accepts date in format of DD/MM/YYYY when this input is provided along with tradingDateFrom, it will overwrite the from and to params of transaction query. The transaction will be returned based on tradingDateFrom till the range of tradingDateTo with the trading end time added to the date ranges as well"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/transactionStatus"
+              }
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/transactionType"
+              }
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "paymentMethods",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "minAmount",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "maxAmount",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "merchantReference",
+            "schema": {
+              "type": "string",
+              "description": "Filter transactions by merchant reference (order ID)"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "storeRefs",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter transactions by store references"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string",
+              "description": "Pagination cursor for retrieving the next page of results"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "searchTerm",
+            "schema": {
+              "type": "string",
+              "description": "Search term to filter transactions (searches across multiple fields)"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "terminals",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Filter transactions by terminal IDs"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "salesChannels",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ],
+                "description": "0: POS\n1: eCommerce\n"
+              },
+              "description": "Filter transactions by sales channels"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/transaction"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "pageNumber": {
+                          "type": "integer"
+                        },
+                        "cursor": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{merchantId}/{id}": {
+      "get": {
+        "summary": "Get a transaction by ID",
+        "description": "Fetch details for a single transaction given its Id.",
+        "operationId": "get-transaction-by-id",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/transactionReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{merchantId}/{id}/adjust": {
+      "post": {
+        "summary": "Adjust a transaction",
+        "description": "Adjust a transaction",
+        "operationId": "adjust-transaction-by-id",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON object containing adjustment body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/adjustmentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/transactionReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The transaction cannot be adjusted",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{merchantId}/{id}/capture": {
+      "post": {
+        "summary": "Capture a transaction",
+        "description": "Capture a transaction",
+        "operationId": "capture-transaction-by-id",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON object containing capture body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "$ref": "#/components/schemas/metadata"
+                  },
+                  "amount": {
+                    "$ref": "#/components/schemas/amount",
+                    "description": "Amount must be less than or equal to authorized amount."
+                  }
+                },
+                "required": [
+                  "amount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/transactionReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The transaction cannot be captured",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{merchantId}/{id}/cancel": {
+      "post": {
+        "summary": "Cancel a transaction",
+        "description": "Cancel a transaction",
+        "operationId": "cancel-transaction-by-id",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON object containing cancel body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "$ref": "#/components/schemas/metadata"
+                  }
+                },
+                "required": [
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/transactionReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The transaction cannot be cancelled",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{merchantId}/{id}/refund": {
+      "post": {
+        "summary": "Refund a transaction",
+        "description": "Refund a transaction",
+        "operationId": "refund-transaction-by-id",
+        "tags": [
+          "transactions"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "merchantId",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON object containing refund body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/refundBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "$ref": "#/components/schemas/transactionReply"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request problem reading or understanding the request",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The transaction cannot be refunded",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internet sever error",
+            "content": {
+              "text/plain; charset=utf-8": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/transactionType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/transactionStatus"
+          },
+          "merchantId": {
+            "type": "string"
+          },
+          "merchantReference": {
+            "type": "string"
+          },
+          "acquirerReference": {
+            "type": "string"
+          },
+          "authorizedAt": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "baseAmount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "salesChannel": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/transactionSource"
+          },
+          "extraCharges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/extraCharge"
+            }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/metadata"
+          },
+          "events": {
+            "$ref": "#/components/schemas/events"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/transactionLink"
+            }
+          }
+        }
+      },
+      "amount": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "transactionSource": {
+        "type": "object",
+        "properties": {
+          "storeRef": {
+            "type": "string"
+          },
+          "terminal": {
+            "type": "string"
+          },
+          "merchantId": {
+            "type": "string"
+          },
+          "interaction": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "description": "0: Ecommerce\n1: POS\n2: Moto\n3: ContAuth\n"
+          }
+        }
+      },
+      "extraCharge": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "type": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "description": "0: Surcharge\n1: Tip\n"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "transactionStatus": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "description": "0: Received\n1: Authorized\n2: Completed\n3: Settled\n4: Refunded\n5: Cancelled\n6: SentForSettle\n7: Refused\n"
+      },
+      "transactionType": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "description": "0: Payment\n1: Refund\n2: Chargeback\n3: Cashout\n"
+      },
+      "events": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/transactionLifeCycle"
+        }
+      },
+      "transactionLifeCycle": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/transactionStatus"
+          },
+          "timestamp": {
+            "type": "integer"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/metadata"
+          }
+        }
+      },
+      "transactionLink": {
+        "type": "object",
+        "properties": {
+          "transactionID": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/transactionLinkType"
+          }
+        }
+      },
+      "transactionLinkType": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "description": "0: Parent\n1: Refund\n2: Order\n3: Chargeback\n"
+      },
+      "metadata": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "refundBody": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/metadata"
+          }
+        },
+        "required": [
+          "reason",
+          "amount",
+          "metadata"
+        ]
+      },
+      "adjustmentBody": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/metadata"
+          }
+        },
+        "required": [
+          "reason",
+          "amount",
+          "metadata"
+        ]
+      },
+      "transactionReply": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the transaction was successfully processed"
+          },
+          "data": {
+            "type": "object",
+            "$ref": "#/components/schemas/transaction",
+            "description": "The transaction data containing details of the processed transaction"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,531 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "2",
+    "title": "Zipkin API",
+    "description": "Zipkin's v2 API currently includes a POST endpoint that can receive spans.\n",
+    "x-jentic-source-url": "https://raw.githubusercontent.com/openzipkin/zipkin-api/master/zipkin2-api.yaml"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9411/api/v2"
+    }
+  ],
+  "paths": {
+    "/services": {
+      "get": {
+        "description": "Returns a list of all service names associated with span endpoints.\n",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request Error"
+          }
+        }
+      }
+    },
+    "/spans": {
+      "get": {
+        "description": "Get all the span names recorded by a particular service",
+        "parameters": [
+          {
+            "name": "serviceName",
+            "in": "query",
+            "required": true,
+            "description": "Ex favstar (required) - Lower-case label of a node in the service\ngraph. The /services endpoint enumerates possible input values.\n",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOfSpans"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Uploads a list of spans encoded per content-type, for example json.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListOfSpans"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/traces": {
+      "get": {
+        "description": "Invoking this request retrieves traces matching the below filters.\n\nResults should be filtered against endTs, subject to limit and\nlookback. For example, if endTs is 10:20 today, limit is 10, and\nlookback is 7 days, traces returned should be those nearest to 10:20\ntoday, not 10:20 a week ago.\n\nTime units of endTs and lookback are milliseconds as opposed to\nmicroseconds, the grain of Span.timestamp. Milliseconds is a more\nfamiliar and supported granularity for query, index and windowing\nfunctions\n",
+        "parameters": [
+          {
+            "name": "serviceName",
+            "in": "query",
+            "required": false,
+            "description": "Ex favstar (required) - Lower-case label of a node in the service\ngraph. The /services endpoint enumerates possible input values.\n",
+            "type": "string"
+          },
+          {
+            "name": "spanName",
+            "in": "query",
+            "required": false,
+            "description": "Ex get - name of a span in a trace.\nOnly return traces that contains spans with this name.\n",
+            "type": "string"
+          },
+          {
+            "name": "annotationQuery",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "Ex. `http.uri=/foo and retried` - If key/value (has an `=`),\nconstrains against Span.tags entres. If just a word, constrains\nagainst Span.annotations[].value or Span.tags[].key. Any values are\nAND against eachother. This means a span in the trace must match\nall of these.\n"
+          },
+          {
+            "name": "minDuration",
+            "in": "query",
+            "type": "integer",
+            "format": "int64",
+            "description": "Ex. 100000 (for 100ms). Only return traces whose `Span.duration` is\ngreater than or equal to minDuration microseconds.\n"
+          },
+          {
+            "name": "maxDuration",
+            "in": "query",
+            "type": "integer",
+            "format": "int64",
+            "description": "Only return traces whose Span.duration is less than or equal to\n`maxDuration` microseconds. Only valid with minDuration.\n"
+          },
+          {
+            "name": "endTs",
+            "in": "query",
+            "type": "integer",
+            "format": "int64",
+            "description": "Only return traces where all Span.timestamp are at or before this\ntime in epoch milliseconds. Defaults to current time.\n"
+          },
+          {
+            "name": "lookback",
+            "type": "integer",
+            "format": "int64",
+            "in": "query",
+            "description": "Only return traces where all  Span.timestamp are at or after (endTs\n- * lookback) in milliseconds. Defaults to endTs, limited to a\nsystem parameter QUERY_LOOKBACK\n"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "default": 10,
+            "type": "integer",
+            "description": "Maximum number of traces to return. Defaults to 10\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOfTraces"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trace/{traceId}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "traceId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 16,
+            "pattern": "[a-f0-9]{16,32}",
+            "description": "Trace identifier, set on all spans within it.\n\nEncoded as 16 or 32 lowercase hex characters corresponding to 64 or 128 bits.\nFor example, a 128bit trace ID looks like 4e441824ec2b6a44ffdc9bb9a6453df3\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`traceId` not found"
+          }
+        }
+      }
+    },
+    "/traceMany": {
+      "get": {
+        "description": "Invoking this request retrieves any traces with the specified IDs.\n\nResults return in any order, and can be empty.\n\nUse /trace/{traceId} to request a single trace ID: <2 trace IDs is a\nbad request.\n",
+        "parameters": [
+          {
+            "name": "traceIds",
+            "in": "query",
+            "type": "string",
+            "minLength": 33,
+            "pattern": "([a-f0-9]{16,32},)+([a-f0-9]{16,32})",
+            "required": true,
+            "description": "Comma delimited list of at least two unique trace identifiers.\n\nEncoded as 16 or 32 lowercase hex characters corresponding to 64 or 128 bits.\nFor example, a 128bit trace ID looks like 4e441824ec2b6a44ffdc9bb9a6453df3\n"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. List of traces that match the input traceIds, empty if none match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOfTraces"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request. Less than two traceIds, or the list was redundant or malformed."
+          }
+        }
+      }
+    },
+    "/dependencies": {
+      "get": {
+        "description": "Returns service links derived from spans.\n",
+        "parameters": [
+          {
+            "name": "endTs",
+            "in": "query",
+            "description": "only return links from spans where `Span.timestamp`  are at or before\nthis time in epoch milliseconds.\n",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "lookback",
+            "in": "query",
+            "description": "only return links where all Span.timestamp are at or after\n(`endTs - * lookback`) in milliseconds. Defaults to `endTs`, limited\nto a system parameter `QUERY_LOOKBACK`\n",
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "title": "ListOfDependencyLinks",
+                  "items": {
+                    "$ref": "#/components/schemas/DependencyLink"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/autocompleteKeys": {
+      "get": {
+        "description": "Returns a subset of keys from Span.tags configured for value autocompletion.\nThis helps sites populate common keys into the annotationQuery parameter of the\n/traces endpoint. For example, a UI can allow users to select site-specific\nkeys from a drop-down as opposed to typing them in manually. This helps guide\nusers towards the more correct keys and avoids typos or formatting problems.\n",
+        "responses": {
+          "200": {
+            "description": "Success is a list of site-specific keys, such as environment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request Error"
+          }
+        }
+      }
+    },
+    "/autocompleteValues": {
+      "get": {
+        "description": "Returns all known values of Span.tags for the given autocomplete key. Refer\nto the description of /autocompleteKeys for the use case.\n",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "description": "Name of the autocomplete key from the /autocompleteKeys endpoint.",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success result is empty when there are no values or the key was not\nconfigured.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Endpoint": {
+        "type": "object",
+        "title": "Endpoint",
+        "description": "The network context of a node in the service graph",
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "description": "Lower-case label of this node in the service graph, such as \"favstar\". Leave\nabsent if unknown.\n\nThis is a primary label for trace lookup and aggregation, so it should be\nintuitive and consistent. Many use a name from service discovery.\n"
+          },
+          "ipv4": {
+            "type": "string",
+            "format": "ipv4",
+            "description": "The text representation of the primary IPv4 address associated with this\nconnection. Ex. 192.168.99.100 Absent if unknown.\n"
+          },
+          "ipv6": {
+            "type": "string",
+            "format": "ipv6",
+            "description": "The text representation of the primary IPv6 address associated with a\nconnection. Ex. 2001:db8::c001 Absent if unknown.\n\nPrefer using the ipv4 field for mapped addresses.\n"
+          },
+          "port": {
+            "type": "integer",
+            "description": "Depending on context, this could be a listen port or the client-side of a\nsocket. Absent if unknown. Please don't set to zero.\n"
+          }
+        }
+      },
+      "Annotation": {
+        "title": "Annotation",
+        "type": "object",
+        "description": "Associates an event that explains latency with a timestamp.\nUnlike log statements, annotations are often codes. Ex. \"ws\" for WireSend\n\nZipkin v1 core annotations such as \"cs\" and \"sr\" have been replaced with\nSpan.Kind, which interprets timestamp and duration.\n",
+        "required": [
+          "timestamp",
+          "value"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Epoch **microseconds** of this event.\n\nFor example, 1502787600000000 corresponds to 2017-08-15 09:00 UTC\n\nThis value should be set directly by instrumentation, using the most precise\nvalue possible. For example, gettimeofday or multiplying epoch millis by 1000.\n"
+          },
+          "value": {
+            "type": "string",
+            "description": "Usually a short tag indicating an event, like \"error\"\n\nWhile possible to add larger data, such as garbage collection details, low\ncardinality event names both keep the size of spans down and also are easy\nto search against.\n"
+          }
+        }
+      },
+      "Tags": {
+        "type": "object",
+        "title": "Tags",
+        "description": "Adds context to a span, for search, viewing and analysis.\n\nFor example, a key \"your_app.version\" would let you lookup traces by version.\nA tag \"sql.query\" isn't searchable, but it can help in debugging when viewing\na trace.\n",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "ListOfSpans": {
+        "title": "ListOfSpans",
+        "description": "A list of spans with possibly different trace ids, in no particular order",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Span"
+        }
+      },
+      "Trace": {
+        "title": "Trace",
+        "type": "array",
+        "description": "List of spans who have the same trace ID.",
+        "items": {
+          "$ref": "#/components/schemas/Span"
+        }
+      },
+      "ListOfTraces": {
+        "title": "ListOfTraces",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Trace"
+        }
+      },
+      "Span": {
+        "title": "Span",
+        "description": "A span is a single-host view of an operation. A trace is a series of spans\n(often RPC calls) which nest to form a latency tree. Spans are in the same\ntrace when they share the same trace ID. The parent_id field establishes the\nposition of one span in the tree.\n\nThe root span is where parent_id is Absent and usually has the longest\nduration in the trace. However, nested asynchronous work can materialize as\nchild spans whose duration exceed the root span.\n\nSpans usually represent remote activity such as RPC calls, or messaging\nproducers and consumers. However, they can also represent in-process\nactivity in any position of the trace. For example, a root span could\nrepresent a server receiving an initial client request. A root span could\nalso represent a scheduled job that has no remote context.\n",
+        "type": "object",
+        "required": [
+          "traceId",
+          "id"
+        ],
+        "properties": {
+          "traceId": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 16,
+            "pattern": "[a-f0-9]{16,32}",
+            "description": "Randomly generated, unique identifier for a trace, set on all spans within it.\n\nEncoded as 16 or 32 lowercase hex characters corresponding to 64 or 128 bits.\nFor example, a 128bit trace ID looks like 4e441824ec2b6a44ffdc9bb9a6453df3\n"
+          },
+          "name": {
+            "type": "string",
+            "description": "The logical operation this span represents in lowercase (e.g. rpc method).\nLeave absent if unknown.\n\nAs these are lookup labels, take care to ensure names are low cardinality.\nFor example, do not embed variables into the name.\n"
+          },
+          "parentId": {
+            "type": "string",
+            "pattern": "[a-f0-9]{16}",
+            "maxLength": 16,
+            "minLength": 16,
+            "description": "The parent span ID or absent if this the root span in a trace."
+          },
+          "id": {
+            "type": "string",
+            "pattern": "[a-f0-9]{16}",
+            "maxLength": 16,
+            "minLength": 16,
+            "description": "Unique 64bit identifier for this operation within the trace.\n\nEncoded as 16 lowercase hex characters. For example ffdc9bb9a6453df3\n"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CLIENT",
+              "SERVER",
+              "PRODUCER",
+              "CONSUMER"
+            ],
+            "description": "When present, kind clarifies timestamp, duration and remoteEndpoint. When\nabsent, the span is local or incomplete. Unlike client and server, there\nis no direct critical path latency relationship between producer and\nconsumer spans.\n\n* `CLIENT`\n  * timestamp is the moment a request was sent to the server. (in v1 \"cs\")\n  * duration is the delay until a response or an error was received. (in v1 \"cr\"-\"cs\")\n  * remoteEndpoint is the server. (in v1 \"sa\")\n* `SERVER`\n  * timestamp is the moment a client request was received. (in v1 \"sr\")\n  * duration is the delay until a response was sent or an error. (in v1 \"ss\"-\"sr\")\n  * remoteEndpoint is the client. (in v1 \"ca\")\n* `PRODUCER`\n  * timestamp is the moment a message was sent to a destination. (in v1  \"ms\")\n  * duration is the delay sending the message, such as batching.\n  * remoteEndpoint is the broker.\n* `CONSUMER`\n  * timestamp is the moment a message was received from an origin. (in v1 \"mr\")\n  * duration is the delay consuming the message, such as from backlog.\n  * remoteEndpoint - Represents the broker. Leave serviceName absent if unknown.\n"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Epoch microseconds of the start of this span, possibly absent if\nincomplete.\n\nFor example, 1502787600000000 corresponds to 2017-08-15 09:00 UTC\n\nThis value should be set directly by instrumentation, using the most\nprecise value possible. For example, gettimeofday or multiplying epoch\nmillis by 1000.\n\nThere are three known edge-cases where this could be reported absent.\n * A span was allocated but never started (ex not yet received a timestamp)\n * The span's start event was lost\n * Data about a completed span (ex tags) were sent after the fact\n"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Duration in **microseconds** of the critical path, if known. Durations of less\nthan one are rounded up. Duration of children can be longer than their\nparents due to asynchronous operations.\n\nFor example 150 milliseconds is 150000 microseconds.\n"
+          },
+          "debug": {
+            "type": "boolean",
+            "description": "True is a request to store this span even if it overrides sampling policy.\n\nThis is true when the `X-B3-Flags` header has a value of 1.\n"
+          },
+          "shared": {
+            "type": "boolean",
+            "description": "True if we are contributing to a span started by another tracer (ex on a different host)."
+          },
+          "localEndpoint": {
+            "$ref": "#/components/schemas/Endpoint",
+            "description": "The host that recorded this span, primarily for query by service name.\n\nInstrumentation should always record this. Usually, absent implies late\ndata. The IP address corresponding to this is usually the site local or\nadvertised service address. When present, the port indicates the listen\nport.\n"
+          },
+          "remoteEndpoint": {
+            "$ref": "#/components/schemas/Endpoint",
+            "description": "When an RPC (or messaging) span, indicates the other side of the\nconnection.\n\nBy recording the remote endpoint, your trace will contain network context\neven if the peer is not tracing. For example, you can record the IP from\nthe `X-Forwarded-For` header or the service name and socket of a remote\npeer.\n"
+          },
+          "annotations": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/Annotation"
+            },
+            "description": "Associates events that explain latency with the time they happened."
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags",
+            "description": "Tags give your span context for search, viewing and analysis."
+          }
+        },
+        "example": {
+          "id": "352bff9a74ca9ad2",
+          "traceId": "5af7183fb1d4cf5f",
+          "parentId": "6b221d5bc9e6496c",
+          "name": "get /api",
+          "timestamp": 1556604172355737,
+          "duration": 1431,
+          "kind": "SERVER",
+          "localEndpoint": {
+            "serviceName": "backend",
+            "ipv4": "192.168.99.1",
+            "port": 3306
+          },
+          "remoteEndpoint": {
+            "ipv4": "172.19.0.2",
+            "port": 58648
+          },
+          "tags": {
+            "http.method": "GET",
+            "http.path": "/api"
+          }
+        }
+      },
+      "DependencyLink": {
+        "title": "DependencyLink",
+        "description": "The count of traced calls between services, or between a service and a broker.\n\nThe direction of the link is parent to child, and can be one of:\n * client to server\n * producer to broker\n * broker to consumer\n\nNote: This is related to span ID count between a sender and receiver, but there\nis nuance that makes it more difficult than counting unique span IDs. Ex. the\nparent or child might be uninstrumented: detected via the remote endpoint. There\ncan also be scenarios where both sides are instrumented. Please use existing tools\nsuch as zipkin-dependencies to derive links as they avoid under or over counting.\n",
+        "type": "object",
+        "required": [
+          "parent",
+          "child",
+          "callCount"
+        ],
+        "properties": {
+          "parent": {
+            "type": "string",
+            "description": "The service name of the caller: client or message producer or broker."
+          },
+          "child": {
+            "type": "string",
+            "description": "The service name of the callee: server or message consumer or broker."
+          },
+          "callCount": {
+            "type": "integer",
+            "description": "Total traced calls made from the parent to the child."
+          },
+          "errorCount": {
+            "type": "integer",
+            "description": "Total traced calls made from the parent to the child known to be in error."
+          }
+        }
+      }
+    }
+  }
+}

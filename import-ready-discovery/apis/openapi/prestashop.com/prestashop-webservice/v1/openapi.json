@@ -1,0 +1,1454 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PrestaShop Web Service API",
+    "description": "PrestaShop Web Service API provides CRUD access to a PrestaShop store's database. Supports XML (default) and JSON output formats. Resources follow REST conventions at /api/{resource_name} for collections and /api/{resource_name}/{id} for individual items. Supports filtering, sorting, pagination, and field selection via query parameters.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "PrestaShop",
+      "url": "https://devdocs.prestashop-project.org/8/webservice/"
+    },
+    "x-jentic-source-url": "https://devdocs.prestashop-project.org/8/webservice/",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "{shopUrl}/api",
+      "description": "PrestaShop store Web Service endpoint",
+      "variables": {
+        "shopUrl": {
+          "default": "https://your-shop.example.com",
+          "description": "Base URL of your PrestaShop installation"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "listResources",
+        "summary": "List available resources",
+        "description": "Returns a list of all available web service resources with their permission indicators (get, put, post, patch, delete, head) and schema links.",
+        "tags": ["Discovery"],
+        "parameters": [
+          {
+            "name": "output_format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["JSON"],
+              "default": "JSON"
+            },
+            "description": "Output format. Default is XML."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available resources",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "operationId": "listProducts",
+        "summary": "List products",
+        "description": "Retrieves a list of products from the store.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/language"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product list",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "object"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProduct",
+        "summary": "Create a product",
+        "description": "Creates a new product. Request body must be in XML format.",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "description": "Product XML structure. Use schema=blank to get the required structure."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created"
+          },
+          "400": {
+            "description": "Bad Request - validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "operationId": "getProduct",
+        "summary": "Get a product",
+        "description": "Retrieves a specific product by ID.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/language"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProduct",
+        "summary": "Update a product",
+        "description": "Updates an existing product. Full resource XML required.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchProduct",
+        "summary": "Partially update a product",
+        "description": "Partially updates a product. Only send the fields to be changed.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product partially updated"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteProduct",
+        "summary": "Delete a product",
+        "description": "Deletes a product by ID.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Product ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product deleted"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "summary": "List orders",
+        "description": "Retrieves a list of orders from the store.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrder",
+        "summary": "Create an order",
+        "description": "Creates a new order.",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created"
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Get an order",
+        "description": "Retrieves a specific order by ID.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Order ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOrder",
+        "summary": "Update an order",
+        "description": "Updates an existing order.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Order ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order updated"
+          }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "operationId": "listCustomers",
+        "summary": "List customers",
+        "description": "Retrieves a list of customers from the store.",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCustomer",
+        "summary": "Create a customer",
+        "description": "Creates a new customer.",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created"
+          }
+        }
+      }
+    },
+    "/customers/{id}": {
+      "get": {
+        "operationId": "getCustomer",
+        "summary": "Get a customer",
+        "description": "Retrieves a specific customer by ID.",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Customer ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details"
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateCustomer",
+        "summary": "Update a customer",
+        "description": "Updates an existing customer.",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Customer ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCustomer",
+        "summary": "Delete a customer",
+        "description": "Deletes a customer by ID.",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Customer ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer deleted"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "List categories",
+        "description": "Retrieves a list of product categories.",
+        "tags": ["Categories"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/sort"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCategory",
+        "summary": "Create a category",
+        "description": "Creates a new product category.",
+        "tags": ["Categories"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created"
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "operationId": "getCategory",
+        "summary": "Get a category",
+        "description": "Retrieves a specific category by ID.",
+        "tags": ["Categories"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Category ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category details"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateCategory",
+        "summary": "Update a category",
+        "description": "Updates an existing category.",
+        "tags": ["Categories"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Category ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCategory",
+        "summary": "Delete a category",
+        "description": "Deletes a category by ID.",
+        "tags": ["Categories"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Category ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category deleted"
+          }
+        }
+      }
+    },
+    "/carts": {
+      "get": {
+        "operationId": "listCarts",
+        "summary": "List carts",
+        "description": "Retrieves a list of shopping carts.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCart",
+        "summary": "Create a cart",
+        "description": "Creates a new shopping cart.",
+        "tags": ["Carts"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cart created"
+          }
+        }
+      }
+    },
+    "/carts/{id}": {
+      "get": {
+        "operationId": "getCart",
+        "summary": "Get a cart",
+        "description": "Retrieves a specific cart by ID.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart details"
+          },
+          "404": {
+            "description": "Cart not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateCart",
+        "summary": "Update a cart",
+        "description": "Updates an existing cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cart updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCart",
+        "summary": "Delete a cart",
+        "description": "Deletes a cart by ID.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart deleted"
+          }
+        }
+      }
+    },
+    "/addresses": {
+      "get": {
+        "operationId": "listAddresses",
+        "summary": "List addresses",
+        "description": "Retrieves a list of addresses.",
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createAddress",
+        "summary": "Create an address",
+        "description": "Creates a new address.",
+        "tags": ["Addresses"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address created"
+          }
+        }
+      }
+    },
+    "/addresses/{id}": {
+      "get": {
+        "operationId": "getAddress",
+        "summary": "Get an address",
+        "description": "Retrieves a specific address by ID.",
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Address ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address details"
+          },
+          "404": {
+            "description": "Address not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateAddress",
+        "summary": "Update an address",
+        "description": "Updates an existing address.",
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Address ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAddress",
+        "summary": "Delete an address",
+        "description": "Deletes an address by ID.",
+        "tags": ["Addresses"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Address ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address deleted"
+          }
+        }
+      }
+    },
+    "/carriers": {
+      "get": {
+        "operationId": "listCarriers",
+        "summary": "List carriers",
+        "description": "Retrieves a list of shipping carriers.",
+        "tags": ["Carriers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carrier list"
+          }
+        }
+      }
+    },
+    "/carriers/{id}": {
+      "get": {
+        "operationId": "getCarrier",
+        "summary": "Get a carrier",
+        "description": "Retrieves a specific carrier by ID.",
+        "tags": ["Carriers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Carrier ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Carrier details"
+          },
+          "404": {
+            "description": "Carrier not found"
+          }
+        }
+      }
+    },
+    "/currencies": {
+      "get": {
+        "operationId": "listCurrencies",
+        "summary": "List currencies",
+        "description": "Retrieves a list of currencies.",
+        "tags": ["Configuration"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Currency list"
+          }
+        }
+      }
+    },
+    "/languages": {
+      "get": {
+        "operationId": "listLanguages",
+        "summary": "List languages",
+        "description": "Retrieves a list of languages.",
+        "tags": ["Configuration"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Language list"
+          }
+        }
+      }
+    },
+    "/countries": {
+      "get": {
+        "operationId": "listCountries",
+        "summary": "List countries",
+        "description": "Retrieves a list of countries.",
+        "tags": ["Configuration"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Country list"
+          }
+        }
+      }
+    },
+    "/stock_availables": {
+      "get": {
+        "operationId": "listStockAvailables",
+        "summary": "List stock availability",
+        "description": "Retrieves stock availability information for products.",
+        "tags": ["Stock"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock availability list"
+          }
+        }
+      }
+    },
+    "/stock_availables/{id}": {
+      "get": {
+        "operationId": "getStockAvailable",
+        "summary": "Get stock availability",
+        "description": "Retrieves stock availability for a specific product/combination.",
+        "tags": ["Stock"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Stock available ID"
+          },
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock availability details"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateStockAvailable",
+        "summary": "Update stock availability",
+        "description": "Updates stock quantity for a product/combination.",
+        "tags": ["Stock"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Stock available ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock updated"
+          }
+        }
+      }
+    },
+    "/order_details": {
+      "get": {
+        "operationId": "listOrderDetails",
+        "summary": "List order details",
+        "description": "Retrieves order line items/details.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details list"
+          }
+        }
+      }
+    },
+    "/order_histories": {
+      "get": {
+        "operationId": "listOrderHistories",
+        "summary": "List order histories",
+        "description": "Retrieves order status history records.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order history list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrderHistory",
+        "summary": "Create order history entry",
+        "description": "Creates a new order status history entry, typically used to update order status.",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order history entry created"
+          }
+        }
+      }
+    },
+    "/manufacturers": {
+      "get": {
+        "operationId": "listManufacturers",
+        "summary": "List manufacturers",
+        "description": "Retrieves a list of manufacturers/brands.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Manufacturer list"
+          }
+        }
+      }
+    },
+    "/specific_prices": {
+      "get": {
+        "operationId": "listSpecificPrices",
+        "summary": "List specific prices",
+        "description": "Retrieves specific price rules (discounts, promotions).",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/display"
+          },
+          {
+            "$ref": "#/components/parameters/filter"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Specific price list"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createSpecificPrice",
+        "summary": "Create a specific price",
+        "description": "Creates a new specific price rule.",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Specific price created"
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "operationId": "search",
+        "summary": "Search the store",
+        "description": "Searches across store resources.",
+        "tags": ["Search"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Language ID"
+          },
+          {
+            "$ref": "#/components/parameters/outputFormat"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "HTTP Basic Authentication. Use your API key as the username and leave the password empty. The recommended approach is to send an Authorization header with Base64-encoded credentials."
+      }
+    },
+    "parameters": {
+      "display": {
+        "name": "display",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Fields to display. Use 'full' for all fields, or bracket notation like '[id,name,price]' for specific fields."
+      },
+      "filter": {
+        "name": "filter",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Filter criteria. Format: filter[field]=[value]. Supports operators: [value1|value2] (OR), [value1,value2] (range), [value]% (LIKE)."
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Sort field and direction. Format: [field_ASC] or [field_DESC]."
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Limit results. Format: 'count' or 'offset,count' (e.g. '0,100')."
+      },
+      "language": {
+        "name": "language",
+        "in": "query",
+        "schema": {
+          "type": "integer"
+        },
+        "description": "Language ID for multi-language fields."
+      },
+      "outputFormat": {
+        "name": "output_format",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": ["JSON"]
+        },
+        "description": "Set to 'JSON' for JSON output. Default is XML."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Discovery",
+      "description": "Resource discovery"
+    },
+    {
+      "name": "Products",
+      "description": "Product management"
+    },
+    {
+      "name": "Orders",
+      "description": "Order management"
+    },
+    {
+      "name": "Customers",
+      "description": "Customer management"
+    },
+    {
+      "name": "Categories",
+      "description": "Category management"
+    },
+    {
+      "name": "Carts",
+      "description": "Shopping cart management"
+    },
+    {
+      "name": "Addresses",
+      "description": "Address management"
+    },
+    {
+      "name": "Carriers",
+      "description": "Shipping carrier management"
+    },
+    {
+      "name": "Configuration",
+      "description": "Store configuration (currencies, languages, countries)"
+    },
+    {
+      "name": "Stock",
+      "description": "Stock availability management"
+    },
+    {
+      "name": "Search",
+      "description": "Store search"
+    }
+  ]
+}

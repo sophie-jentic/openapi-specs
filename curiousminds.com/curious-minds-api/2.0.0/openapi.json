@@ -1,0 +1,411 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Curious Minds API",
+    "description": "AI-powered learning platform API for PDF question generation and assessment intelligence",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Development Team",
+      "email": "dev@curiousminds.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/creamcollaredtech/curious-minds-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.curiousminds.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "PDF Processing",
+      "description": "PDF question generation endpoints"
+    },
+    {
+      "name": "Assessment",
+      "description": "Assessment and evaluation endpoints"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check endpoint",
+        "description": "Returns the health status of the API server",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pdf/generate-questions": {
+      "post": {
+        "tags": [
+          "PDF Processing"
+        ],
+        "summary": "Generate questions from PDF documents",
+        "description": "Upload one or more PDF files and generate AI-powered assessment questions from their content",
+        "operationId": "generateQuestionsFromPDF",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pdfs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "PDF files to process (max 10 files, 5MB each)",
+                    "maxItems": 10
+                  },
+                  "level": {
+                    "type": "string",
+                    "enum": [
+                      "beginner",
+                      "intermediate",
+                      "advanced",
+                      "expert"
+                    ],
+                    "default": "intermediate",
+                    "description": "Difficulty level for generated questions"
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "default": 5,
+                    "description": "Number of questions to generate"
+                  },
+                  "includeExplanations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to include explanations for answers"
+                  }
+                },
+                "required": [
+                  "pdfs"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Questions generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "questions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Question"
+                          }
+                        },
+                        "text": {
+                          "type": "string",
+                          "description": "Combined extracted text from all PDFs"
+                        },
+                        "metadata": {
+                          "$ref": "#/components/schemas/ProcessingMetadata"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - No PDF files uploaded or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - Failed to process PDFs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Question": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique question identifier",
+            "example": "q-1698765432-0"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "multiple_choice",
+              "true_false",
+              "text",
+              "code"
+            ],
+            "description": "Type of question",
+            "example": "multiple_choice"
+          },
+          "question": {
+            "type": "string",
+            "description": "The question text",
+            "example": "What is the primary purpose of machine learning?"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Answer options for multiple choice questions",
+            "example": [
+              "A) To replace human intelligence",
+              "B) To learn patterns from data",
+              "C) To create robots",
+              "D) To process text"
+            ]
+          },
+          "correctAnswer": {
+            "type": "string",
+            "description": "The correct answer (letter for multiple choice, text for others)",
+            "example": "B"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Explanation of why the answer is correct",
+            "example": "Machine learning is primarily designed to identify patterns and make predictions from data."
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "difficultyLevel": {
+                "type": "string",
+                "example": "intermediate"
+              },
+              "type": {
+                "type": "string",
+                "example": "multiple_choice"
+              },
+              "sourceText": {
+                "type": "string",
+                "description": "First 100 characters of source text",
+                "example": "Machine learning is a subset of artificial intelligence that enables systems to learn..."
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "question",
+          "correctAnswer"
+        ]
+      },
+      "ProcessingMetadata": {
+        "type": "object",
+        "properties": {
+          "totalFiles": {
+            "type": "integer",
+            "description": "Total number of files uploaded",
+            "example": 2
+          },
+          "processedFiles": {
+            "type": "integer",
+            "description": "Number of files successfully processed",
+            "example": 2
+          },
+          "failedFiles": {
+            "type": "integer",
+            "description": "Number of files that failed to process",
+            "example": 0
+          },
+          "fileResults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileResult"
+            }
+          },
+          "fileSeparators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileSeparator"
+            }
+          },
+          "combinedStats": {
+            "type": "object",
+            "properties": {
+              "totalCharacters": {
+                "type": "integer",
+                "example": 15000
+              },
+              "totalWords": {
+                "type": "integer",
+                "example": 2500
+              },
+              "combinedTextLength": {
+                "type": "integer",
+                "example": 15200
+              }
+            }
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-10-28T10:30:00.000Z"
+          },
+          "totalQuestions": {
+            "type": "integer",
+            "example": 5
+          },
+          "difficulty": {
+            "type": "string",
+            "example": "intermediate"
+          },
+          "includesExplanations": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "FileResult": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "example": "machine-learning-basics.pdf"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "File size in bytes",
+            "example": 1048576
+          },
+          "textLength": {
+            "type": "integer",
+            "description": "Length of extracted text",
+            "example": 7500
+          },
+          "wordCount": {
+            "type": "integer",
+            "description": "Number of words in extracted text",
+            "example": 1250
+          },
+          "firstWords": {
+            "type": "string",
+            "description": "First 100 characters of extracted text",
+            "example": "Machine learning is a subset of artificial intelligence that enables systems to learn..."
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if processing failed"
+          }
+        },
+        "required": [
+          "fileName",
+          "fileSize",
+          "success"
+        ]
+      },
+      "FileSeparator": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "example": "machine-learning-basics.pdf"
+          },
+          "startPosition": {
+            "type": "integer",
+            "description": "Start position in combined text",
+            "example": 0
+          },
+          "endPosition": {
+            "type": "integer",
+            "description": "End position in combined text",
+            "example": 7500
+          },
+          "textLength": {
+            "type": "integer",
+            "description": "Length of text from this file",
+            "example": 7500
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "No PDF files uploaded"
+          },
+          "details": {
+            "type": "string",
+            "description": "Detailed error information"
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      }
+    }
+  }
+}

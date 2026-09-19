@@ -1,0 +1,458 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API - Register and Process P&L",
+    "description": "API for registerign users, upload financial documents for P&L processing, and access results via magic links.\n\n## Authentication\n\nAll API calls are authenticated using **HMAC-SHA256** signing with a shared secret (`PARTNER_SECRET_KEY`).\nThe secret key is pre-shared between both systems and is **never transmitted** in any request.\n\n### How to sign a request\n\n1. Build the **string to sign**:\n   ```\n   {unix_timestamp}\\n{HTTP_METHOD}\\n{endpoint}\\n{body_hash}\n   ```\n2. Compute `body_hash`:\n   - For `application/json`: `SHA256(raw JSON body string)`\n   - For `multipart/form-data`: `SHA256(payload field value)`\n3. Compute the signature:\n   ```\n   HMAC-SHA256(PARTNER_SECRET_KEY, string_to_sign)\n   ```\n4. Send headers:\n   - `Authorization: HMAC-SHA256 <signature>`\n   - `X-Timestamp: <unix_timestamp_in_seconds>`\n\n### Replay protection\nRequests older than **5 minutes** are rejected.\n\n## Flow\n1. **Sign up** \u2014 Register a user \u2192 receive `userId`\n2. **Process** \u2014 Upload 3 Excel files with metadata \u2192 receive a magic link URL\n3. **Magic link** \u2014 User opens the link in browser \u2192 auto-login and redirect to P&L view\n   - One-time use (consumed on first click)\n   - Expires after **10 minutes**\n   - Token is path-based (not in query string)\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ronyauorganization/external/1.0.0"
+  },
+  "paths": {
+    "/api/external/signUp": {
+      "post": {
+        "summary": "Register an external user",
+        "description": "Creates a new external user account and returns a `userId`.\nThe `userId` is used in subsequent process API calls.\n\n**Content-Type:** `application/json`\n\n**HMAC signing:**\n- `body_hash` = `SHA256(raw JSON body string)`\n",
+        "operationId": "signUp",
+        "tags": [
+          "Authentication"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Authorization"
+          },
+          {
+            "$ref": "#/components/parameters/XTimestamp"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address (must be unique)",
+                    "example": "client@example.com"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "User's display name (defaults to email if not provided)",
+                    "example": "ABC Corp"
+                  }
+                }
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic signup",
+                  "value": {
+                    "email": "client@example.com",
+                    "name": "ABC Corp"
+                  }
+                },
+                "email_only": {
+                  "summary": "Email only",
+                  "value": {
+                    "email": "client@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the processing was successful"
+                    },
+                    "userId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The unique identifier for the created user"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "userId": "550e8400-e29b-41d4-a716-446655440000"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Email is required"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing HMAC signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_headers": {
+                    "summary": "Missing auth headers",
+                    "value": {
+                      "error": "Missing auth headers"
+                    }
+                  },
+                  "expired": {
+                    "summary": "Request expired (older than 5 minutes)",
+                    "value": {
+                      "error": "Request expired"
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid signature",
+                    "value": {
+                      "error": "Invalid signature"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User with this email already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "User already exists"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/external/process": {
+      "post": {
+        "summary": "Upload and process tb and p&l mapping",
+        "description": "Uploads 3 Excel files (last year TB, last year P&L mapping, this year TB),\nafter processing then return a magic link URL for viewing the P&L result.\n\n**Content-Type:** `multipart/form-data`\n\n**Request body structure:**\n- `payload` \u2014 JSON string containing metadata and file hashes - PayloadSchema\n- `lastYearTb` \u2014 Excel file (.xlsx)\n- `lastYearPnlMapping` \u2014 Excel file (.xlsx)\n- `thisYearTb` \u2014 Excel file (.xlsx)\n\n**HMAC signing:**\n- `body_hash` = `SHA256(payload field value)` (only the JSON string, not the files)\n\n**File integrity (optional):**\nInclude SHA256 hashes of each file in the `payload` JSON. The server can verify\nactual file content matches the declared hashes.\n\n**Magic link behavior:**\n- Expires after **10 minutes**\n- One-time use (consumed on first click)\n- Auto-logs the user in and redirects to the P&L view\n",
+        "operationId": "process",
+        "tags": [
+          "Processing"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Authorization"
+          },
+          {
+            "$ref": "#/components/parameters/XTimestamp"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payload",
+                  "lastYearTb",
+                  "lastYearPnlMapping",
+                  "thisYearTb"
+                ],
+                "properties": {
+                  "payload": {
+                    "type": "string",
+                    "description": "JSON string containing metadata and file hashes. Check the Schemas - PayloadSchema for more info.\nThis is the value used for HMAC body hash computation.\n",
+                    "example": "{\"name\":\"ABC Corp\",\"yearOfAssessment\":\"2025\",\"userId\":\"550e8400-e29b-41d4-a716-446655440000\",\"lastYearTbHash\":\"abc123...\",\"lastYearPnlMappingHash\":\"def456...\",\"thisYearTbHash\":\"ghi789...\"}"
+                  },
+                  "lastYearTb": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Last year's trial balance Excel file (max 10MB)"
+                  },
+                  "lastYearPnlMapping": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Last year's P&L mapping Excel file (max 10MB)"
+                  },
+                  "thisYearTb": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "This year's trial balance Excel file (max 10MB)"
+                  }
+                }
+              },
+              "encoding": {
+                "payload": {
+                  "contentType": "application/json"
+                },
+                "lastYearTb": {
+                  "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                },
+                "lastYearPnlMapping": {
+                  "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                },
+                "thisYearTb": {
+                  "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Files processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the processing was successful"
+                    },
+                    "pnlUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "One-time magic link URL to view the P&L result (expires in 10 minutes)"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "pnlUrl": "https://prod-app.com/auto-login/a1b2c3d4e5f6..."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields or files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_payload": {
+                    "summary": "Missing payload",
+                    "value": {
+                      "error": "Missing payload"
+                    }
+                  },
+                  "missing_fields": {
+                    "summary": "Missing required fields",
+                    "value": {
+                      "error": "Missing required fields: name, yearOfAssessment, userId"
+                    }
+                  },
+                  "missing_files": {
+                    "summary": "Missing required files",
+                    "value": {
+                      "error": "Missing required files: lastYearTb, lastYearPnlMapping, thisYearTb"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing HMAC signature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missing_headers": {
+                    "summary": "Missing auth headers",
+                    "value": {
+                      "error": "Missing auth headers"
+                    }
+                  },
+                  "expired": {
+                    "summary": "Request expired",
+                    "value": {
+                      "error": "Request expired"
+                    }
+                  },
+                  "invalid": {
+                    "summary": "Invalid signature",
+                    "value": {
+                      "error": "Invalid signature"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "User not found"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "File exceeds 10MB size limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "File too large"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Authorization": {
+        "name": "Authorization",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "HMAC-SHA256 a1b2c3d4e5f6..."
+        },
+        "description": "HMAC-SHA256 signature.\nFormat: `HMAC-SHA256 <signature>`\nSignature = HMAC-SHA256(PARTNER_SECRET_KEY, string_to_sign)\nstring_to_sign = `{timestamp}\\n{method}\\n{endpoint}\\n{body_hash}`\n"
+      },
+      "XTimestamp": {
+        "name": "X-Timestamp",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "1710000000"
+        },
+        "description": "Unix timestamp in seconds. Requests older than 5 minutes are rejected.\n"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "PayloadSchema": {
+        "type": "object",
+        "description": "JSON structure for the `payload` form-data field in process endpoint",
+        "required": [
+          "name",
+          "yearOfAssessment",
+          "userId",
+          "lastYearTbHash",
+          "lastYearPnlMappingHash",
+          "thisYearTbHash"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "example": "ABC Corp"
+          },
+          "yearOfAssessment": {
+            "type": "string",
+            "description": "Year of assessment",
+            "example": "2025"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User ID returned from signUp",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "lastYearTbHash": {
+            "type": "string",
+            "description": "SHA256 hash of lastYearTb file (for integrity verification)",
+            "example": "93c9a409a00073e90828b782d7a9af97fed5a2a5c46c033ba73a6be641d69d09"
+          },
+          "lastYearPnlMappingHash": {
+            "type": "string",
+            "description": "SHA256 hash of lastYearPnlMapping file",
+            "example": "93c9a409a00073e90828b782d7a9af97fed5a2a5c46c033ba73a6be641d69d09"
+          },
+          "thisYearTbHash": {
+            "type": "string",
+            "description": "SHA256 hash of thisYearTb file",
+            "example": "93c9a409a00073e90828b782d7a9af97fed5a2a5c46c033ba73a6be641d69d09"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Production URL",
+      "url": "https://web-app.mangoground-7f334edc.eastasia.azurecontainerapps.io"
+    },
+    {
+      "description": "SwaggerHub API Auto Mocking - ignore",
+      "url": "https://virtserver.swaggerhub.com/ronyauorganization/external/1.0.0"
+    }
+  ]
+}

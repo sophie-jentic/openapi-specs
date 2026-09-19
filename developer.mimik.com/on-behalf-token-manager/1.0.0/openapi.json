@@ -1,0 +1,1279 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "On Behalf Token Manager",
+    "description": "**On Behalf Token Manager** manages delegate-member relationships and exposes\non-behalf access for delegates to act for members. It handles membership requests,\nmembership state (including revocation), and system insight.\n\n**What this service does**\n- **Manage delegate-member links**\n  - List a delegate's members, fetch an individual member, delete a member.\n  - **Revoke / restore** a member's access (`revokedAt` via `PUT /delegates/{id}/members/{memberId}`).\n  - Return an **on-behalf token** in the `member.token` object.\n- **Run the invitation workflow**\n  - Delegates **invite** prospective members; members **accept** or **cancel**.\n  - Delegates can **resend** or **delete** requests.\n- **System insight**\n  - `GET /info` provides config, health, and resource counters.\n- **User lifecycle (system)**\n  - System clients can delete a user by ID.\n\n**Conventions**\n- OAuth2 client-credentials for system/admin operations\n- Responses are JSON and typically wrapped in a top-level `data` property for consistency\n\n**Notes**\n- Examples are illustrative; field values are for demonstration only.\n- Use On Behalf Token Manager to centrally define on-behalf token trust, generate JWTs with the right scopes,\nand create user hierarchies with delegates and members.\n\n<p><a href='https://bitbucket.org/mimiktech/swagger-mobt/src'>Repository</a></p>\n",
+    "contact": {
+      "name": "mimik",
+      "url": "https://developer.mimik.com/",
+      "email": "support.sdk@mimik.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/mimik/mobt/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/mobt/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "User endpoints",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "https://developer.mimik.com"
+      }
+    },
+    {
+      "name": "Admin",
+      "description": "Admin endpoints",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "https://developer.mimik.com"
+      }
+    },
+    {
+      "name": "System",
+      "description": "Server-to-server endpoints",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "https://developer.mimik.com"
+      }
+    },
+    {
+      "name": "Delegate",
+      "description": "Delegate endpoints",
+      "externalDocs": {
+        "description": "Find out more",
+        "url": "https://developer.mimik.com"
+      }
+    }
+  ],
+  "paths": {
+    "/info": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get system information",
+        "description": "Retrieves information about resources in the system (e.g., counts of members/memberRequests, health, and config details).",
+        "operationId": "getInfo",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Types of information to retrieve",
+            "explode": true,
+            "style": "form",
+            "schema": {
+              "minItems": 1,
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "config",
+                  "healthCheck",
+                  "members",
+                  "memberRequests"
+                ]
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Information about the service and its resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {},
+                      "example": {
+                        "members": {
+                          "count": 432
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:system"
+            ]
+          }
+        ],
+        "x-swagger-router-controller": "infoController"
+      }
+    },
+    "/delegates/{id}/members": {
+      "parameters": [
+        {
+          "name": "id",
+          "description": "ID of the delegate",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "List members for a delegate",
+        "x-swagger-router-controller": "memberController",
+        "operationId": "getMembers",
+        "security": [
+          {
+            "UserSecurity": [
+              "read:members"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Members retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/member"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/delegates/{id}/members/{memberId}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the delegate",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "memberId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the member",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "put": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Update a member (revoke/restore)",
+        "x-swagger-router-controller": "memberController",
+        "operationId": "updateMember",
+        "security": [
+          {
+            "UserSecurity": [
+              "update:member"
+            ]
+          }
+        ],
+        "requestBody": {
+          "description": "Set `revoke: true` to apply a revocation (`revokedAt`), or `false` to remove it.\n",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/updateMember"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/member"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Delete a member (by delegate)",
+        "x-swagger-router-controller": "memberController",
+        "operationId": "deleteMemberByDelegate",
+        "security": [
+          {
+            "UserSecurity": [
+              "delete:memberByDelegate"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "2898019418983239680"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Get a member (by delegate)",
+        "x-swagger-router-controller": "memberController",
+        "operationId": "getMemberByMemberId",
+        "security": [
+          {
+            "UserSecurity": [
+              "read:members"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/member"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/delegates/{id}/memberRequests": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "ID of the delegate",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Create a member request (by delegate)",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "createMemberRequest",
+        "security": [
+          {
+            "UserSecurity": [
+              "create:memberReq"
+            ]
+          }
+        ],
+        "requestBody": {
+          "description": "request made members to be added to the list",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/newMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request created and sent to the member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/memberRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "409": {
+            "$ref": "#/components/responses/409"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "List member requests (by delegate)",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "getMemberRequestsByDelegate",
+        "security": [
+          {
+            "UserSecurity": [
+              "read:memberReqs:delegate"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requests retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/memberRequest"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/delegates/{id}/memberRequests/{userId}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the delegate",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the requested user",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "put": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Resend a request (by delegate)",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "updateMemberRequestByDelegate",
+        "security": [
+          {
+            "UserSecurity": [
+              "update:memberReq:delegate"
+            ]
+          }
+        ],
+        "requestBody": {
+          "description": "Set status to `REQUESTED` to resend the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/updateMemberRequestByDelegate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/memberRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Delegate"
+        ],
+        "summary": "Delete a request (by delegate)",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "deleteMemberRequest",
+        "security": [
+          {
+            "UserSecurity": [
+              "delete:memberReq"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "2898019418983239680"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/members/{id}/memberRequests": {
+      "parameters": [
+        {
+          "name": "id",
+          "description": "ID of the member",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "List requests for a member",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "getMemberRequestsByMember",
+        "security": [
+          {
+            "UserSecurity": [
+              "read:memberReqs:member"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requests retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/memberRequest"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/members/{id}/memberRequests/{delegateId}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the member",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "delegateId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the delegate",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Accept or cancel a request (by member)",
+        "x-swagger-router-controller": "memberRequestController",
+        "operationId": "updateMemberRequestByMember",
+        "security": [
+          {
+            "UserSecurity": [
+              "update:memberReq:member"
+            ]
+          }
+        ],
+        "requestBody": {
+          "description": "Update the request to `ACCEPTED` or `CANCELED`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/updateMemberRequestByMember"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/memberRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/members/{id}/delegates/{delegateId}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "ID of the member",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "delegateId",
+          "in": "path",
+          "required": true,
+          "description": "ID of the delegate",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Remove a delegate relationship (by member)",
+        "x-swagger-router-controller": "memberController",
+        "operationId": "deleteMemberByMember",
+        "security": [
+          {
+            "UserSecurity": [
+              "delete:memberByMember"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Member deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "2898019418983239680"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "The user ID or `me` for the caller",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Delete a user",
+        "description": "Delete a user by ID",
+        "x-swagger-router-controller": "userController",
+        "operationId": "deleteUser",
+        "security": [
+          {
+            "SystemSecurity": [
+              "delete:user"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ID of the deleted user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "example": "2898019418983239680"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "required": [
+          "message",
+          "statusCode",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "info": {
+            "type": "object",
+            "properties": {}
+          }
+        }
+      },
+      "member": {
+        "required": [
+          "memberId",
+          "delegateId",
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "description": "ID of the user who will be the member",
+            "example": "2898019418983239680"
+          },
+          "delegateId": {
+            "type": "string",
+            "description": "ID of the user who is the delegate and owns the list",
+            "example": "8568584395969996023"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Create date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Update date"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Revoked date"
+          },
+          "token": {
+            "type": "object",
+            "properties": {
+              "token_type": {
+                "type": "string",
+                "description": "type of the token that is being passed"
+              },
+              "access_token": {
+                "type": "string",
+                "description": "token for regular access"
+              },
+              "refresh_token": {
+                "type": "string",
+                "description": "token for refreshing the access token"
+              }
+            },
+            "description": "Access token for the delegate",
+            "example": {
+              "token_type": "Bearer",
+              "access_token": "JWT token",
+              "refresh_token": "refresh token"
+            }
+          }
+        }
+      },
+      "updateMember": {
+        "required": [
+          "revoke"
+        ],
+        "type": "object",
+        "description": "whether to revoke (true) or restore (false) member access.",
+        "properties": {
+          "revoke": {
+            "type": "boolean",
+            "description": "Revocation flag for the member"
+          }
+        }
+      },
+      "newMemberRequest": {
+        "required": [
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user to whom the request will be sent",
+            "example": "2898019418983239680"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED"
+            ],
+            "default": "REQUESTED"
+          }
+        },
+        "description": "New member request"
+      },
+      "memberRequest": {
+        "required": [
+          "userId",
+          "delegateId",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user who will be the member",
+            "example": "2898019418983239680"
+          },
+          "delegateId": {
+            "type": "string",
+            "description": "ID of the delegate who generated the request",
+            "example": "8568584395969996023"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Create date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Update date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "ACCEPTED",
+              "CANCELED"
+            ],
+            "description": "Status of the request"
+          }
+        }
+      },
+      "updateMemberRequestByMember": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACCEPTED",
+              "CANCELED"
+            ],
+            "description": "Status to set for the request"
+          }
+        }
+      },
+      "updateMemberRequestByDelegate": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED"
+            ],
+            "description": "Status to set for the request"
+          }
+        }
+      }
+    },
+    "responses": {
+      "400": {
+        "description": "Bad input parameter",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 400
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Bad Request"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid validation check"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized request.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 401
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Invalid or missing token"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 403
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Forbidden"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Cannot access resource"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 404
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Not Found"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Resource not found"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "409": {
+        "description": "Resource already exists",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 409
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Conflict"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Resource already exists"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "System error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "number",
+                      "example": 500
+                    },
+                    "title": {
+                      "type": "string",
+                      "example": "Internal Server Error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Configuration not found"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/Error"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "AdminSecurity": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "read:system": "read system"
+            }
+          }
+        }
+      },
+      "SystemSecurity": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "delete:user": "delete a user"
+            }
+          }
+        }
+      },
+      "UserSecurity": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://mimik.com/authorize",
+            "scopes": {
+              "read:members": "read members",
+              "read:memberReqs:delegate": "read requests (delegate)",
+              "read:memberReqs:member": "read requests (member)",
+              "create:memberReq": "create a request",
+              "update:memberReq:delegate": "update a request (delegate)",
+              "update:memberReq:member": "update a request (member)",
+              "delete:memberByDelegate": "delete a member by delegate",
+              "delete:memberByMember": "delete a member by member",
+              "delete:memberReq": "delete a request",
+              "update:member": "update a member"
+            }
+          }
+        }
+      }
+    }
+  }
+}

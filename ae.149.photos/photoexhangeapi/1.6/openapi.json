@@ -1,0 +1,409 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PhotoExhangeAPI",
+    "description": "Restful API for retrieving batches of photos - revised 12JAN2026",
+    "contact": {
+      "name": "Gordon Henderson",
+      "email": "gordon@149photos.com"
+    },
+    "version": "1.6",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/149Photos/photo-exhange-api-v2/1.6"
+  },
+  "servers": [
+    {
+      "url": "https://ae.149.photos/api"
+    }
+  ],
+  "paths": {
+    "/builders/{builderid}/photos": {
+      "get": {
+        "summary": "Get Photo List",
+        "description": "Retrieve a list of photos that are new, updated or deleted from a specficied date range.  Also retrieve all or limited images for a specific homesite.  Specify the \"lotid\" parameter to retrieve images for a specific homesite.",
+        "operationId": "GetPhotoList",
+        "parameters": [
+          {
+            "name": "builderid",
+            "in": "path",
+            "description": "GUID for the builder",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "778fbd8a-e9bf-11e6-bd86-420999999999"
+            }
+          },
+          {
+            "name": "startdate",
+            "in": "query",
+            "description": "Search date for photos in YYYY-MM-DD format - if no enddate, no more than 90 days ago",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "2024-03-01"
+            }
+          },
+          {
+            "name": "enddate",
+            "in": "query",
+            "description": "Optional search end date for photos in YYYY-MM-DD format - if omitted the end date will be today - start and end dates cannot be more than 90 days apart",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2024-03-31"
+            }
+          },
+          {
+            "name": "lotid",
+            "in": "query",
+            "description": "Optional builder lot identifier.  If provided, startdate and enddate may be omitted to retrieve all photos for the selected homesite.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "a033XX0001223111231"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200"
+                },
+                "examples": {
+                  "All photos within a date range": {
+                    "value": {
+                      "startdate": "2024-03-01",
+                      "enddate": "2024-03-31",
+                      "numphotos": "1",
+                      "builderid": "778fbd8a-e9bf-11e6-bd86-420109999999",
+                      "photos": [
+                        [
+                          {
+                            "id": "544433",
+                            "url": "https://149.photos/photos/e8e97bac-e00c-4978-99c4-058c2ed06df0.jpg",
+                            "timestamp": "2022-08-14T12:02:21.000Z",
+                            "lotguid": "b60b48fb-b801-11e6-a14c-42010a800375",
+                            "stage": "Mechanical",
+                            "status": "add",
+                            "batchnum": "5",
+                            "isExterior": 1,
+                            "isExteriorFront": 0,
+                            "type": 1,
+                            "caption": "Sample",
+                            "attributes": [
+                              "Interior",
+                              "Kitchen"
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  },
+                  "All photos for 1 homesite": {
+                    "value": {
+                      "startdate": "2020-01-01",
+                      "numphotos": "1",
+                      "builderid": "778fbd8a-e9bf-11e6-bd86-420109999999",
+                      "photos": [
+                        [
+                          {
+                            "id": "544433",
+                            "url": "https://149.photos/photos/e8e97bac-e00c-4978-99c4-058c2ed06df0.jpg",
+                            "timestamp": "2022-08-14T12:02:21.000Z",
+                            "lotguid": "b60b48fb-b801-11e6-a14c-42010a800375",
+                            "stage": "Mechanical",
+                            "status": "add",
+                            "batchnum": "5",
+                            "isExterior": 1,
+                            "isExteriorFront": 0,
+                            "type": 1
+                          }
+                        ]
+                      ],
+                      "lotid": "a0Z1000X123123123"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "errorText"
+                  ],
+                  "properties": {
+                    "errorText": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "e3o7kr68j7npm"
+                      },
+                      "example": "invalid startdate (out of range): 2025-01-01"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errortext": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "1xjf65w2o2p27"
+                      },
+                      "example": "Invalid authentication"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errortext": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "p0jfyu2cq4r90"
+                      },
+                      "example": "lotid not found:  xxxxxxxx"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errortext": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "nq4cc7c12vk8y"
+                      },
+                      "example": "Error validating builder information"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "[apikey]": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "photo": {
+        "title": "photo",
+        "required": [
+          "attributes",
+          "batchnum",
+          "id",
+          "isExterior",
+          "isExteriorFront",
+          "lotguid",
+          "status",
+          "timestamp",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique photo ID",
+            "example": "544433"
+          },
+          "url": {
+            "type": "string",
+            "description": "Photo or video URL",
+            "example": "https://149.photos/photos/e8e97bac-e00c-4978-99c4-058c2ed06df0.jpg"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Date and time of photo in UTC",
+            "format": "date-time",
+            "example": "2022-08-14T12:02:21Z"
+          },
+          "lotguid": {
+            "type": "string",
+            "description": "Linked Lot GUID",
+            "example": "b60b48fb-b801-11e6-a14c-42010a800375"
+          },
+          "altid": {
+            "type": "string",
+            "description": "Builder's unique homesite id",
+            "example": "a033Z00001A1S4EQAV"
+          },
+          "stage": {
+            "type": "string",
+            "description": "Stage name",
+            "example": "Mechanical"
+          },
+          "status": {
+            "type": "string",
+            "description": "Photo status:  add/update/delete",
+            "example": "add"
+          },
+          "batchnum": {
+            "type": "number",
+            "description": "Photo batch number",
+            "example": 5
+          },
+          "type": {
+            "type": "number",
+            "description": "What resource type? (1=image, 2=video)",
+            "example": 1
+          },
+          "isExterior": {
+            "type": "number",
+            "description": "Is this an exterior photo? (0/1)",
+            "example": 1
+          },
+          "isExteriorFront": {
+            "type": "number",
+            "description": "Is this an exterior front photo? (0/1)",
+            "example": 0
+          },
+          "caption": {
+            "type": "string",
+            "description": "Optional most recent caption associated with the photo",
+            "x-stoplight": {
+              "id": "arwxauifg3ecr"
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "description": "An array of image attributes describing the image",
+            "x-stoplight": {
+              "id": "9sowt0jxsk5ld"
+            },
+            "items": {
+              "type": "string",
+              "example": "Exterior",
+              "x-stoplight": {
+                "id": "3wpf1ki8vxq71"
+              }
+            }
+          }
+        },
+        "description": "Information about a single photo",
+        "example": [
+          {
+            "id": "544433",
+            "url": "https://149.photos/photos/e8e97bac-e00c-4978-99c4-058c2ed06df0.jpg",
+            "timestamp": "2022-08-14T12:02:21.000Z",
+            "lotguid": "b60b48fb-b801-11e6-a14c-42010a800375",
+            "stage": "Mechanical",
+            "status": "add",
+            "batchnum": "5",
+            "isExterior": 1,
+            "isExteriorFront": 0,
+            "type": 1
+          }
+        ],
+        "x-examples": {
+          "Example 1": [
+            {
+              "id": "544433",
+              "url": "https://149.photos/photos/e8e97bac-e00c-4978-99c4-058c2ed06df0.jpg",
+              "timestamp": "2022-08-14T12:02:21.000Z",
+              "lotguid": "b60b48fb-b801-11e6-a14c-42010a800375",
+              "stage": "Mechanical",
+              "status": "add",
+              "batchnum": "5",
+              "isExterior": 1,
+              "isExteriorFront": 0,
+              "type": 1,
+              "caption": "This is a sample caption",
+              "attributes": [
+                "Interior",
+                "Kitchen"
+              ]
+            }
+          ]
+        }
+      },
+      "subdivision": {
+        "title": "subdivision",
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Subdivision identifier",
+            "example": 5
+          },
+          "name": {
+            "type": "string",
+            "description": "Subdivision name",
+            "example": "The Hills of Charlotte"
+          }
+        },
+        "description": "Subdivision object"
+      },
+      "builder": {
+        "title": "builder",
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Builder GUID",
+            "example": "778fbd8a-e9bf-11e6-bd86-999999999"
+          },
+          "name": {
+            "type": "string",
+            "description": "Builder name",
+            "example": "Best Builder"
+          }
+        },
+        "description": "Builder object"
+      }
+    },
+    "securitySchemes": {
+      "[apikey]": {
+        "name": "x-api-key",
+        "type": "apiKey",
+        "in": "header",
+        "description": "Required API Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "x-api-key": []
+    }
+  ]
+}

@@ -1,0 +1,1390 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DASP XForms API",
+    "description": "This is a simple API for the Declarative Amsterdam 2025 conference to show how to build REST APIs in [Elemental](https://www.elemental.xyz) to work with [XForms](https://www.w3.org/community/xformsusers/). The impetus for the workshop and demo originally came from Steven Pemberton.\n\nSome useful links:\n- [The Elemental Slack Workspace](https://join.slack.com/t/elemental-xyz/shared_invite/zt-34r53san4-fzHCV0vDT9lYSMChUdn3cQ)\n- [Elemental's Documentation](https://www.elemental.xyz/documentation)\n- [agence XML's XSLTForms (XForms implementation)](https://www.agencexml.com/xsltforms)",
+    "contact": {
+      "email": "tech@evolvedbinary.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/evolvedbinary/dasp-xforms-api/1.0.0"
+  },
+  "externalDocs": {
+    "description": "Find out more about Elemental",
+    "url": "https://www.elemental.xyz"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:8080/exist/restxq/dasp"
+    }
+  ],
+  "tags": [
+    {
+      "name": "document",
+      "description": "Resources about your documents"
+    },
+    {
+      "name": "user",
+      "description": "Resources about users of your system"
+    },
+    {
+      "name": "member",
+      "description": "These resources can be accessed by authorised users. If the resource is also available to the public, then an authorised user may have further access over and above the general public. If the resource is not also available to the public, then authentication is required."
+    },
+    {
+      "name": "public",
+      "description": "These resources may be accessed without authentication by the general public without authentication."
+    }
+  ],
+  "paths": {
+    "/document": {
+      "put": {
+        "tags": [
+          "document",
+          "member"
+        ],
+        "summary": "Create a new Document.",
+        "description": "Creates a new Document from the provided content and returns its new ID.",
+        "operationId": "createDocument",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The content of the new document.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string",
+                "format": "xml"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "format": "json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created. Returns the identifier of the new Document.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              },
+              "Location": {
+                "$ref": "#/components/headers/location"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "document",
+          "public",
+          "member"
+        ],
+        "summary": "List of documents.",
+        "description": "List of all available documents. Only documents visible to the current user will be shown.",
+        "operationId": "listDocuments",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. List of available documents.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Documents"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Documents"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/notModified"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    },
+    "/document/{document-id}": {
+      "parameters": [
+        {
+          "name": "document-id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a document.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "document",
+          "public",
+          "member"
+        ],
+        "summary": "Get a document.",
+        "description": "Get a document. Only documents available to the current user will be available.",
+        "operationId": "getDocument",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. The document.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "xml"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "json"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "document",
+          "member"
+        ],
+        "summary": "Replace a Document.",
+        "description": "Replaces a Document with the provided content.",
+        "operationId": "replaceDocument",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The new content for the document.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "type": "string",
+                "format": "xml"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "format": "json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content. The document has been replaced.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "document",
+          "member"
+        ],
+        "summary": "Delete a Document.",
+        "description": "Deletes a Document.",
+        "operationId": "deleteDocument",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content. The document has been deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "document",
+          "member"
+        ],
+        "summary": "Update a Document.",
+        "description": "Updates a Document in the store based on content in the request.",
+        "operationId": "updateDocument",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "An XUpdate document describing the changes to made.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/Modifications"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content. The document has been updated.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              },
+              "X-XUpdate-Modifications": {
+                "$ref": "#/components/headers/xupdateModifications"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "List of users.",
+        "description": "List of all available users. Only users visible to the current user will be shown.",
+        "operationId": "listUsers",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. List of available users.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Users"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Users"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/notModified"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Create a new User.",
+        "description": "Creates a new User from the provided details and returns its new ID.",
+        "operationId": "createUser",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The details of the new user.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created. Returns the identifier of the new User.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    },
+    "/user/{user-id}": {
+      "parameters": [
+        {
+          "name": "user-id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a user.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Get a user.",
+        "description": "Get a user. Only users available to the current user will be available.",
+        "operationId": "getUser",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. The user.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Delete a User.",
+        "description": "Deletes a User.",
+        "operationId": "deleteUser",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content. The user has been deleted.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Update a User.",
+        "description": "Updates a User in the store based on the provided details.",
+        "operationId": "updateUser",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The details to update the user with.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content. The user has been updated.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    },
+    "/group": {
+      "get": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "List of groups.",
+        "description": "List of all available groups. Only groups visible to the current user will be shown.",
+        "operationId": "listGroups",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. List of available groups.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Groups"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Groups"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/notModified"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Create a new Group.",
+        "description": "Creates a new Group from the provided details and returns its new ID.",
+        "operationId": "createGroup",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The details of the new group.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created. Returns the identifier of the new Group.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    },
+    "/group/{group-id}": {
+      "parameters": [
+        {
+          "name": "group-id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a group.",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Get a group.",
+        "description": "Get a group. Only groups available to the current user will be available.",
+        "operationId": "getGroup",
+        "security": [
+          {},
+          {
+            "basicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ifModifiedSince"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK. The group.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            },
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Delete a Group.",
+        "description": "Deletes a Group.",
+        "operationId": "deleteGroup",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content. The group has been deleted.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "user",
+          "member"
+        ],
+        "summary": "Update a Group.",
+        "description": "Updates a Group in the store based on the provided details.",
+        "operationId": "updateGroup",
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "The details to update the group with.",
+          "required": true,
+          "content": {
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Group"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content. The group has been updated.",
+            "headers": {
+              "Last-Modified": {
+                "$ref": "#/components/headers/lastModified"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "406": {
+            "$ref": "#/components/responses/notAcceptable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Documents": {
+        "description": "A list of documents.",
+        "type": "array",
+        "item-type": "#/components/schemas/Document",
+        "xml": {
+          "name": "documents",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        }
+      },
+      "Document": {
+        "description": "Metadata about a document.",
+        "type": "object",
+        "xml": {
+          "name": "document",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "required": [
+          "id",
+          "created",
+          "last-modified",
+          "owner",
+          "group",
+          "permissions"
+        ],
+        "properties": {
+          "id": {
+            "description": "The ID of the document.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "created": {
+            "description": "The date that the document was created.",
+            "type": "string",
+            "format": "date-time",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "last-modified": {
+            "description": "The date that the document was last modified.",
+            "type": "string",
+            "format": "date-time",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "owner": {
+            "description": "The owning user of the document.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "group": {
+            "description": "The owning group of the document.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "permissions": {
+            "description": "The security permissions granted on the document.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          }
+        }
+      },
+      "Modifications": {
+        "description": "An XUpdate Modifications document.",
+        "type": "object",
+        "xml": {
+          "name": "modifications",
+          "namespace": "http://www.xmldb.org/xupdate",
+          "prefix": "xupdate"
+        },
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ]
+          }
+        }
+      },
+      "Users": {
+        "description": "A list of users.",
+        "type": "array",
+        "item-type": "#/components/schemas/User",
+        "xml": {
+          "name": "users",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        }
+      },
+      "User": {
+        "description": "Metadata about a user.",
+        "type": "object",
+        "xml": {
+          "name": "user",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "required": [
+          "id",
+          "name",
+          "first-name",
+          "last-name",
+          "email",
+          "password"
+        ],
+        "properties": {
+          "id": {
+            "description": "The ID of the user.",
+            "type": "integer",
+            "format": "int32",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          },
+          "name": {
+            "description": "The username of the user.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "first-name": {
+            "description": "The first name of the user.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "last-name": {
+            "description": "The last name of the user.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "email": {
+            "description": "The email address of the user.",
+            "type": "string",
+            "format": "email",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "password": {
+            "description": "The encrypted password of the user.",
+            "type": "string",
+            "format": "password",
+            "xml": {
+              "attribute": true
+            },
+            "writeOnly": true
+          },
+          "groups": {
+            "description": "The list of groups that the user belongs to.",
+            "type": "array",
+            "item-type": {
+              "$ref": "#/components/schemas/GroupRef"
+            },
+            "xml": {
+              "name": "groups",
+              "prefix": "dasp",
+              "namespace": "http://ns.declarative.amsterdam/dasp"
+            },
+            "readOnly": true
+          }
+        }
+      },
+      "GroupRef": {
+        "type": "object",
+        "xml": {
+          "name": "group",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "description": "The ID of the group.",
+            "type": "integer",
+            "format": "int32",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          },
+          "name": {
+            "description": "The name of the group.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          }
+        }
+      },
+      "Groups": {
+        "description": "A list of groups.",
+        "type": "array",
+        "item-type": "#/components/schemas/Group",
+        "xml": {
+          "name": "groups",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        }
+      },
+      "Group": {
+        "description": "Metadata about a group.",
+        "type": "object",
+        "xml": {
+          "name": "group",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "users"
+        ],
+        "properties": {
+          "id": {
+            "description": "The ID of the group.",
+            "type": "integer",
+            "format": "int32",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          },
+          "name": {
+            "description": "The name of the group.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "description": {
+            "description": "The description of the group.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "members": {
+            "description": "The list of users belonging to this group.",
+            "type": "array",
+            "item-type": {
+              "$ref": "#/components/schemas/UserRef"
+            },
+            "xml": {
+              "name": "members",
+              "prefix": "dasp",
+              "namespace": "http://ns.declarative.amsterdam/dasp"
+            }
+          }
+        }
+      },
+      "UserRef": {
+        "type": "object",
+        "xml": {
+          "name": "user",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "description": "The ID of the user.",
+            "type": "integer",
+            "format": "int32",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          },
+          "name": {
+            "description": "The username of the user.",
+            "type": "string",
+            "xml": {
+              "attribute": true
+            },
+            "readOnly": true
+          }
+        }
+      },
+      "Error": {
+        "description": "Metadata about an Error",
+        "type": "object",
+        "xml": {
+          "name": "error",
+          "prefix": "dasp",
+          "namespace": "http://ns.declarative.amsterdam/dasp"
+        },
+        "properties": {
+          "code": {
+            "description": "A code assigned to the Error that occurred",
+            "type": "string"
+          },
+          "message": {
+            "description": "A message describing the Error that occurred",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      }
+    },
+    "parameters": {
+      "ifModifiedSince": {
+        "name": "If-Modified-Since",
+        "in": "header",
+        "required": false,
+        "description": "Makes the request conditional, if the resource has been updated since this date, then a HTTP 200 response with the updated resource will be returned, otherwise a HTTP 304 response will be returned.",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "headers": {
+      "lastModified": {
+        "required": true,
+        "description": "The last modified date of the resource.",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "location": {
+        "description": "The location of a resource.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "xupdateModifications": {
+        "description": "The number of XUpdate Modifications made.",
+        "schema": {
+          "type": "number"
+        }
+      }
+    },
+    "responses": {
+      "notModified": {
+        "description": "Not Modified. The requested resource has not changed in accordance with the specified conditional request headers.",
+        "headers": {
+          "Last-Modified": {
+            "$ref": "#/components/headers/lastModified"
+          }
+        }
+      },
+      "badRequestContent": {
+        "description": "Bad Request. The supplied Document content was invalid.",
+        "content": {
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "unauthorized": {
+        "description": "Unauthorized. Authentication was attempted, but the provided credentials were not accepted.",
+        "content": {
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "forbidden": {
+        "description": "Forbidden. Insufficient authorization to access the resource.",
+        "content": {
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "notFound": {
+        "description": "Not Found. There is no known resource with that identifier.",
+        "content": {
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "notAcceptable": {
+        "description": "Not Acceptable. The server cannot produce a response in a format that satisfies the client's request formats.",
+        "content": {
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  }
+}

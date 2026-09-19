@@ -1,0 +1,629 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Guardrails AI API",
+    "description": "REST API for the Guardrails AI server. Provides endpoints for managing guards (input/output validators for LLMs), running validation, and an OpenAI-compatible chat completions proxy with guard protection.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://docs.guardrailsai.com/",
+    "x-provenance": "jentic-generated",
+    "contact": {
+      "name": "Guardrails AI",
+      "url": "https://guardrailsai.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Default local Guardrails API server"
+    }
+  ],
+  "security": [
+    {
+      "apiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/health-check": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Check server health status",
+        "description": "Returns the health status of the Guardrails API server.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards": {
+      "get": {
+        "operationId": "listGuards",
+        "summary": "List all configured guards",
+        "description": "Returns a list of all guards that have been created or loaded from configuration.",
+        "responses": {
+          "200": {
+            "description": "List of guards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Guard"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGuard",
+        "summary": "Create a new guard",
+        "description": "Creates a new guard configuration. Requires PostgreSQL backend for persistence.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Guard created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid guard configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guard_name}": {
+      "get": {
+        "operationId": "getGuard",
+        "summary": "Get a guard by name",
+        "description": "Returns the configuration and details of a specific guard.",
+        "parameters": [
+          {
+            "name": "guard_name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the guard to retrieve",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guard details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guard not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateGuard",
+        "summary": "Update a guard",
+        "description": "Updates the configuration of an existing guard. Requires PostgreSQL backend.",
+        "parameters": [
+          {
+            "name": "guard_name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the guard to update",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuardCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guard updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guard"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guard not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteGuard",
+        "summary": "Delete a guard",
+        "description": "Deletes a guard by name. Requires PostgreSQL backend.",
+        "parameters": [
+          {
+            "name": "guard_name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the guard to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guard deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guard not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guard_name}/validate": {
+      "post": {
+        "operationId": "validateWithGuard",
+        "summary": "Run validation against a guard",
+        "description": "Validates input or output text against the specified guard's configured validators.",
+        "parameters": [
+          {
+            "name": "guard_name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the guard to validate against",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guard not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/guards/{guard_name}/openai/v1/chat/completions": {
+      "post": {
+        "operationId": "guardedChatCompletion",
+        "summary": "OpenAI-compatible chat completion with guard protection",
+        "description": "Proxies a chat completion request through the specified guard, applying input/output validation. Follows the OpenAI ChatCompletion API format.",
+        "parameters": [
+          {
+            "name": "guard_name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the guard to apply",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guarded chat completion response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Guard not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Optional API key for authentication, configured via GUARDRAILS_API_KEY environment variable on the server. Pass as 'Bearer <token>' in the Authorization header."
+      }
+    },
+    "schemas": {
+      "Guard": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the guard"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the guard"
+          },
+          "validators": {
+            "type": "array",
+            "description": "List of validators applied by this guard",
+            "items": {
+              "$ref": "#/components/schemas/Validator"
+            }
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "JSON Schema for structured output validation"
+          }
+        }
+      },
+      "GuardCreateRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name for the guard"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the guard's purpose"
+          },
+          "validators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Validator"
+            }
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "Optional JSON Schema for structured output validation"
+          }
+        }
+      },
+      "Validator": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Validator identifier from Guardrails Hub"
+          },
+          "on": {
+            "type": "string",
+            "description": "What to validate (e.g., prompt, output, field name)",
+            "example": "output"
+          },
+          "args": {
+            "type": "object",
+            "description": "Validator-specific configuration arguments"
+          },
+          "on_fail": {
+            "type": "string",
+            "description": "Action on validation failure",
+            "enum": ["exception", "filter", "fix", "noop", "reask", "refrain"]
+          }
+        }
+      },
+      "ValidateRequest": {
+        "type": "object",
+        "properties": {
+          "llm_output": {
+            "type": "string",
+            "description": "The LLM output text to validate"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The prompt to validate (for input guards)"
+          },
+          "num_reasks": {
+            "type": "integer",
+            "description": "Maximum number of re-ask attempts",
+            "default": 0
+          },
+          "llm_api": {
+            "type": "string",
+            "description": "LLM API identifier for re-asking"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata for validation context"
+          }
+        }
+      },
+      "ValidationResult": {
+        "type": "object",
+        "properties": {
+          "validation_passed": {
+            "type": "boolean",
+            "description": "Whether all validators passed"
+          },
+          "validated_output": {
+            "description": "The validated and potentially corrected output",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "raw_llm_output": {
+            "type": "string",
+            "description": "The original LLM output before validation"
+          },
+          "reask": {
+            "type": "object",
+            "description": "Re-ask information if validation failed and reask was configured",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if validation raised an exception",
+            "nullable": true
+          }
+        }
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "required": ["model", "messages"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "LLM model identifier"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": ["system", "user", "assistant"]
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": ["role", "content"]
+            }
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "max_tokens": {
+            "type": "integer"
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "created": {
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "message": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "finish_reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer"
+              },
+              "completion_tokens": {
+                "type": "integer"
+              },
+              "total_tokens": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

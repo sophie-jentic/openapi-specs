@@ -1,0 +1,992 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API GRB Recebimentos Bancarios",
+    "version": "V2",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/grb-0ea/api-grb-recebimentos-bancarios/V2"
+  },
+  "servers": [
+    {
+      "description": "GRB API Ambientes"
+    },
+    {
+      "url": "https://hml-apigateway.paas.pr.gov.br/iat/grb/boleto-des/v2/",
+      "description": "DES"
+    },
+    {
+      "url": "https://hml-apigateway.paas.pr.gov.br/iat/grb/boleto/v2/",
+      "description": "HML"
+    },
+    {
+      "url": "https://apigateway.paas.pr.gov.br/iat/grb/boleto/v2/",
+      "description": "PRD"
+    }
+  ],
+  "components": {
+    "parameters": {
+      "consumerId": {
+        "name": "consumerId",
+        "in": "header",
+        "description": "Identificador do consumidor do servi\u00e7o",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "MEUSISTEMA"
+      }
+    },
+    "schemas": {
+      "mensagem": {
+        "type": "string"
+      },
+      "retornoJsonXml": {
+        "type": "string"
+      },
+      "detalhe": {
+        "type": "string"
+      },
+      "arquivoRetorno": {
+        "type": "object",
+        "properties": {
+          "arquivos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/arquivo"
+            }
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        }
+      },
+      "PendenteConfirmarDTO": {
+        "type": "object",
+        "properties": {
+          "codBoleto": {
+            "type": "integer"
+          },
+          "codOrgao": {
+            "type": "integer"
+          },
+          "codSistema": {
+            "type": "integer"
+          }
+        }
+      },
+      "SolicitacaoBoletoSituacaoDTO": {
+        "type": "object",
+        "properties": {
+          "codOrgao": {
+            "type": "integer",
+            "description": "C\u00f3digo do \u00d3rg\u00e3o cadastrado no GRB."
+          },
+          "codSistema": {
+            "type": "integer",
+            "description": "C\u00f3digo do Sistema cadastrado no GRB."
+          },
+          "codBoleto": {
+            "type": "integer",
+            "description": "C\u00f3digo do boleto gerado pelo GRB."
+          },
+          "loginUsuarioSistema": {
+            "type": "string",
+            "example": "user",
+            "description": "Login ou usu\u00e1rio informado do sistema consumidor."
+          },
+          "motivoAnteracao": {
+            "type": "string",
+            "example": "Teste",
+            "description": "Motivo da altera\u00e7\u00e3o."
+          },
+          "movimentoOrigemEnum": {
+            "type": "string",
+            "example": "NENHUM",
+            "description": "NENHUM|BANCO|SISTEMA"
+          }
+        }
+      },
+      "movimento": {
+        "type": "object",
+        "properties": {
+          "movimentoOrigem": {
+            "type": "string",
+            "example": "NENHUM",
+            "description": "NENHUM|BANCO|SISTEMA"
+          },
+          "situacao": {
+            "type": "string",
+            "description": "0 - NAO_MAPEADO|1 - LANCADO|2 - PAGO|3 - CANCELADO|4- ENVIADO_PARA_BAIXA"
+          },
+          "descricaoSituacao": {
+            "type": "string",
+            "description": "NAO_MAPEADO|LANCADO|PAGO|CANCELADO|ENVIADO_PARA_BAIXA"
+          },
+          "responsavel": {
+            "type": "string",
+            "description": "Institui\u00e7\u00e3o financeira respons\u00e1vel pelo boleto"
+          },
+          "motivo": {
+            "type": "string",
+            "description": "D\u00e9bito de Tarifas/Custas"
+          },
+          "observacao": {
+            "type": "string",
+            "description": "Observa\u00e7\u00e3o"
+          },
+          "data": {
+            "type": "string",
+            "description": "Data de Emiss\u00e3o"
+          },
+          "arquivoRetorno": {
+            "$ref": "#/components/schemas/arquivoRetorno"
+          }
+        }
+      },
+      "arquivo": {
+        "type": "object",
+        "properties": {
+          "codArquivoRetorno": {
+            "type": "integer",
+            "description": "C\u00f3digo do arquivo de retorno."
+          },
+          "nomeArquivoRetorno": {
+            "type": "string",
+            "description": "Nome do arquivo de retorno."
+          },
+          "arquivoRetorno": {
+            "type": "string",
+            "description": "Arquivo de retorno."
+          },
+          "dataCarga": {
+            "type": "string",
+            "description": "Data carga."
+          },
+          "mensagens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/mensagem"
+            }
+          }
+        }
+      },
+      "banco": {
+        "type": "object",
+        "properties": {
+          "numBanco": {
+            "type": "integer",
+            "description": "C\u00f3digo do Banco"
+          },
+          "numAgencia": {
+            "type": "integer",
+            "description": "Ag\u00eancia"
+          }
+        }
+      },
+      "sacado": {
+        "type": "object",
+        "properties": {
+          "nomeSacado": {
+            "type": "string",
+            "description": "Nome Sacado"
+          },
+          "tipoInscrsacado": {
+            "type": "string",
+            "description": "-1 - NAO_MAPEADO|0 - Isento/N\u00e3o informado|1 - CPF| 2 -CNPJ|3 - PIS/PASEP| 9 - Outros"
+          },
+          "numInscrSacado": {
+            "type": "string",
+            "description": "N\u00famero da inscri\u00e7\u00e3o do Sacado(CPF ou CNPJ)"
+          },
+          "rgSacado": {
+            "type": "string",
+            "description": "RG do Sacado",
+            "nullable": true
+          },
+          "ufSacado": {
+            "type": "string",
+            "description": "UF do Sacado"
+          },
+          "cepSacado": {
+            "type": "string",
+            "description": "CEP do Sacado"
+          },
+          "cidadeSacado": {
+            "type": "string",
+            "description": "Cidade do Sacado"
+          },
+          "bairroSacado": {
+            "type": "string",
+            "description": "Bairro do Sacado"
+          },
+          "enderecoSacado": {
+            "type": "string",
+            "description": "Endere\u00e7o do Sacado"
+          },
+          "telefoneSacado": {
+            "type": "string",
+            "description": "Telefone do Sacado"
+          }
+        }
+      },
+      "SolicitacaoBoletoDTO": {
+        "type": "object",
+        "description": "Dados da solicitacao do boleto",
+        "properties": {
+          "codOrgao": {
+            "type": "integer",
+            "example": 4,
+            "description": "C\u00f3digo do \u00d3rg\u00e3o."
+          },
+          "codSistema": {
+            "type": "integer",
+            "example": 38,
+            "description": "C\u00f3digo do sistema consumidor."
+          },
+          "valorBoleto": {
+            "type": "number",
+            "example": 35.0,
+            "description": "Valor do boleto."
+          },
+          "qtdeParcelas": {
+            "type": "integer",
+            "example": 1,
+            "description": "N\u00famero de parcelas."
+          },
+          "dataVencimento": {
+            "type": "string",
+            "example": "2024-08-30",
+            "description": "Informar data de vencimento do boleto. Tamb\u00e9m pode ser informado o intervaloDiasVencimento ou intervaloMesesVencimento, ao menos um dos campos deve ser informado."
+          },
+          "intervaloDiasVencimento": {
+            "type": "integer",
+            "example": 30,
+            "nullable": true,
+            "description": "Informar o intervalo de dias do vencimento do boleto. (Opcional)."
+          },
+          "intervaloMesesVencimento": {
+            "type": "integer",
+            "example": 1,
+            "nullable": true,
+            "description": "Informar o intervalo de meses do vencimento do boleto. (Opcional)."
+          },
+          "numDocOrigem": {
+            "type": "integer",
+            "example": 1234,
+            "description": "N\u00famero Documento Origem. Normalmente mantido/controlado pelo sistema consumidor."
+          },
+          "listaInstrucoes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "I1",
+              "I2"
+            ],
+            "description": "N\u00famero Documento Origem. Normalmente mantido/controlado pelo sistema consumidor."
+          },
+          "dataCalculoJuros": {
+            "type": "string",
+            "nullable": true
+          },
+          "nomeSacado": {
+            "type": "string",
+            "example": "Joana Dark",
+            "description": "Nome do Sacado"
+          },
+          "endSacado": {
+            "type": "string",
+            "example": "Rua Nilo Pe\u00e7anha",
+            "description": "Endere\u00e7o do Sacado"
+          },
+          "bairroSacado": {
+            "type": "string",
+            "example": "Centro C\u00edvico",
+            "description": "Bairro do Sacado"
+          },
+          "cepSacado": {
+            "type": "string",
+            "example": "80520176",
+            "description": "CEP do Sacado"
+          },
+          "cidadeSacado": {
+            "type": "string",
+            "example": "Curitiba",
+            "description": "Cidade do Sacado"
+          },
+          "ufSacado": {
+            "type": "string",
+            "example": "PR",
+            "description": "UF do Sacado"
+          },
+          "tipoInscrSacado": {
+            "type": "integer",
+            "example": 1,
+            "description": "-1 - NAO_MAPEADO|0 - Isento/N\u00e3o informado|1 - CPF| 2 -CNPJ|3 - PIS/PASEP| 9 - Outros"
+          },
+          "numInscrSacado": {
+            "type": "string",
+            "example": "89660159994",
+            "description": "N\u00famero da inscri\u00e7\u00e3o do Sacado"
+          },
+          "cpfCnpjSacado": {
+            "type": "string",
+            "example": "89660159994",
+            "description": "CPF/CNPJ do Sacado"
+          },
+          "evitarRegistroBoleto": {
+            "type": "boolean",
+            "example": false,
+            "description": "N\u00e3o deixa o boleto ser registrado pelo banco."
+          },
+          "codBoletoAnterior": {
+            "type": "integer",
+            "nullable": true,
+            "description": "C\u00f3digo do boleto atual a ser reemitido. Este par\u00e2metro \u00e9 obrigat\u00f3rio na reemiss\u00e3o, ele representa o c\u00f3digo do boleto atual que vai ser reemitido."
+          },
+          "indGeraBoletoPdf": {
+            "type": "boolean",
+            "example": false,
+            "description": "Gerar boleto em PDF."
+          },
+          "codServicoSistemaCliente": {
+            "type": "integer",
+            "nullable": true,
+            "description": "C\u00f3digo do sistema consumidor."
+          },
+          "numParcela": {
+            "type": "integer",
+            "example": 1,
+            "description": "N\u00famero da parcela."
+          },
+          "loginUsuarioSistema": {
+            "type": "string",
+            "nullable": true,
+            "description": "Login ou usu\u00e1rio informado do sistema consumidor."
+          },
+          "evitarDuplicarNumDocOrigem": {
+            "type": "boolean",
+            "example": false,
+            "description": "Evitar Duplicar N\u00famero do Documento de Origem"
+          },
+          "justificativa": {
+            "type": "string",
+            "nullable": true,
+            "description": "Justificativa"
+          },
+          "reemissaoSihWeb": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Reservado para o sistema Sihweb"
+          },
+          "cancelaBoletoLancado": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Cancela Boleto Lan\u00e7ado em caso de reemiss\u00e3o. Este par\u00e2metro precisa ser informado como true caso o boleto reemitido ainda esteja lan\u00e7ado."
+          },
+          "motivoAnteracao": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivo da altera\u00e7\u00e3o"
+          },
+          "telefoneSacado": {
+            "type": "string",
+            "nullable": true,
+            "description": "Telefone do Sacado"
+          }
+        }
+      },
+      "boleto": {
+        "type": "object",
+        "description": "Dados do boleto gerado",
+        "properties": {
+          "numDocOrigem": {
+            "type": "integer",
+            "description": "N\u00famero Documento Origem. Normalmente mantido/controlado pelo sistema consumidor."
+          },
+          "codBoleto": {
+            "type": "integer",
+            "description": "C\u00f3digo do boleto gerado."
+          },
+          "codBoletoAnterior": {
+            "type": "integer",
+            "description": "C\u00f3digo do boleto anterior antes da reemiss\u00e3o."
+          },
+          "numeroParcela": {
+            "type": "integer",
+            "description": "N\u00famero da Parcela."
+          },
+          "valorBoleto": {
+            "type": "number",
+            "description": "Valor do boleto."
+          },
+          "arquivoBoleto": {
+            "type": "string",
+            "description": "Arquivo do boleto gerado."
+          },
+          "dataVencimento": {
+            "type": "string",
+            "description": "Data de vencimento."
+          },
+          "dataProcessamento": {
+            "type": "string",
+            "description": "Data do processamento."
+          },
+          "situacao": {
+            "type": "string",
+            "description": "0 - NAO_MAPEADO|1 - LANCADO|2 - PAGO|3 - CANCELADO|4- ENVIADO_PARA_BAIXA"
+          },
+          "descricaoSituacao": {
+            "type": "string",
+            "description": "NAO_MAPEADO|LANCADO|PAGO|CANCELADO|ENVIADO_PARA_BAIXA"
+          },
+          "dataSituacao": {
+            "type": "string",
+            "description": "Data da Situa\u00e7\u00e3o."
+          },
+          "descricaoReferencia": {
+            "type": "string",
+            "description": "Descri\u00e7\u00e3o refer\u00eancia."
+          },
+          "linhaDigitavel": {
+            "type": "string",
+            "description": "Linha digit\u00e1vel."
+          },
+          "codigoDeBarras": {
+            "type": "string",
+            "description": "C\u00f3digo de Barras."
+          },
+          "nossoNumero": {
+            "type": "string",
+            "description": "Nosso N\u00famero."
+          },
+          "dataCredito": {
+            "type": "string",
+            "description": "Data do cr\u00e9dito."
+          },
+          "valorPago": {
+            "type": "number",
+            "description": "Valor Pago."
+          },
+          "jurosMultasEncargos": {
+            "type": "number",
+            "description": "Juros, multas, encargos."
+          },
+          "numInscrSacado": {
+            "type": "string"
+          },
+          "codServicoSistemaCliente": {
+            "type": "integer",
+            "description": "C\u00f3digo do sistema consumidor."
+          },
+          "sacado": {
+            "$ref": "#/components/schemas/sacado"
+          },
+          "bancoRecebedor": {
+            "$ref": "#/components/schemas/banco"
+          },
+          "qRPix": {
+            "type": "string",
+            "description": "QR Code para pagamento via PIX."
+          },
+          "ulrBoletoImpressao": {
+            "type": "string",
+            "description": "(Depreciado) URL do boleto para impress\u00e3o."
+          },
+          "urlBoletoImpressao": {
+            "type": "string",
+            "description": "URL do boleto para impress\u00e3o."
+          },
+          "meio": {
+            "type": "string",
+            "description": "Meio pelo qual o servi\u00e7o est\u00e1 sendo disponibilizado",
+            "example": "RestFull"
+          },
+          "movimentosBoletoHistorico": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/movimento"
+            }
+          }
+        }
+      },
+      "retorno": {
+        "type": "object",
+        "properties": {
+          "qtdeBoleto": {
+            "type": "integer"
+          },
+          "mensagem": {
+            "type": "string"
+          },
+          "boletos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/boleto"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "centralSeguranca": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth-cs-hml.identidadedigital.pr.gov.br/centralautenticacao/api/v1/token/jwt",
+            "scopes": {
+              "grb.v1.boletos": null
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/gerar": {
+      "post": {
+        "description": "Gerar e registrar junto ao Banco um boleto de cobranca.",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Bearer jwtdf1e854d0804f07d3e43e7d7fc391178..."
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitacaoBoletoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/obter/{codBoleto}": {
+      "get": {
+        "description": "Obter os dados de boleto",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer jwt331746b131fe93dd18e9d7ef5d77a127..."
+          },
+          {
+            "name": "codBoleto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "codOrgao",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "codSistema",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "indGeraBoletoPdf",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "mostrarMovimento",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "anexarArquivoRetorno",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retornoJsonXml"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/detalhe"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pendente/listar": {
+      "get": {
+        "description": "Lista boletos pendentes de um sistema",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Bearer jwtdf1e854d0804f07d3e43e7d7fc391178..."
+          },
+          {
+            "name": "codOrgao",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "codSistema",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retornoJsonXml"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/detalhe"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pendente/confirmar/{codBoleto}": {
+      "put": {
+        "description": "Confirmar boletos pendentes de um sistema",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Bearer jwtdf1e854d0804f07d3e43e7d7fc391178..."
+          },
+          {
+            "name": "codBoleto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 123456
+            }
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PendenteConfirmarDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/detalhe"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/situacao/cancelar/{codBoleto}": {
+      "put": {
+        "description": "Cancelar um boleto existente",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Bearer jwtdf1e854d0804f07d3e43e7d7fc391178..."
+          },
+          {
+            "name": "codBoleto",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "example": 123456
+            }
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitacaoBoletoSituacaoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/detalhe"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reemitir": {
+      "post": {
+        "description": "Reemitir um boleto de cobranca",
+        "parameters": [
+          {
+            "name": "consumerId",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "MEUSISTEMA"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "example": "Bearer jwtdf1e854d0804f07d3e43e7d7fc391178..."
+          }
+        ],
+        "security": [
+          {
+            "centralSeguranca": [
+              "write_grb"
+            ]
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitacaoBoletoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retorno"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

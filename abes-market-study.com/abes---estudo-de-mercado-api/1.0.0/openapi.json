@@ -1,0 +1,6329 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ABES - Estudo de Mercado API",
+    "version": "1.0.0",
+    "description": "API utilizada pelo projeto **Estudo de Mercado da ABES** para gerenciar e consultar dados sobre o setor de tecnologia no Brasil, Am\u00e9rica Latina e Mundo.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/taluaai/abes-estudo-de-mercado-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Ambiente de desenvolvimento"
+    },
+    {
+      "url": "https://api.abes-market-study.com",
+      "description": "Produ\u00e7\u00e3o"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Endpoints de autentica\u00e7\u00e3o"
+    },
+    {
+      "name": "Brazil",
+      "description": "Dados de mercado e investimento no Brasil"
+    },
+    {
+      "name": "LATAM",
+      "description": "Dados de investimento e pa\u00edses da Am\u00e9rica Latina"
+    },
+    {
+      "name": "World",
+      "description": "Dados globais de investimento e distribui\u00e7\u00e3o"
+    },
+    {
+      "name": "ABES",
+      "description": "M\u00e9tricas institucionais e indicadores da ABES"
+    },
+    {
+      "name": "Hero",
+      "description": "Gerenciamento dos banners 'hero' das p\u00e1ginas"
+    },
+    {
+      "name": "Footer",
+      "description": "Gerenciamento do rodap\u00e9 do site"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "User",
+        "description": "Registra um novo usu\u00e1rio no sistema.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password",
+                  "name"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email do usu\u00e1rio",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Senha do usu\u00e1rio",
+                    "example": "mySecurePassword123"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Nome completo do usu\u00e1rio",
+                    "example": "John Doe"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resposta de sucesso ou conflito de email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "user@example.com"
+                            },
+                            "name": {
+                              "type": "string",
+                              "example": "John Doe"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "example": "Email already registered"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "description": "Realiza o login de um usu\u00e1rio no sistema.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email do usu\u00e1rio",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "Senha do usu\u00e1rio",
+                    "example": "mySecurePassword123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login bem-sucedido ou credenciais inv\u00e1lidas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "user@example.com"
+                            },
+                            "name": {
+                              "type": "string",
+                              "example": "John Doe"
+                            }
+                          }
+                        },
+                        "token": {
+                          "type": "string",
+                          "description": "JWT gerado para autentica\u00e7\u00e3o",
+                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "example": "Invalid credentials"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout",
+        "description": "Realiza o logout do usu\u00e1rio, removendo o cookie `auth` que cont\u00e9m o token JWT.",
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Verify Token",
+        "description": "Verifica a validade de um token JWT (enviado via cookie `auth`) e retorna os dados do usu\u00e1rio.",
+        "responses": {
+          "200": {
+            "description": "Token v\u00e1lido e usu\u00e1rio encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authenticated": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "John Doe"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "user@example.com"
+                        }
+                      }
+                    },
+                    "payload": {
+                      "type": "object"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token n\u00e3o encontrado, inv\u00e1lido ou expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 401
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Token not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usu\u00e1rio associado ao token n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 404
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/update/{id}": {
+      "put": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "User",
+        "description": "Atualiza os dados de um usu\u00e1rio existente.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do usu\u00e1rio a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "newSecurePassword123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usu\u00e1rio atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "User updated successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo `id` ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o usu\u00e1rio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/investmentdata": {
+      "get": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Investment Data",
+        "description": "Retorna os dados de investimento em tecnologia no Brasil para os anos especificados.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "query",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de investimento retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "year": {
+                            "type": "integer",
+                            "example": 2025
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 230.0
+                          },
+                          "unit": {
+                            "type": "string",
+                            "example": "Billion USD"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Investment Data",
+        "description": "Cria um novo registro de investimento em tecnologia no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer"
+                  },
+                  "value": {
+                    "type": "integer"
+                  }
+                },
+                "example": {
+                  "year": 2025,
+                  "value": 1325000
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment data created"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 1325000
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/investmentdata/{id}": {
+      "put": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Investment Data",
+        "description": "Atualiza um registro de investimento em tecnologia no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de investimento a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "example": 1400000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 1400000
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `id` ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Investment Data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de investimento a ser removido",
+            "schema": {
+              "type": "integer",
+              "example": 16
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 16
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inv\u00e1lido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/distributiondata": {
+      "get": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Data",
+        "description": "Retorna os dados de distribui\u00e7\u00e3o de TI no Brasil.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "query",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "year": {
+                            "type": "integer",
+                            "example": 2025
+                          },
+                          "hardware": {
+                            "type": "number",
+                            "example": 45
+                          },
+                          "software": {
+                            "type": "number",
+                            "example": 30
+                          },
+                          "itServices": {
+                            "type": "number",
+                            "example": 25
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Data",
+        "description": "Cria um novo registro de dados de distribui\u00e7\u00e3o de TI no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer"
+                  },
+                  "hardware": {
+                    "type": "integer"
+                  },
+                  "software": {
+                    "type": "integer"
+                  },
+                  "itServices": {
+                    "type": "integer"
+                  }
+                },
+                "example": {
+                  "year": 2025,
+                  "hardware": 45,
+                  "software": 30,
+                  "itServices": 25
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dados de distribui\u00e7\u00e3o criados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data created"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "hardware": {
+                          "type": "number",
+                          "example": 45
+                        },
+                        "software": {
+                          "type": "number",
+                          "example": 30
+                        },
+                        "itServices": {
+                          "type": "number",
+                          "example": 25
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/distributiondata/{id}": {
+      "put": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Data",
+        "description": "Atualiza um registro de dados de distribui\u00e7\u00e3o de TI no Brasil pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de distribui\u00e7\u00e3o de TI no Brasil a ser atualizado",
+            "example": 16
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados",
+                "properties": {
+                  "software": {
+                    "type": "integer",
+                    "example": 10
+                  },
+                  "hardware": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "itServices": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro de distribui\u00e7\u00e3o atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 16
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "hardware": {
+                          "type": "number",
+                          "example": 1
+                        },
+                        "software": {
+                          "type": "number",
+                          "example": 10
+                        },
+                        "itServices": {
+                          "type": "number",
+                          "example": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Data",
+        "description": "Remove um registro de dados de distribui\u00e7\u00e3o de TI no Brasil pelo ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 16
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 16
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/distributionregion": {
+      "get": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Region",
+        "description": "Retorna os dados de distribui\u00e7\u00e3o regional de TI no Brasil.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "query",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de registros retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BrazilDistributionRegionData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Region",
+        "description": "Cria um novo registro de dados de distribui\u00e7\u00e3o regional de TI no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrazilDistributionRegionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Dados regionais salvos com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution region data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilDistributionRegionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/distributionregion/{id}": {
+      "put": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Region",
+        "description": "Atualiza um registro de dados de distribui\u00e7\u00e3o regional de TI no Brasil pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de distribui\u00e7\u00e3o regional de TI no Brasil a ser atualizado",
+            "example": 15
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrazilDistributionRegionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro de distribui\u00e7\u00e3o regional atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Region distribution updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilDistributionRegionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Distribution Region",
+        "description": "Remove um registro de distribui\u00e7\u00e3o regional de TI no Brasil pelo ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Region distribution deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token inv\u00e1lido ou ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/regiondata": {
+      "get": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Region Data",
+        "description": "Retorna os dados de distribui\u00e7\u00e3o regional de TI no Brasil.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados regionais retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Regions Brazil data retrieved successfully."
+                    },
+                    "data": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "description": "M\u00e9dia dos valores por regi\u00e3o (quando anos s\u00e3o informados)",
+                          "properties": {
+                            "north": {
+                              "type": "number",
+                              "example": 25.33
+                            },
+                            "south": {
+                              "type": "number",
+                              "example": 18.44
+                            },
+                            "northEast": {
+                              "type": "number",
+                              "example": 22.5
+                            },
+                            "midWest": {
+                              "type": "number",
+                              "example": 19.0
+                            },
+                            "southEast": {
+                              "type": "number",
+                              "example": 15.73
+                            }
+                          }
+                        },
+                        {
+                          "type": "array",
+                          "description": "Lista completa de registros (quando nenhum ano \u00e9 informado)",
+                          "items": {
+                            "$ref": "#/components/schemas/BrazilRegionData"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Region Data",
+        "description": "Cria um novo registro de dados de distribui\u00e7\u00e3o regional de TI no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "north": {
+                    "type": "number",
+                    "description": "Percentual ou valor da regi\u00e3o Norte",
+                    "example": 12.5
+                  },
+                  "northEast": {
+                    "type": "number",
+                    "description": "Percentual ou valor da regi\u00e3o Nordeste",
+                    "example": 20.3
+                  },
+                  "midWest": {
+                    "type": "number",
+                    "description": "Percentual ou valor da regi\u00e3o Centro-Oeste",
+                    "example": 18.2
+                  },
+                  "southEast": {
+                    "type": "number",
+                    "description": "Percentual ou valor da regi\u00e3o Sudeste",
+                    "example": 30.7
+                  },
+                  "south": {
+                    "type": "number",
+                    "description": "Percentual ou valor da regi\u00e3o Sul",
+                    "example": 18.3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Region data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilRegionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/regiondata/{id}": {
+      "put": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Region Data",
+        "description": "Atualiza um registro existente de dados de distribui\u00e7\u00e3o regional de TI no Brasil pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de dados regionais a ser atualizado",
+            "example": 5
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no registro",
+                "properties": {
+                  "north": {
+                    "type": "number",
+                    "example": 12.4
+                  },
+                  "northEast": {
+                    "type": "number",
+                    "example": 15.8
+                  },
+                  "midWest": {
+                    "type": "number",
+                    "example": 18.1
+                  },
+                  "southEast": {
+                    "type": "number",
+                    "example": 27.9
+                  },
+                  "south": {
+                    "type": "number",
+                    "example": 25.8
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Region updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilRegionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Region Data",
+        "description": "Remove um registro de dados de distribui\u00e7\u00e3o regional de TI no Brasil pelo ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 12
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Region deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 12
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/marketdata": {
+      "get": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Market Data",
+        "description": "Retorna os dados consolidados de mercado de Tecnologia da Informa\u00e7\u00e3o (TI) e Telecomunica\u00e7\u00f5es no Brasil.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de mercado retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 3
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BrazilMarketData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Market Data",
+        "description": "Cria um novo registro de dados de mercado de Tecnologia da Informa\u00e7\u00e3o (TI) e Telecomunica\u00e7\u00f5es no Brasil.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrazilMarketDataCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Market data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilMarketData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brazil/marketdata/{id}": {
+      "put": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Market Data",
+        "description": "Atualiza um registro existente de dados de mercado de Tecnologia da Informa\u00e7\u00e3o (TI) e Telecomunica\u00e7\u00f5es no Brasil pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de dados de mercado a ser atualizado",
+            "example": 3
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrazilMarketDataUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro de mercado atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Market data updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BrazilMarketData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Brazil"
+        ],
+        "summary": "Market Data",
+        "description": "Remove um registro de dados de mercado de Tecnologia da Informa\u00e7\u00e3o (TI) e Telecomunica\u00e7\u00f5es no Brasil pelo ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Market data deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 10
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/latam/countrydata": {
+      "get": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "Country Data",
+        "description": "Retorna os dados de investimento em tecnologia por pa\u00eds na Am\u00e9rica Latina.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de investimento retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Latin America data retrieved successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LatamCountryData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "Country Data",
+        "description": "Cria um novo registro de dados de investimento por pa\u00eds na Am\u00e9rica Latina.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year",
+                  "countryId",
+                  "value"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "countryId": {
+                    "type": "integer",
+                    "description": "ID do pa\u00eds relacionado ao registro",
+                    "example": 1
+                  },
+                  "value": {
+                    "type": "number",
+                    "description": "Valor do investimento em milh\u00f5es de d\u00f3lares",
+                    "example": 320000
+                  },
+                  "participation": {
+                    "type": "number",
+                    "description": "Percentual de participa\u00e7\u00e3o no total latino-americano",
+                    "example": 4.5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LatamCountryDataCreate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year must be a number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o mesmo pa\u00eds e ano",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year and country already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/latam/countrydata/{id}": {
+      "put": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "Country Data",
+        "description": "Atualiza um registro existente de dados de investimento por pa\u00eds na Am\u00e9rica Latina pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de investimento por pa\u00eds a ser atualizado",
+            "example": 7
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no registro",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "example": 350000
+                  },
+                  "participation": {
+                    "type": "number",
+                    "example": 4.2
+                  },
+                  "countryId": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LatamCountryDataCreate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "Country Data",
+        "description": "Remove um registro de investimento por pa\u00eds na Am\u00e9rica Latina pelo ID.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/latam/itinvestment": {
+      "get": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "IT Investment",
+        "description": "Retorna os dados de investimento em Tecnologia da Informa\u00e7\u00e3o (TI) na Am\u00e9rica Latina.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de investimento em TI retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Latin America data retrieved successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 5
+                          },
+                          "year": {
+                            "type": "integer",
+                            "example": 2025
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 230000
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "IT Investment",
+        "description": "Cria um novo registro de investimento em Tecnologia da Informa\u00e7\u00e3o (TI) na Am\u00e9rica Latina.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year",
+                  "value"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "value": {
+                    "type": "number",
+                    "description": "Valor total do investimento em TI (em milh\u00f5es de d\u00f3lares)",
+                    "example": 230000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "LATAM investment data created"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 5
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 230000
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year must be a number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/latam/itinvestment/{id}": {
+      "put": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "IT Investment",
+        "description": "Atualiza um registro existente de investimento em Tecnologia da Informa\u00e7\u00e3o (TI) na Am\u00e9rica Latina pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de investimento em TI a ser atualizado",
+            "example": 3
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos permitidos para atualiza\u00e7\u00e3o",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "description": "Novo valor do investimento em TI",
+                    "example": 250000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "LATAM investment updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 250000
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "LATAM"
+        ],
+        "summary": "IT Investment",
+        "description": "Remove um registro de investimento em Tecnologia da Informa\u00e7\u00e3o (TI) na Am\u00e9rica Latina com base no ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de investimento a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 7
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "LATAM investment deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 7
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/countries": {
+      "get": {
+        "tags": [
+          "World"
+        ],
+        "summary": "List of Countries",
+        "description": "Retorna a lista completa de pa\u00edses cadastrados no sistema, ordenada alfabeticamente pelo nome.",
+        "responses": {
+          "200": {
+            "description": "Lista de pa\u00edses retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Latin America data retrieved successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "Brazil"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao buscar os pa\u00edses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/countryinvestment": {
+      "get": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Country Investment",
+        "description": "Retorna os dados de investimento em tecnologia por pa\u00eds no mundo.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de investimento por pa\u00eds retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 15
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WorldCountryData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao recuperar os dados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Country Investment",
+        "description": "Cria um novo registro de investimento por pa\u00eds no mundo.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year",
+                  "countryId",
+                  "value"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "countryId": {
+                    "type": "integer",
+                    "description": "ID do pa\u00eds relacionado ao registro",
+                    "example": 1
+                  },
+                  "value": {
+                    "type": "number",
+                    "description": "Valor do investimento em milh\u00f5es de d\u00f3lares",
+                    "example": 9900000
+                  },
+                  "participation": {
+                    "type": "number",
+                    "description": "Percentual de participa\u00e7\u00e3o no total global",
+                    "example": 3.7
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WorldCountryDataCreate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year must be a number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o mesmo pa\u00eds e ano",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year and country already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/countryinvestment/{id}": {
+      "put": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Country Investment",
+        "description": "Atualiza um registro existente de investimento por pa\u00eds no mundo pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de investimento a ser atualizado",
+            "example": 15
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no registro",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "description": "Novo valor do investimento",
+                    "example": 9900000
+                  },
+                  "participation": {
+                    "type": "number",
+                    "description": "Percentual de participa\u00e7\u00e3o no total global",
+                    "example": 3.7
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WorldCountryDataCreate"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Country Investment",
+        "description": "Remove um registro de investimento por pa\u00eds no mundo com base no ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 15
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 15
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/distributiondata": {
+      "get": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Distribution Data",
+        "description": "Retorna os dados de distribui\u00e7\u00e3o de TI no mundo.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de distribui\u00e7\u00e3o retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 5
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WorldDistributionData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Distribution Data",
+        "description": "Cria um novo registro de distribui\u00e7\u00e3o de TI no mundo.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "hardware": {
+                    "type": "number",
+                    "description": "Valor referente a hardware",
+                    "example": 45
+                  },
+                  "software": {
+                    "type": "number",
+                    "description": "Valor referente a software",
+                    "example": 30
+                  },
+                  "itServices": {
+                    "type": "number",
+                    "description": "Valor referente a servi\u00e7os de TI",
+                    "example": 25
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Country data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WorldDistributionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year and country already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/distributiondata/{id}": {
+      "put": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Distribution Data",
+        "description": "Atualiza um registro existente de distribui\u00e7\u00e3o de TI no mundo pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de distribui\u00e7\u00e3o de TI no mundo a ser atualizado",
+            "example": 3
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados",
+                "properties": {
+                  "hardware": {
+                    "type": "number",
+                    "example": 45
+                  },
+                  "software": {
+                    "type": "number",
+                    "example": 30
+                  },
+                  "itServices": {
+                    "type": "number",
+                    "example": 25
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/WorldDistributionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Delete Distribution Data (Global)",
+        "description": "Remove um registro de distribui\u00e7\u00e3o de TI no mundo pelo ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de distribui\u00e7\u00e3o a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/investmentdata": {
+      "get": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Investment Data",
+        "description": "Retorna os dados de investimento mundial.",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de investimento retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment data fetched successfully"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "year": {
+                            "type": "integer",
+                            "example": 2025
+                          },
+                          "value": {
+                            "type": "number",
+                            "example": 9900000
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Investment Data",
+        "description": "Cria um novo registro de investimento mundial.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "year",
+                  "value"
+                ],
+                "properties": {
+                  "year": {
+                    "type": "integer",
+                    "description": "Ano do registro",
+                    "example": 2025
+                  },
+                  "value": {
+                    "type": "number",
+                    "description": "Valor do investimento em d\u00f3lares",
+                    "example": 9900000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment data created"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 9.9
+                        },
+                        "unit": {
+                          "type": "string",
+                          "example": "Million USD"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/world/investmentdata/{id}": {
+      "put": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Investment Data",
+        "description": "Atualiza um registro existente de investimento mundial pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de investimento a ser atualizado",
+            "example": 3
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no registro",
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "description": "Novo valor do investimento",
+                    "example": 9900000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "year": {
+                          "type": "integer",
+                          "example": 2025
+                        },
+                        "value": {
+                          "type": "number",
+                          "example": 9.9
+                        },
+                        "unit": {
+                          "type": "string",
+                          "example": "Million USD"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "World"
+        ],
+        "summary": "Global Investment",
+        "description": "Remove um registro de investimento mundial com base no ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de investimento a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 3
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Investment deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/abes/metrics": {
+      "get": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Metrics",
+        "description": "Retorna os dados de m\u00e9tricas da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software).",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de m\u00e9tricas retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Abes metrics data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 3
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AbesMetricsData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Metrics",
+        "description": "Cria um novo registro de m\u00e9tricas da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbesMetricsCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Abes metrics data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AbesMetricsData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/abes/metrics/{id}": {
+      "put": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Metrics",
+        "description": "Atualiza um registro existente de m\u00e9tricas da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software) pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de m\u00e9tricas a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbesMetricsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Abes metrics updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AbesMetricsData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Metrics",
+        "description": "Remove um registro de m\u00e9tricas da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software) pelo ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de m\u00e9tricas a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Abes metrics deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/abes/revenuedistribution": {
+      "get": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Revenue Distribution",
+        "description": "Retorna os dados de distribui\u00e7\u00e3o de receita da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software).",
+        "parameters": [
+          {
+            "name": "years",
+            "in": "header",
+            "description": "Ano ou lista de anos separados por v\u00edrgulas para filtrar os dados (opcional)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "2023,2024,2025"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados de distribui\u00e7\u00e3o de receita retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data retrieved successfully."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 5
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AbesRevenueDistributionData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Revenue Distribution",
+        "description": "Cria um novo registro de distribui\u00e7\u00e3o de receita da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software).",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbesRevenueDistributionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registro criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data created"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AbesRevenueDistributionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: `year` ausente ou n\u00e3o num\u00e9rico)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "Year is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "J\u00e1 existe um registro para o ano informado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 409
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "A record for this year already exists"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao criar o registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/abes/revenuedistribution/{id}": {
+      "put": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Revenue Distribution",
+        "description": "Atualiza um registro existente de distribui\u00e7\u00e3o de receita da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software) pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do registro de distribui\u00e7\u00e3o de receita a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbesRevenueDistributionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registro atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution data updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AbesRevenueDistributionData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ABES"
+        ],
+        "summary": "Revenue Distribution",
+        "description": "Remove um registro de distribui\u00e7\u00e3o de receita da ABES (Associa\u00e7\u00e3o Brasileira das Empresas de Software) pelo ID fornecido.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID do registro de distribui\u00e7\u00e3o de receita a ser deletado",
+            "schema": {
+              "type": "integer",
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registro deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Distribution deleted successfully"
+                    },
+                    "data": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID ausente ou inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao deletar o registro (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hero": {
+      "get": {
+        "tags": [
+          "Hero"
+        ],
+        "summary": "Get Hero Banners",
+        "description": "Retorna a lista de banners 'hero' cadastrados.",
+        "responses": {
+          "200": {
+            "description": "Lista de banners retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "List os page heros."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 2
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HeroData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hero/{id}": {
+      "put": {
+        "tags": [
+          "Hero"
+        ],
+        "summary": "Update Hero Banner",
+        "description": "Atualiza um banner 'hero' existente pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do banner 'hero' a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no banner 'hero'",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "example": "Novo t\u00edtulo do banner"
+                  },
+                  "subtitle": {
+                    "type": "string",
+                    "example": "Novo subt\u00edtulo do banner"
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "example": "https://example.com/new-hero-image.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Banner atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Hero updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/HeroData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o banner (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hero/upload": {
+      "post": {
+        "tags": [
+          "Hero"
+        ],
+        "summary": "Upload Hero Image",
+        "description": "Faz upload de uma nova imagem para um banner 'hero'.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "img": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "O arquivo de imagem a ser enviado."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Imagem enviada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Hero image uploaded successfully"
+                    },
+                    "data": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://bucket.s3.region.amazonaws.com/hero/image.png"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Arquivo 'img' ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 400
+                    },
+                    "statusMessage": {
+                      "type": "string",
+                      "example": "File is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno durante o upload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/footer": {
+      "get": {
+        "tags": [
+          "Footer"
+        ],
+        "summary": "Get Footer Data",
+        "description": "Retorna os dados de conte\u00fado do rodap\u00e9.",
+        "responses": {
+          "200": {
+            "description": "Dados do rodap\u00e9 retornados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Footer loaded successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FooterData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/footer/{id}": {
+      "put": {
+        "tags": [
+          "Footer"
+        ],
+        "summary": "Update Footer Data",
+        "description": "Atualiza os dados de conte\u00fado do rodap\u00e9 pelo ID fornecido na rota.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do rodap\u00e9 a ser atualizado",
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Campos que podem ser atualizados no rodap\u00e9",
+                "properties": {
+                  "addressTitle": {
+                    "type": "string",
+                    "example": "Endere\u00e7o"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "Av. Brigadeiro Faria Lima, 1234 - S\u00e3o Paulo, SP"
+                  },
+                  "linkTitle": {
+                    "type": "string",
+                    "example": "Acesse nosso site"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+55 (11) 1234-5678"
+                  },
+                  "openingHours": {
+                    "type": "string",
+                    "example": "Seg a Sex, 9h \u00e0s 18h"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "contato@abes.org.br"
+                  },
+                  "site": {
+                    "type": "string",
+                    "example": "https://www.abes.org.br"
+                  },
+                  "feedback": {
+                    "type": "string",
+                    "example": "Sua opini\u00e3o \u00e9 importante para n\u00f3s!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rodap\u00e9 atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Footer updated successfully"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FooterData"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida (ex: ID ausente)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorIDRequired"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (token ausente ou inv\u00e1lido)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno ao atualizar o rodap\u00e9 (ex: registro n\u00e3o encontrado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorUnauthorized": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 401
+          },
+          "statusMessage": {
+            "type": "string",
+            "example": "Unauthorized: Missing token"
+          }
+        }
+      },
+      "ErrorIDRequired": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 400
+          },
+          "statusMessage": {
+            "type": "string",
+            "example": "ID is required"
+          }
+        }
+      },
+      "ErrorServer": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 500
+          },
+          "statusMessage": {
+            "type": "string",
+            "example": "Internal Server Error"
+          }
+        }
+      },
+      "BrazilRegionData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 12
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "north": {
+            "type": "number",
+            "example": 30.5
+          },
+          "south": {
+            "type": "number",
+            "example": 25.1
+          },
+          "northEast": {
+            "type": "number",
+            "example": 28.4
+          },
+          "midWest": {
+            "type": "number",
+            "example": 22.9
+          },
+          "southEast": {
+            "type": "number",
+            "example": 27.8
+          }
+        }
+      },
+      "BrazilMarketData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "unit": {
+            "type": "string",
+            "example": "Billion USD"
+          },
+          "ti": {
+            "$ref": "#/components/schemas/MarketDataSection"
+          },
+          "telecom": {
+            "$ref": "#/components/schemas/MarketDataSection"
+          },
+          "totalWithTelecom": {
+            "$ref": "#/components/schemas/MarketDataSection"
+          }
+        }
+      },
+      "BrazilMarketDataCreate": {
+        "type": "object",
+        "required": [
+          "year",
+          "ti",
+          "telecom",
+          "totalWithTelecom"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Ano do registro",
+            "example": 2025
+          },
+          "ti": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          },
+          "telecom": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          },
+          "totalWithTelecom": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          }
+        }
+      },
+      "BrazilMarketDataUpdate": {
+        "type": "object",
+        "description": "Campos a serem atualizados",
+        "properties": {
+          "ti": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          },
+          "telecom": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          },
+          "totalWithTelecom": {
+            "$ref": "#/components/schemas/MarketDataSectionUpdate"
+          }
+        }
+      },
+      "MarketDataSection": {
+        "type": "object",
+        "properties": {
+          "domestic": {
+            "type": "string",
+            "example": "12.4"
+          },
+          "export": {
+            "type": "string",
+            "example": "8.6"
+          },
+          "total": {
+            "type": "string",
+            "example": "21.0"
+          }
+        }
+      },
+      "MarketDataSectionUpdate": {
+        "type": "object",
+        "properties": {
+          "domestic": {
+            "type": "number",
+            "example": 12.4
+          },
+          "export": {
+            "type": "number",
+            "example": 8.6
+          },
+          "total": {
+            "type": "number",
+            "example": 21.0
+          }
+        }
+      },
+      "BrazilDistributionRegionData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "north": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "northEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "midWest": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "southEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "south": {
+            "$ref": "#/components/schemas/RegionDetail"
+          }
+        }
+      },
+      "BrazilDistributionRegionCreate": {
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "north": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "northEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "midWest": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "southEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "south": {
+            "$ref": "#/components/schemas/RegionDetail"
+          }
+        }
+      },
+      "BrazilDistributionRegionUpdate": {
+        "type": "object",
+        "properties": {
+          "north": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "northEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "midWest": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "southEast": {
+            "$ref": "#/components/schemas/RegionDetail"
+          },
+          "south": {
+            "$ref": "#/components/schemas/RegionDetail"
+          }
+        }
+      },
+      "RegionDetail": {
+        "type": "object",
+        "properties": {
+          "software": {
+            "type": "integer",
+            "example": 10
+          },
+          "itServices": {
+            "type": "integer",
+            "example": 12
+          },
+          "hardware": {
+            "type": "integer",
+            "example": 8
+          },
+          "total": {
+            "type": "integer",
+            "example": 30
+          }
+        }
+      },
+      "LatamCountryData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 7
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "value": {
+            "type": "number",
+            "example": 320000
+          },
+          "participation": {
+            "type": "number",
+            "example": 4.5
+          },
+          "name": {
+            "type": "string",
+            "example": "Brazil"
+          },
+          "countryId": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "LatamCountryDataCreate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 10
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "value": {
+            "type": "number",
+            "example": 320000
+          },
+          "participation": {
+            "type": "number",
+            "example": 4.5
+          },
+          "countryId": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "WorldCountryData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 12
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "value": {
+            "type": "number",
+            "example": 9900000
+          },
+          "participation": {
+            "type": "number",
+            "example": 3.7
+          },
+          "name": {
+            "type": "string",
+            "example": "Brazil"
+          },
+          "countryId": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "WorldCountryDataCreate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 12
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "value": {
+            "type": "number",
+            "example": 9900000
+          },
+          "participation": {
+            "type": "number",
+            "example": 3.7
+          },
+          "countryId": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "WorldDistributionData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "hardware": {
+            "type": "number",
+            "example": 45
+          },
+          "software": {
+            "type": "number",
+            "example": 30
+          },
+          "itServices": {
+            "type": "number",
+            "example": 25
+          }
+        }
+      },
+      "AbesMetricsData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "members": {
+            "type": "integer",
+            "example": 500
+          },
+          "revenueUSD": {
+            "type": "number",
+            "example": 125000000
+          },
+          "directJobs": {
+            "type": "integer",
+            "example": 20000
+          },
+          "percentageSMEs": {
+            "type": "number",
+            "example": 70
+          },
+          "stateCoverage": {
+            "type": "integer",
+            "example": 26
+          },
+          "acatePartners": {
+            "type": "integer",
+            "example": 15
+          }
+        }
+      },
+      "AbesMetricsCreate": {
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Ano do registro",
+            "example": 2025
+          },
+          "members": {
+            "type": "integer",
+            "description": "N\u00famero de associados",
+            "example": 500
+          },
+          "revenueUSD": {
+            "type": "number",
+            "description": "Receita total em d\u00f3lares",
+            "example": 125000000
+          },
+          "directJobs": {
+            "type": "integer",
+            "description": "N\u00famero de empregos diretos",
+            "example": 20000
+          },
+          "percentageSMEs": {
+            "type": "number",
+            "description": "Percentual de pequenas e m\u00e9dias empresas",
+            "example": 70
+          },
+          "stateCoverage": {
+            "type": "integer",
+            "description": "N\u00famero de estados cobertos",
+            "example": 26
+          },
+          "acatePartners": {
+            "type": "integer",
+            "description": "N\u00famero de parceiros ACATE",
+            "example": 15
+          }
+        }
+      },
+      "AbesMetricsUpdate": {
+        "type": "object",
+        "description": "Campos que podem ser atualizados",
+        "properties": {
+          "members": {
+            "type": "integer",
+            "example": 500
+          },
+          "revenueUSD": {
+            "type": "number",
+            "example": 125000000
+          },
+          "directJobs": {
+            "type": "integer",
+            "example": 20000
+          },
+          "percentageSMEs": {
+            "type": "number",
+            "example": 70
+          },
+          "stateCoverage": {
+            "type": "integer",
+            "example": 26
+          },
+          "acatePartners": {
+            "type": "integer",
+            "example": 15
+          }
+        }
+      },
+      "AbesRevenueDistributionData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "year": {
+            "type": "integer",
+            "example": 2025
+          },
+          "upTo360k": {
+            "type": "number",
+            "example": 20
+          },
+          "from360kTo2000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from2000kTo3600k": {
+            "type": "number",
+            "example": 15
+          },
+          "from3600kTo10000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from10000kTo50000k": {
+            "type": "number",
+            "example": 10
+          },
+          "above50000k": {
+            "type": "number",
+            "example": 5
+          }
+        }
+      },
+      "AbesRevenueDistributionCreate": {
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Ano do registro",
+            "example": 2025
+          },
+          "upTo360k": {
+            "type": "number",
+            "example": 20
+          },
+          "from360kTo2000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from2000kTo3600k": {
+            "type": "number",
+            "example": 15
+          },
+          "from3600kTo10000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from10000kTo50000k": {
+            "type": "number",
+            "example": 10
+          },
+          "above50000k": {
+            "type": "number",
+            "example": 5
+          }
+        }
+      },
+      "AbesRevenueDistributionUpdate": {
+        "type": "object",
+        "description": "Campos que podem ser atualizados",
+        "properties": {
+          "upTo360k": {
+            "type": "number",
+            "example": 20
+          },
+          "from360kTo2000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from2000kTo3600k": {
+            "type": "number",
+            "example": 15
+          },
+          "from3600kTo10000k": {
+            "type": "number",
+            "example": 25
+          },
+          "from10000kTo50000k": {
+            "type": "number",
+            "example": 10
+          },
+          "above50000k": {
+            "type": "number",
+            "example": 5
+          }
+        }
+      },
+      "HeroData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "page": {
+            "type": "string",
+            "example": "home"
+          },
+          "title": {
+            "type": "string",
+            "example": "Title"
+          },
+          "subtitle": {
+            "type": "string",
+            "example": "Subtitle"
+          },
+          "imgUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://...png"
+          }
+        }
+      },
+      "FooterData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "addressTitle": {
+            "type": "string",
+            "example": "Endere\u00e7o"
+          },
+          "address": {
+            "type": "string",
+            "example": "Av. Brigadeiro Faria Lima, 1234 - S\u00e3o Paulo, SP"
+          },
+          "linkTitle": {
+            "type": "string",
+            "example": "Acesse nosso site"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+55 (11) 1234-5678"
+          },
+          "openingHours": {
+            "type": "string",
+            "example": "Seg a Sex, 9h \u00e0s 18h"
+          },
+          "email": {
+            "type": "string",
+            "example": "contato@abes.org.br"
+          },
+          "site": {
+            "type": "string",
+            "example": "https://www.abes.org.br"
+          },
+          "feedback": {
+            "type": "string",
+            "example": "Sua opini\u00e3o \u00e9 importante para n\u00f3s!"
+          }
+        }
+      }
+    }
+  }
+}

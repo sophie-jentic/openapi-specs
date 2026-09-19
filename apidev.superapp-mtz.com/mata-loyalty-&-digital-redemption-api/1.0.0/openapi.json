@@ -1,0 +1,645 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MATA Loyalty & Digital Redemption API",
+    "description": "# MATA  Loyalty & Digital Redemption APIs\n\nThis API handles balance inquiries, pre-authorization, confirmation, and cancellation for loyalty programs.\n\n---\n\n## \ud83d\udd10 Authentication & Security\n\n### Environment Security Policy\nAuthentication requirements differ based on the environment:\n\n| Environment | Auth Status | Description |\n| :--- | :--- | :--- |\n| **DEV** | **Disabled** | Authentication is turned **OFF** for easier integration and testing. |\n| **STG / PROD** | **Enabled** | Authentication is **STRICTLY ENFORCED**. Requests without a valid signature will return `401 Unauthorized`. |\n\n### Key Provisioning\n> \u26a0\ufe0f **Note:** Please contact the MATA technical support team **offline** to obtain your **Public Key** or **App Secret** required for the STG and PROD environments.\n\n---\n\n### Signature Specification (STG & PROD Only)\n\nWhen running in Staging or Production, all API requests must be signed.\n\n#### 1. Required Headers\n\n| Header Field | Description | Example |\n| :--- | :--- | :--- |\n| `X-App-Key` | Unique identifier assigned to the client | `epoc_client_001` |\n| `X-Timestamp` | Current UNIX timestamp (seconds) | `1678892345` |\n| `X-Signature` | The calculated signature string | `7f8a9b...` |\n\n#### 2. Signature Algorithm\n\n**Step 1: Construct the String-to-Sign**\nConcatenate the request elements using a specific separator (e.g., newline `\\n`):\n\n```\nString = HTTP_METHOD + \"\\n\" +\n         URL_PATH + \"\\n\" +\n         TIMESTAMP + \"\\n\" +\n         REQUEST_BODY_JSON\n```\n\n**Step 2: Calculate Hash**\nSign the string using the provided Key/Secret (e.g., HMAC-SHA256 or RSA):\n\n```\nSignature = HexEncode( EncryptionMethod( Key, String ) )\n```\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/mata-a84/epoc-loyalty-digital-redemption-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://apidev.superapp-mtz.com/loyalty",
+      "description": "dev server"
+    },
+    {
+      "url": "https://apistg.superapp-mtz.com/loyalty",
+      "description": "stg server"
+    },
+    {
+      "url": "https://api.superapp-mtz.com/loyalty",
+      "description": "prod server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "MATA Loyalty",
+      "description": "MATA  Loyalty & Digital Redemption APIs"
+    }
+  ],
+  "paths": {
+    "/epoc/balance": {
+      "post": {
+        "tags": [
+          "MATA Loyalty"
+        ],
+        "summary": "Balance Inquiry",
+        "description": "Returns the customer's current active balance",
+        "operationId": "getBalance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BalanceRequest"
+              },
+              "example": {
+                "customerIdentifier": "11999999999",
+                "storeId": "EPOC_STORE_001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer balance not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/epoc/pre-auth": {
+      "post": {
+        "tags": [
+          "MATA Loyalty"
+        ],
+        "summary": "Digital Pre-Redemption (Pre-Auth)",
+        "description": "Places a hold on the balance and requests user authorization via the app",
+        "operationId": "preAuth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreAuthRequest"
+              },
+              "example": {
+                "customerIdentifier": "11999999999",
+                "amount": 50,
+                "orderId": "ORDER-102030",
+                "storeId": "EPOC_STORE_001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created - Pre-auth successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreAuthResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Insufficient balance or invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer balance not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/epoc/redeem/confirm": {
+      "post": {
+        "tags": [
+          "MATA Loyalty"
+        ],
+        "summary": "Digital Redemption (Confirmation)",
+        "description": "Checks the status of the pre-authorization. If approved by the user, the funds are permanently deducted.",
+        "operationId": "confirmRedemption",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRedemptionRequest"
+              },
+              "example": {
+                "transactionId": "a1b2c3d4-partner-uuid",
+                "amount": 50,
+                "storeId": "EPOC_STORE_001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success - Transaction approved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmRedemptionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Waiting for approval or denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmRedemptionErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Waiting for approval or denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmRedemptionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/epoc/redeem/cancel": {
+      "post": {
+        "tags": [
+          "MATA Loyalty"
+        ],
+        "summary": "Cancellation (Reversal)",
+        "description": "Voids the redemption and refunds the balance to the customer immediately",
+        "operationId": "cancelRedemption",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRedemptionRequest"
+              },
+              "example": {
+                "transactionId": "a1b2c3d4-partner-uuid",
+                "reason": "Order cancelled at POS",
+                "storeId": "EPOC_STORE_001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success - Transaction cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelRedemptionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BalanceRequest": {
+        "type": "object",
+        "required": [
+          "customerIdentifier",
+          "storeId"
+        ],
+        "properties": {
+          "customerIdentifier": {
+            "type": "string",
+            "description": "Customer ID, Phone, or Tax ID",
+            "example": "11999999999"
+          },
+          "storeId": {
+            "type": "string",
+            "description": "Store ID",
+            "example": "EPOC_STORE_001"
+          }
+        }
+      },
+      "BalanceResponse": {
+        "type": "object",
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "description": "Customer name",
+            "example": "John Doe"
+          },
+          "availableBalance": {
+            "type": "number",
+            "format": "double",
+            "description": "Available balance",
+            "example": 150
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code",
+            "example": "BRL"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "example": "ACTIVE"
+          }
+        }
+      },
+      "PreAuthRequest": {
+        "type": "object",
+        "required": [
+          "customerIdentifier",
+          "amount",
+          "orderId",
+          "storeId"
+        ],
+        "properties": {
+          "customerIdentifier": {
+            "type": "string",
+            "description": "Customer identifier",
+            "example": "11999999999"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount the customer wishes to use",
+            "example": 50
+          },
+          "orderId": {
+            "type": "string",
+            "description": "EPOC Internal Order ID",
+            "example": "ORDER-102030"
+          },
+          "storeId": {
+            "type": "string",
+            "description": "Store ID",
+            "example": "EPOC_STORE_001"
+          }
+        }
+      },
+      "PreAuthResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Transaction ID",
+            "example": "a1b2c3d4-partner-uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "example": "PENDING_USER_APPROVAL"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message",
+            "example": "Request sent to customer App. Waiting for approval."
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Timeout in seconds",
+            "example": 60
+          }
+        }
+      },
+      "ConfirmRedemptionRequest": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "amount",
+          "storeId"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Transaction ID returned in pre-auth",
+            "example": "a1b2c3d4-partner-uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount",
+            "example": 50
+          },
+          "storeId": {
+            "type": "string",
+            "description": "Store ID",
+            "example": "EPOC_STORE_001"
+          }
+        }
+      },
+      "ConfirmRedemptionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "example": "APPROVED"
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "Transaction ID",
+            "example": "a1b2c3d4-partner-uuid"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Processed timestamp",
+            "example": "2023-10-27T10:00:00Z"
+          },
+          "remainingBalance": {
+            "type": "number",
+            "format": "double",
+            "description": "Remaining balance",
+            "example": 100
+          }
+        }
+      },
+      "ConfirmRedemptionErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "example": "WAITING_APPROVAL"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "The customer has not approved the transaction in the app yet."
+          }
+        }
+      },
+      "CancelRedemptionRequest": {
+        "type": "object",
+        "required": [
+          "transactionId",
+          "storeId"
+        ],
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "description": "Transaction ID",
+            "example": "a1b2c3d4-partner-uuid"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Cancellation reason",
+            "example": "Order cancelled at POS"
+          },
+          "storeId": {
+            "type": "string",
+            "description": "Store ID",
+            "example": "EPOC_STORE_001"
+          }
+        }
+      },
+      "CancelRedemptionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Status",
+            "example": "CANCELLED"
+          },
+          "reversedAmount": {
+            "type": "number",
+            "format": "double",
+            "description": "Reversed amount",
+            "example": 50
+          },
+          "currentBalance": {
+            "type": "number",
+            "format": "double",
+            "description": "Current balance",
+            "example": 150
+          }
+        }
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Response code",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message",
+            "example": "Success"
+          },
+          "data": {
+            "type": "object",
+            "description": "Response data (varies by endpoint)"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Additional attributes (optional)",
+            "nullable": true
+          }
+        }
+      },
+      "BalanceResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Result"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/BalanceResponse"
+              }
+            }
+          }
+        ]
+      },
+      "PreAuthResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Result"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PreAuthResponse"
+              }
+            }
+          }
+        ]
+      },
+      "ConfirmRedemptionResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Result"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/ConfirmRedemptionResponse"
+              }
+            }
+          }
+        ]
+      },
+      "CancelRedemptionResult": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Result"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/CancelRedemptionResponse"
+              }
+            }
+          }
+        ]
+      },
+      "ErrorResult": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Error code",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Bad request"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "nullable": true
+          }
+        }
+      }
+    }
+  }
+}

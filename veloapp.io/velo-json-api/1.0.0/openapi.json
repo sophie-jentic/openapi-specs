@@ -1,0 +1,1651 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Velo JSON API",
+    "version": "1.0.0",
+    "description": "### What You Can Do with This API\n- Get available shipping services for a customer's address\n- Create orders\n- Confirm delivery orders\n- Generate a pdf shipping label\n- Check an order's status\n\n### *** IMPORTANT - Authentication - Getting Your HMAC ***\nYour HMAC is an encoded string we use to identify you, similar to a password.\nYou'll need your HMAC for all requests.\nSteps to get it:\n1. Find an HMAC generator (there are many free ones online, such as [this one.](https://www.freeformatter.com/hmac-generator.html))\n2. Insert a string made of your email and API key, like this: `youremail@gmail.comYOURAPIKEY`\n3. Use your API secret key as the HMAC secret key\n4. Compute the HMAC\n\n### Intended Flow\n1. **Get shipping options** - send the target address to the API, and all available shipping methods are returned for you to select from.\n2. **Create order** - send your target address with a polygon ID and external service ID.  \n  If the external service ID from step 1 is `null`, you can pass `null` here. This creates an order in the Velo system with status `\"placed\"`.\n3. **Review** - verify that all the order's details are correct on the Velo panel or via the /info/{order} endpoint.\n4. **Confirm delivery** - once packed and ready, confirm delivery. We'll transmit it to the delivery company, and you'll get a barcode.  \n  Every order MUST have a label with the barcode clearly on the packaging.  \n  You can get a label from the Velo panel or use your own (just don't forget the barcode).\n5. **Optional - Generate a shipping label** - You can use the /label/{order} endpoint to create a pdf shipping label for your package. You can also generate the label via the Velo panel.\n6. **Get order info** - track in the Velo panel or via the API. Other data such as available tracking links and label pdf link will be included in the response (see the DeliveryInfoResponse schema for more information).\n\n[Velo \u2764](https://veloapp.io)\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ItayRijensky/Velo_JSON_API/1.0.0"
+  },
+  "tags": [
+    {
+      "name": "Orders",
+      "description": "Operations related to managing orders."
+    }
+  ],
+  "servers": [
+    {
+      "description": "Velo Production Server",
+      "url": "https://api.veloapp.io"
+    }
+  ],
+  "components": {
+    "parameters": {
+      "ContentType": {
+        "name": "Content-Type",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "default": "application/json"
+        }
+      },
+      "XVeloApiKey": {
+        "name": "X-Velo-Api-Key",
+        "in": "header",
+        "required": true,
+        "description": "Your Api Key from the Velo App Center",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "XVeloHmac": {
+        "name": "X-Velo-Hmac",
+        "in": "header",
+        "required": true,
+        "description": "A sha256 string encoded with your secret key, composed of your Velo email, followed by your api key (e.g. youremail@gmail.comYOURAPIKEY). Your api key and secret key are available at the Velo App Center.\n",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "defaultExample": {
+            "value": "7c6e4627118..."
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CheckRequestBody": {
+        "type": "object",
+        "required": [
+          "weight",
+          "dimensions",
+          "customerAddress"
+        ],
+        "properties": {
+          "customerAddress": {
+            "$ref": "#/components/schemas/Address",
+            "description": "The customer's delivery address",
+            "examples": [
+              {
+                "street": "Main St",
+                "number": "123",
+                "city": "Exampleville",
+                "zip": "12345",
+                "country": "Countryland",
+                "phone": "5555555"
+              }
+            ]
+          },
+          "storeAddress": {
+            "$ref": "#/components/schemas/Address",
+            "description": "The store's delivery address - if not sent, this defaults to the closest pickup address to the customer your store has on Velo",
+            "examples": [
+              {
+                "street": "Store Ave",
+                "number": "456",
+                "city": "Shop City",
+                "zip": "67890",
+                "country": "Retailand",
+                "phone": "0000000"
+              }
+            ]
+          },
+          "weight": {
+            "type": "number",
+            "description": "The package's weight",
+            "examples": [
+              0
+            ]
+          },
+          "deliveryType": {
+            "type": "string",
+            "description": "Delivery type",
+            "enum": [
+              "normal",
+              "return",
+              "replacement"
+            ],
+            "default": "normal"
+          },
+          "dimensions": {
+            "type": "object",
+            "description": "The package's size measurements",
+            "properties": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "depth": {
+                "type": "number"
+              }
+            },
+            "examples": [
+              {
+                "width": 0,
+                "height": 0,
+                "depth": 0
+              }
+            ]
+          },
+          "packagesCount": {
+            "type": "number",
+            "description": "How many packages are sent in this delivery (defaults to 1)",
+            "examples": [
+              1
+            ]
+          }
+        }
+      },
+      "OrderRequestBody": {
+        "type": "object",
+        "required": [
+          "customerAddress"
+        ],
+        "properties": {
+          "customerAddress": {
+            "$ref": "#/components/schemas/Address",
+            "description": "The customer's delivery address",
+            "examples": [
+              {
+                "street": "Main St",
+                "number": "123",
+                "city": "Exampleville",
+                "zip": "12345",
+                "country": "Countryland",
+                "phone": "5555555"
+              }
+            ]
+          },
+          "storeAddress": {
+            "$ref": "#/components/schemas/Address",
+            "description": "The store's delivery address - if not sent, this defaults to the pickup address that has the best service for the customer",
+            "examples": [
+              {
+                "street": "Store Ave",
+                "number": "456",
+                "city": "Shop City",
+                "zip": "67890",
+                "country": "Retailand",
+                "phone": "0000000"
+              }
+            ]
+          },
+          "polygonId": {
+            "type": "integer",
+            "description": "Velo service Identifier",
+            "examples": [
+              15
+            ]
+          },
+          "externalServiceId": {
+            "type": "string",
+            "description": "Velo sub-service Identifier (usually not required)",
+            "examples": [
+              "4312859"
+            ]
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Order ID reference in your system",
+            "examples": [
+              "Order113"
+            ]
+          },
+          "weight": {
+            "type": "number",
+            "description": "The package's weight",
+            "examples": [
+              0
+            ]
+          },
+          "dimensions": {
+            "type": "object",
+            "description": "The package's size measurements",
+            "properties": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "depth": {
+                "type": "number"
+              }
+            },
+            "examples": [
+              {
+                "width": 0,
+                "height": 0,
+                "depth": 0
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Order notes (for DELIVERY notes - use line2 on the address)",
+            "examples": [
+              "Contact the customer before sending to the delivery company"
+            ]
+          },
+          "packagesCount": {
+            "type": "number",
+            "description": "How many packages are sent in this delivery (defaults to 1)",
+            "examples": [
+              1
+            ]
+          },
+          "courierBarcode": {
+            "type": "string",
+            "description": "The delivery's barcode (if it has one)",
+            "examples": [
+              "Vvelo341"
+            ]
+          },
+          "courierRemoteId": {
+            "type": "string",
+            "description": "The courier company's remote ID for this delivery",
+            "examples": [
+              "AE333"
+            ]
+          },
+          "products": {
+            "type": "array",
+            "description": "The products/items sent in the delivery",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "code",
+                "price",
+                "quantity"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The product's name/title",
+                  "examples": [
+                    "Polo shirt"
+                  ]
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The product's SKU",
+                  "examples": [
+                    "PLSH221"
+                  ]
+                },
+                "variation": {
+                  "type": "string",
+                  "description": "The product variant's name/title",
+                  "examples": [
+                    "XL / Blue"
+                  ]
+                },
+                "price": {
+                  "type": "number",
+                  "description": "The product's price (per unit)",
+                  "examples": [
+                    89.99
+                  ]
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "The quantity of the product in this order",
+                  "examples": [
+                    1
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "AcceptRequestBody": {
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "examples": [
+              "Vorder23"
+            ]
+          }
+        }
+      },
+      "LabelRequestBody": {
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "examples": [
+              "Vorder23"
+            ]
+          }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Message to be displayed to the user"
+          },
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "A code describing the error",
+            "default": ""
+          },
+          "fail": {
+            "type": "boolean",
+            "description": "Whether the request was successful",
+            "examples": [
+              false
+            ]
+          },
+          "data": {
+            "type": "object",
+            "description": "Data returned by the request"
+          },
+          "errors": {
+            "type": "array",
+            "description": "List of errors"
+          }
+        }
+      },
+      "UnprocessableContentResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "The customer address.city field is required."
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  422
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              },
+              "errorCode": {
+                "type": "string",
+                "examples": [
+                  "customerAddress.city.required"
+                ]
+              },
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "examples": [
+                  {
+                    "customerAddress.city": "The customer address.city field is required."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "InvalidStatusResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Order not confirmed yet"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  400
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "UnauthorizedResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "invalidHmac"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  401
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ForbiddenResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "This action is unauthorized"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  403
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              },
+              "errorCode": {
+                "type": "string",
+                "examples": [
+                  "auth.unauthorized"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "NotFoundResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Order not found"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  404
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "examples": [
+                  []
+                ]
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "examples": [
+                  []
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ServerErrorResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Accept failed: No communication with service API"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  500
+                ]
+              },
+              "fail": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "examples": [
+                  []
+                ]
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "examples": [
+                  []
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CheckSuccessResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ShippingOption"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CheckSuccessEmptyResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CheckSuccessResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "maxItems": 0,
+                "examples": [
+                  []
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "OrderSuccessResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The newly created order's ID",
+                    "examples": [
+                      "Vorder123"
+                    ]
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "The order's total",
+                    "examples": [
+                      99.99
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The order's status",
+                    "examples": [
+                      "draft"
+                    ]
+                  },
+                  "shipping_code": {
+                    "type": "string",
+                    "description": "The order's shipping service code",
+                    "examples": [
+                      "VELOAPPIO_NEXT_DAY"
+                    ]
+                  },
+                  "courier": {
+                    "type": "string",
+                    "description": "The order's courier service provider",
+                    "examples": [
+                      "Yango"
+                    ]
+                  },
+                  "shipping_address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "pickup_address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "billing_address": {
+                    "$ref": "#/components/schemas/Address"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeliveryInfoResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Response"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Order found"
+                ]
+              },
+              "code": {
+                "type": "integer",
+                "examples": [
+                  200
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "description": "Response message",
+                    "examples": [
+                      "Order processed successfully"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Order name/identifier",
+                    "examples": [
+                      "ORD12345"
+                    ]
+                  },
+                  "external_id": {
+                    "type": "string",
+                    "description": "External system ID for the order (if provided)",
+                    "examples": [
+                      "EXT98765"
+                    ]
+                  },
+                  "shpoify_id": {
+                    "type": "string",
+                    "description": "Shopify ID for the order (if provided)",
+                    "examples": [
+                      "SH123456789"
+                    ]
+                  },
+                  "barcode": {
+                    "type": "string",
+                    "description": "Barcode of the delivery",
+                    "examples": [
+                      "BARCODE123"
+                    ]
+                  },
+                  "line_number": {
+                    "type": "string",
+                    "description": "Courier's distribution line number (optional)",
+                    "examples": [
+                      "some-area"
+                    ]
+                  },
+                  "distribution_branch": {
+                    "description": "Courier's distribution distribution branch (optional)",
+                    "examples": [
+                      "Some Branch"
+                    ]
+                  },
+                  "total": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Total amount for the order",
+                    "examples": [
+                      123.45
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Delivery status identifier",
+                    "examples": [
+                      "placed"
+                    ]
+                  },
+                  "status_description": {
+                    "type": "string",
+                    "description": "Localized short description of the status",
+                    "examples": [
+                      "Placed"
+                    ]
+                  },
+                  "shipping_code": {
+                    "type": "string",
+                    "description": "Shipping code associated with the delivery",
+                    "examples": [
+                      "VELOAPPIO_NEXT_DAY"
+                    ]
+                  },
+                  "shipping_code_description": {
+                    "type": "string",
+                    "description": "Localized description of the shipping code",
+                    "examples": [
+                      "Next day delivery"
+                    ]
+                  },
+                  "courier": {
+                    "type": "string",
+                    "description": "Localized courier company name",
+                    "examples": [
+                      "Mahirli"
+                    ]
+                  },
+                  "shipping_address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "pickup_address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "billing_address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "courier_tracking_url": {
+                    "type": "string",
+                    "description": "Courier tracking URL",
+                    "examples": [
+                      "https://somecourier.com/track/..."
+                    ]
+                  },
+                  "tracking_url": {
+                    "type": "string",
+                    "description": "Velo tracking URL",
+                    "examples": [
+                      "https://vlo.im/..."
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "link to pdf label (if generated)",
+                    "examples": [
+                      "https://api.veloapp.io/..."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AcceptSuccessResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeliveryInfoResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Order accepted"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "LabelSuccessResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeliveryInfoResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "examples": [
+                  "Label created"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ShippingOption": {
+        "type": "object",
+        "properties": {
+          "polygon_id": {
+            "type": "integer",
+            "examples": [
+              42
+            ],
+            "description": "The shipping service identifier"
+          },
+          "external_service_id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              null
+            ],
+            "description": "The shipping service's second identifier (where applicable)"
+          },
+          "pickup_max_days": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              1
+            ],
+            "description": "The shipping service's pickup SLA in business days"
+          },
+          "dropoff_max_days": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              1
+            ],
+            "description": "The shipping service's dropoff SLA in business days"
+          },
+          "courier": {
+            "type": "string",
+            "examples": [
+              "mahirli"
+            ],
+            "description": "The shipping service's courier company"
+          },
+          "service_name": {
+            "type": "string",
+            "examples": [
+              "\u05de\u05e9\u05dc\u05d7 \u05e9\u05dc\u05d9\u05d7 Velo \u05de\u05d4\u05d9\u05e8 (31/03/2025)"
+            ],
+            "description": "The shipping service's title"
+          },
+          "description": {
+            "type": "string",
+            "examples": [
+              "\u05d0\u05e6\u05dc\u05e0\u05d5 \u05d1\u05d1\u05d9\u05ea \u05d1\u05d9\u05d5\u05d8\u05d4 \u05d1\u05d9\u05d5\u05ea \u05d4\u05e2\u05e1\u05e7\u05d9\u05dd"
+            ],
+            "description": "The shipping service's description"
+          },
+          "rate": {
+            "type": "object",
+            "description": "The shipping service's pricing",
+            "properties": {
+              "price": {
+                "type": "string",
+                "examples": [
+                  "30"
+                ]
+              },
+              "active": {
+                "type": "boolean",
+                "examples": [
+                  true
+                ]
+              },
+              "margin": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "examples": [
+                  ""
+                ]
+              }
+            }
+          },
+          "external_service_name": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              null
+            ],
+            "description": "The shipping service's external name"
+          },
+          "shipping_code": {
+            "type": "object",
+            "description": "Velo service code",
+            "properties": {
+              "code": {
+                "type": "string",
+                "examples": [
+                  "VELOAPPIO_NEXT_DAY"
+                ]
+              },
+              "initial_free_km": {
+                "oneOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "examples": [
+                  null
+                ]
+              },
+              "prices": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "price": {
+                      "type": "integer",
+                      "examples": [
+                        30
+                      ]
+                    },
+                    "slug": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "examples": [
+                        null
+                      ]
+                    },
+                    "currency_id": {
+                      "type": "integer",
+                      "examples": [
+                        2
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "description": "First name of the person"
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Last name of the person"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number (numeric characters only)"
+          },
+          "street": {
+            "type": "string",
+            "description": "Street name"
+          },
+          "number": {
+            "type": "string",
+            "description": "House number"
+          },
+          "line2": {
+            "type": "string",
+            "description": "Apartment number, entrance, floor, etc."
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country"
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "Zip code"
+          },
+          "latitude": {
+            "type": "string",
+            "description": "Latitude"
+          },
+          "longitude": {
+            "type": "string",
+            "description": "Longitude"
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "phone",
+          "street",
+          "number",
+          "city",
+          "country"
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the product"
+          },
+          "code": {
+            "type": "string",
+            "description": "Product code"
+          },
+          "variation": {
+            "type": "string",
+            "description": "Variation of the product (e.g., size, color)"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "Price of the product"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "float",
+            "description": "Quantity of the product"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "price",
+          "quantity"
+        ]
+      },
+      "OrderStatus": {
+        "type": "string",
+        "description": "The order's status",
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "placed",
+            "description": "Draft order created"
+          },
+          {
+            "type": "string",
+            "const": "updated",
+            "description": "Draft order updated"
+          },
+          {
+            "type": "string",
+            "const": "accept_failed",
+            "description": "Can't transmit to courier"
+          },
+          {
+            "type": "string",
+            "const": "pending_accept",
+            "description": "Transmitting to courier"
+          },
+          {
+            "type": "string",
+            "const": "accepted",
+            "description": "Transmitted to courier"
+          },
+          {
+            "type": "string",
+            "const": "pending_pickup",
+            "description": "Awaiting pickup"
+          },
+          {
+            "type": "string",
+            "const": "transit",
+            "description": "In transit"
+          },
+          {
+            "type": "string",
+            "const": "transit_to_destination",
+            "description": "In transit to the destination"
+          },
+          {
+            "type": "string",
+            "const": "transit_to_warehouse",
+            "description": "In transit to fulfillment warehouse"
+          },
+          {
+            "type": "string",
+            "const": "transit_to_sender",
+            "description": "In transit back to sender"
+          },
+          {
+            "type": "string",
+            "const": "in_warehouse",
+            "description": "In fulfillment warehouse"
+          },
+          {
+            "type": "string",
+            "const": "pending_cancel",
+            "description": "Cancelling"
+          },
+          {
+            "type": "string",
+            "const": "service_cancel",
+            "description": "Cancelled by customer service"
+          },
+          {
+            "type": "string",
+            "const": "data_problem",
+            "description": "Data problem"
+          },
+          {
+            "type": "string",
+            "const": "cancelled",
+            "description": "Cancelled"
+          },
+          {
+            "type": "string",
+            "const": "delivered",
+            "description": "Delivered"
+          },
+          {
+            "type": "string",
+            "const": "rejected",
+            "description": "Rejected"
+          },
+          {
+            "type": "string",
+            "const": "refunded",
+            "description": "Refunded"
+          },
+          {
+            "type": "string",
+            "const": "failed",
+            "description": "Failed"
+          }
+        ]
+      }
+    }
+  },
+  "paths": {
+    "/api/json/v1/check": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get Shipping Options",
+        "description": "Takes address and package size information, and returns all available delivery services for it, and their details.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckRequestBody"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ContentType"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloApiKey"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloHmac"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response (may be empty)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CheckSuccessResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CheckSuccessEmptyResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/json/v1/order": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create Order",
+        "description": "Takes address information, package size information, polygon id and external service id (these two are from the \"Get Shipping Options\" endpoint) and creates a draft order on Velo.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnprocessableContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/json/v1/accept": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Confirm Delivery",
+        "description": "Takes a draft order's ID and transmits it to a courier service provider. After confirming the delivery, your order will be billed and receive a shipping label.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptRequestBody"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ContentType"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloApiKey"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloHmac"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/json/v1/label": {
+      "post": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Create a shipping label",
+        "description": "Creates a ready to print PDF shipping label with barcode, 10cm X 10cm.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelRequestBody"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ContentType"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloApiKey"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloHmac"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelSuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/json/v1/info/{order}": {
+      "get": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Get Order Info",
+        "description": "Gets an order's status, barcode and tracking link.",
+        "parameters": [
+          {
+            "name": "order",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the order.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ContentType"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloApiKey"
+          },
+          {
+            "$ref": "#/components/parameters/XVeloHmac"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryInfoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

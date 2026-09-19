@@ -1,0 +1,2358 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Cacimbo AT - API (Assist\u00eancias, Tarefas, Clientes, Ve\u00edculos)",
+    "version": "1.0.0",
+    "description": "OpenAPI (Swagger) do Cacimbo AT, baseada nos endpoints usados pelo app. Inclui CRUD de Assist\u00eancias e Tarefas, a\u00e7\u00f5es (estado, cobran\u00e7a, encaminhar, localiza\u00e7\u00e3o), upload/listagem/remo\u00e7\u00e3o de imagens de tarefas, e cat\u00e1logos de apoio.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/cacimbo/cacimbo-at-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://cacimboweb.com/api/",
+      "description": "Produ\u00e7\u00e3o"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Push"
+    },
+    {
+      "name": "Utilizadores"
+    },
+    {
+      "name": "Assist\u00eancias"
+    },
+    {
+      "name": "Assist\u00eancias - A\u00e7\u00f5es"
+    },
+    {
+      "name": "Cobran\u00e7a"
+    },
+    {
+      "name": "Tarefas"
+    },
+    {
+      "name": "Tarefas - A\u00e7\u00f5es"
+    },
+    {
+      "name": "Tarefas - Imagens"
+    },
+    {
+      "name": "Clientes"
+    },
+    {
+      "name": "Ve\u00edculos"
+    },
+    {
+      "name": "Cat\u00e1logos"
+    },
+    {
+      "name": "Apoio"
+    }
+  ],
+  "paths": {
+    "/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login (obter token)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "password123",
+                "device_name": "insomnia"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token gerado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inv\u00e1lidas"
+          },
+          "422": {
+            "description": "Erro de valida\u00e7\u00e3o"
+          }
+        }
+      }
+    },
+    "/send-push-token": {
+      "put": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Registar/actualizar Push Token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushTokenRequest"
+              },
+              "example": {
+                "user_id": 1,
+                "push_token": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Utilizadores"
+        ],
+        "summary": "Listar utilizadores",
+        "responses": {
+          "200": {
+            "description": "Lista de utilizadores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistencias": {
+      "get": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Listar assist\u00eancias (geral)",
+        "responses": {
+          "200": {
+            "description": "Lista de assist\u00eancias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assistance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Criar assist\u00eancia",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistanceCreateRequest"
+              },
+              "example": {
+                "titulo": "Avaria no POS",
+                "descricao": "Erro ao fechar conta",
+                "prioridade": "alta",
+                "estado": "to do",
+                "fechado": 0,
+                "empresaNome": "Cacimbo Angola",
+                "empresa_id": 5417167444,
+                "remetente": "Carlos",
+                "remetenteContacto": "+244930120001",
+                "destinatario": "Suporte",
+                "user_id": 1,
+                "localizacao": "Luanda - Talatona",
+                "data": "2026-02-11",
+                "id_veiculo": 123,
+                "equipamento": {
+                  "tipo": "POS",
+                  "serial": "SN-001"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assistance"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          },
+          "5XX": {
+            "description": "Erro interno"
+          }
+        }
+      }
+    },
+    "/assistencias/{id}": {
+      "get": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Obter detalhes da assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assist\u00eancia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assistance"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "N\u00e3o encontrado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Eliminar assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "Removido"
+          },
+          "404": {
+            "description": "N\u00e3o encontrado"
+          }
+        }
+      }
+    },
+    "/assistencias/user/{userId}": {
+      "get": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Listar assist\u00eancias por utilizador",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assistance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistencias/parceiro/{partnerId}": {
+      "get": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Listar assist\u00eancias por parceiro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partnerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assistance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistencias/parceiro/{partnerId}/all": {
+      "get": {
+        "tags": [
+          "Assist\u00eancias"
+        ],
+        "summary": "Listar assist\u00eancias por parceiro (com filtro de datas)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partnerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista filtrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assistance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistencias-tipos": {
+      "get": {
+        "tags": [
+          "Apoio"
+        ],
+        "summary": "Listar tipos de assist\u00eancia por perfil",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "perfil",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de tipos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AssistanceType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assistencias-pendentes/empresa/{companyId}": {
+      "get": {
+        "tags": [
+          "Apoio"
+        ],
+        "summary": "Listar assist\u00eancias pendentes por empresa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assistance"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assist-edit-estado/{id}": {
+      "put": {
+        "tags": [
+          "Assist\u00eancias - A\u00e7\u00f5es"
+        ],
+        "summary": "Alterar estado da assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistanceStatusUpdateRequest"
+              },
+              "example": {
+                "estado": "done"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assistance"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/assistencia/{id}/location-edit": {
+      "put": {
+        "tags": [
+          "Assist\u00eancias - A\u00e7\u00f5es"
+        ],
+        "summary": "Alterar localiza\u00e7\u00e3o da assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistanceLocationUpdateRequest"
+              },
+              "example": {
+                "localizacao": "Luanda - Talatona"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assistance"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/assistencia-encaminhar": {
+      "put": {
+        "tags": [
+          "Assist\u00eancias - A\u00e7\u00f5es"
+        ],
+        "summary": "Encaminhar assist\u00eancia para outro utilizador",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistanceForwardRequest"
+              },
+              "example": {
+                "user_id": 12,
+                "assistencia_id": 345
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Encaminhado"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/assistencia/{id}/task-edit-all-estado": {
+      "put": {
+        "tags": [
+          "Assist\u00eancias - A\u00e7\u00f5es"
+        ],
+        "summary": "Iniciar/Parar todas as tarefas da assist\u00eancia",
+        "description": "Enviar \"start-all\" ou \"stop-all\".",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskEditAllStatusRequest"
+              },
+              "example": {
+                "estado": "start-all"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/estados-cobranca": {
+      "get": {
+        "tags": [
+          "Cobran\u00e7a"
+        ],
+        "summary": "Listar estados de cobran\u00e7a",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentStatus"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assist-edit-estado-cobranca/{id}": {
+      "put": {
+        "tags": [
+          "Cobran\u00e7a"
+        ],
+        "summary": "Alterar estado de cobran\u00e7a da assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistancePaymentStatusUpdateRequest"
+              },
+              "example": {
+                "id_estado_cobranca": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "tags": [
+          "Tarefas"
+        ],
+        "summary": "Listar tarefas (geral)",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tarefas"
+        ],
+        "summary": "Criar tarefa",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateRequest"
+              },
+              "example": {
+                "tarefa": "Diagn\u00f3stico",
+                "estado": "to do",
+                "assistencia_id": 345,
+                "user_id": 1,
+                "descricao": "Verificar logs",
+                "inicio": "2026-02-11",
+                "fim": null,
+                "task_texto_id": 10,
+                "cobrar": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "delete": {
+        "tags": [
+          "Tarefas"
+        ],
+        "summary": "Eliminar tarefa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "Removido"
+          },
+          "404": {
+            "description": "N\u00e3o encontrado"
+          }
+        }
+      }
+    },
+    "/tasks/get-por-assistencia/{assistanceId}": {
+      "get": {
+        "tags": [
+          "Tarefas"
+        ],
+        "summary": "Listar tarefas por assist\u00eancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assistanceId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-edit/{id}": {
+      "put": {
+        "tags": [
+          "Tarefas - A\u00e7\u00f5es"
+        ],
+        "summary": "Editar descri\u00e7\u00e3o e datas da tarefa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskEditRequest"
+              },
+              "example": {
+                "descricao": "Atualizar diagn\u00f3stico",
+                "inicio": "2026-02-11",
+                "fim": "2026-02-11"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/task-edit-estado/{id}": {
+      "put": {
+        "tags": [
+          "Tarefas - A\u00e7\u00f5es"
+        ],
+        "summary": "Alterar estado da tarefa (GPS opcional)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskStatusUpdateRequest"
+              },
+              "example": {
+                "estado": "done",
+                "gps_lat": -8.85,
+                "gps_long": 13.23
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/tasks/{id}/getImages": {
+      "get": {
+        "tags": [
+          "Tarefas - Imagens"
+        ],
+        "summary": "Listar imagens de uma tarefa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskImage"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{id}/uploadImage": {
+      "post": {
+        "tags": [
+          "Tarefas - Imagens"
+        ],
+        "summary": "Upload de imagem para uma tarefa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "collection",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload OK"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/tasks/{taskID}/delete-image/{imageName}": {
+      "delete": {
+        "tags": [
+          "Tarefas - Imagens"
+        ],
+        "summary": "Eliminar imagem da tarefa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "imageName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removido"
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/task-textos": {
+      "get": {
+        "tags": [
+          "Apoio"
+        ],
+        "summary": "Listar textos-modelo de tarefas por perfil",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "perfil",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskText"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listar clientes",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Client"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Criar cliente",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCreateRequest"
+              },
+              "example": {
+                "nome": "Oficina X",
+                "nif": "1234567890",
+                "email": "oficina@example.com",
+                "telefone": "+244900000000",
+                "morada": "Rua ...",
+                "localidade": "Luanda",
+                "provincia": "Luanda",
+                "pais": "Angola",
+                "contacto_nome": "Sr. Jo\u00e3o",
+                "cargo": "Gerente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/clientes/{companyId}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Obter detalhes do cliente (empresa)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "N\u00e3o encontrado"
+          }
+        }
+      }
+    },
+    "/veiculos": {
+      "post": {
+        "tags": [
+          "Ve\u00edculos"
+        ],
+        "summary": "Criar ve\u00edculo",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCreateRequest"
+              },
+              "example": {
+                "matricula": "LD-00-00-AA",
+                "quadro": "VIN123",
+                "marca": "Toyota",
+                "modelo": "Hilux",
+                "cc": "2800",
+                "hp": "200",
+                "peso": "2500",
+                "tara": "1900",
+                "motor": "Diesel",
+                "cor": "Branco",
+                "ano": "2021",
+                "combustivel": "Diesel",
+                "tipo": "Pickup",
+                "pneus_frente": "265/65R17",
+                "pneus_tras": "265/65R17",
+                "livrete_data": "2026-02-11"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/veiculos/{id}": {
+      "get": {
+        "tags": [
+          "Ve\u00edculos"
+        ],
+        "summary": "Obter ve\u00edculo por ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ve\u00edculo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ve\u00edculos"
+        ],
+        "summary": "Actualizar ve\u00edculo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Erro"
+          }
+        }
+      }
+    },
+    "/veiculos/cliente/{clientId}/parceiro/{partnerId}": {
+      "get": {
+        "tags": [
+          "Ve\u00edculos"
+        ],
+        "summary": "Listar ve\u00edculos por cliente e parceiro",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "partnerId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Vehicle"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parceiros": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Listar parceiros",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Partner"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipamentos": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Listar equipamentos",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Equipment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/empresa-localizacoes": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Listar localiza\u00e7\u00f5es por parceiro",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "parceiro_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyLocation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/marcas": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Listar marcas de ve\u00edculos",
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleBrand"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/modelos": {
+      "get": {
+        "tags": [
+          "Cat\u00e1logos"
+        ],
+        "summary": "Listar modelos por marca",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "marca",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VehicleModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "device_name"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "PushTokenRequest": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "push_token"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "integer"
+          },
+          "push_token": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "empresa_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "parceiro_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "id_perfil": {
+            "type": "integer",
+            "nullable": true
+          },
+          "perfil": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "nullable": true
+              },
+              "nome": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        }
+      },
+      "Assistance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "uuid": {
+            "type": "string",
+            "nullable": true
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "prioridade": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "alta",
+              "media",
+              "baixa"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "to do",
+              "in progress",
+              "done",
+              "canceled"
+            ]
+          },
+          "fechado": {
+            "type": "integer",
+            "nullable": true,
+            "example": 0
+          },
+          "localizacao": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataDocumento": {
+            "type": "string",
+            "nullable": true
+          },
+          "empresaNome": {
+            "type": "string",
+            "nullable": true
+          },
+          "empresa_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "parceiro_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "remetente": {
+            "type": "string",
+            "nullable": true
+          },
+          "remetenteContacto": {
+            "type": "string",
+            "nullable": true
+          },
+          "destinatario": {
+            "type": "string",
+            "nullable": true
+          },
+          "id_veiculo": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "nullable": true
+          },
+          "matricula": {
+            "type": "string",
+            "nullable": true
+          },
+          "pendentes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "id_estado_cobranca": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "equipamento": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          }
+        }
+      },
+      "AssistanceCreateRequest": {
+        "type": "object",
+        "required": [
+          "titulo",
+          "descricao",
+          "prioridade",
+          "estado",
+          "fechado",
+          "empresaNome",
+          "empresa_id",
+          "remetente",
+          "remetenteContacto",
+          "destinatario",
+          "user_id"
+        ],
+        "properties": {
+          "titulo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "prioridade": {
+            "type": "string",
+            "enum": [
+              "alta",
+              "media",
+              "baixa"
+            ]
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "to do",
+              "in progress",
+              "done",
+              "canceled"
+            ]
+          },
+          "fechado": {
+            "type": "integer",
+            "example": 0
+          },
+          "localizacao": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "empresaNome": {
+            "type": "string"
+          },
+          "empresa_id": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "remetente": {
+            "type": "string"
+          },
+          "remetenteContacto": {
+            "type": "string"
+          },
+          "destinatario": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "id_veiculo": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "nullable": true
+          },
+          "equipamento": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          }
+        }
+      },
+      "AssistanceStatusUpdateRequest": {
+        "type": "object",
+        "required": [
+          "estado"
+        ],
+        "properties": {
+          "estado": {
+            "type": "string",
+            "enum": [
+              "to do",
+              "in progress",
+              "done",
+              "canceled"
+            ]
+          }
+        }
+      },
+      "AssistanceLocationUpdateRequest": {
+        "type": "object",
+        "required": [
+          "localizacao"
+        ],
+        "properties": {
+          "localizacao": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistanceForwardRequest": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "assistencia_id"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "integer"
+          },
+          "assistencia_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "AssistanceType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PaymentStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AssistancePaymentStatusUpdateRequest": {
+        "type": "object",
+        "required": [
+          "id_estado_cobranca"
+        ],
+        "properties": {
+          "id_estado_cobranca": {
+            "type": "integer"
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "tarefa": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "inicio": {
+            "type": "string"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "done",
+              "in progress",
+              "to do",
+              "canceled"
+            ]
+          },
+          "registo_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "assistencia_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "task_texto_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cobrar": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TaskCreateRequest": {
+        "type": "object",
+        "required": [
+          "tarefa",
+          "estado",
+          "assistencia_id",
+          "user_id",
+          "inicio",
+          "task_texto_id",
+          "cobrar"
+        ],
+        "properties": {
+          "tarefa": {
+            "type": "string"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "done",
+              "in progress",
+              "to do",
+              "canceled"
+            ]
+          },
+          "assistencia_id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "inicio": {
+            "type": "string"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true
+          },
+          "task_texto_id": {
+            "type": "integer"
+          },
+          "cobrar": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "TaskEditRequest": {
+        "type": "object",
+        "required": [
+          "descricao",
+          "inicio",
+          "fim"
+        ],
+        "properties": {
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "inicio": {
+            "type": "string"
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TaskStatusUpdateRequest": {
+        "type": "object",
+        "required": [
+          "estado"
+        ],
+        "properties": {
+          "estado": {
+            "type": "string",
+            "enum": [
+              "done",
+              "in progress",
+              "to do",
+              "canceled"
+            ]
+          },
+          "gps_lat": {
+            "type": "number",
+            "nullable": true
+          },
+          "gps_long": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
+      "TaskEditAllStatusRequest": {
+        "type": "object",
+        "required": [
+          "estado"
+        ],
+        "properties": {
+          "estado": {
+            "type": "string",
+            "enum": [
+              "start-all",
+              "stop-all"
+            ]
+          }
+        }
+      },
+      "TaskText": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "texto": {
+            "type": "string"
+          },
+          "perfil_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "TaskImage": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "nif": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "morada": {
+            "type": "string",
+            "nullable": true
+          },
+          "localidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "provincia": {
+            "type": "string",
+            "nullable": true
+          },
+          "pais": {
+            "type": "string",
+            "nullable": true
+          },
+          "contacto_nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "cargo": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ClientCreateRequest": {
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "nif": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "morada": {
+            "type": "string",
+            "nullable": true
+          },
+          "localidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "provincia": {
+            "type": "string",
+            "nullable": true
+          },
+          "pais": {
+            "type": "string",
+            "nullable": true
+          },
+          "contacto_nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "cargo": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "matricula": {
+            "type": "string"
+          },
+          "quadro": {
+            "type": "string",
+            "nullable": true
+          },
+          "marca": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cc": {
+            "type": "string",
+            "nullable": true
+          },
+          "hp": {
+            "type": "string",
+            "nullable": true
+          },
+          "peso": {
+            "type": "string",
+            "nullable": true
+          },
+          "tara": {
+            "type": "string",
+            "nullable": true
+          },
+          "motor": {
+            "type": "string",
+            "nullable": true
+          },
+          "cor": {
+            "type": "string",
+            "nullable": true
+          },
+          "ano": {
+            "type": "string",
+            "nullable": true
+          },
+          "combustivel": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "pneus_frente": {
+            "type": "string",
+            "nullable": true
+          },
+          "pneus_tras": {
+            "type": "string",
+            "nullable": true
+          },
+          "livrete_data": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "VehicleCreateRequest": {
+        "type": "object",
+        "required": [
+          "matricula",
+          "marca",
+          "modelo"
+        ],
+        "properties": {
+          "matricula": {
+            "type": "string"
+          },
+          "quadro": {
+            "type": "string",
+            "nullable": true
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "cc": {
+            "type": "string",
+            "nullable": true
+          },
+          "hp": {
+            "type": "string",
+            "nullable": true
+          },
+          "peso": {
+            "type": "string",
+            "nullable": true
+          },
+          "tara": {
+            "type": "string",
+            "nullable": true
+          },
+          "motor": {
+            "type": "string",
+            "nullable": true
+          },
+          "cor": {
+            "type": "string",
+            "nullable": true
+          },
+          "ano": {
+            "type": "string",
+            "nullable": true
+          },
+          "combustivel": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "pneus_frente": {
+            "type": "string",
+            "nullable": true
+          },
+          "pneus_tras": {
+            "type": "string",
+            "nullable": true
+          },
+          "livrete_data": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Partner": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "nif": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Equipment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CompanyLocation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "parceiro_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "VehicleBrand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string"
+          }
+        }
+      },
+      "VehicleModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      }
+    }
+  }
+}

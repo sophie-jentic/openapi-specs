@@ -1,0 +1,266 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "POOSD Contacts API",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ucf-050/contact-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://poosdproject.space/POOSD_Small_Project",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/SearchContact.php": {
+      "post": {
+        "summary": "Search contacts (scoped to user)",
+        "description": "Searches a user's contacts by partial match on FirstName, LastName, Phone, or Email.\nIf `search` is an empty string, returns all contacts for the given userId.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "search",
+                  "userId"
+                ],
+                "properties": {
+                  "search": {
+                    "type": "string",
+                    "description": "Search term (empty string returns all contacts)",
+                    "example": "John"
+                  },
+                  "userId": {
+                    "type": "integer",
+                    "description": "Authenticated user's ID",
+                    "example": 1
+                  }
+                }
+              },
+              "examples": {
+                "searchAll": {
+                  "summary": "Return all contacts",
+                  "value": {
+                    "search": "",
+                    "userId": 1
+                  }
+                },
+                "searchByName": {
+                  "summary": "Search by partial name",
+                  "value": {
+                    "search": "jo",
+                    "userId": 1
+                  }
+                },
+                "searchByEmail": {
+                  "summary": "Search by partial email",
+                  "value": {
+                    "search": "@gmail",
+                    "userId": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Results list or error message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ID": {
+                            "type": "integer",
+                            "example": 12
+                          },
+                          "Name": {
+                            "type": "string",
+                            "example": "John Doe"
+                          },
+                          "Phone": {
+                            "type": "string",
+                            "example": "5551234567"
+                          },
+                          "Email": {
+                            "type": "string",
+                            "example": "john@email.com"
+                          },
+                          "DateCreated": {
+                            "type": "string",
+                            "example": "2026-02-20 13:45:00"
+                          },
+                          "userId": {
+                            "type": "integer",
+                            "example": 1
+                          }
+                        }
+                      }
+                    },
+                    "userId": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": ""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/RegisterContact.php": {
+      "post": {
+        "summary": "Register user",
+        "description": "Creates a new user in the Users table.\n\nValidation:\n- All fields are required\n- Username must be unique (case-insensitive)\n\nIMPORTANT:\nThe frontend hashes the password before sending.\nTherefore this endpoint expects MD5(password).\n\nExample:\nmd5(\"Test1\") = e1b849f9631ffc1829b2e31402373e3c\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "firstName",
+                  "lastName",
+                  "login",
+                  "password"
+                ],
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "description": "User first name",
+                    "example": "Demo"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "description": "User last name",
+                    "example": "User"
+                  },
+                  "login": {
+                    "type": "string",
+                    "description": "Unique username",
+                    "example": "demo_live_001"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "MD5(password)",
+                    "example": "e1b849f9631ffc1829b2e31402373e3c"
+                  }
+                }
+              },
+              "example": {
+                "firstName": "",
+                "lastName": "",
+                "login": "",
+                "password": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success or error JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "New user ID (0 if error)",
+                      "example": 42
+                    },
+                    "firstName": {
+                      "type": "string",
+                      "example": "Demo"
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "example": "User"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message if any",
+                      "example": ""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/LoginContact.php": {
+      "post": {
+        "summary": "Login user",
+        "description": "Password must be the MD5 hash (frontend hashes before sending).\nExample: md5(\"Test1\") = e1b849f9631ffc1829b2e31402373e3c\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "login",
+                  "password"
+                ],
+                "properties": {
+                  "login": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "MD5(password)"
+                  }
+                }
+              },
+              "example": {
+                "login": "",
+                "password": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success or error JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

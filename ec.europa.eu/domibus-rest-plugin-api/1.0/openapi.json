@@ -1,0 +1,1379 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Domibus REST Plugin API",
+    "description": "The Domibus REST Plugin provides a simplified and secure external interface for integrating backend applications to exchange eDelivery AS4 messages using synchronous and asynchronous REST communication.",
+    "termsOfService": "https://ec.europa.eu/digital-building-blocks/sites/spaces/DIGITAL/pages/467117601/Domibus+support+arrangement",
+    "contact": {
+      "name": "eDelivery Service Desk",
+      "url": "https://ec.europa.eu/digital-building-blocks/sites/spaces/DIGITAL/pages/467119336/Support+eDelivery",
+      "email": "EC-EDELIVERY-SUPPORT@ec.europa.eu"
+    },
+    "license": {
+      "name": "EUPL 1.2",
+      "url": "https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12"
+    },
+    "version": "1.0",
+    "x-api-id": "DOMIBUS-REST-001",
+    "x-edelivery": {
+      "publisher": {
+        "name": "European Commission",
+        "url": "https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/eDelivery"
+      },
+      "lifecycle": {
+        "maturity": "development"
+      }
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/cyberhub/REST-hook/1.0"
+  },
+  "paths": {
+    "/api/rest-plugin/v1/messages": {
+      "get": {
+        "tags": [
+          "Messages API"
+        ],
+        "summary": "Retrieve a list of messages",
+        "description": "Get a list of messages with filtering and pagination. Use `Prefer` header for performance optimization and `fields` parameter for granular field selection.\n\n**Performance Optimization:**\n- **Prefer: return=minimal** - Returns MessageSummary (id, message_id, msh_role, processing_type, status, sent_at). Minimal joins, fastest.\n- **Prefer: return=representation** (default) - Returns MessageDetails with full metadata (message_properties, party_info, collaboration_info, attachments metadata).\n\n**Field Selection:** Use `fields` to add/override included fields. Supports **field groups** ('metadata', 'attachments', 'errors') and **individual fields** ('message_properties', 'party_info'). Note: When Prefer=minimal, Java returns MessageSummary objects; with Prefer=representation, returns MessageDetails objects. Fields parameter controls which properties are populated within those objects.",
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "name": "msh_role",
+            "in": "query",
+            "description": "The MSH role to filter messages, SENDING or RECEIVING.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MshRole"
+            }
+          },
+          {
+            "name": "processing_type",
+            "in": "query",
+            "description": "The processing type, PUSH or PULL.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProcessingType"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "The status to filter messages. Only READY_TO_PULL and SEND_ENQUEUED are allowed.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/MessageStatus"
+            }
+          },
+          {
+            "name": "message_id",
+            "in": "query",
+            "description": "Filter by Domibus AS4 message ID (business identifier, e.g., 'msg-123@domibus.eu'). This is distinct from the REST API's internal message ID used in path parameters.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of messages to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor for forward pagination. Returns messages with message-id > cursor. Pass the value from the 'next' link header.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Field to sort by. Prefix with minus (-) for descending order.\n\n**Examples:**\n- `sort=sent_at` - Ascending by send time (oldest first)\n- `sort=-sent_at` - Descending by send time (newest first)\n- `sort=-updated_at` - Most recently updated first",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "-sent_at"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "Comma-separated list of additional fields/field groups to include.\n\n**Field groups:**\n- `metadata` - Includes message_properties, party_info, and collaboration_info\n- `attachments` - Includes payload_info array\n- `errors` - Includes error logs\n\n**Individual fields:**\n- `message_properties`\n- `party_info`\n- `collaboration_info`\n- `payload_info`\n\n**Examples:**\n- `fields=metadata,errors` - Groups only\n- `fields=message_properties,errors` - Mix of individual field and group\n- `fields=errors` with `Prefer: return=minimal` header - Returns id+status+timestamp+errors only",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "metadata,errors"
+            }
+          },
+          {
+            "name": "Prefer",
+            "in": "header",
+            "description": "RFC 7240 Prefer header. 'return=minimal' (id, message_id, role, status, sent_at only), 'return=representation' (full metadata, default).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "return=representation",
+                "return=minimal"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of messages. Response format depends on 'Prefer' header: 'return=representation' returns full MessageDetails objects, 'return=minimal' returns lightweight MessageSummary objects. Pagination links provided in Link header (RFC 5988).",
+            "headers": {
+              "Link": {
+                "description": "RFC 5988 compliant web links for pagination. Contains comma-separated links with rel values: 'self' (current page), 'first' (first page), 'prev' (previous page, if not first), 'next' (next page, if not last), 'last' (last page). Example: <https://api.example.org/api/rest-plugin/v1/messages?cursor=abc123>; rel=\"self\", <https://api.example.org/api/rest-plugin/v1/messages?cursor=xyz789>; rel=\"next\"",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Preference-Applied": {
+                "description": "RFC 7240 header indicating which representation preference was applied (return=representation or return=minimal).",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/MessageSummary"
+                      },
+                      {
+                        "$ref": "#/components/schemas/MessageDetails"
+                      }
+                    ]
+                  }
+                },
+                "examples": {
+                  "example1": {
+                    "summary": "Single message filtered by message_id (full representation)",
+                    "description": "Query: ?message_id=urn:uuid:abc123-def4-5678-90ab-cdef12345678@sender.eu with default Prefer: return=representation. Returns complete metadata including party_info, collaboration_info, and attachment details.",
+                    "value": [
+                      {
+                        "id": 100234567,
+                        "metadata": {
+                          "mpc": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/defaultMPC",
+                          "message_info": {
+                            "sent_at": "2025-12-06T10:15:00.000+01:00",
+                            "message_id": "urn:uuid:abc123-def4-5678-90ab-cdef12345678@sender.eu",
+                            "ref_to_message_id": null
+                          },
+                          "party_info": {
+                            "from": {
+                              "party_id": {
+                                "value": "SenderPartyID",
+                                "type": "urn:oasis:names:tc:ebcore:partyid-type:unregistered"
+                              },
+                              "role": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/sender"
+                            },
+                            "to": {
+                              "party_id": {
+                                "value": "ReceiverPartyID",
+                                "type": "iso6523::0123::987654321"
+                              },
+                              "role": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/receiver"
+                            }
+                          },
+                          "collaboration_info": {
+                            "service": {
+                              "value": "urn:www.cenbii.eu:transaction:biitrns001:ver2.0",
+                              "type": "urn:oasis:names:tc:ebcore:vve:service"
+                            },
+                            "action": "InvoiceOnly",
+                            "conversation_id": "CONV-4567-ABC-7890"
+                          },
+                          "message_properties": {
+                            "property": [
+                              {
+                                "name": "originalSender",
+                                "value": "C1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "finalRecipient",
+                                "value": "C4",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "payload_info": {
+                            "attachments": [
+                              {
+                                "id": 9001,
+                                "content_id": "cid:invoice_xml",
+                                "content_type": "application/xml",
+                                "name": "invoice.xml",
+                                "content_status": "AVAILABLE"
+                              }
+                            ]
+                          }
+                        },
+                        "processing_info": {
+                          "processing_type": "PUSH",
+                          "msh_role": "SENDING",
+                          "backend": "REST_PLUGIN_APP_A",
+                          "received_at": null,
+                          "updated_at": "2025-12-06T10:15:05.123+01:00",
+                          "status": "SEND_ENQUEUED",
+                          "auto_send": true
+                        }
+                      }
+                    ]
+                  },
+                  "example2": {
+                    "summary": "Multiple messages with minimal representation (Prefer: return=minimal)",
+                    "description": "Query without message_id filter, using Prefer: return=minimal header. Returns array of messages with only essential fields (id, message_id, msh_role, processing_type, status, auto_send). Efficient for listing/searching.",
+                    "value": [
+                      {
+                        "id": 100234567,
+                        "metadata": {
+                          "message_info": {
+                            "message_id": "urn:uuid:abc123-def4-5678-90ab-cdef12345678@sender.eu",
+                            "sent_at": "2025-12-06T10:15:30.000+01:00"
+                          }
+                        },
+                        "processing_info": {
+                          "processing_type": "PUSH",
+                          "msh_role": "SENDING",
+                          "status": "SEND_ENQUEUED",
+                          "auto_send": true
+                        }
+                      },
+                      {
+                        "id": 100234568,
+                        "metadata": {
+                          "message_info": {
+                            "message_id": "urn:uuid:fed098-cba7-6543-21ab-fedcba098765@sender.eu",
+                            "sent_at": "2025-12-06T10:20:45.000+01:00"
+                          }
+                        },
+                        "processing_info": {
+                          "processing_type": "PULL",
+                          "msh_role": "RECEIVING",
+                          "status": "READY_TO_PULL",
+                          "auto_send": false
+                        }
+                      }
+                    ]
+                  },
+                  "example3": {
+                    "summary": "Message with 2 attachments (full representation)",
+                    "description": "Query: ?message_id=urn:uuid:... with default Prefer: return=representation. Demonstrates message with multiple attachments (2 attachments), showing complete metadata for each attachment including content_id, content_type, content_status.",
+                    "value": [
+                      {
+                        "id": 100234567,
+                        "metadata": {
+                          "mpc": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/defaultMPC",
+                          "message_info": {
+                            "sent_at": "2025-12-06T10:15:00.000+01:00",
+                            "message_id": "urn:uuid:abc123-def4-5678-90ab-cdef12345678@sender.eu",
+                            "ref_to_message_id": null
+                          },
+                          "party_info": {
+                            "from": {
+                              "party_id": {
+                                "value": "SenderPartyID",
+                                "type": "urn:oasis:names:tc:ebcore:partyid-type:unregistered"
+                              },
+                              "role": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/sender"
+                            },
+                            "to": {
+                              "party_id": {
+                                "value": "ReceiverPartyID",
+                                "type": "iso6523::0123::987654321"
+                              },
+                              "role": "http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/receiver"
+                            }
+                          },
+                          "collaboration_info": {
+                            "service": {
+                              "value": "urn:www.cenbii.eu:transaction:biitrns001:ver2.0",
+                              "type": "urn:oasis:names:tc:ebcore:vve:service"
+                            },
+                            "action": "InvoiceOnly",
+                            "conversation_id": "CONV-4567-ABC-7890"
+                          },
+                          "message_properties": {
+                            "property": [
+                              {
+                                "name": "originalSender",
+                                "value": "C1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "finalRecipient",
+                                "value": "C4",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "payload_info": {
+                            "attachments": [
+                              {
+                                "id": 9001,
+                                "content_id": "cid:invoice_xml",
+                                "content_type": "application/xml",
+                                "name": "invoice.xml",
+                                "content_status": "AVAILABLE"
+                              },
+                              {
+                                "id": 9002,
+                                "content_id": "cid:document_pdf",
+                                "content_type": "application/pdf",
+                                "name": "document.pdf",
+                                "content_status": "AVAILABLE"
+                              }
+                            ]
+                          }
+                        },
+                        "processing_info": {
+                          "processing_type": "PUSH",
+                          "msh_role": "SENDING",
+                          "backend": "REST_PLUGIN_APP_A",
+                          "received_at": null,
+                          "updated_at": "2025-12-06T10:15:05.123+01:00",
+                          "status": "SEND_ENQUEUED",
+                          "auto_send": true
+                        }
+                      }
+                    ]
+                  },
+                  "example4": {
+                    "summary": "GET messages with errors using fields parameter",
+                    "description": "Sample response using `fields=errors` to include error logs for messages in SEND_FAILURE status. Uses `Prefer: return=minimal` header to return only essential fields (id, metadata.message_info.message_id, processing_info.msh_role, processing_info.processing_type, processing_info.status, processing_info.errors).",
+                    "value": [
+                      {
+                        "id": 100234567,
+                        "metadata": {
+                          "message_info": {
+                            "message_id": "urn:uuid:abc123-def4-5678-90ab-cdef12345678@sender.eu"
+                          }
+                        },
+                        "processing_info": {
+                          "msh_role": "SENDING",
+                          "processing_type": "PUSH",
+                          "status": "SEND_FAILURE",
+                          "errors": [
+                            {
+                              "id": 1001,
+                              "error_code": "EBMS_0004",
+                              "error_detail": "Connection timeout while attempting to deliver message",
+                              "created_at": "2025-12-06T10:20:15.456+01:00"
+                            },
+                            {
+                              "id": 1002,
+                              "error_code": "EBMS_0005",
+                              "error_detail": "Maximum retry attempts (3) exceeded",
+                              "created_at": "2025-12-06T10:25:30.789+01:00"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "id": 100234568,
+                        "metadata": {
+                          "message_info": {
+                            "message_id": "urn:uuid:fed098-cba7-6543-21ab-fedcba098765@sender.eu"
+                          }
+                        },
+                        "processing_info": {
+                          "msh_role": "RECEIVING",
+                          "processing_type": "PULL",
+                          "status": "READY_TO_PULL"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or invalid query parameter value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                },
+                "example": {
+                  "type": "/problems/validation-error",
+                  "title": "Invalid Query Parameter Value",
+                  "status": 400,
+                  "detail": "Invalid parameter value: 'status' must be one of [READY_TO_PULL, SEND_ENQUEUED, WAITING_FOR_RECEIPT, etc]. Check the API documentation for valid values.",
+                  "instance": "/api/rest-plugin/v1/messages?status=INVALID_VALUE"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                },
+                "example": {
+                  "type": "/problems/authentication-failed",
+                  "title": "Unauthorized",
+                  "status": 401,
+                  "detail": "Authentication failed: Missing or invalid API key/token.",
+                  "instance": "/api/rest-plugin/v1/messages"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden: User lacks permission to view messages.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                },
+                "example": {
+                  "type": "/problems/permission-denied",
+                  "title": "Forbidden",
+                  "status": 403,
+                  "detail": "Forbidden: User is not authorized to retrieve bulk message data.",
+                  "instance": "/api/rest-plugin/v1/messages"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error during data retrieval.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                },
+                "example": {
+                  "type": "/problems/internal-error",
+                  "title": "Internal Server Error",
+                  "status": 500,
+                  "detail": "Database access error during message retrieval.",
+                  "instance": "/api/rest-plugin/v1/messages"
+                }
+              }
+            }
+          }
+        },
+        "x-order": 1
+      }
+    },
+    "/api/rest-plugin/v1/openapi.yaml": {
+      "get": {
+        "tags": [
+          "API Documentation"
+        ],
+        "summary": "Get OpenAPI documentation in YAML format",
+        "description": "Returns the current OpenAPI 3.1 specification document for this REST API in YAML format. This endpoint is mandated by the ISA2 IPS REST API Profile for API documentation accessibility.",
+        "operationId": "getOpenApiYaml",
+        "responses": {
+          "200": {
+            "description": "OK - OpenAPI document returned successfully in YAML format.",
+            "content": {
+              "application/yaml": {}
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to generate OpenAPI documentation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable - The API documentation service is not operational.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rest-plugin/v1/openapi.json": {
+      "get": {
+        "tags": [
+          "API Documentation"
+        ],
+        "summary": "Get OpenAPI documentation in JSON format",
+        "description": "Returns the current OpenAPI 3.1 specification document for this REST API in JSON format. This endpoint is mandated by the ISA2 IPS REST API Profile for API documentation accessibility.",
+        "operationId": "getOpenApiJson",
+        "responses": {
+          "200": {
+            "description": "OK - OpenAPI document returned successfully in JSON format.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to generate OpenAPI documentation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable - The API documentation service is not operational.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProblemDetail": {
+        "required": [
+          "status",
+          "title",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A URI reference that identifies the problem type.",
+            "example": "/problems/unauthorized-access"
+          },
+          "title": {
+            "type": "string",
+            "description": "A short, human-readable summary of the problem type.",
+            "example": "Authentication Missing"
+          },
+          "status": {
+            "type": "integer",
+            "description": "The HTTP status code (e.g., 401, 404).",
+            "format": "int32",
+            "example": 401
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human-readable explanation specific to this occurrence.",
+            "example": "The request requires valid authentication credentials."
+          },
+          "instance": {
+            "type": "string",
+            "description": "A URI reference that identifies the specific occurrence of the problem.",
+            "example": "/api/rest-plugin/v1/messages/123456"
+          }
+        },
+        "description": "Standardized API error response (RFC 7807)."
+      },
+      "ResendMessagesRequestPayload": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "<b>Explicit list of message IDs</b> to be resent.",
+            "items": {
+              "type": "integer",
+              "description": "<b>Explicit list of message IDs</b> to be resent.",
+              "format": "int64"
+            }
+          },
+          "filter": {
+            "type": "string",
+            "description": "<b>RSQL/FIQL filter expression</b> to select messages for resend. Supports operators: `==`, `!=`, `=lt=`, `=le=`, `=gt=`, `=ge=`, `=in=`, `=out=`, `AND`, `OR`, `()`. Filterable fields: `status`, `mshRole`, `processingType`, `fromParty`, `toParty`, `messageId`, `conversationId`, `receivedFrom`, `receivedTo`. Examples: `status==SEND_FAILURE`, `status==SEND_FAILURE AND fromParty==DOMIBUS_RED`, `status=in=(SEND_FAILURE,SEND_ATTEMPT_FAILED) AND processingType==PUSH`, `(status==SEND_FAILURE OR status==SEND_ATTEMPT_FAILED) AND receivedFrom=ge=2025-01-01T00:00:00Z`.",
+            "example": "status==SEND_FAILURE AND fromParty==DOMIBUS_RED"
+          }
+        },
+        "description": "HTTP Request payload to <b>initiate a new batch message resend</b> operation."
+      },
+      "BatchResendMessageItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the message."
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the resend operation for this message."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description or error details if resend failed."
+          }
+        },
+        "description": "Result for a single message in a batch resend operation."
+      },
+      "MessageResendRequestStatus": {
+        "type": "string",
+        "description": "Status of a batch resend request job.",
+        "enum": [
+          "NOT_STARTED",
+          "IN_PROGRESS",
+          "COMPLETED",
+          "FAILED"
+        ]
+      },
+      "ResendMessagesRequestResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Internal database <b>message ID</b> of the newly created object.",
+            "format": "int64"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageResendRequestStatus"
+          },
+          "processing_started_at": {
+            "type": "string",
+            "description": "Timestamp when the server <b>started processing</b> the request.",
+            "format": "date-time"
+          },
+          "processing_ended_at": {
+            "type": "string",
+            "description": "Timestamp when the server <b>finished processing</b> the request.",
+            "format": "date-time"
+          },
+          "selected_messages": {
+            "type": "integer",
+            "description": "Total number of messages <b>selected</b> by the filter.",
+            "format": "int32"
+          },
+          "enqueued_successfully": {
+            "type": "integer",
+            "description": "Number of messages <b>successfully re-enqueued</b> for sending.",
+            "format": "int32"
+          },
+          "failed_to_enqueue": {
+            "type": "integer",
+            "description": "Number of messages that <b>could not be re-enqueued</b> (e.g., due to status).",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "description": "Results for each message in the batch resend operation.",
+            "items": {
+              "$ref": "#/components/schemas/BatchResendMessageItem"
+            }
+          }
+        },
+        "description": "DTO representing the state and outcome of an asynchronous request to resend a batch of messages."
+      },
+      "AgreementRef": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The agreement reference string."
+          },
+          "type": {
+            "type": "string",
+            "description": "The <b>type attribute</b> of the agreement reference (optional)."
+          }
+        },
+        "description": "<b>Trading agreement reference</b> value and attributes."
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this attachment resource. This is the internal database ID, not the AS4 Content-ID (which is in attachment_id).",
+            "format": "int64"
+          },
+          "content_id": {
+            "type": "string",
+            "description": "The unique <b>Content-ID</b> for the attachment (AS4 payload identifier)."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "The <b>MIME Content-Type</b> of the attachment (e.g., text/xml, application/pdf)."
+          },
+          "content_ref": {
+            "type": "string",
+            "description": "<b>Reference to the location of the attachment content.</b> This field is used when the content is NOT embedded in the 'content' field (e.g., for later upload or large files). Supported reference types include: <ul><li><b>File URI:</b> `file:///path/to/local/file` (internal file system reference).</li><li><b>Web Resource:</b> `https://external.domain.com/resource` (external HTTP/HTTPS URL).</li></ul>If this field is present, the system will attempt to resolve the content from this location."
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional name for the attachment (used in Content-Disposition header when downloading)"
+          },
+          "content": {
+            "type": "string",
+            "description": "<b>Base64 encoded content</b> of the attachment. Included only in full representations or for small files.",
+            "format": "byte"
+          },
+          "content_status": {
+            "$ref": "#/components/schemas/AttachmentContentStatus"
+          },
+          "content_status_detail": {
+            "type": "string",
+            "description": "Additional details about the content status. Provides context for DOWNLOADING (progress), DOWNLOAD_FAILED (error message), UPLOADING (progress), or other states. Null when status is AVAILABLE or no additional details needed."
+          }
+        },
+        "description": "Represents a single payload (attachment) associated with an AS4 message."
+      },
+      "AttachmentContentStatus": {
+        "type": "string",
+        "description": "Indicates the availability status of attachment content.",
+        "enum": [
+          "AVAILABLE",
+          "MISSING",
+          "UPLOADING",
+          "DOWNLOADING",
+          "DOWNLOAD_FAILED"
+        ]
+      },
+      "CollaborationInfo": {
+        "required": [
+          "action",
+          "service"
+        ],
+        "type": "object",
+        "properties": {
+          "agreement_ref": {
+            "$ref": "#/components/schemas/AgreementRef"
+          },
+          "service": {
+            "$ref": "#/components/schemas/Service"
+          },
+          "action": {
+            "type": "string",
+            "description": "The specific <b>action</b> within the service."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "Identifier for the logical <b>business conversation</b> (optional)."
+          }
+        },
+        "description": "Defines the <b>context of the business process</b>."
+      },
+      "CreateMessageRequest": {
+        "required": [
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata"
+          },
+          "auto_send_if_complete": {
+            "type": "boolean",
+            "description": "Controls automatic sending behavior. When true (default), the message is automatically submitted to the MSH once all attachments are ready (embedded or referenced). When false, the message remains pending until an explicit POST /messages/{id}/send-request call.",
+            "default": true
+          }
+        },
+        "description": "Request payload containing AS4 UserMessage metadata and processing hints (auto_send_if_complete)."
+      },
+      "MessageInfo": {
+        "type": "object",
+        "properties": {
+          "sent_at": {
+            "type": "string",
+            "description": "The time the message was <b>created</b>.",
+            "format": "date-time"
+          },
+          "message_id": {
+            "type": "string",
+            "description": "The unique <b>identifier</b> of the message."
+          },
+          "ref_to_message_id": {
+            "type": "string",
+            "description": "<b>Reference to a previous message</b> (e.g., in a response)."
+          }
+        },
+        "description": "Contains <b>identifiers and chronological information</b> for the message."
+      },
+      "MessageMetadata": {
+        "required": [
+          "collaboration_info",
+          "party_info"
+        ],
+        "type": "object",
+        "properties": {
+          "mpc": {
+            "type": "string",
+            "description": "Message Partition Channel (<b>MPC</b>) identifier (optional)."
+          },
+          "message_info": {
+            "$ref": "#/components/schemas/MessageInfo"
+          },
+          "party_info": {
+            "$ref": "#/components/schemas/PartyInfo"
+          },
+          "collaboration_info": {
+            "$ref": "#/components/schemas/CollaborationInfo"
+          },
+          "message_properties": {
+            "$ref": "#/components/schemas/MessageProperties"
+          },
+          "payload_info": {
+            "$ref": "#/components/schemas/PayloadsInfo"
+          }
+        },
+        "description": "The core <b>AS4 UserMessage metadata structure</b> (excluding payloads), based on the ebMS3 XSD."
+      },
+      "MessageProperties": {
+        "required": [
+          "property"
+        ],
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "array",
+            "description": "List of custom name-value properties.",
+            "items": {
+              "$ref": "#/components/schemas/Property"
+            }
+          }
+        },
+        "description": "<b>Custom properties</b> attached to the UserMessage."
+      },
+      "Party": {
+        "required": [
+          "party_id",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "party_id": {
+            "$ref": "#/components/schemas/PartyId"
+          },
+          "role": {
+            "type": "string",
+            "description": "The party's specific <b>role</b> in the transaction."
+          }
+        },
+        "description": "Defines a <b>single party</b> (sender or receiver) with ID and role."
+      },
+      "PartyId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The actual party identifier string."
+          },
+          "type": {
+            "type": "string",
+            "description": "The <b>type attribute</b> of the PartyId (e.g., DUNS, GLN)."
+          }
+        },
+        "description": "<b>Party identifier</b> value and type attribute."
+      },
+      "PartyInfo": {
+        "required": [
+          "from"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/Party"
+          },
+          "to": {
+            "$ref": "#/components/schemas/Party"
+          }
+        },
+        "description": "Contains <b>party and role information</b> for the sender and receiver."
+      },
+      "PayloadsInfo": {
+        "required": [
+          "attachments"
+        ],
+        "type": "object",
+        "properties": {
+          "attachments": {
+            "type": "array",
+            "description": "List of Attachment elements, representing each payload.",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        },
+        "description": "Defines the list of <b>payloads (attachments)</b> carried by the message."
+      },
+      "Property": {
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The value of the property."
+          },
+          "name": {
+            "type": "string",
+            "description": "The required <b>name attribute</b> of the property."
+          },
+          "type": {
+            "type": "string",
+            "description": "The optional <b>type attribute</b> of the property."
+          }
+        },
+        "description": "A generic <b>name-value pair</b> used in MessageProperties or PartProperties."
+      },
+      "Service": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The service string identifier."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type attribute of the Service (optional)."
+          }
+        },
+        "description": "<b>Service value</b> and type attribute."
+      },
+      "DetailedMessageStatus": {
+        "type": "string",
+        "description": "Detailed message processing substates that track attachment acquisition and processing readiness. Priority: PENDING_UPLOADS > PENDING_ATTACHMENTS > PENDING_REFERENCE_RESOLUTION > PENDING_USER_ACTION.",
+        "enum": [
+          "PENDING_UPLOADS",
+          "PENDING_ATTACHMENTS",
+          "PENDING_REFERENCE_RESOLUTION",
+          "PENDING_USER_ACTION",
+          "READY_FOR_TRANSMISSION"
+        ]
+      },
+      "MessageDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this message resource. This is the internal database ID, not the AS4 Message ID (which is in metadata.message_info.message_id).",
+            "format": "int64"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadata"
+          },
+          "processing_info": {
+            "$ref": "#/components/schemas/MessageProcessingInfo"
+          }
+        },
+        "description": "<b>Detailed representation of a message</b>, including full AS4 metadata and all processing/log information."
+      },
+      "MessageError": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this error log entry.",
+            "format": "int64"
+          },
+          "error_code": {
+            "type": "string",
+            "description": "The error code associated with this error entry."
+          },
+          "error_detail": {
+            "type": "string",
+            "description": "Detailed description of the error."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the error was logged.",
+            "format": "date-time"
+          }
+        },
+        "description": "Represents an error log entry for a message."
+      },
+      "MessageProcessingInfo": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageError"
+            }
+          },
+          "processing_type": {
+            "$ref": "#/components/schemas/ProcessingType"
+          },
+          "msh_role": {
+            "$ref": "#/components/schemas/MshRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "backend": {
+            "type": "string",
+            "description": "Backend application identifier."
+          },
+          "received_at": {
+            "type": "string",
+            "description": "Timestamp when the message was initially received.",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Timestamp when the message was last updated. This field is used for ETag generation and cache validation.",
+            "format": "date-time"
+          },
+          "downloaded_at": {
+            "type": "string",
+            "description": "Timestamp when the message was downloaded by the backend.",
+            "format": "date-time"
+          },
+          "acknowledged_at": {
+            "type": "string",
+            "description": "Timestamp when the message was acknowledged.",
+            "format": "date-time"
+          },
+          "failed_at": {
+            "type": "string",
+            "description": "Timestamp when the message failed processing.",
+            "format": "date-time"
+          },
+          "restored_at": {
+            "type": "string",
+            "description": "Timestamp when the message was restored for retry.",
+            "format": "date-time"
+          },
+          "archived_at": {
+            "type": "string",
+            "description": "Timestamp when the message was archived.",
+            "format": "date-time"
+          },
+          "exported_at": {
+            "type": "string",
+            "description": "Timestamp when the message was exported.",
+            "format": "date-time"
+          },
+          "deleted_at": {
+            "type": "string",
+            "description": "Timestamp when the message was deleted.",
+            "format": "date-time"
+          },
+          "next_attempt_at": {
+            "type": "string",
+            "description": "The next scheduled time for message retry.",
+            "format": "date-time"
+          },
+          "send_attempts": {
+            "type": "integer",
+            "description": "Current number of send attempts.",
+            "format": "int32"
+          },
+          "send_attempts_max": {
+            "type": "integer",
+            "description": "Maximum allowed send attempts.",
+            "format": "int32"
+          },
+          "scheduled": {
+            "type": "boolean",
+            "description": "Flag indicating if the message is scheduled."
+          },
+          "auto_send": {
+            "type": "boolean",
+            "description": "Indicates whether the message will be automatically sent once all attachments are ready. Set to true when all attachments are embedded or can be immediately resolved. Set to false when at least one attachment requires explicit upload via PUT before sending."
+          },
+          "security_profile": {
+            "type": "string",
+            "description": "The security profile used for the message."
+          },
+          "notification_status": {
+            "$ref": "#/components/schemas/NotificationStatus"
+          },
+          "detailed_status": {
+            "$ref": "#/components/schemas/DetailedMessageStatus"
+          }
+        },
+        "description": "Comprehensive processing information detailing the lifecycle, processing timeline, status, and delivery attempts for a single message within Domibus."
+      },
+      "MessageStatus": {
+        "type": "string",
+        "description": "Represents the current processing state of an AS4 message within the Domibus MSH system. <br><br><b>State transitions during message creation:</b><ul><li><b>Incomplete attachments (uploads required):</b> Message enters <b>CREATED</b> state with substatus <b>PENDING_UPLOADS</b>. Awaits manual upload via PUT /messages/{id}/attachments/{attachmentId}. After all uploads complete, transitions to READY_TO_SEND (if auto_send_if_complete=true) or remains CREATED with substatus PENDING_USER_ACTION (if auto_send_if_complete=false). If external references also need resolution, transitions to substatus PENDING_REFERENCE_RESOLUTION first.</li><li><b>URL-referenced attachments (external resolution required):</b> Message enters <b>CREATED</b> state with substatus <b>PENDING_REFERENCE_RESOLUTION</b>. Server resolves file:// or https:// references asynchronously. After resolution completes, transitions to READY_TO_SEND (if auto_send_if_complete=true) or remains CREATED with substatus PENDING_USER_ACTION (if auto_send_if_complete=false).</li><li><b>Mixed attachments (both uploads and references):</b> Message enters <b>CREATED</b> with substatus <b>PENDING_UPLOADS</b> (higher priority). After uploads complete, transitions to substatus <b>PENDING_REFERENCE_RESOLUTION</b> while server resolves external references. After all attachments ready, transitions to READY_TO_SEND (if auto_send_if_complete=true) or remains CREATED with substatus PENDING_USER_ACTION (if auto_send_if_complete=false).</li><li><b>Complete attachments + auto_send_if_complete=true:</b> Message transitions immediately to <b>READY_TO_SEND</b>, then automatically to <b>SEND_ENQUEUED</b>.</li><li><b>Complete attachments + auto_send_if_complete=false:</b> Message remains in <b>CREATED</b> state with substatus PENDING_USER_ACTION until explicit POST /messages/{id}/send-request call triggers transition to READY_TO_SEND \u2192 SEND_ENQUEUED.</li></ul>",
+        "example": "SEND_ENQUEUED",
+        "enum": [
+          "CREATED",
+          "READY_TO_SEND",
+          "READY_TO_PULL",
+          "BEING_PULLED",
+          "SEND_ENQUEUED",
+          "SEND_IN_PROGRESS",
+          "WAITING_FOR_RECEIPT",
+          "ACKNOWLEDGED",
+          "ACKNOWLEDGED_WITH_WARNING",
+          "SEND_ATTEMPT_FAILED",
+          "SEND_FAILURE",
+          "NOT_FOUND",
+          "WAITING_FOR_RETRY",
+          "RECEIVED",
+          "RECEIVED_WITH_WARNINGS",
+          "DELETED",
+          "DOWNLOADED"
+        ]
+      },
+      "MshRole": {
+        "type": "string",
+        "description": "MSH (Message Service Handler) role in AS4 message exchange. Indicates whether this MSH is sending or receiving the message.",
+        "enum": [
+          "SENDING",
+          "RECEIVING"
+        ]
+      },
+      "NotificationStatus": {
+        "type": "string",
+        "description": "Notification delivery status for message events.",
+        "example": "NOTIFIED",
+        "enum": [
+          "NOTIFIED",
+          "NOT_REQUIRED",
+          "REQUIRED"
+        ]
+      },
+      "ProcessingType": {
+        "type": "string",
+        "description": "Message processing type: PUSH (immediate send) or PULL (C2 initiates retrieval).",
+        "enum": [
+          "PUSH",
+          "PULL"
+        ]
+      },
+      "SendMessageRequestResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this message resource. This is the internal database ID.",
+            "format": "int64"
+          },
+          "processing_type": {
+            "$ref": "#/components/schemas/ProcessingType"
+          },
+          "message_status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "detailed_status": {
+            "$ref": "#/components/schemas/DetailedMessageStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the request was <b>created</b>.",
+            "format": "date-time"
+          },
+          "error_detail": {
+            "type": "string",
+            "description": "Error details if the send/resend attempt failed. Contains validation errors, missing attachments, or other issues that prevented sending. Null if no errors occurred."
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/SendTrigger"
+          }
+        },
+        "description": "Response returned upon successful <b>send request</b>."
+      },
+      "SendTrigger": {
+        "type": "string",
+        "description": "Indicates how the message sending was triggered.",
+        "enum": [
+          "ON_DEMAND",
+          "AUTO"
+        ]
+      },
+      "ResendMessageRequestResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this message resource. This is the internal database ID.",
+            "format": "int64"
+          },
+          "processing_type": {
+            "$ref": "#/components/schemas/ProcessingType"
+          },
+          "message_status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "detailed_status": {
+            "$ref": "#/components/schemas/DetailedMessageStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the request was <b>created</b>.",
+            "format": "date-time"
+          },
+          "error_detail": {
+            "type": "string",
+            "description": "Error details if the send/resend attempt failed. Contains validation errors, missing attachments, or other issues that prevented sending. Null if no errors occurred."
+          }
+        },
+        "description": "Response returned upon successful <b>resend request</b>."
+      },
+      "DownloadMessageResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this message resource. This is the internal database ID.",
+            "format": "int64"
+          },
+          "message_status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Timestamp when the download request was created.",
+            "format": "date-time"
+          },
+          "downloaded_at": {
+            "type": "string",
+            "description": "Timestamp when the message was marked as downloaded. Null if not yet downloaded.",
+            "format": "date-time"
+          },
+          "message": {
+            "$ref": "#/components/schemas/MessageDetails"
+          },
+          "error_detail": {
+            "type": "string",
+            "description": "Error details if the download request failed or encountered issues."
+          }
+        },
+        "description": "Response returned upon successful download request creation or when querying download request status."
+      },
+      "UserDetails": {
+        "required": [
+          "authorities",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the user.",
+            "example": "101"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username used for authentication.",
+            "example": "apiuser"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The domain in which the user is registered.",
+            "example": "default"
+          },
+          "authorities": {
+            "type": "array",
+            "description": "List of roles or authorities associated with the user.",
+            "items": {
+              "type": "string",
+              "description": "List of roles or authorities associated with the user."
+            }
+          },
+          "default_password_used": {
+            "type": "boolean",
+            "description": "Indicator if the user is using the default password (true = default).",
+            "example": false
+          },
+          "days_till_expiration": {
+            "type": "integer",
+            "description": "Number of days until the password expires.",
+            "format": "int32",
+            "example": 90
+          },
+          "external_auth_provider": {
+            "type": "boolean",
+            "description": "Indicator if the user is managed by an external authentication provider (e.g., LDAP).",
+            "example": true
+          }
+        },
+        "description": "Security and basic details of the authenticated user (UserDetails)."
+      },
+      "MessageMetadataSummary": {
+        "type": "object",
+        "properties": {
+          "message_info": {
+            "$ref": "#/components/schemas/MessageInfo"
+          },
+          "payload_info": {
+            "$ref": "#/components/schemas/PayloadsInfo"
+          }
+        },
+        "description": "Summary version of message metadata, containing only message ID and payload info."
+      },
+      "MessageProcessingInfoSummary": {
+        "type": "object",
+        "properties": {
+          "processing_type": {
+            "$ref": "#/components/schemas/ProcessingType"
+          },
+          "msh_role": {
+            "$ref": "#/components/schemas/MshRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MessageStatus"
+          },
+          "detailed_status": {
+            "$ref": "#/components/schemas/DetailedMessageStatus"
+          },
+          "auto_send": {
+            "type": "boolean",
+            "description": "Indicates whether the message will be automatically sent when ready. True if the message was created with auto_send_if_complete=true and will be automatically submitted to MSH when complete. False if manual send request is required (auto_send_if_complete=false). Null for received messages (RECEIVING role) where auto-send does not apply."
+          }
+        },
+        "description": "Summary version of processing info, containing only essential status fields."
+      },
+      "MessageSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "REST API-specific identifier for this message resource. This is the internal database ID, not the AS4 Message ID (which is in metadata.message_info.message_id).",
+            "format": "int64"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/MessageMetadataSummary"
+          },
+          "processing_info": {
+            "$ref": "#/components/schemas/MessageProcessingInfoSummary"
+          }
+        },
+        "description": "<b>Summary representation of a message</b>, containing only essential IDs, status, and attachment references for pulling or listing."
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Simple Username and Password Authentication via Basic HTTP Scheme",
+        "scheme": "basic"
+      }
+    }
+  }
+}

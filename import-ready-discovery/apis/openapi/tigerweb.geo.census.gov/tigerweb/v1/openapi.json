@@ -1,0 +1,776 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Census TIGERweb REST Services API",
+    "description": "The TIGERweb application provides geographic boundaries and features from the U.S. Census Bureau's MAF/TIGER database via ArcGIS REST map services. It includes boundaries for states, counties, census tracts, block groups, congressional districts, and more, supporting query, identify, and find operations with output in JSON, GeoJSON, and other formats.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "U.S. Census Bureau",
+      "url": "https://tigerweb.geo.census.gov"
+    },
+    "license": {
+      "name": "Public Domain",
+      "url": "https://www.census.gov/data/developers/about/terms-of-service.html"
+    },
+    "x-jentic-source-url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb",
+      "description": "TIGERweb ArcGIS REST Services"
+    }
+  ],
+  "paths": {
+    "/tigerWMS_Current/MapServer": {
+      "get": {
+        "operationId": "getCurrentMapServerInfo",
+        "summary": "Get current vintage MapServer metadata including all layers and supported operations",
+        "parameters": [
+          {
+            "name": "f",
+            "in": "query",
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "pjson"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MapServer service metadata including layers, spatial reference, and capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "serviceDescription": { "type": "string" },
+                    "mapName": { "type": "string" },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" },
+                          "parentLayerId": { "type": "integer" },
+                          "defaultVisibility": { "type": "boolean" }
+                        }
+                      }
+                    },
+                    "spatialReference": {
+                      "type": "object",
+                      "properties": {
+                        "wkid": { "type": "integer" }
+                      }
+                    },
+                    "supportedQueryFormats": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Current/MapServer/{layerId}/query": {
+      "get": {
+        "operationId": "queryCurrentLayer",
+        "summary": "Query features from a specific layer in the current vintage MapServer",
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "description": "Layer ID (e.g., 0=PUMA, 2=ZCTA, 6=Census Tracts, 10=Census Block Groups, 12=Census Blocks, 50=States, 52=Counties)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "where",
+            "in": "query",
+            "description": "SQL-like WHERE clause to filter features (e.g., STATE='06' for California)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outFields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return, or * for all fields",
+            "schema": {
+              "type": "string",
+              "default": "*"
+            }
+          },
+          {
+            "name": "geometry",
+            "in": "query",
+            "description": "Geometry to apply as spatial filter (e.g., envelope coordinates)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "geometryType",
+            "in": "query",
+            "description": "Type of geometry specified in the geometry parameter",
+            "schema": {
+              "type": "string",
+              "enum": ["esriGeometryPoint", "esriGeometryMultipoint", "esriGeometryPolyline", "esriGeometryPolygon", "esriGeometryEnvelope"],
+              "default": "esriGeometryEnvelope"
+            }
+          },
+          {
+            "name": "spatialRel",
+            "in": "query",
+            "description": "Spatial relationship to apply",
+            "schema": {
+              "type": "string",
+              "enum": ["esriSpatialRelIntersects", "esriSpatialRelContains", "esriSpatialRelWithin"],
+              "default": "esriSpatialRelIntersects"
+            }
+          },
+          {
+            "name": "inSR",
+            "in": "query",
+            "description": "Spatial reference of input geometry (WKID)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "outSR",
+            "in": "query",
+            "description": "Spatial reference for output geometry (WKID)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "returnGeometry",
+            "in": "query",
+            "description": "Whether to return geometry with results",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "returnCountOnly",
+            "in": "query",
+            "description": "Return only the count of matching features",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "resultRecordCount",
+            "in": "query",
+            "description": "Maximum number of records to return (max 100000)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "resultOffset",
+            "in": "query",
+            "description": "Number of records to skip for pagination",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "required": true,
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "geojson", "pbf"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query results with feature attributes and optional geometry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "objectIdFieldName": { "type": "string" },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "type": { "type": "string" },
+                          "alias": { "type": "string" }
+                        }
+                      }
+                    },
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "attributes": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "geometry": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Current/MapServer/{layerId}": {
+      "get": {
+        "operationId": "getCurrentLayerInfo",
+        "summary": "Get metadata for a specific layer including fields, geometry type, and extent",
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "description": "Layer ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "pjson"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Layer metadata including fields, geometry type, extent, and capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "name": { "type": "string" },
+                    "type": { "type": "string" },
+                    "geometryType": { "type": "string" },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "type": { "type": "string" },
+                          "alias": { "type": "string" }
+                        }
+                      }
+                    },
+                    "extent": {
+                      "type": "object",
+                      "properties": {
+                        "xmin": { "type": "number" },
+                        "ymin": { "type": "number" },
+                        "xmax": { "type": "number" },
+                        "ymax": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Current/MapServer/identify": {
+      "get": {
+        "operationId": "identifyCurrentFeatures",
+        "summary": "Identify features at a geographic location across one or more layers",
+        "parameters": [
+          {
+            "name": "geometry",
+            "in": "query",
+            "required": true,
+            "description": "Point geometry as JSON (e.g., {x:-77.03,y:38.89})",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "geometryType",
+            "in": "query",
+            "description": "Type of geometry",
+            "schema": {
+              "type": "string",
+              "enum": ["esriGeometryPoint", "esriGeometryMultipoint", "esriGeometryPolyline", "esriGeometryPolygon", "esriGeometryEnvelope"],
+              "default": "esriGeometryPoint"
+            }
+          },
+          {
+            "name": "sr",
+            "in": "query",
+            "description": "Spatial reference of input geometry (WKID)",
+            "schema": {
+              "type": "integer",
+              "default": 4326
+            }
+          },
+          {
+            "name": "layers",
+            "in": "query",
+            "description": "Layers to identify (e.g., all:0,50,52 or visible:0,50,52)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tolerance",
+            "in": "query",
+            "description": "Tolerance in pixels for identify operation",
+            "schema": {
+              "type": "integer",
+              "default": 2
+            }
+          },
+          {
+            "name": "mapExtent",
+            "in": "query",
+            "required": true,
+            "description": "Extent of the map (xmin,ymin,xmax,ymax)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageDisplay",
+            "in": "query",
+            "required": true,
+            "description": "Image display parameters (width,height,dpi)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "returnGeometry",
+            "in": "query",
+            "description": "Whether to return geometry",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "required": true,
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "geojson"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identified features from the specified layers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layerId": { "type": "integer" },
+                          "layerName": { "type": "string" },
+                          "displayFieldName": { "type": "string" },
+                          "value": { "type": "string" },
+                          "attributes": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "geometryType": { "type": "string" },
+                          "geometry": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Current/MapServer/find": {
+      "get": {
+        "operationId": "findCurrentFeatures",
+        "summary": "Search for features by attribute value across layers",
+        "parameters": [
+          {
+            "name": "searchText",
+            "in": "query",
+            "required": true,
+            "description": "Text to search for in feature attributes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contains",
+            "in": "query",
+            "description": "Whether to use contains (true) or exact match (false)",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "searchFields",
+            "in": "query",
+            "description": "Comma-separated list of fields to search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "layers",
+            "in": "query",
+            "description": "Comma-separated list of layer IDs to search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "returnGeometry",
+            "in": "query",
+            "description": "Whether to return geometry with results",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "required": true,
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "geojson"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Features matching the search criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "layerId": { "type": "integer" },
+                          "layerName": { "type": "string" },
+                          "displayFieldName": { "type": "string" },
+                          "foundFieldName": { "type": "string" },
+                          "value": { "type": "string" },
+                          "attributes": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "geometryType": { "type": "string" },
+                          "geometry": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Current/MapServer/export": {
+      "get": {
+        "operationId": "exportCurrentMap",
+        "summary": "Export a map image for the specified extent and layers",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": true,
+            "description": "Bounding box (xmin,ymin,xmax,ymax)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bboxSR",
+            "in": "query",
+            "description": "Spatial reference of the bounding box (WKID)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "imageSR",
+            "in": "query",
+            "description": "Spatial reference of the output image (WKID)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Image size in pixels (width,height)",
+            "schema": {
+              "type": "string",
+              "default": "400,400"
+            }
+          },
+          {
+            "name": "layers",
+            "in": "query",
+            "description": "Layer visibility (e.g., show:0,50,52)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Output image format",
+            "schema": {
+              "type": "string",
+              "enum": ["png", "png8", "png24", "png32", "jpg", "bmp", "gif", "svg", "pdf"],
+              "default": "png"
+            }
+          },
+          {
+            "name": "transparent",
+            "in": "query",
+            "description": "Whether the background is transparent",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "description": "Response format (json returns image URL, image returns raw image)",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "image"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported map image or JSON with image URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "href": { "type": "string" },
+                    "width": { "type": "integer" },
+                    "height": { "type": "integer" },
+                    "extent": {
+                      "type": "object",
+                      "properties": {
+                        "xmin": { "type": "number" },
+                        "ymin": { "type": "number" },
+                        "xmax": { "type": "number" },
+                        "ymax": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Census2020/MapServer": {
+      "get": {
+        "operationId": "getCensus2020MapServerInfo",
+        "summary": "Get Census 2020 vintage MapServer metadata",
+        "parameters": [
+          {
+            "name": "f",
+            "in": "query",
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "pjson"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Census 2020 MapServer service metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "serviceDescription": { "type": "string" },
+                    "mapName": { "type": "string" },
+                    "layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tigerWMS_Census2020/MapServer/{layerId}/query": {
+      "get": {
+        "operationId": "queryCensus2020Layer",
+        "summary": "Query features from a specific layer in the Census 2020 vintage MapServer",
+        "parameters": [
+          {
+            "name": "layerId",
+            "in": "path",
+            "required": true,
+            "description": "Layer ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "where",
+            "in": "query",
+            "description": "SQL-like WHERE clause to filter features",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "outFields",
+            "in": "query",
+            "description": "Comma-separated list of fields to return",
+            "schema": {
+              "type": "string",
+              "default": "*"
+            }
+          },
+          {
+            "name": "returnGeometry",
+            "in": "query",
+            "description": "Whether to return geometry",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "resultRecordCount",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "f",
+            "in": "query",
+            "required": true,
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["json", "geojson", "pbf"],
+              "default": "json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query results with feature attributes and optional geometry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "attributes": {
+                            "type": "object",
+                            "additionalProperties": true
+                          },
+                          "geometry": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "TIGERweb",
+      "description": "U.S. Census Bureau geographic boundary and feature services"
+    }
+  ]
+}

@@ -1,0 +1,407 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OECD SDMX Data API",
+    "description": "OECD Statistical Data and Metadata eXchange (SDMX) REST API. Provides access to OECD economic indicators, statistics, and structural metadata using the SDMX standard.",
+    "version": "2.0.0",
+    "x-jentic-source-url": "https://data-explorer.oecd.org/developers",
+    "x-jentic-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://sdmx.oecd.org/public/rest",
+      "description": "OECD SDMX Public REST API"
+    }
+  ],
+  "paths": {
+    "/data/{dataflowId}": {
+      "get": {
+        "operationId": "getDataByDataflow",
+        "summary": "Retrieve data for a specific dataflow",
+        "tags": ["Data"],
+        "parameters": [
+          {
+            "name": "dataflowId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Dataflow identifier (e.g., 'OECD.SDD.NAD,DSD_NAMAIN1@DF_TABLE1,1.0')"
+          },
+          {
+            "name": "c[FREQ]",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Frequency filter (e.g., 'A' for annual, 'Q' for quarterly)"
+          },
+          {
+            "name": "c[REF_AREA]",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Reference area/country code filter (e.g., 'USA', 'GBR')"
+          },
+          {
+            "name": "c[MEASURE]",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Measure filter"
+          },
+          {
+            "name": "startPeriod",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Start period for data (e.g., '2020-01')"
+          },
+          {
+            "name": "endPeriod",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "End period for data (e.g., '2023-12')"
+          },
+          {
+            "name": "dimensionAtObservation",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Dimension at observation level (e.g., 'TIME_PERIOD')"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["csvfilewithlabels", "jsondata", "structurespecificdata"]
+            },
+            "description": "Response format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful data retrieval",
+            "content": {
+              "application/vnd.sdmx.data+json": {
+                "schema": { "type": "object" }
+              },
+              "application/vnd.sdmx.data+csv": {
+                "schema": { "type": "string" }
+              },
+              "application/vnd.sdmx.structurespecificdata+xml": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "404": {
+            "description": "Dataflow not found"
+          },
+          "503": {
+            "description": "Service unavailable"
+          }
+        }
+      }
+    },
+    "/data/{agencyId},{dataflowId},{version}/{key}": {
+      "get": {
+        "operationId": "getDataByKey",
+        "summary": "Retrieve data with agency, dataflow, version, and key filter",
+        "tags": ["Data"],
+        "parameters": [
+          {
+            "name": "agencyId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Agency identifier (e.g., 'OECD.SDD.NAD')"
+          },
+          {
+            "name": "dataflowId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Dataflow identifier"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Dataflow version (e.g., '1.0')"
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Key filter using dot-separated dimension values (e.g., 'A.USA..GDP')"
+          },
+          {
+            "name": "startPeriod",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Start period"
+          },
+          {
+            "name": "endPeriod",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "End period"
+          },
+          {
+            "name": "dimensionAtObservation",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful data retrieval",
+            "content": {
+              "application/vnd.sdmx.data+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/structure/dataflow/{agencyId}": {
+      "get": {
+        "operationId": "listDataflows",
+        "summary": "List available dataflows for an agency",
+        "tags": ["Structure"],
+        "parameters": [
+          {
+            "name": "agencyId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "default": "OECD" },
+            "description": "Agency identifier (e.g., 'OECD')"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["full", "allstubs", "referencestubs", "allcompletestubs", "referencecompletestubs", "referencepartial", "raw"]
+            },
+            "description": "Amount of detail returned"
+          },
+          {
+            "name": "references",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "References to resolve (e.g., 'none', 'all', 'children', 'parents')"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of dataflows",
+            "content": {
+              "application/vnd.sdmx.structure+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/structure/datastructure/{agencyId}/{structureId}/{version}": {
+      "get": {
+        "operationId": "getDataStructureDefinition",
+        "summary": "Retrieve a data structure definition",
+        "tags": ["Structure"],
+        "parameters": [
+          {
+            "name": "agencyId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Agency identifier"
+          },
+          {
+            "name": "structureId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Structure identifier"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Version number"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "references",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data structure definition",
+            "content": {
+              "application/vnd.sdmx.structure+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "404": {
+            "description": "Structure not found"
+          }
+        }
+      }
+    },
+    "/structure/codelist/{agencyId}/{codelistId}/{version}": {
+      "get": {
+        "operationId": "getCodelist",
+        "summary": "Retrieve a codelist definition",
+        "tags": ["Structure"],
+        "parameters": [
+          {
+            "name": "agencyId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Agency identifier"
+          },
+          {
+            "name": "codelistId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Codelist identifier"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Version"
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Codelist definition",
+            "content": {
+              "application/vnd.sdmx.structure+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "404": {
+            "description": "Codelist not found"
+          }
+        }
+      }
+    },
+    "/structure/conceptscheme/{agencyId}/{conceptSchemeId}/{version}": {
+      "get": {
+        "operationId": "getConceptScheme",
+        "summary": "Retrieve a concept scheme",
+        "tags": ["Structure"],
+        "parameters": [
+          {
+            "name": "agencyId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "conceptSchemeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Concept scheme",
+            "content": {
+              "application/vnd.sdmx.structure+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/availability/{dataflowId}": {
+      "get": {
+        "operationId": "getDataAvailability",
+        "summary": "Get data availability for a dataflow",
+        "tags": ["Data"],
+        "parameters": [
+          {
+            "name": "dataflowId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Dataflow identifier"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["exact", "available"]
+            },
+            "description": "Availability mode"
+          },
+          {
+            "name": "references",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability information",
+            "content": {
+              "application/vnd.sdmx.structure+json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {}
+  }
+}

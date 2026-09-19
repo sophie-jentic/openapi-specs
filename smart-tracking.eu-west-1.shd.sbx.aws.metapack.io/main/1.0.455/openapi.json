@@ -1,0 +1,2183 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Smart Tracking API",
+    "description": "API for managing carrier status mappings and file processing",
+    "contact": {
+      "name": "Unicorns Team",
+      "email": "unicorns@auctane.com"
+    },
+    "version": "1.0.455",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/metapack/smart-tracking-api/1.0.455"
+  },
+  "servers": [
+    {
+      "url": "http://api.smart-tracking.eu-west-1.shd.sbx.aws.metapack.io",
+      "description": "Test server"
+    }
+  ],
+  "paths": {
+    "/api/files": {
+      "post": {
+        "tags": [
+          "File"
+        ],
+        "summary": "Upload a new carrier tracking data file",
+        "description": "Uploads a carrier tracking data file (CSV or XLSX format) for processing.\r\n\r\nSample request:\r\n\r\n    POST /api/files\r\n    Content-Type: multipart/form-data\r\n\r\n    file: [binary file data]\r\n    carrier_name: \"DHL Express\"\r\n    description_column_index: 0\r\n    description_column_name: \"Status Description\"\r\n\r\n**File Requirements:**\r\n- Maximum file size: 10MB\r\n- Supported formats: .csv, .xlsx\r\n- Must contain carrier status descriptions\r\n\r\n**Description Column:**\r\nSpecify either `description_column_index` (zero-based) or `description_column_name` to identify the column containing status descriptions.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "carrier_name",
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The file to upload (CSV or XLSX format, max 10MB)",
+                    "format": "binary"
+                  },
+                  "carrier_name": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "type": "string",
+                    "description": "Name of the carrier this file belongs to",
+                    "example": "DHL Express"
+                  },
+                  "description_column_index": {
+                    "type": "integer",
+                    "description": "Zero-based index of the column containing status descriptions (optional, use either this or DescriptionColumnName)",
+                    "format": "int32",
+                    "example": 2
+                  },
+                  "description_column_name": {
+                    "type": "string",
+                    "description": "Name of the column containing status descriptions (optional, use either this or DescriptionColumnIndex)",
+                    "example": "Status Description"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                },
+                "carrier_name": {
+                  "style": "form"
+                },
+                "description_column_index": {
+                  "style": "form"
+                },
+                "description_column_name": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully. Returns the file ID for tracking.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request. Model validation failed or missing required fields."
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          },
+          "413": {
+            "description": "File size exceeds the 10MB limit."
+          },
+          "422": {
+            "description": "Unsupported file format. Only CSV and XLSX files are accepted."
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "File"
+        ],
+        "summary": "Retrieve a paginated list of uploaded files",
+        "description": "Gets a list of all uploaded carrier tracking files with pagination support.\r\n\r\nSample request:\r\n\r\n    GET /api/files?page=1&page_size=10\r\n\r\n**Pagination:**\r\n- Default page size: 20\r\n- Maximum page size: 100\r\n- Pages are 1-indexed",
+        "parameters": [
+          {
+            "name": "carrier_name",
+            "in": "query",
+            "description": "Filter by carrier name (optional, case-insensitive partial match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "description": "Filter by file statuses (optional, returns files matching any of the specified statuses)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "new",
+                  "pending",
+                  "processing",
+                  "completed",
+                  "failed",
+                  "approved",
+                  "rejected",
+                  "archived"
+                ],
+                "type": "string",
+                "description": "Status of an uploaded file in the processing pipeline\n\n**Possible values:**\n\n* `new`\n* `pending` - File waiting for processing\n* `processing` - File is currently being processed\n* `completed` - File processing completed successfully\n* `failed` - File processing failed due to an error\n* `approved` - File approved for further processing\n* `rejected` - File rejected and will not be processed\n* `archived` - File archived (hidden from default views)"
+              }
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination (1-indexed, default: 1)",
+            "schema": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Number of items per page (1-100, default: 20)",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "ascending",
+            "in": "query",
+            "description": "Sort order for results (default: true for ascending)",
+            "schema": {
+              "type": "boolean",
+              "example": true
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved file list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetFilesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (page must be greater than 0, pageSize must be between 1 and 100)"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          }
+        }
+      }
+    },
+    "/api/files/{file_id}": {
+      "patch": {
+        "tags": [
+          "File"
+        ],
+        "summary": "Update file status (approve, reject, or archive)",
+        "description": "Updates the status of an uploaded file. Available status transitions:\r\n- **Approved**: Mark file as approved for processing\r\n- **Rejected**: Mark file as rejected (will not be processed)\r\n- **Archived**: Archive the file (removes from default listing)\r\n\r\nSample request:\r\n\r\n    PATCH /api/files\r\n    Content-Type: application/json\r\n\r\n    {\r\n      \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n      \"status\": \"approved\"\r\n    }",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Update request containing file ID and new status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File status updated successfully"
+          },
+          "400": {
+            "description": "Invalid request or invalid status value"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          },
+          "404": {
+            "description": "File not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "File"
+        ],
+        "summary": "Delete a file by ID",
+        "description": "Permanently deletes a file and all associated records and mappings.\r\n\r\nSample request:\r\n\r\n    DELETE /api/files/3fa85f64-5717-4562-b3fc-2c963f66afa6\r\n\r\n**Warning:** This action cannot be undone. All data associated with the file will be permanently removed.",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The unique identifier of the file to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          },
+          "404": {
+            "description": "File not found"
+          }
+        }
+      }
+    },
+    "/api/files/{file_id}/export": {
+      "get": {
+        "tags": [
+          "File"
+        ],
+        "summary": "Export file records to Excel format",
+        "description": "Exports all records from a specific file to an Excel (.xlsx) file for download.\r\n\r\nSample request:\r\n\r\n    GET /api/files/3fa85f64-5717-4562-b3fc-2c963f66afa6\r\n\r\n**Output Format:**\r\n- File type: Excel (.xlsx)\r\n- Columns: Record ID, Original Line, Status Description, Status Code, Approval Status, Updated By, Updated On\r\n- File name format: `{carrier_name}_file_{file_id}_{date}.xlsx`\r\n\r\n**Use Cases:**\r\n- Export processed records for review\r\n- Share mapping results with stakeholders\r\n- Archive processed data",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The unique identifier of the file to export",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "csv"
+              ],
+              "type": "string",
+              "description": "**Possible values:**\n\n* `xlsx`\n* `csv`"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated Excel file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          },
+          "403": {
+            "description": "Forbidden. User does not have export permissions."
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "500": {
+            "description": "Internal server error during file generation"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Basic health check endpoint to verify application is running.",
+        "responses": {
+          "200": {
+            "description": "Application is running"
+          }
+        }
+      }
+    },
+    "/api/mappings": {
+      "post": {
+        "tags": [
+          "Mapping"
+        ],
+        "summary": "Create new status mappings for a carrier",
+        "description": "Creates one or more status mappings for a specific carrier. Maps carrier-specific status descriptions to standardized CDM status codes.\r\n\r\nSample request:\r\n\r\n    POST /api/mappings\r\n    Content-Type: application/json\r\n\r\n    {\r\n      \"carrier_name\": \"DHL Express\",\r\n      \"mappings\": [\r\n        {\r\n          \"status_description\": \"Delivered\",\r\n          \"status_code\": \"delivered\"\r\n        },\r\n        {\r\n          \"status_description\": \"In Transit\",\r\n          \"status_code\": \"in_transit\"\r\n        }\r\n      ]\r\n    }\r\n\r\n**Response Codes:**\r\n- **201**: All mappings created successfully\r\n- **207**: Partial success (some mappings created, some failed)\r\n- **400**: All mappings failed",
+        "requestBody": {
+          "description": "Mapping creation request containing carrier name and list of mappings",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMappingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "All mappings created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMappingsResponse"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success. Some mappings created, some failed. Check individual results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMappingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request. All mappings failed or validation error."
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Mapping"
+        ],
+        "summary": "Retrieve status mappings with optional filtering and pagination",
+        "description": "Gets a list of status mappings with support for filtering by carrier and status description.\r\n\r\nSample request:\r\n\r\n    GET /api/mappings?carrier=DHL%20Express&page=1&page_size=50&ascending=true\r\n\r\n**Filtering:**\r\n- `carrier`: Filter by carrier name (case-insensitive partial match)\r\n- `status_description`: Filter by status description (case-insensitive partial match)\r\n\r\n**Pagination:**\r\n- Default page size: 50\r\n- Maximum page size: 1000\r\n- If `page` is not specified, all results are returned\r\n\r\n**Sorting:**\r\n- `ascending=true`: Sort A-Z by status description\r\n- `ascending=false`: Sort Z-A by status description",
+        "parameters": [
+          {
+            "name": "carrier",
+            "in": "query",
+            "description": "Carrier name to filter mappings",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status_description",
+            "in": "query",
+            "description": "Status description to filter mappings",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination (1-indexed, default: 1)",
+            "schema": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Number of items per page (1-100, default: 20)",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "example": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "ascending",
+            "in": "query",
+            "description": "Sort order for results (default: true for ascending)",
+            "schema": {
+              "type": "boolean",
+              "example": true
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved mappings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMappingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters (e.g., pageSize out of range)"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Mapping"
+        ],
+        "summary": "Batch update existing status mappings",
+        "description": "Updates multiple status mappings in a single request. Allows modifying status descriptions and CDM status codes.\r\n\r\nSample request:\r\n\r\n    PATCH /api/mappings\r\n    Content-Type: application/json\r\n\r\n    [\r\n      {\r\n        \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\r\n        \"status_description\": \"Delivered Successfully\",\r\n        \"status_code\": \"delivered\"\r\n      },\r\n      {\r\n        \"id\": \"8b2c5e1a-9d3f-4a7e-b8c6-1f2e3d4a5b6c\",\r\n        \"status_description\": \"Out for Delivery\",\r\n        \"status_code\": \"out_for_delivery\"\r\n      }\r\n    ]\r\n\r\n**Response Codes:**\r\n- **200**: All updates successful\r\n- **207**: Partial success (some updates succeeded, some failed)\r\n- **400**: Bad request or validation error\r\n- **404**: One or more mappings not found\r\n- **422**: Unprocessable entity (e.g., duplicate mapping)",
+        "requestBody": {
+          "description": "Array of mapping updates, each containing ID and new values",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UpdateMappingsRequestItem"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All mappings updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UpdateMappingsResponseItem"
+                  }
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success. Some mappings updated, some failed. Check individual results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMappingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation error"
+          },
+          "404": {
+            "description": "One or more mappings not found"
+          },
+          "422": {
+            "description": "Unprocessable entity (e.g., duplicate mapping would be created)"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mapping"
+        ],
+        "summary": "Batch delete status mappings by IDs",
+        "description": "Deletes multiple status mappings in a single request by their IDs.\r\n\r\nSample request:\r\n\r\n    DELETE /api/mappings?mapping_ids=3fa85f64-5717-4562-b3fc-2c963f66afa6,8b2c5e1a-9d3f-4a7e-b8c6-1f2e3d4a5b6c\r\n\r\n**Response Codes:**\r\n- **200**: All deletions successful\r\n- **207**: Partial success (some deletions succeeded, some failed)\r\n- **400**: Bad request (e.g., empty ID list)",
+        "parameters": [
+          {
+            "name": "mapping_ids",
+            "in": "query",
+            "schema": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All mappings deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteMappingsResponse"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success. Some mappings deleted, some failed. Check individual results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteMappingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g., empty ID list)"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/mappings/export": {
+      "get": {
+        "tags": [
+          "Mapping"
+        ],
+        "summary": "Export carrier mappings to Excel file",
+        "description": "Exports all status mappings for a specific carrier to an Excel (.xlsx) file.\r\n\r\nSample request:\r\n\r\n    GET /api/mappings/export?carrier=DHL%20Express\r\n\r\n**Output Format:**\r\n- File type: Excel (.xlsx)\r\n- Columns: Status Description, CDM Status Code\r\n- File name format: `{carrier_name}_mappings_{date}.xlsx`\r\n\r\n**Use Cases:**\r\n- Backup of current mappings\r\n- Review and audit of mapping configurations\r\n- Sharing mapping configurations with stakeholders",
+        "parameters": [
+          {
+            "name": "carrier",
+            "in": "query",
+            "description": "Carrier name to export mappings for (required)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated Excel file",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g., carrier parameter missing or empty)"
+          },
+          "403": {
+            "description": "Forbidden. User does not have export permissions."
+          },
+          "404": {
+            "description": "No mappings found for the specified carrier"
+          },
+          "500": {
+            "description": "Internal server error during file generation"
+          }
+        }
+      }
+    },
+    "/api/files/{file_id}/records": {
+      "get": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Get all records for a specific file",
+        "description": "Retrieves all tracking status records from a specific uploaded file with pagination support.\r\n\r\nSample request:\r\n\r\n    GET /api/files/3fa85f64-5717-4562-b3fc-2c963f66afa6/records?page=1&page_size=50\r\n\r\n**Record Information:**\r\nEach record contains:\r\n- Original line from the file\r\n- Extracted status description\r\n- AI-suggested status code (if available)\r\n- Manually assigned status code (if mapped)\r\n- Approval status\r\n- Audit information (updated by, updated on)\r\n\r\n**Pagination:**\r\n- Default page size: 50\r\n- Maximum page size: 100\r\n- Pages are 1-indexed",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The unique identifier of the file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRecordsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters (e.g., page < 1, pageSize out of range)"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Record"
+        ],
+        "summary": "Batch update records (approve/reject status mappings)",
+        "description": "Updates multiple records in a file by approving or rejecting their status code mappings.\r\n\r\nSample request:\r\n\r\n    PUT /api/files/3fa85f64-5717-4562-b3fc-2c963f66afa6/records\r\n    Content-Type: application/json\r\n\r\n    [\r\n      {\r\n        \"id\": \"7b2c5e1a-9d3f-4a7e-b8c6-1f2e3d4a5b6c\",\r\n        \"status_code\": \"delivered\",\r\n        \"is_approved\": true\r\n      },\r\n      {\r\n        \"id\": \"9e3f6d2a-1c4e-5b8f-a7d9-2e3f4a5b6c7d\",\r\n        \"status_code\": \"in_transit\",\r\n        \"is_approved\": false\r\n      }\r\n    ]\r\n\r\n**Update Options:**\r\n- Set `is_approved: true` to approve the current or specified status code\r\n- Set `is_approved: false` to reject the status code (requires manual review)\r\n- Optionally specify `status_code` to override the suggested mapping\r\n\r\n**Response Codes:**\r\n- **200**: All records updated successfully\r\n- **207**: Partial success (some updates succeeded, some failed)\r\n- **400**: Bad request or validation error",
+        "parameters": [
+          {
+            "name": "file_id",
+            "in": "path",
+            "description": "The unique identifier of the file containing the records",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Array of record updates, each containing record ID and approval status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UpdateRecordsRequestItem"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All records updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRecordsResponse"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Partial success. Some records updated, some failed. Check individual results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRecordsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request or validation error"
+          },
+          "401": {
+            "description": "Unauthorized. Authentication required."
+          },
+          "404": {
+            "description": "File or one or more records not found"
+          }
+        }
+      }
+    },
+    "/api/statuses": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "Get all available CDM status codes",
+        "description": "Retrieves a sorted list of all supported CDM status codes that can be used for mapping carrier statuses.\r\n\r\nSample request:\r\n\r\n    GET /api/statuses\r\n\r\n**Common Status Codes:**\r\n- delivered\r\n- in_transit\r\n- out_for_delivery\r\n- failed_attempt\r\n- exception\r\n- available_for_pickup\r\n- and more...\r\n\r\nStatus codes are returned in lowercase and alphabetically sorted.",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved status codes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - valid authentication required"
+          }
+        }
+      }
+    },
+    "/api/status-suggestions": {
+      "get": {
+        "tags": [
+          "StatusSuggestion"
+        ],
+        "summary": "Get AI-powered status code suggestions for a given status description",
+        "description": "Analyzes a carrier-specific status description and returns suggested CDM status codes with confidence scores.\r\n            \r\nSample request:\r\n            \r\n    GET /api/status-suggestions?status_description=Package%20delivered%20to%20recipient\r\n            \r\n**Response:**\r\nReturns an array of suggested status codes ordered by confidence (highest first).\r\nEach suggestion includes:\r\n- **status_code**: The standardized CDM status code\r\n- **confidence**: Prediction confidence score (0.0 to 1.0)\r\n            \r\n**Confidence Score Interpretation:**\r\n- **0.9 - 1.0**: Very high confidence (usually accurate)\r\n- **0.7 - 0.9**: High confidence (generally reliable)\r\n- **0.5 - 0.7**: Medium confidence (review recommended)\r\n- **Below 0.5**: Low confidence (manual review required)\r\n            \r\n**Use Cases:**\r\n- Assist users in mapping new carrier statuses\r\n- Automate bulk status mapping with high-confidence predictions\r\n- Validate existing mappings",
+        "parameters": [
+          {
+            "name": "status_description",
+            "in": "query",
+            "description": "The carrier-specific status description to analyze (required, max 500 characters)",
+            "required": true,
+            "schema": {
+              "maxLength": 500,
+              "minLength": 0,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated suggestions. Returns array of status codes with confidence scores.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestResponseItem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request. Status description is missing or empty."
+          },
+          "422": {
+            "description": "Unprocessable entity. Status description is too long or contains invalid characters."
+          },
+          "503": {
+            "description": "ML service unavailable. The prediction service is currently unavailable."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateMappingsRequest": {
+        "required": [
+          "carrier_name",
+          "mappings"
+        ],
+        "type": "object",
+        "properties": {
+          "carrier_name": {
+            "minLength": 1,
+            "type": "string",
+            "description": "Name of the carrier these mappings belong to",
+            "example": "DHL Express"
+          },
+          "mappings": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMappingsRequestItem"
+            },
+            "description": "List of status mappings to create"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request model for creating multiple status mappings for a carrier"
+      },
+      "CreateMappingsRequestItem": {
+        "required": [
+          "status_code",
+          "status_description"
+        ],
+        "type": "object",
+        "properties": {
+          "status_description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string",
+            "description": "The carrier-specific status description to map",
+            "example": "Delivered to recipient"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Individual mapping item for creation request"
+      },
+      "CreateMappingsResponse": {
+        "required": [
+          "failed",
+          "succeeded"
+        ],
+        "type": "object",
+        "properties": {
+          "succeeded": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMappingsResponseItem"
+            },
+            "nullable": true
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMappingsResponseItem"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateMappingsResponseItem": {
+        "required": [
+          "status_code",
+          "status_description"
+        ],
+        "type": "object",
+        "properties": {
+          "status_description": {
+            "type": "string",
+            "description": "The carrier-specific status description that was mapped",
+            "nullable": true,
+            "example": "Delivered to recipient"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel."
+          },
+          "error_message": {
+            "type": "string",
+            "description": "Error message if the mapping creation failed (null if successful)",
+            "nullable": true,
+            "example": "Duplicate mapping already exists for this carrier and status description"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item for a single mapping creation operation"
+      },
+      "DeleteMappingsResponse": {
+        "required": [
+          "failed",
+          "succeeded"
+        ],
+        "type": "object",
+        "properties": {
+          "succeeded": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteMappingsResponseItem"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeleteMappingsResponseItem": {
+        "required": [
+          "error",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the mapping that was attempted to be deleted",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item for a single mapping deletion operation"
+      },
+      "GetFilesResponse": {
+        "required": [
+          "files"
+        ],
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetFilesResponseItem"
+            },
+            "description": "Collection of file items matching the request criteria",
+            "nullable": true
+          },
+          "pages_count": {
+            "type": "integer",
+            "description": "Total number of pages available based on the page size",
+            "format": "int32",
+            "example": 15
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response model for file list retrieval with pagination information"
+      },
+      "GetFilesResponseItem": {
+        "required": [
+          "carrier_name",
+          "file_name",
+          "id",
+          "row_count",
+          "status",
+          "uploaded_by",
+          "uploaded_on"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the file",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Original filename as uploaded by the user",
+            "nullable": true,
+            "example": "dhl_tracking_statuses_2024.xlsx"
+          },
+          "carrier_name": {
+            "type": "string",
+            "description": "Name of the carrier this file belongs to",
+            "nullable": true,
+            "example": "DHL Express"
+          },
+          "uploaded_by": {
+            "type": "string",
+            "description": "Username or identifier of the user who uploaded the file",
+            "nullable": true,
+            "example": "john.doe@company.com"
+          },
+          "uploaded_on": {
+            "type": "string",
+            "description": "Timestamp when the file was uploaded (UTC)",
+            "format": "date-time",
+            "example": "2024-03-15T10:30:00Z"
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "Username or identifier of the user who last updated the file or its processing status",
+            "nullable": true,
+            "example": "jane.smith@company.com"
+          },
+          "updated_on": {
+            "type": "string",
+            "description": "Timestamp when the file or its status was last updated (UTC)",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-03-15T14:45:30Z"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "pending",
+              "processing",
+              "completed",
+              "failed",
+              "approved",
+              "rejected",
+              "archived"
+            ],
+            "type": "string",
+            "description": "Status of an uploaded file in the processing pipeline\n\n**Possible values:**\n\n* `new`\n* `pending` - File waiting for processing\n* `processing` - File is currently being processed\n* `completed` - File processing completed successfully\n* `failed` - File processing failed due to an error\n* `approved` - File approved for further processing\n* `rejected` - File rejected and will not be processed\n* `archived` - File archived (hidden from default views)"
+          },
+          "row_count": {
+            "type": "integer",
+            "description": "Total number of records/rows in the file",
+            "format": "int32",
+            "example": 1250
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response model representing a single file in the file list"
+      },
+      "GetMappingsResponse": {
+        "required": [
+          "mappings"
+        ],
+        "type": "object",
+        "properties": {
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetMappingsResponseItem"
+            },
+            "nullable": true
+          },
+          "pages_count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetMappingsResponseItem": {
+        "required": [
+          "id",
+          "status_code",
+          "status_description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the mapping",
+            "format": "uuid"
+          },
+          "status_description": {
+            "type": "string",
+            "description": "The carrier-specific status description",
+            "nullable": true,
+            "example": "Delivered to recipient"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel."
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "The identifier of the user or system that last updated this mapping",
+            "nullable": true
+          },
+          "updated_on": {
+            "type": "string",
+            "description": "The timestamp when this mapping was last updated",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item representing a single status mapping"
+      },
+      "GetRecordsResponse": {
+        "required": [
+          "pages_count",
+          "records"
+        ],
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetRecordsResponseItem"
+            },
+            "nullable": true
+          },
+          "pages_count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetRecordsResponseItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the record",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "status_description": {
+            "type": "string",
+            "description": "Extracted status description from the record (null if extraction failed)",
+            "nullable": true,
+            "example": "Delivered to recipient"
+          },
+          "status_propositions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusProposition"
+            },
+            "description": "AI-suggested status description (alternative phrasing) if available",
+            "nullable": true
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Assigned CDM status code (either AI-suggested or manually assigned, null if not yet mapped)",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "new",
+              "pending",
+              "processing",
+              "approval_required",
+              "approved",
+              "rejected",
+              "failed"
+            ],
+            "type": "string",
+            "description": "Status of an individual record within a file\n\n**Possible values:**\n\n* `new` - Record awaiting processing or review\n* `pending` - Record awaiting processing or review\n* `processing` - Record is currently being processed\n* `approval_required` - Record requires manual approval before proceeding\n* `approved` - Record has been approved and mapping confirmed\n* `rejected` - Record has been rejected\n* `failed` - Record processing failed due to an error"
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "Username or identifier of the user who last updated this record (null if never updated)",
+            "nullable": true,
+            "example": "john.doe@company.com"
+          },
+          "updated_on": {
+            "type": "string",
+            "description": "Timestamp when the record was last updated (UTC, null if never updated)",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2024-03-15T14:30:00Z"
+          },
+          "processing_notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional notes regarding the processing of the record, errors, warnings, etc.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item representing a single record from an uploaded file"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": {}
+      },
+      "StatusProposition": {
+        "type": "object",
+        "properties": {
+          "Key": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel."
+          },
+          "Value": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SuggestResponseItem": {
+        "required": [
+          "confidence",
+          "status_code",
+          "status_description"
+        ],
+        "type": "object",
+        "properties": {
+          "status_description": {
+            "type": "string",
+            "description": "The original carrier status description for which the suggestion was generated",
+            "nullable": true,
+            "example": "Package delivered to recipient"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel.",
+            "example": "delivered"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Confidence score for this suggestion (0.0 to 1.0, where 1.0 is highest confidence)",
+            "format": "float",
+            "example": 0.95
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item containing an AI-suggested status code with confidence score"
+      },
+      "UpdateFileRequest": {
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "approved",
+              "rejected",
+              "archived"
+            ],
+            "type": "string",
+            "description": "New status to set for the file (approved, rejected, or archived)"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request model for updating file status"
+      },
+      "UpdateMappingsRequestItem": {
+        "required": [
+          "id",
+          "status_code",
+          "status_description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the mapping to update",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "status_description": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string",
+            "description": "Updated carrier-specific status description",
+            "example": "Package delivered successfully"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "Standardized CDM (Common Data Model) status codes for shipment tracking\n\n**Possible values:**\n\n* `carrier_status_not_mapped` - Status not mapped. Please check the carrier's website for updates.\n* `closed_by_system` - Tracking for this parcel has expired. If you're still expecting this delivery, please contact the carrier for\n                assistance.\n* `unspecified_exception` - The carrier has reported an issue with your parcel, but details are unavailable.\n* `collection_failed` - Parcel pickup failed. The delivery company will try again soon.\n* `collection_made` - Your parcel has been picked up by the carrier.\n* `collection_requested` - Your parcel is waiting to be handed over to the carrier.\n* `dropped_off` - Your parcel has been dropped off and is ready for carrier processing.\n* `elec_advice_recd_by_carrier` - Your shipment is now in the carrier's system.\n* `not_yet_received_by_carrier` - The carrier has not yet received your parcel, which may cause a delay.\n* `attempted_delivery` - The carrier attempted to deliver your parcel but was unable to complete delivery.\n* `attempted_delivery_final` - The carrier made a final attempt to deliver your parcel but was unable to complete delivery. Please check the\n                carrier's instructions for next steps.\n* `cod_amount_not_paid` - Delivery failed due to unpaid cash on delivery. Please follow carrier instructions.\n* `cod_amount_paid` - Cash on delivery payment received.\n* `customer_carded` - Delivery attempt failed. Please follow delivery instructions left by the carrier.\n* `customer_identification_failed` - Delivery couldn't be completed as identification requirements were not met.\n* `customer_to_collect_from_carrier` - Your parcel is available for collection from the carrier's local delivery unit.\n* `delivery_scheduled` - Your parcel's delivery has been scheduled and will soon be out for delivery.\n* `no_access_to_recipients_address` - The carrier couldn't access the delivery location due to restricted entry.\n* `out_for_delivery` - Your parcel is on its way and will be delivered today.\n* `cancelled` - Your parcel has been cancelled.\n* `customer_moved` - Delivery failed as the recipient is no longer at the specified address. Your parcel is being returned.\n* `hazardous_prohibited` - Your parcel contains restricted items and will not be delivered.\n* `not_collected_from_pickup_point` - Your parcel was not collected from the pickup point within the designated time and will be returned.\n* `not_delivered` - All delivery attempts failed. Your parcel is being returned to the sender.\n* `not_delivered_addressee_deceased` - The parcel could not be delivered as the addressee is reported deceased.\n* `parcel_disposed` - Your parcel has been disposed of due to its contents or condition and will not be delivered.\n* `parcel_lost` - The carrier has reported that your parcel is lost and will not be delivered.\n* `parcel_outside_of_service_capability` - The parcel cannot be delivered as it exceeds the carrier's service limits.\n* `refused_by_customer` - You have refused the parcel, and it will be returned to the sender.\n* `return_to_sender` - Your parcel is being returned to the sender due to delivery issues.\n* `undeliverable_returned_to_sender` - The shipment has been returned to the sender. Please contact the sender for further information.\n* `address_query` - There is an issue with the delivery address, which may delay your parcel.\n* `carrier_delays` - Your parcel is delayed due to issues within the carrier network.\n* `customs_cleared` - Your parcel has cleared customs and is continuing its journey.\n* `customs_processing` - Your parcel is currently being processed by customs.\n* `delayed_not_carrier` - Your parcel is delayed due to circumstances beyond the carrier's control.\n* `delivery_arranged_with_recipient` - Your parcel's delivery has been arranged with the carrier.\n* `delivery_rescheduled` - Your parcel's delivery has been rescheduled due to operational issues.\n* `duty_not_paid` - The import taxes or duties for this package haven't been paid and it may be subject to disposal by customs\n                authorities if payment is not made.\n* `held_by_carrier` - Your parcel is being held due to an operational issue. Contact with the carrier for more information.\n* `held_by_carrier_for_clearance_pre_processing` - Your parcel is being held by the carrier for customs documentation checks. This may occur when the carrier must\n                confirm documentation before the parcel can continue its journey.\n* `held_by_customs` - Your parcel is being held at customs, which may delay delivery.\n* `hub_processing` - Your parcel is being processed at a carrier hub.\n* `hub_scan_in` - Your parcel has arrived at the carrier's hub for processing.\n* `hub_scan_out` - Your parcel has left the carrier's hub.\n* `in_transit` - Your shipment is on its way between the carrier hubs.\n* `incorrect_declaration` - Your parcel has been incorrectly declared but is still moving forward for delivery.\n* `information` - The carrier has shared additional information about your parcel.\n* `parcel_damaged` - Your parcel was damaged in transit but will still be delivered.\n* `parcel_over_labelled` - Your parcel's label has been updated by the carrier, which may affect tracking visibility.\n* `parcel_redirected_by_carrier` - The carrier has redirected your parcel due to an operational issue. The package is likely being rerouted to a\n                nearby pickup point. You may contact the carrier for more details about the new delivery location.\n* `parcel_redirected_by_recipient` - Your parcel has been redirected to a new delivery address per your request.\n* `parcel_repacked` - Your parcel was repackaged by the carrier due to damage and will still be delivered.\n* `parcel_update_notification` - The carrier has sent you an update on your parcel status via SMS or email.\n* `recd_by_carrier_no_elec_advice` - Your parcel has been received by the carrier but may experience delays due to missing pre-advice.\n* `received_by_carrier` - Your parcel has been received by the carrier and is beginning its journey.\n* `received_local_delivery_depot` - Your parcel has arrived at the local delivery depot and is almost ready for delivery.\n* `routing_error` - Your parcel was sent to the wrong place due to a routing error but is being redirected.\n* `sub_contractor_event` - The carrier has shared additional information about your parcel's handling by a delivery partner.\n* `sub_contractor_received` - Your parcel has been received by the carrier's local delivery partner.\n* `awaiting_collection_from_pickup_point` - Your parcel is ready for collection at the selected pickup point.\n* `collect_at_local_po` - Your parcel is ready for collection at your local post office.\n* `delivered` - Your parcel has been successfully delivered.\n* `delivered_damaged` - Your parcel was delivered but arrived with visible damage.\n* `delivered_in_part` - Part of your shipment has been delivered. Check for updates on the rest.\n* `delivered_specified_safe_place` - Your parcel has been delivered to your specified safe place.\n* `delivered_to_alternative_delivery_location` - Your parcel was delivered to an alternative location due to the delivery company being unable to deliver it to the\n                specified address. Check carrier instructions for pickup details.\n* `delivered_to_locker_collection_point` - Your package has been delivered to the pickup point. You'll be notified when it's ready for collection.\n* `delivered_to_neighbour` - Your parcel was delivered to your neighbor.\n* `delivered_to_po_box` - Your parcel has been delivered to your specified PO Box.\n* `delivered_to_reception` - Your parcel has been delivered to your building's reception or designated mail area.\n* `parcel_collected_from_pickup_point` - Your package has been picked up from the pick up point.\n* `post_transit_status` - The carrier has added more information about your delivery.\n* `proof_of_delivery` - The carrier has confirmed delivery with proof, such as a signature or photo.\n* `collected_from_pick_up_point` - Your package has been collected from the pickup point.\n* `damaged` - Your parcel was damaged during transit.\n* `delayed` - Your parcel has been delayed.\n* `delivered_to_different_address` - Your parcel was delivered to a different address than originally specified.\n* `delivered_to_pickup_point` - Your parcel has been delivered to a pickup point.\n* `held` - Your parcel is being held.\n* `lost` - Your parcel has been reported as lost.\n* `misroute` - Your parcel was misrouted during transit.\n* `partial_delivery` - Only part of your shipment has been delivered.\n* `received_in_depot` - Your parcel has been received at the depot.\n* `refused_by_recipient` - The recipient has refused to accept the parcel."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Individual mapping item for update request"
+      },
+      "UpdateMappingsResponse": {
+        "required": [
+          "failed",
+          "succeeded"
+        ],
+        "type": "object",
+        "properties": {
+          "succeeded": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateMappingsResponseItem"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMappingsResponseItem": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the mapping that was attempted to be updated",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the update failed (null if successful)",
+            "nullable": true,
+            "example": "Mapping not found"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item for a single mapping update operation"
+      },
+      "UpdateRecordsRequestItem": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the record to update",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "status_code": {
+            "enum": [
+              "carrier_status_not_mapped",
+              "closed_by_system",
+              "unspecified_exception",
+              "collection_failed",
+              "collection_made",
+              "collection_requested",
+              "dropped_off",
+              "elec_advice_recd_by_carrier",
+              "not_yet_received_by_carrier",
+              "attempted_delivery",
+              "attempted_delivery_final",
+              "cod_amount_not_paid",
+              "cod_amount_paid",
+              "customer_carded",
+              "customer_identification_failed",
+              "customer_to_collect_from_carrier",
+              "delivery_scheduled",
+              "no_access_to_recipients_address",
+              "out_for_delivery",
+              "cancelled",
+              "customer_moved",
+              "hazardous_prohibited",
+              "not_collected_from_pickup_point",
+              "not_delivered",
+              "not_delivered_addressee_deceased",
+              "parcel_disposed",
+              "parcel_lost",
+              "parcel_outside_of_service_capability",
+              "refused_by_customer",
+              "return_to_sender",
+              "undeliverable_returned_to_sender",
+              "address_query",
+              "carrier_delays",
+              "customs_cleared",
+              "customs_processing",
+              "delayed_not_carrier",
+              "delivery_arranged_with_recipient",
+              "delivery_rescheduled",
+              "duty_not_paid",
+              "held_by_carrier",
+              "held_by_carrier_for_clearance_pre_processing",
+              "held_by_customs",
+              "hub_processing",
+              "hub_scan_in",
+              "hub_scan_out",
+              "in_transit",
+              "incorrect_declaration",
+              "information",
+              "parcel_damaged",
+              "parcel_over_labelled",
+              "parcel_redirected_by_carrier",
+              "parcel_redirected_by_recipient",
+              "parcel_repacked",
+              "parcel_update_notification",
+              "recd_by_carrier_no_elec_advice",
+              "received_by_carrier",
+              "received_local_delivery_depot",
+              "routing_error",
+              "sub_contractor_event",
+              "sub_contractor_received",
+              "awaiting_collection_from_pickup_point",
+              "collect_at_local_po",
+              "delivered",
+              "delivered_damaged",
+              "delivered_in_part",
+              "delivered_specified_safe_place",
+              "delivered_to_alternative_delivery_location",
+              "delivered_to_locker_collection_point",
+              "delivered_to_neighbour",
+              "delivered_to_po_box",
+              "delivered_to_reception",
+              "parcel_collected_from_pickup_point",
+              "post_transit_status",
+              "proof_of_delivery",
+              "collected_from_pick_up_point",
+              "damaged",
+              "delayed",
+              "delivered_to_different_address",
+              "delivered_to_pickup_point",
+              "held",
+              "lost",
+              "misroute",
+              "partial_delivery",
+              "received_in_depot",
+              "refused_by_recipient"
+            ],
+            "type": "string",
+            "description": "CDM status code to assign to this record (optional, if null uses existing/suggested code)",
+            "nullable": true
+          },
+          "is_approved": {
+            "type": "boolean",
+            "description": "Approval status: true to approve, false to reject, null to leave unchanged",
+            "nullable": true,
+            "example": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Request item for updating a single record"
+      },
+      "UpdateRecordsResponse": {
+        "required": [
+          "failed",
+          "succeeded"
+        ],
+        "type": "object",
+        "properties": {
+          "succeeded": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateRecordsResponseItem"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateRecordsResponseItem": {
+        "required": [
+          "error",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the record that was attempted to be updated",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the update failed (null if successful)",
+            "nullable": true,
+            "example": "Record not found or belongs to a different file"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response item for a single record update operation"
+      },
+      "UploadFileResponse": {
+        "required": [
+          "file_id"
+        ],
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "description": "Unique identifier assigned to the uploaded file",
+            "format": "uuid",
+            "example": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Response model for successful file upload"
+      }
+    }
+  }
+}

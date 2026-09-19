@@ -1,0 +1,262 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EU CELLAR SPARQL API",
+    "description": "REST interface to the CELLAR repository SPARQL endpoint maintained by the Publications Office of the European Union. Provides access to EU legislation, case law, and official publications metadata via SPARQL queries. The endpoint runs on OpenLink Virtuoso and supports SELECT, CONSTRUCT, DESCRIBE, and ASK query types with results in JSON, XML, CSV, Turtle, and other RDF formats.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Publications Office of the European Union",
+      "email": "OP-CELLAR@ec.europa.eu",
+      "url": "https://op.europa.eu/en/web/cellar"
+    },
+    "license": {
+      "name": "EU Open Data Licence",
+      "url": "https://data.europa.eu/eli/dec_impl/2011/833/oj"
+    },
+    "x-jentic-source-url": "https://publications.europa.eu/webapi/rdf/sparql",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://publications.europa.eu/webapi/rdf",
+      "description": "CELLAR SPARQL endpoint"
+    }
+  ],
+  "paths": {
+    "/sparql": {
+      "get": {
+        "operationId": "executeSparqlQueryGet",
+        "summary": "Execute a SPARQL query via HTTP GET",
+        "description": "Execute a SPARQL SELECT, CONSTRUCT, DESCRIBE, or ASK query against the CELLAR RDF store. Returns results in the format specified by the format parameter.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "SPARQL query string",
+            "schema": {
+              "type": "string"
+            },
+            "example": "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Desired response format",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/json",
+                "application/sparql-results+json",
+                "application/sparql-results+xml",
+                "text/csv",
+                "text/tab-separated-values",
+                "application/rdf+xml",
+                "text/turtle",
+                "application/n-triples",
+                "application/ld+json",
+                "application/xhtml+xml",
+                "text/html"
+              ],
+              "default": "application/sparql-results+json"
+            }
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "Query execution timeout in milliseconds",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "default-graph-uri",
+            "in": "query",
+            "description": "Default graph URI for the query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SPARQL query results",
+            "content": {
+              "application/sparql-results+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SparqlResultSet"
+                }
+              },
+              "application/sparql-results+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid SPARQL query syntax"
+          },
+          "500": {
+            "description": "Query execution error or timeout"
+          }
+        }
+      },
+      "post": {
+        "operationId": "executeSparqlQueryPost",
+        "summary": "Execute a SPARQL query via HTTP POST",
+        "description": "Execute a SPARQL query using POST method, suitable for longer queries that exceed URL length limits.",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Desired response format",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/json",
+                "application/sparql-results+json",
+                "application/sparql-results+xml",
+                "text/csv",
+                "text/tab-separated-values",
+                "application/rdf+xml",
+                "text/turtle",
+                "application/n-triples",
+                "application/ld+json"
+              ],
+              "default": "application/sparql-results+json"
+            }
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "Query execution timeout in milliseconds",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "SPARQL query string"
+                  },
+                  "default-graph-uri": {
+                    "type": "string",
+                    "description": "Default graph URI"
+                  }
+                }
+              }
+            },
+            "application/sparql-query": {
+              "schema": {
+                "type": "string",
+                "description": "SPARQL query as raw body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SPARQL query results",
+            "content": {
+              "application/sparql-results+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SparqlResultSet"
+                }
+              },
+              "application/sparql-results+xml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid SPARQL query syntax"
+          },
+          "500": {
+            "description": "Query execution error or timeout"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SparqlResultSet": {
+        "type": "object",
+        "description": "W3C SPARQL JSON Results Format",
+        "properties": {
+          "head": {
+            "type": "object",
+            "properties": {
+              "link": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "vars": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Variable names from the SELECT clause"
+              }
+            }
+          },
+          "results": {
+            "type": "object",
+            "properties": {
+              "distinct": { "type": "boolean" },
+              "ordered": { "type": "boolean" },
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["uri", "literal", "bnode", "typed-literal"]
+                      },
+                      "value": { "type": "string" },
+                      "xml:lang": { "type": "string" },
+                      "datatype": { "type": "string" }
+                    },
+                    "required": ["type", "value"]
+                  }
+                }
+              }
+            }
+          },
+          "boolean": {
+            "type": "boolean",
+            "description": "Result of an ASK query"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "SPARQL",
+      "description": "SPARQL query operations against EU CELLAR RDF store"
+    }
+  ]
+}

@@ -1,0 +1,528 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "JOJO E-Bike API",
+    "description": "REST API f\u00fcr E-Bike Vermietungen auf Sylt. Erm\u00f6glicht Verf\u00fcgbarkeitspr\u00fcfung und automatische Buchungen.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "JOJO E-Bike Support",
+      "email": "info@jojo-ebike.de",
+      "url": "https://jojo-ebike.de"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/hotelkiose/jojo-e-bike-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://jojo-ebike.de",
+      "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development Server"
+    }
+  ],
+  "paths": {
+    "/api/ai/availability": {
+      "get": {
+        "summary": "Verf\u00fcgbarkeit pr\u00fcfen",
+        "description": "Pr\u00fcft die Verf\u00fcgbarkeit von Fahrr\u00e4dern f\u00fcr einen bestimmten Zeitraum und gibt Preise zur\u00fcck.",
+        "operationId": "checkAvailability",
+        "tags": [
+          "Availability"
+        ],
+        "parameters": [
+          {
+            "name": "bikeTypeId",
+            "in": "query",
+            "required": true,
+            "description": "Fahrradtyp-ID (city, ebike-std, ebike-premium, mtb, sharing-ebike, e-kickscooter)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "city",
+                "ebike-std",
+                "ebike-premium",
+                "mtb",
+                "sharing-ebike",
+                "e-kickscooter"
+              ]
+            }
+          },
+          {
+            "name": "pickupDate",
+            "in": "query",
+            "required": true,
+            "description": "Abholdatum im Format YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "returnDate",
+            "in": "query",
+            "required": true,
+            "description": "R\u00fcckgabedatum im Format YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "quantity",
+            "in": "query",
+            "required": false,
+            "description": "Anzahl der Fahrr\u00e4der (default: 1)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verf\u00fcgbarkeitspr\u00fcfung erfolgreich",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "bikeType": {
+                          "type": "string",
+                          "example": "E-Bike Standard"
+                        },
+                        "bikeTypeId": {
+                          "type": "string",
+                          "example": "ebike-std"
+                        },
+                        "pickupDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2026-02-10"
+                        },
+                        "returnDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2026-02-12"
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "days": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "pricePerDay": {
+                          "type": "number",
+                          "format": "float",
+                          "example": 47
+                        },
+                        "totalPrice": {
+                          "type": "number",
+                          "format": "float",
+                          "example": 300
+                        },
+                        "discount": {
+                          "type": "number",
+                          "format": "float",
+                          "example": 18
+                        },
+                        "finalPrice": {
+                          "type": "number",
+                          "format": "float",
+                          "example": 282
+                        },
+                        "currency": {
+                          "type": "string",
+                          "example": "EUR"
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "bikeType",
+                        "bikeTypeId",
+                        "pickupDate",
+                        "returnDate",
+                        "quantity",
+                        "days",
+                        "pricePerDay",
+                        "totalPrice",
+                        "discount",
+                        "finalPrice",
+                        "currency"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean",
+                          "example": false
+                        },
+                        "error": {
+                          "type": "string",
+                          "example": "No availability data for this period"
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "error"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltige Parameter"
+          },
+          "500": {
+            "description": "Serverfehler"
+          }
+        }
+      }
+    },
+    "/api/ai/book": {
+      "post": {
+        "summary": "Buchung erstellen",
+        "description": "Erstellt eine neue E-Bike Buchung mit Kundeninformationen. Generiert QR-Code und sendet SMS-Best\u00e4tigung.",
+        "operationId": "createBooking",
+        "tags": [
+          "Bookings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bikeTypeId": {
+                    "type": "string",
+                    "description": "Fahrradtyp-ID",
+                    "enum": [
+                      "city",
+                      "ebike-std",
+                      "ebike-premium",
+                      "mtb",
+                      "sharing-ebike",
+                      "e-kickscooter"
+                    ],
+                    "example": "ebike-std"
+                  },
+                  "pickupDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Abholdatum (YYYY-MM-DD)",
+                    "example": "2026-02-10"
+                  },
+                  "returnDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "R\u00fcckgabedatum (YYYY-MM-DD)",
+                    "example": "2026-02-12"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "Anzahl der Fahrr\u00e4der",
+                    "minimum": 1,
+                    "example": 2
+                  },
+                  "customerId": {
+                    "type": "string",
+                    "description": "Eindeutige Kunden-ID (z.B. chatgpt-user-123)",
+                    "example": "chatgpt-user-123"
+                  },
+                  "customerName": {
+                    "type": "string",
+                    "description": "Vollst\u00e4ndiger Name des Kunden",
+                    "example": "Max M\u00fcller"
+                  },
+                  "customerEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "E-Mail-Adresse des Kunden",
+                    "example": "max@example.com"
+                  },
+                  "customerPhone": {
+                    "type": "string",
+                    "description": "Telefonnummer mit L\u00e4ndercode (+49...)",
+                    "example": "+491234567890"
+                  },
+                  "phoneToken": {
+                    "type": "string",
+                    "description": "Telefon-Verifizierungstoken",
+                    "example": "token-123"
+                  }
+                },
+                "required": [
+                  "bikeTypeId",
+                  "pickupDate",
+                  "returnDate",
+                  "quantity",
+                  "customerId",
+                  "customerName",
+                  "customerEmail",
+                  "customerPhone",
+                  "phoneToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Buchung erfolgreich erstellt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bookingId": {
+                      "type": "string",
+                      "description": "Eindeutige Buchungs-ID",
+                      "example": "JOJO-2026-5J3PMRDM"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Buchungsstatus",
+                      "enum": [
+                        "pending",
+                        "confirmed",
+                        "cancelled",
+                        "completed",
+                        "break"
+                      ],
+                      "example": "pending"
+                    },
+                    "qrCode": {
+                      "type": "string",
+                      "description": "QR-Code als Data URL (Base64)",
+                      "example": "data:image/png;base64,..."
+                    },
+                    "confirmationText": {
+                      "type": "string",
+                      "description": "Best\u00e4tigungstext f\u00fcr den Kunden",
+                      "example": "JOJO E-Bike Buchungsbest\u00e4tigung..."
+                    },
+                    "confirmationMessage": {
+                      "type": "string",
+                      "description": "Best\u00e4tigungsnachricht",
+                      "example": "Booking JOJO-2026-5J3PMRDM confirmed. SMS with payment link sent."
+                    },
+                    "smsMessage": {
+                      "type": "string",
+                      "description": "SMS-Nachricht an Kunden",
+                      "example": "JOJO E-Bike: Buchung JOJO-2026-5J3PMRDM best\u00e4tigt!..."
+                    },
+                    "paymentLink": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Zahlungslink f\u00fcr Anzahlung",
+                      "example": "https://jojoebike.manus.space/payment/JOJO-2026-5J3PMRDM"
+                    },
+                    "jojPhone": {
+                      "type": "string",
+                      "description": "Kontaktnummer von JOJO E-Bike",
+                      "example": "+49 1515 524 8003"
+                    }
+                  },
+                  "required": [
+                    "bookingId",
+                    "status",
+                    "confirmationMessage",
+                    "paymentLink",
+                    "jojPhone"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ung\u00fcltige Buchungsdaten"
+          },
+          "500": {
+            "description": "Buchung konnte nicht erstellt werden"
+          }
+        }
+      }
+    },
+    "/api/ai/booking/{bookingId}": {
+      "get": {
+        "summary": "Buchungsdetails abrufen",
+        "description": "Ruft die Details einer bestehenden Buchung ab.",
+        "operationId": "getBooking",
+        "tags": [
+          "Bookings"
+        ],
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "description": "Buchungs-ID (z.B. JOJO-2026-5J3PMRDM)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Buchungsdetails erfolgreich abgerufen",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bookingId": {
+                      "type": "string",
+                      "example": "JOJO-2026-5J3PMRDM"
+                    },
+                    "customerName": {
+                      "type": "string",
+                      "example": "Max M\u00fcller"
+                    },
+                    "customerEmail": {
+                      "type": "string",
+                      "example": "max@example.com"
+                    },
+                    "bikeType": {
+                      "type": "string",
+                      "example": "E-Bike Standard"
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "example": 2
+                    },
+                    "pickupDate": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2026-02-10"
+                    },
+                    "returnDate": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2026-02-12"
+                    },
+                    "totalPrice": {
+                      "type": "number",
+                      "format": "float",
+                      "example": 282
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "confirmed",
+                        "cancelled",
+                        "completed",
+                        "break"
+                      ],
+                      "example": "pending"
+                    },
+                    "paymentLink": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://jojoebike.manus.space/payment/JOJO-2026-5J3PMRDM"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Buchung nicht gefunden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BikeType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "city",
+              "ebike-std",
+              "ebike-premium",
+              "mtb",
+              "sharing-ebike",
+              "e-kickscooter"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "pricePerDay": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "completed",
+              "break"
+            ]
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerEmail": {
+            "type": "string"
+          },
+          "bikeType": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "pickupDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "returnDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "totalPrice": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Availability",
+      "description": "Verf\u00fcgbarkeitspr\u00fcfung und Preisberechnung"
+    },
+    {
+      "name": "Bookings",
+      "description": "Buchungsverwaltung"
+    }
+  ]
+}

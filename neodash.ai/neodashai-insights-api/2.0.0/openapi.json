@@ -1,0 +1,745 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NeoDashAI Insights API",
+    "version": "2.0.0",
+    "description": "API p\u00fablica do NeoDashAI Insights voltada ao consumo direto por clientes finais.\nOferece apenas dois fluxos de execu\u00e7\u00e3o:\n\n* `/component`: processa um componente individual em uma janela temporal, com op\u00e7\u00e3o de comparar com uma janela baseline.\n* `/dashboard`: agrega componentes de um dashboard, aplica regras, produz narrativa executiva e permite revis\u00e3o humana.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/luispacheco-d35/neodashai-insights-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.neodash.ai/insights",
+      "description": "Produ\u00e7\u00e3o"
+    },
+    {
+      "url": "https://staging.neodash.ai/insights",
+      "description": "Ambiente de homologa\u00e7\u00e3o"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Component",
+      "description": "Execu\u00e7\u00e3o e an\u00e1lise de componentes individuais"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Consolida\u00e7\u00e3o e revis\u00e3o de dashboards completos"
+    }
+  ],
+  "paths": {
+    "/component": {
+      "post": {
+        "summary": "Executa an\u00e1lises para um \u00fanico componente",
+        "description": "Dispara o grafo de componente com base no `mode` solicitado. Quando `window_baseline` \u00e9 informado,\nexecuta as mesmas etapas (servi\u00e7o Clojure, regras e narrativa) para a janela hist\u00f3rica e retorna comparativos.\nN\u00e3o h\u00e1 etapa de revis\u00e3o humana nesta rota.\n",
+        "operationId": "runComponent",
+        "tags": [
+          "Component"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentRunRequest"
+              },
+              "example": {
+                "tenant_id": "tenant-123",
+                "dashboard_id": "dash-42",
+                "component_id": "comp-b2",
+                "mode": "exploit",
+                "force_narrative_refresh": false,
+                "window_current": {
+                  "start": "2024-09-01T00:00:00Z",
+                  "end": "2024-09-30T23:59:59Z",
+                  "granularity": "month"
+                },
+                "window_baseline": {
+                  "start": "2024-08-01T00:00:00Z",
+                  "end": "2024-08-31T23:59:59Z",
+                  "granularity": "month"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Componente processado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentRunResponse"
+                },
+                "example": {
+                  "thread_id": "cmp-1729300000000",
+                  "run_key": "tenant-123|dash-42|comp-b2|2024-09|v1",
+                  "status": {
+                    "clojure_service_status": "ok",
+                    "narrative_refreshed": true,
+                    "persist_status": "upserted",
+                    "comparison_persist_status": "upserted"
+                  },
+                  "current": {
+                    "metrics": {
+                      "window": {
+                        "start": "2024-09-01T00:00:00Z",
+                        "end": "2024-09-30T23:59:59Z",
+                        "granularity": "month"
+                      },
+                      "metrics": [
+                        {
+                          "key": "ctr",
+                          "value": 1.4
+                        },
+                        {
+                          "key": "impressions",
+                          "value": 342100
+                        }
+                      ]
+                    },
+                    "flags": {
+                      "anomalies": []
+                    },
+                    "rule_hits": [
+                      {
+                        "rule_id": "rule-boost",
+                        "title": "Ajustar or\u00e7amento",
+                        "rationale": "CTR acima da meta",
+                        "action": "aumentar investimento em 10%",
+                        "impact_score": 0.8,
+                        "confidence": 0.6
+                      }
+                    ],
+                    "narrative": {
+                      "executive_summary": "CTR manteve patamar superior ao m\u00eas anterior.",
+                      "bullet_points": [
+                        "Recomenda ampliar investimento gradualmente."
+                      ]
+                    },
+                    "component_narrative": {
+                      "executive_summary": "Narrativa estruturada do componente.",
+                      "bullet_points": [
+                        "Indica\u00e7\u00e3o 1."
+                      ]
+                    },
+                    "generated_at": "2024-10-17T09:00:05Z",
+                    "source_hash": "srv-123abc",
+                    "service_trace": {
+                      "call_duration_ms": 420
+                    }
+                  },
+                  "baseline": {
+                    "metrics": {
+                      "window": {
+                        "start": "2024-08-01T00:00:00Z",
+                        "end": "2024-08-31T23:59:59Z",
+                        "granularity": "month"
+                      },
+                      "metrics": [
+                        {
+                          "key": "ctr",
+                          "value": 1.1
+                        }
+                      ]
+                    },
+                    "narrative": {
+                      "executive_summary": "Agosto serviu como base comparativa.",
+                      "bullet_points": [
+                        "CTR inferior ao atual."
+                      ]
+                    }
+                  },
+                  "deltas": {
+                    "ctr": 0.3
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard": {
+      "post": {
+        "summary": "Consolida insights de um dashboard e dispara revis\u00e3o humana",
+        "description": "Executa o grafo de dashboard, que agora consulta o servi\u00e7o Clojure para listar os componentes associados,\ninvoca o worker de cada componente (janelas current/baseline) e consolida as narrativas agregadas.\nQuando `window_baseline` \u00e9 fornecida, calcula deltas e gera narrativa comparativa. Inclui etapa opcional de\nrevis\u00e3o humana (HIL) com possibilidade de aprovar, rejeitar ou solicitar reprocessos direcionados.\n",
+        "operationId": "runDashboard",
+        "tags": [
+          "Dashboard"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardRunRequest"
+              },
+              "example": {
+                "tenant_id": "tenant-123",
+                "dashboard_id": "dash-42",
+                "mode": "explore",
+                "force_narrative_refresh": true,
+                "window_current": {
+                  "start": "2024-09-01T00:00:00Z",
+                  "end": "2024-09-30T23:59:59Z",
+                  "granularity": "month"
+                },
+                "window_baseline": {
+                  "start": "2024-08-01T00:00:00Z",
+                  "end": "2024-08-31T23:59:59Z",
+                  "granularity": "month"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dashboard processado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardRunResponse"
+                },
+                "example": {
+                  "thread_id": "dash-1729300055000",
+                  "report_key": "rpt|tenant-123|dash-42|2024-09|v1",
+                  "status": {
+                    "persist_status": "upserted",
+                    "persist_status_baseline": "upserted",
+                    "comparison_persist_status": "upserted",
+                    "human_review": {
+                      "action": "approve",
+                      "reason": "Narrativa consistente com dados."
+                    },
+                    "components_current": [
+                      {
+                        "component_id": "comp-a1",
+                        "status": "ok"
+                      },
+                      {
+                        "component_id": "comp-b2",
+                        "status": "ok"
+                      }
+                    ],
+                    "components_baseline": [
+                      {
+                        "component_id": "comp-a1",
+                        "status": "ok"
+                      }
+                    ]
+                  },
+                  "current_report": {
+                    "aggregated_metrics": {
+                      "totals": {
+                        "revenue": 125000.32,
+                        "spend": 32000.0
+                      }
+                    },
+                    "global_flags": {
+                      "comp-b2": {
+                        "anomalies": []
+                      }
+                    },
+                    "final_recommendations": [
+                      {
+                        "prioridade": "alta",
+                        "descricao": "Ajustar or\u00e7amento de remarketing"
+                      }
+                    ],
+                    "narrative": {
+                      "executive_summary": "Setembro superou expectativas de receita.",
+                      "bullet_points": [
+                        "Spend est\u00e1vel.",
+                        "Convers\u00e3o crescente em remarketing."
+                      ]
+                    },
+                    "coverage": 0.95,
+                    "trace_components": [
+                      {
+                        "component_id": "comp-a1",
+                        "run_key": "tenant-123|dash-42|comp-a1|2024-09|v1"
+                      }
+                    ]
+                  },
+                  "baseline_report": {
+                    "aggregated_metrics": {
+                      "totals": {
+                        "revenue": 118000.11,
+                        "spend": 31500.0
+                      }
+                    },
+                    "narrative": {
+                      "executive_summary": "Agosto serviu de refer\u00eancia.",
+                      "bullet_points": [
+                        "Receita abaixo da meta."
+                      ]
+                    }
+                  },
+                  "deltas": {
+                    "revenue": 7000.21,
+                    "spend": 500.0
+                  },
+                  "comparison_narrative": {
+                    "executive_summary": "Compara\u00e7\u00e3o do dashboard (explore) entre agosto e setembro.",
+                    "bullet_points": [
+                      "revenue: +7,000.21",
+                      "spend: +500.00"
+                    ]
+                  },
+                  "hil_decision": {
+                    "action": "approve",
+                    "reason": "Salvar e publicar."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ComponentRunRequest": {
+        "type": "object",
+        "required": [
+          "tenant_id",
+          "dashboard_id",
+          "component_id",
+          "mode",
+          "window_current"
+        ],
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "Identificador \u00fanico do tenant"
+          },
+          "dashboard_id": {
+            "type": "string",
+            "description": "Dashboard ao qual o componente pertence"
+          },
+          "component_id": {
+            "type": "string",
+            "description": "Identificador do componente a ser executado"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ExecutionMode"
+          },
+          "force_narrative_refresh": {
+            "type": "boolean",
+            "description": "For\u00e7a nova gera\u00e7\u00e3o de narrativa ignorando vers\u00f5es persistidas",
+            "default": false
+          },
+          "window_current": {
+            "$ref": "#/components/schemas/TimeWindow"
+          },
+          "window_baseline": {
+            "$ref": "#/components/schemas/TimeWindow",
+            "description": "Janela hist\u00f3rica usada para compara\u00e7\u00e3o. Quando ausente, nenhum comparativo \u00e9 realizado."
+          }
+        }
+      },
+      "ComponentRunResponse": {
+        "type": "object",
+        "required": [
+          "thread_id",
+          "status",
+          "current"
+        ],
+        "properties": {
+          "thread_id": {
+            "type": "string",
+            "description": "Identificador do processamento ass\u00edncrono"
+          },
+          "run_key": {
+            "type": "string",
+            "description": "Chave de persist\u00eancia do componente processado"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ComponentRunStatus"
+          },
+          "current": {
+            "$ref": "#/components/schemas/ComponentSnapshot"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/ComponentSnapshot"
+          },
+          "deltas": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Diferen\u00e7as m\u00e9tricas (valor atual - baseline)"
+          }
+        }
+      },
+      "ComponentRunStatus": {
+        "type": "object",
+        "properties": {
+          "clojure_service_status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "fallback",
+              "sample"
+            ]
+          },
+          "narrative_refreshed": {
+            "type": "boolean"
+          },
+          "persist_status": {
+            "type": "string"
+          },
+          "comparison_persist_status": {
+            "type": "string"
+          }
+        }
+      },
+      "ComponentSnapshot": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/MetricsBundle"
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "rule_hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleHit"
+            }
+          },
+          "narrative": {
+            "$ref": "#/components/schemas/Narrative"
+          },
+          "component_narrative": {
+            "$ref": "#/components/schemas/Narrative"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source_hash": {
+            "type": "string"
+          },
+          "service_trace": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "DashboardRunRequest": {
+        "type": "object",
+        "required": [
+          "tenant_id",
+          "dashboard_id",
+          "mode",
+          "window_current"
+        ],
+        "properties": {
+          "tenant_id": {
+            "type": "string"
+          },
+          "dashboard_id": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ExecutionMode"
+          },
+          "force_narrative_refresh": {
+            "type": "boolean",
+            "description": "Gera narrativa do dashboard novamente, mesmo que j\u00e1 exista",
+            "default": false
+          },
+          "window_current": {
+            "$ref": "#/components/schemas/TimeWindow"
+          },
+          "window_baseline": {
+            "$ref": "#/components/schemas/TimeWindow",
+            "description": "Quando informado, executa comparativo baseline vs. current."
+          }
+        }
+      },
+      "DashboardRunResponse": {
+        "type": "object",
+        "required": [
+          "thread_id",
+          "status",
+          "current_report"
+        ],
+        "properties": {
+          "thread_id": {
+            "type": "string"
+          },
+          "report_key": {
+            "type": "string",
+            "description": "Chave do relat\u00f3rio persistido (quando aplic\u00e1vel)"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DashboardRunStatus"
+          },
+          "current_report": {
+            "$ref": "#/components/schemas/DashboardSnapshot"
+          },
+          "baseline_report": {
+            "$ref": "#/components/schemas/DashboardSnapshot"
+          },
+          "deltas": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "comparison_narrative": {
+            "$ref": "#/components/schemas/Narrative"
+          },
+          "hil_decision": {
+            "$ref": "#/components/schemas/HumanReviewDecision"
+          }
+        }
+      },
+      "DashboardRunStatus": {
+        "type": "object",
+        "properties": {
+          "persist_status": {
+            "type": "string"
+          },
+          "persist_status_baseline": {
+            "type": "string"
+          },
+          "comparison_persist_status": {
+            "type": "string"
+          },
+          "human_review": {
+            "$ref": "#/components/schemas/HumanReviewDecision"
+          },
+          "components_current": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "components_baseline": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "DashboardSnapshot": {
+        "type": "object",
+        "properties": {
+          "aggregated_metrics": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "global_flags": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "final_recommendations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "narrative": {
+            "$ref": "#/components/schemas/Narrative"
+          },
+          "coverage": {
+            "type": "number"
+          },
+          "trace_components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "ExecutionMode": {
+        "type": "string",
+        "enum": [
+          "exploit",
+          "explore"
+        ]
+      },
+      "TimeWindow": {
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "description": "In\u00edcio do intervalo em ISO8601"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fim do intervalo em ISO8601"
+          },
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "default": "day"
+          }
+        }
+      },
+      "MetricsBundle": {
+        "type": "object",
+        "required": [
+          "window",
+          "metrics"
+        ],
+        "properties": {
+          "window": {
+            "$ref": "#/components/schemas/TimeWindow"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricPoint"
+            }
+          },
+          "by_segment": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/MetricPoint"
+              }
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MetricPoint": {
+        "type": "object",
+        "required": [
+          "key",
+          "value"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RuleHit": {
+        "type": "object",
+        "required": [
+          "rule_id",
+          "title",
+          "rationale",
+          "action"
+        ],
+        "properties": {
+          "rule_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "impact_score": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Narrative": {
+        "type": "object",
+        "required": [
+          "executive_summary"
+        ],
+        "properties": {
+          "executive_summary": {
+            "type": "string"
+          },
+          "bullet_points": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "HumanReviewDecision": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "stop",
+              "rerun_components",
+              "rerun_aggregator",
+              "rerun_all"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "targets": {
+            "type": "object",
+            "properties": {
+              "dashboards": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

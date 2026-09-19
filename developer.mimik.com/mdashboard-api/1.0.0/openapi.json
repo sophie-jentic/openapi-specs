@@ -1,0 +1,953 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "mDashboard API",
+    "description": "**mDashboard** provides org-scoped analytics dashboards and audit log queries for partner admins, exclusively through ClickHouse.\n\n## What this service does\n- **Analytics Metrics** - Unified metrics endpoint covering enrollment, sleep quality, nudge acceptance, enrollment funnel, devices, cost, and retention.\n- **Audit Trail** - Filterable, paginated admin action history with CSV export capability.\n- **Org-Scoped Data Isolation** - Every query is automatically filtered by the caller's organization.\n- **Privacy Enforcement** - De-identification thresholds (cohort N\u226515) applied at the query layer. Consent is enforced upstream.\n\n## Conventions\n- All successful JSON responses wrap results under a top-level `data` property.\n- OAuth2 scopes gate admin and user operations (see **Security Schemes**).\n- This is a **read-only** API - no create, update, or delete operations.\n- Timestamps are ISO-8601 date-times with UTC `Z` (e.g., `2026-03-12T14:30:00Z`).\n\n<p><a href=\"https://bitbucket.org/mimiktech/swagger-mdashboard/src\">Repository</a></p>\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "mimik technology inc.",
+      "url": "https://developer.mimik.com/",
+      "email": "support@mimik.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/mimik/mdashboard/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/mDashboard/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin",
+      "description": "Superadmin operations - full access to all analytics and audit data across organizations"
+    },
+    {
+      "name": "User",
+      "description": "Partner admin operations - org-scoped analytics dashboards and audit trail"
+    }
+  ],
+  "paths": {
+    "/analytics/metrics": {
+      "get": {
+        "tags": [
+          "Admin",
+          "User"
+        ],
+        "summary": "Get analytics metrics",
+        "description": "Returns analytics metrics for the caller's organization. Use the `types` query parameter\nto select which metric groups to include in the response.\n\nAvailable metric types:\n- `enrollment` - Total enrolled, active members, and active usage rate\n- `sleepQuality` - Average sleep quality score, duration, and daily trend\n- `nudgeAcceptance` - Average nudge acceptance rate\n- `enrollmentFunnel` - Funnel stage counts and conversion rates (invited through engaged)\n- `devices` - Wearable device distribution and activation status\n- `costPerActiveMember` - Cost per active member based on subscription rate\n- `retentionRates` - Member retention at 30, 60, and 90 day intervals\n\nIf no types are specified, all metric groups are returned.\n\nDe-identification thresholds are enforced - cohorts with fewer than 15 members are suppressed.\nNon-consented member data is already excluded upstream (never written to ClickHouse).\n",
+        "operationId": "getMetrics",
+        "x-swagger-router-controller": "analyticsController",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "description": "Metric groups to include in the response. If omitted, all groups are returned.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "enrollment",
+                  "sleepQuality",
+                  "nudgeAcceptance",
+                  "enrollmentFunnel",
+                  "devices",
+                  "costPerActiveMember",
+                  "retentionRates"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "$ref": "#/components/parameters/StartDateParam"
+          },
+          {
+            "$ref": "#/components/parameters/EndDateParam"
+          },
+          {
+            "$ref": "#/components/parameters/OrgIdFilterParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved analytics metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AnalyticsMetrics"
+                    }
+                  }
+                },
+                "examples": {
+                  "allMetrics": {
+                    "summary": "All metric groups returned",
+                    "value": {
+                      "data": {
+                        "enrollment": {
+                          "totalEnrolled": 85,
+                          "activeMemberCount": 72,
+                          "activeUsageRate": 0.847
+                        },
+                        "sleepQuality": {
+                          "avgScore": 7.3,
+                          "avgDurationMinutes": 438,
+                          "trend": [
+                            {
+                              "date": "2026-03-01",
+                              "avgScore": 7.1
+                            },
+                            {
+                              "date": "2026-03-02",
+                              "avgScore": 7.4
+                            },
+                            {
+                              "date": "2026-03-03",
+                              "avgScore": 7.2
+                            }
+                          ]
+                        },
+                        "nudgeAcceptance": {
+                          "avgRate": 0.62
+                        },
+                        "enrollmentFunnel": {
+                          "stages": [
+                            {
+                              "name": "invited",
+                              "count": 100,
+                              "conversionRate": 1.0
+                            },
+                            {
+                              "name": "registered",
+                              "count": 85,
+                              "conversionRate": 0.85
+                            },
+                            {
+                              "name": "devicePaired",
+                              "count": 72,
+                              "conversionRate": 0.847
+                            },
+                            {
+                              "name": "agentActive",
+                              "count": 65,
+                              "conversionRate": 0.903
+                            },
+                            {
+                              "name": "engaged",
+                              "count": 58,
+                              "conversionRate": 0.892
+                            }
+                          ],
+                          "medianTimeToFirstInsightDays": 4.5
+                        },
+                        "devices": {
+                          "distributed": 72,
+                          "activated": 65,
+                          "activelySyncing": 58
+                        },
+                        "costPerActiveMember": 12.5,
+                        "retentionRates": {
+                          "days30": 0.95,
+                          "days60": 0.88,
+                          "days90": 0.82
+                        },
+                        "startDate": "2026-02-10",
+                        "endDate": "2026-03-12",
+                        "orgId": "550e8400-e29b-41d4-a716-446655440000"
+                      }
+                    }
+                  },
+                  "selective": {
+                    "summary": "Only enrollment and devices requested",
+                    "value": {
+                      "data": {
+                        "enrollment": {
+                          "totalEnrolled": 85,
+                          "activeMemberCount": 72,
+                          "activeUsageRate": 0.847
+                        },
+                        "devices": {
+                          "distributed": 72,
+                          "activated": 65,
+                          "activelySyncing": 58
+                        },
+                        "startDate": "2026-02-10",
+                        "endDate": "2026-03-12",
+                        "orgId": "550e8400-e29b-41d4-a716-446655440000"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:analytics"
+            ]
+          },
+          {
+            "UserSecurity": [
+              "read:analytics"
+            ]
+          }
+        ]
+      }
+    },
+    "/audit/events": {
+      "get": {
+        "tags": [
+          "Admin",
+          "User"
+        ],
+        "summary": "List audit events",
+        "description": "Returns a paginated list of admin action audit events for the caller's organization.\n\nSupports filtering by user, action type, and date range. Results are ordered by\ntimestamp descending (most recent first) and use cursor-based pagination.\n",
+        "operationId": "listAuditEvents",
+        "x-swagger-router-controller": "auditController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PageSizeParam"
+          },
+          {
+            "$ref": "#/components/parameters/StartAfterParam"
+          },
+          {
+            "$ref": "#/components/parameters/OrgIdFilterParam"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "description": "Filter by the user who performed the action",
+            "schema": {
+              "type": "string"
+            },
+            "example": "880e8400-e29b-41d4-a716-446655440000"
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "required": false,
+            "description": "Filter by event type (e.g., `org.created`, `dashboard.viewed`, `member.enrolled`)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "org.created"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": false,
+            "description": "Filter events on or after this date (ISO-8601 date-time)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-03-01T00:00:00Z"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "description": "Filter events on or before this date (ISO-8601 date-time)",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "example": "2026-03-12T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved audit events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AuditEvent"
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Total number of matching events (omitted when using startAfter)",
+                      "example": 156
+                    },
+                    "nextPageUrl": {
+                      "type": "string",
+                      "description": "URL for the next page of results (null when no more pages)",
+                      "nullable": true,
+                      "example": "/mDashboard/v1/audit/events?pageSize=25&startAfter=evt-abc-123"
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "evt-550e8400-e29b-41d4-a716-001",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "userId": "880e8400-e29b-41d4-a716-446655440000",
+                      "eventType": "org.updated",
+                      "resource": "organizations/550e8400-e29b-41d4-a716-446655440000",
+                      "ip": "203.0.113.42",
+                      "outcome": "success",
+                      "details": {
+                        "updatedFields": [
+                          "name",
+                          "primaryContact"
+                        ]
+                      },
+                      "occurredAt": "2026-03-12T14:30:00Z"
+                    }
+                  ],
+                  "count": 156,
+                  "nextPageUrl": "/mDashboard/v1/audit/events?pageSize=25&startAfter=evt-550e8400-e29b-41d4-a716-001"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:audit"
+            ]
+          },
+          {
+            "UserSecurity": [
+              "read:audit"
+            ]
+          }
+        ]
+      }
+    },
+    "/info": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Service inventory & counters",
+        "description": "Retrieve counters and status snapshots for selected resource types.\n",
+        "operationId": "getInfo",
+        "x-swagger-router-controller": "infoController",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Types of information to retrieve",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "analytics",
+                  "audit",
+                  "config",
+                  "healthCheck"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Information about the service and its resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "data": {
+                        "analytics": {
+                          "count": 3
+                        },
+                        "audit": {
+                          "count": 156
+                        },
+                        "healthCheck": {
+                          "status": "ok"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:system"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AdminSecurity": {
+        "type": "oauth2",
+        "description": "OAuth2 client credentials flow for superadmin operations - full access to analytics and audit data across all organizations.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "read:system": "Read system information (health, version)",
+              "read:analytics": "Read analytics metrics and dashboards",
+              "read:audit": "Read audit trail events and export CSV"
+            }
+          }
+        }
+      },
+      "UserSecurity": {
+        "type": "oauth2",
+        "description": "OAuth2 implicit flow for partner admin operations - org-scoped access to analytics dashboards and audit trail.",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://mimik.auth0.com/authorize",
+            "scopes": {
+              "read:analytics": "Read analytics dashboards for own organization",
+              "read:audit": "Read audit trail events for own organization"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "PageSizeParam": {
+        "name": "pageSize",
+        "in": "query",
+        "required": false,
+        "description": "Number of items per page (10-100)",
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "default": 25
+        },
+        "example": 25
+      },
+      "StartAfterParam": {
+        "name": "startAfter",
+        "in": "query",
+        "required": false,
+        "description": "ID of the last record from the previous page for cursor-based pagination",
+        "schema": {
+          "type": "string"
+        },
+        "example": "evt-550e8400-e29b-41d4-a716-001"
+      },
+      "StartDateParam": {
+        "name": "startDate",
+        "in": "query",
+        "required": true,
+        "description": "Start of the date range for analytics data (inclusive, ISO-8601 date)",
+        "schema": {
+          "type": "string",
+          "format": "date"
+        },
+        "example": "2026-02-10"
+      },
+      "EndDateParam": {
+        "name": "endDate",
+        "in": "query",
+        "required": true,
+        "description": "End of the date range for analytics data (inclusive, ISO-8601 date)",
+        "schema": {
+          "type": "string",
+          "format": "date"
+        },
+        "example": "2026-03-12"
+      },
+      "OrgIdFilterParam": {
+        "name": "orgId",
+        "in": "query",
+        "required": false,
+        "description": "Organization ID to scope the query. For UserSecurity callers, this is automatically\ninjected from the JWT and cannot be overridden. AdminSecurity callers may specify\nany organization ID to query cross-org data.\n",
+        "schema": {
+          "type": "string"
+        },
+        "example": "550e8400-e29b-41d4-a716-446655440000"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 400,
+              "title": "Bad Request",
+              "message": "endDate must be on or after startDate"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Missing required OAuth2 scope or insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 403,
+              "title": "Forbidden",
+              "message": "Insufficient permissions. Required scope read:analytics is missing."
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Unexpected server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 500,
+              "title": "Internal Server Error",
+              "message": "An unexpected error occurred. Please try again later."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "AnalyticsMetrics": {
+        "type": "object",
+        "description": "Consolidated analytics metrics response. Only the metric groups requested via the `types`\nquery parameter are included. If no types are specified, all groups are returned.\n",
+        "required": [
+          "startDate",
+          "endDate",
+          "orgId"
+        ],
+        "properties": {
+          "enrollment": {
+            "$ref": "#/components/schemas/EnrollmentMetrics"
+          },
+          "sleepQuality": {
+            "$ref": "#/components/schemas/SleepQualityMetrics"
+          },
+          "nudgeAcceptance": {
+            "$ref": "#/components/schemas/NudgeAcceptanceMetrics"
+          },
+          "enrollmentFunnel": {
+            "$ref": "#/components/schemas/EnrollmentFunnelMetrics"
+          },
+          "devices": {
+            "$ref": "#/components/schemas/DeviceMetrics"
+          },
+          "costPerActiveMember": {
+            "type": "number",
+            "format": "float",
+            "description": "Cost per active member based on current subscription rate. Null if no subscription configured.",
+            "nullable": true,
+            "example": 12.5
+          },
+          "retentionRates": {
+            "$ref": "#/components/schemas/RetentionRates"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the queried date range",
+            "example": "2026-02-10"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "End of the queried date range",
+            "example": "2026-03-12"
+          },
+          "orgId": {
+            "type": "string",
+            "description": "Organization ID these metrics belong to",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        }
+      },
+      "EnrollmentMetrics": {
+        "type": "object",
+        "description": "Member enrollment and activity metrics",
+        "required": [
+          "totalEnrolled",
+          "activeMemberCount",
+          "activeUsageRate"
+        ],
+        "properties": {
+          "totalEnrolled": {
+            "type": "integer",
+            "description": "Total number of enrolled members in the organization",
+            "example": 85
+          },
+          "activeMemberCount": {
+            "type": "integer",
+            "description": "Number of members with agent syncing activity in the measurement period",
+            "example": 72
+          },
+          "activeUsageRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Ratio of active members to total enrolled (activeMemberCount / totalEnrolled)",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.847
+          }
+        }
+      },
+      "SleepQualityMetrics": {
+        "type": "object",
+        "description": "Sleep quality metrics from on-device agent analysis",
+        "properties": {
+          "avgScore": {
+            "type": "number",
+            "format": "float",
+            "description": "Average sleep quality score (scale 1-10). Null if insufficient data.",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 10,
+            "example": 7.3
+          },
+          "avgDurationMinutes": {
+            "type": "integer",
+            "description": "Average sleep duration in minutes across active members. Null if insufficient data.",
+            "nullable": true,
+            "example": 438
+          },
+          "trend": {
+            "type": "array",
+            "description": "Sleep quality score trend over the selected time range (one data point per day)",
+            "items": {
+              "$ref": "#/components/schemas/TrendDataPoint"
+            }
+          }
+        }
+      },
+      "NudgeAcceptanceMetrics": {
+        "type": "object",
+        "description": "Nudge acceptance metrics",
+        "properties": {
+          "avgRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Average rate at which members accept nudge recommendations. Null if insufficient data.",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.62
+          }
+        }
+      },
+      "TrendDataPoint": {
+        "type": "object",
+        "description": "A single data point in a time-series trend",
+        "required": [
+          "date",
+          "avgScore"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "The date for this data point",
+            "example": "2026-03-01"
+          },
+          "avgScore": {
+            "type": "number",
+            "format": "float",
+            "description": "Average score for this date",
+            "example": 7.1
+          }
+        }
+      },
+      "EnrollmentFunnelMetrics": {
+        "type": "object",
+        "description": "Enrollment funnel stage counts and conversion rates",
+        "required": [
+          "stages"
+        ],
+        "properties": {
+          "stages": {
+            "type": "array",
+            "description": "Ordered list of funnel stages with counts and conversion rates",
+            "items": {
+              "$ref": "#/components/schemas/FunnelStage"
+            }
+          },
+          "medianTimeToFirstInsightDays": {
+            "type": "number",
+            "format": "float",
+            "description": "Median number of days from invitation to first AI-generated health report. Null if insufficient data.",
+            "nullable": true,
+            "example": 4.5
+          }
+        }
+      },
+      "FunnelStage": {
+        "type": "object",
+        "description": "A single stage in the enrollment funnel",
+        "required": [
+          "name",
+          "count",
+          "conversionRate"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the funnel stage: invited, registered, devicePaired, agentActive, engaged",
+            "enum": [
+              "invited",
+              "registered",
+              "devicePaired",
+              "agentActive",
+              "engaged"
+            ],
+            "example": "registered"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of members at this stage",
+            "minimum": 0,
+            "example": 85
+          },
+          "conversionRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Conversion rate from the previous stage (1.0 for the first stage)",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.85
+          }
+        }
+      },
+      "DeviceMetrics": {
+        "type": "object",
+        "description": "Wearable device distribution and activation status",
+        "required": [
+          "distributed",
+          "activated",
+          "activelySyncing"
+        ],
+        "properties": {
+          "distributed": {
+            "type": "integer",
+            "description": "Number of devices distributed to members",
+            "minimum": 0,
+            "example": 72
+          },
+          "activated": {
+            "type": "integer",
+            "description": "Number of distributed devices that have been activated",
+            "minimum": 0,
+            "example": 65
+          },
+          "activelySyncing": {
+            "type": "integer",
+            "description": "Number of activated devices actively syncing data",
+            "minimum": 0,
+            "example": 58
+          }
+        }
+      },
+      "RetentionRates": {
+        "type": "object",
+        "description": "Member retention rates at 30, 60, and 90 day intervals",
+        "properties": {
+          "days30": {
+            "type": "number",
+            "format": "float",
+            "description": "Percentage of activated members still active after 30 days",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.95
+          },
+          "days60": {
+            "type": "number",
+            "format": "float",
+            "description": "Percentage of activated members still active after 60 days",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.88
+          },
+          "days90": {
+            "type": "number",
+            "format": "float",
+            "description": "Percentage of activated members still active after 90 days",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.82
+          }
+        }
+      },
+      "AuditEvent": {
+        "type": "object",
+        "description": "A single admin action audit event",
+        "required": [
+          "id",
+          "orgId",
+          "userId",
+          "eventType",
+          "outcome",
+          "occurredAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the audit event",
+            "readOnly": true,
+            "example": "evt-550e8400-e29b-41d4-a716-001"
+          },
+          "orgId": {
+            "type": "string",
+            "description": "Organization ID this event belongs to",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID of the user who performed the action",
+            "example": "880e8400-e29b-41d4-a716-446655440000"
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Type of event (e.g., org.created, org.updated, dashboard.viewed, member.enrolled, report.exported)",
+            "example": "org.updated"
+          },
+          "resource": {
+            "type": "string",
+            "description": "The resource that was acted upon (e.g., organizations/550e8400)",
+            "example": "organizations/550e8400-e29b-41d4-a716-446655440000"
+          },
+          "ip": {
+            "type": "string",
+            "description": "IP address of the caller",
+            "example": "203.0.113.42"
+          },
+          "outcome": {
+            "type": "string",
+            "description": "Result of the action",
+            "enum": [
+              "success",
+              "failure"
+            ],
+            "example": "success"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional context-specific details about the event",
+            "additionalProperties": true,
+            "example": {
+              "updatedFields": [
+                "name",
+                "primaryContact"
+              ]
+            }
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the event occurred",
+            "readOnly": true,
+            "example": "2026-03-12T14:30:00Z"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Standard error response following the mimik platform error format",
+        "required": [
+          "statusCode",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "format": "int32",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "title": {
+            "type": "string",
+            "description": "Short error title",
+            "example": "Bad Request"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed error message describing what went wrong",
+            "example": "endDate must be on or after startDate"
+          },
+          "info": {
+            "type": "object",
+            "description": "Additional context-specific error information",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,257 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "USGS National Map Services API",
+    "description": "USGS National Map services provide elevation data, topographic maps, and geospatial data through ArcGIS REST services and the Elevation Point Query Service (EPQS). The 3DEP Elevation service provides access to high-resolution elevation data across the United States.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "USGS National Map",
+      "url": "https://apps.nationalmap.gov/services/"
+    },
+    "x-jentic-source-url": "https://apps.nationalmap.gov/services/",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://epqs.nationalmap.gov/v1",
+      "description": "USGS Elevation Point Query Service v1"
+    }
+  ],
+  "paths": {
+    "/json": {
+      "get": {
+        "operationId": "getElevationPoint",
+        "summary": "Get elevation for a geographic point",
+        "description": "Returns the elevation value for a given latitude/longitude coordinate using the USGS 3D Elevation Program (3DEP) data.",
+        "parameters": [
+          {
+            "name": "x",
+            "in": "query",
+            "required": true,
+            "description": "Longitude (decimal degrees, WGS84)",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "y",
+            "in": "query",
+            "required": true,
+            "description": "Latitude (decimal degrees, WGS84)",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "wkid",
+            "in": "query",
+            "description": "Well-known ID for spatial reference (default 4326 = WGS84)",
+            "schema": {
+              "type": "integer",
+              "default": 4326
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "description": "Elevation units",
+            "schema": {
+              "type": "string",
+              "enum": ["Meters", "Feet"],
+              "default": "Meters"
+            }
+          },
+          {
+            "name": "includeDate",
+            "in": "query",
+            "description": "Include source data date in response",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Elevation data for the queried point",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ElevationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid coordinates or parameters"
+          }
+        }
+      }
+    },
+    "/csv": {
+      "get": {
+        "operationId": "getElevationPointCsv",
+        "summary": "Get elevation for a geographic point in CSV format",
+        "description": "Returns the elevation value in CSV format for a given coordinate.",
+        "parameters": [
+          {
+            "name": "x",
+            "in": "query",
+            "required": true,
+            "description": "Longitude",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "y",
+            "in": "query",
+            "required": true,
+            "description": "Latitude",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "wkid",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 4326
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["Meters", "Feet"],
+              "default": "Meters"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Elevation in CSV format",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pqs": {
+      "get": {
+        "operationId": "getMultipleElevationPoints",
+        "summary": "Get elevation for multiple points",
+        "description": "Batch query to get elevation values for multiple geographic coordinates in a single request.",
+        "parameters": [
+          {
+            "name": "x",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated longitudes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "y",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated latitudes",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "wkid",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 4326
+            }
+          },
+          {
+            "name": "units",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["Meters", "Feet"],
+              "default": "Meters"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of elevation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ElevationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ElevationResponse": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "Longitude"
+              },
+              "y": {
+                "type": "number",
+                "description": "Latitude"
+              },
+              "spatialReference": {
+                "type": "object",
+                "properties": {
+                  "wkid": {
+                    "type": "integer"
+                  },
+                  "latestWkid": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "locationId": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string",
+            "description": "Elevation value"
+          },
+          "rasterId": {
+            "type": "integer"
+          },
+          "resolution": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

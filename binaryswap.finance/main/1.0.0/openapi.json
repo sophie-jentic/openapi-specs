@@ -1,0 +1,458 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BinarySwap API",
+    "version": "1.0.0",
+    "description": "API for checking service status and working with RFQ on BinarySwap",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/min-3ea/binary-swap/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://binaryswap.finance"
+    }
+  ],
+  "components": {
+    "parameters": {
+      "Network": {
+        "in": "path",
+        "name": "network",
+        "required": true,
+        "description": "Network prefix (currently only eth)",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "eth"
+          ],
+          "default": "eth"
+        }
+      }
+    }
+  },
+  "paths": {
+    "/{network}/status": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Network"
+        }
+      ],
+      "get": {
+        "summary": "Service status check",
+        "description": "The endpoint returns a status code and a message about the service health.",
+        "operationId": "getStatus",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "API key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 200
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/{network}/v1/rfq/prices": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Network"
+        }
+      ],
+      "get": {
+        "summary": "Get RFQ prices",
+        "description": "Returns price levels (bids/asks) for token pairs on the specified network. Levels are sorted in descending order from best price.",
+        "operationId": "getRfqPrices",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "API key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with price levels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "levels": {
+                      "type": "object",
+                      "description": "Dictionary with keys in the format \"baseTokenAddress/quoteTokenAddress\"",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "bids": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "size": {
+                                  "type": "number",
+                                  "example": 0.5
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "example": 3298.52
+                                }
+                              }
+                            }
+                          },
+                          "asks": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "size": {
+                                  "type": "number",
+                                  "example": 0.5
+                                },
+                                "price": {
+                                  "type": "number",
+                                  "example": 3301.48
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "levels": {
+                    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+                      "bids": [
+                        {
+                          "size": 0.5,
+                          "price": 3298.52
+                        },
+                        {
+                          "size": 5,
+                          "price": 3298.31
+                        },
+                        {
+                          "size": 50,
+                          "price": 3297.85
+                        }
+                      ],
+                      "asks": [
+                        {
+                          "size": 0.5,
+                          "price": 3301.48
+                        },
+                        {
+                          "size": 5,
+                          "price": 3301.72
+                        },
+                        {
+                          "size": 50,
+                          "price": 3302.15
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/{network}/v1/rfq/quote": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Network"
+        }
+      ],
+      "post": {
+        "summary": "Request RFQ quote",
+        "description": "Returns a quote for the specified token pair.  \nYou must specify **either `buy_amount` or `sell_amount`**, but not both.\n",
+        "operationId": "postRfqQuote",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "API key for authentication"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "taker_address": {
+                    "type": "string"
+                  },
+                  "receiver_address": {
+                    "type": "string"
+                  },
+                  "buy_token": {
+                    "type": "string"
+                  },
+                  "sell_token": {
+                    "type": "string"
+                  },
+                  "buy_amount": {
+                    "type": "string"
+                  },
+                  "sell_amount": {
+                    "type": "string"
+                  },
+                  "partner_fees_bps": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "taker_address",
+                  "buy_token",
+                  "sell_token"
+                ],
+                "oneOf": [
+                  {
+                    "required": [
+                      "buy_amount"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "sell_amount"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "buy_amount_example": {
+                  "summary": "Example with buy_amount",
+                  "value": {
+                    "taker_address": "0x5Ba...",
+                    "receiver_address": "0x5Ba...",
+                    "buy_token": "0x4200000000000000000000000000000000000006",
+                    "sell_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    "buy_amount": "1000000000000000000",
+                    "partner_fees_bps": 0.0001
+                  }
+                },
+                "sell_amount_example": {
+                  "summary": "Example with sell_amount",
+                  "value": {
+                    "taker_address": "0x5Ba...",
+                    "receiver_address": "0x5Ba...",
+                    "buy_token": "0x4200000000000000000000000000000000000006",
+                    "sell_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    "sell_amount": "500000000000000000",
+                    "partner_fees_bps": 0.0001
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quote successfully received",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quote_id": {
+                      "type": "string"
+                    },
+                    "expiry": {
+                      "type": "integer"
+                    },
+                    "taker_address": {
+                      "type": "string"
+                    },
+                    "maker_address": {
+                      "type": "string"
+                    },
+                    "taker_token": {
+                      "type": "string"
+                    },
+                    "maker_token": {
+                      "type": "string"
+                    },
+                    "taker_amount": {
+                      "type": "string"
+                    },
+                    "maker_amount": {
+                      "type": "string"
+                    },
+                    "receiver_address": {
+                      "type": "string"
+                    },
+                    "tx": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string"
+                        },
+                        "from": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "string"
+                        },
+                        "gas": {
+                          "type": "integer"
+                        },
+                        "gasPrice": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "quote_id": "121-211314...",
+                  "expiry": 1692809418,
+                  "taker_address": "0x5Ba...",
+                  "maker_address": "0xB93...",
+                  "taker_token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                  "maker_token": "0x4200000000000000000000000000000000000006",
+                  "taker_amount": "1000000000000000000",
+                  "maker_amount": "999000000000000000",
+                  "receiver_address": "0x5Ba...",
+                  "tx": {
+                    "to": "0xbbbbbBB520d69a9775E85b458C58c648259FAD5F",
+                    "from": "0x5Ba...",
+                    "value": "0x0",
+                    "data": "0x...",
+                    "gas": 170062,
+                    "gasPrice": 1258726
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid authentication"
+          },
+          "403": {
+            "description": "User is blacklisted"
+          },
+          "421": {
+            "description": "Order is too small"
+          },
+          "424": {
+            "description": "Not enough liquidity"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/{network}/v1/rfq/tokens": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Network"
+        }
+      ],
+      "get": {
+        "summary": "Get RFQ tokens",
+        "description": "Returns a list of tokens with addresses, symbols, and decimals.",
+        "operationId": "getRfqTokens",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-api-key",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "API key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token list successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tokens": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "symbol": {
+                            "type": "string"
+                          },
+                          "address": {
+                            "type": "string"
+                          },
+                          "decimals": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "tokens": {
+                    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+                      "symbol": "USDC",
+                      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                      "decimals": 6
+                    },
+                    "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599": {
+                      "symbol": "BTC",
+                      "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+                      "decimals": 8
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1115 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Knowledge Orchestration Transcript APIs",
+    "description": "APIs to submit and retrieve conversation transcripts for eGain Knowledge Orchestration. This specification defines the ideal transcript input format expected by the KO pipeline and the operations used to send and query transcripts.\n\nThis is the v1 contract for KO transcript ingestion. New fields may be added over time as optional properties. Breaking changes such as removing fields or changing field types will be introduced in a new API version under a different base path, for example '/v2'.\n\nKO currently interprets the following metadata keys when present: 'queue', 'journey.id', 'outcome', 'agent.team', 'agent.region', 'agent.queue', 'entry.channel', 'case.status', 'email.header.*'.",
+    "contact": {
+      "name": "API Support",
+      "email": "apisupport@egain.com",
+      "url": "https://apidev.egain.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/egain-b7b/knowledge-orchestration-transcript-apis/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.egain.cloud/knowledge/orchestration/v1",
+      "description": "Production Server"
+    }
+  ],
+  "security": [
+    {
+      "oAuthClient": [
+        "https://api.egain.cloud/auth/.default"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Transcripts",
+      "description": "Use these APIs to submit and query transcripts for Knowledge Orchestration."
+    }
+  ],
+  "paths": {
+    "/transcripts": {
+      "post": {
+        "x-egain-app-permissions": [
+          "app.knowledge.orchestration.transcripts.manage"
+        ],
+        "operationId": "submitTranscript",
+        "tags": [
+          "Transcripts"
+        ],
+        "summary": "Submit transcript",
+        "description": "# Overview\nUse this API to submit a complete interaction transcript to eGain Knowledge Orchestration.\n\nThe transcript should represent one logical interaction that KO will analyze for:\n* Question extraction and intent discovery\n* Mapping to knowledge topics and journeys\n* Coverage and quality analytics\n\nThe request body follows the Transcript schema which defines the ideal input for KO, including channel, participants, ordered turns, optional timing segments, metadata, and explicit redaction status.\n\n## Idempotency and upsert\nThe 'id' field in the Transcript payload is treated as an upsert key. If a transcript with the same 'id' already exists, KO overwrites the existing transcript and reprocesses it.\n\n## Scope\nClient application must have 'app.knowledge.orchestration.transcripts.manage' scope assigned.\n",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/post_transcript"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/202_transcript_accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/400_common_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/401_invalid_authorization"
+          },
+          "403": {
+            "$ref": "#/components/responses/403_scope_not_assigned"
+          },
+          "404": {
+            "$ref": "#/components/responses/404_common_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/429_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/transcripts/{id}": {
+      "get": {
+        "x-egain-app-permissions": [
+          "app.knowledge.orchestration.transcripts.manage",
+          "app.knowledge.orchestration.transcripts.read"
+        ],
+        "operationId": "getTranscript",
+        "tags": [
+          "Transcripts"
+        ],
+        "summary": "Get transcript",
+        "description": "# Overview\nUse this API to get the stored transcript and processing status from Knowledge Orchestration.\n\nThis endpoint returns the original transcript payload together with KO specific identifiers and status fields. It is intended for diagnostics, replay, and audit.\n\n## Scope\nClient application must have 'app.knowledge.orchestration.transcripts.manage' or 'app.knowledge.orchestration.transcripts.read' scope assigned.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/get_transcript"
+          },
+          "400": {
+            "$ref": "#/components/responses/400_common_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/401_invalid_authorization"
+          },
+          "403": {
+            "$ref": "#/components/responses/403_scope_not_assigned"
+          },
+          "404": {
+            "$ref": "#/components/responses/404_common_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/429_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oAuthClient": {
+        "type": "oauth2",
+        "description": "Authenticate as a client system that submits transcripts.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://login.egain.cloud/global/{tenant-id}/oauth2/v2.0/token",
+            "scopes": {
+              "https://api.egain.cloud/auth/.default": "Default scope"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "description": "Identifier of the object.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      }
+    },
+    "headers": {
+      "X-egain-error-message": {
+        "description": "If present with value 'yes', KO includes a UI friendly 'userMessage' in error responses where available.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "X-Correlation-Id": {
+        "description": "Optional correlation identifier supplied by the client. KO logs it and returns it in responses for diagnostics.",
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        }
+      }
+    },
+    "requestBodies": {
+      "post_transcript": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Transcript"
+            },
+            "examples": {
+              "voice": {
+                "$ref": "#/components/examples/TranscriptVoiceExample"
+              },
+              "chat": {
+                "$ref": "#/components/examples/TranscriptChatExample"
+              },
+              "email": {
+                "$ref": "#/components/examples/TranscriptEmailExample"
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "202_transcript_accepted": {
+        "description": "Transcript accepted for processing.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptAccepted"
+            }
+          }
+        }
+      },
+      "get_transcript": {
+        "description": "Transcript details.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GetTranscriptData"
+            },
+            "examples": {
+              "completed": {
+                "$ref": "#/components/examples/GetTranscriptCompletedExample"
+              }
+            }
+          }
+        }
+      },
+      "400_common_bad_request": {
+        "description": "Bad Request. The request could not be understood or was missing required parameters.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          },
+          "X-egain-error-message": {
+            "$ref": "#/components/headers/X-egain-error-message"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      },
+      "401_invalid_authorization": {
+        "description": "Unauthorized. Authorization failed or was not provided.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      },
+      "403_scope_not_assigned": {
+        "description": "Forbidden. The client application does not have the required scope to call this API.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      },
+      "404_common_not_found": {
+        "description": "Not Found. The requested resource does not exist.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      },
+      "429_too_many_requests": {
+        "description": "Too Many Requests. The client has sent too many requests in a given amount of time.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal Server Error. An unexpected error occurred.",
+        "headers": {
+          "X-Correlation-Id": {
+            "$ref": "#/components/headers/X-Correlation-Id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WSErrorCommon"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Attribute": {
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Name of the attribute. KO reserves names that start with 'ko.' for internal use. Client defined keys should use simple dot separated names such as 'queue', 'journey.id', 'agent.team', 'email.header.From'."
+          },
+          "value": {
+            "type": "string",
+            "description": "Value of the attribute.",
+            "minLength": 1,
+            "maxLength": 1023
+          }
+        }
+      },
+      "WSErrorCommon": {
+        "type": "object",
+        "title": "Error Response",
+        "required": [
+          "code",
+          "developerMessage"
+        ],
+        "properties": {
+          "code": {
+            "title": "Code Identifier",
+            "description": "String that follows the pattern {httpStatus}-{serviceCode}. The first part is the HTTP status code. For example, '400-1001' for invalid payload, '413-1002' for payload too large, '429-1003' for rate limit exceeded.",
+            "type": "string"
+          },
+          "developerMessage": {
+            "title": "Developer Message",
+            "description": "Response explaining what happened.",
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 255
+          },
+          "details": {
+            "title": "Response Details",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key"
+              ],
+              "properties": {
+                "key": {
+                  "title": "Key",
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 255
+                },
+                "value": {
+                  "title": "Value",
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 255
+                }
+              }
+            },
+            "minItems": 0,
+            "maxItems": 30
+          },
+          "userMessage": {
+            "title": "User Message",
+            "description": "UI friendly message only supported by some APIs. Client must request explicitly by passing X-egain-error-message=yes header.",
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 1024
+          }
+        }
+      },
+      "Transcript": {
+        "type": "object",
+        "description": "A complete customer interaction submitted to Knowledge Orchestration.",
+        "required": [
+          "id",
+          "source",
+          "channel",
+          "started",
+          "participants",
+          "turns",
+          "redaction"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this transcript in the client system. Used as an upsert key.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "externalConversationId": {
+            "type": "string",
+            "description": "Optional conversation id from the upstream platform, for example a contact id from telephony or a case id from CRM.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "tenant": {
+            "type": "string",
+            "description": "Optional eGain tenant identifier. Usually derived from auth and environment. If present it must match the tenant associated with the access token.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "workspace": {
+            "type": "string",
+            "description": "Optional workspace or brand identifier within the tenant.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "source": {
+            "type": "string",
+            "description": "System that produced this transcript, for example amazon_connect, qualtrics, custom_recorder.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "channel": {
+            "type": "string",
+            "description": "Primary interaction channel.",
+            "enum": [
+              "voice",
+              "chat",
+              "email"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject of the interaction when channel is 'email'. KO recommends that email transcripts always provide a subject where available. For non email channels this field should be omitted.",
+            "maxLength": 512
+          },
+          "language": {
+            "type": "string",
+            "description": "BCP 47 language tag of the main language in the interaction, if known. KO validates this value and may reject clearly invalid tags."
+          },
+          "started": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start time of the interaction in UTC."
+          },
+          "ended": {
+            "type": "string",
+            "format": "date-time",
+            "description": "End time of the interaction in UTC."
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "description": "Total duration of the interaction in seconds.",
+            "minimum": 0
+          },
+          "participants": {
+            "type": "array",
+            "description": "All distinct participants in the interaction. KO supports up to 3 participants per transcript.",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "$ref": "#/components/schemas/TranscriptParticipant"
+            }
+          },
+          "turns": {
+            "type": "array",
+            "description": "Ordered list of turns that make up this interaction. KO supports up to 200 turns per transcript.",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": {
+              "$ref": "#/components/schemas/TranscriptTurn"
+            }
+          },
+          "redaction": {
+            "$ref": "#/components/schemas/TranscriptRedaction"
+          },
+          "metadata": {
+            "type": "array",
+            "description": "Interaction level metadata that helps KO analytics and mapping to knowledge. For email, original headers should be provided here using Attribute entries such as email.header.From, email.header.To, email.header.Date, and optionally email.headers.raw. KO supports up to 20 metadata entries per transcript.",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/Attribute"
+            }
+          }
+        }
+      },
+      "TranscriptParticipant": {
+        "type": "object",
+        "description": "Person or system that participates in the interaction.",
+        "required": [
+          "id",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Local identifier of the participant used by turns in this transcript.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "role": {
+            "type": "string",
+            "description": "Logical role of the participant.",
+            "enum": [
+              "customer",
+              "agent",
+              "bot",
+              "system",
+              "supervisor"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "Optional participant type defined by the client, for example specific bot or agent profile type.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Optional human readable name, for example agent name or bot name.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Optional id from the upstream platform.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "metadata": {
+            "type": "array",
+            "description": "Participant level metadata such as team, skill group, region, or segment.",
+            "items": {
+              "$ref": "#/components/schemas/Attribute"
+            }
+          }
+        }
+      },
+      "TranscriptTurn": {
+        "type": "object",
+        "description": "One contiguous utterance or message from a participant.",
+        "required": [
+          "id",
+          "sequence",
+          "timestamp",
+          "participantId",
+          "kind",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Turn identifier within the transcript.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "sequence": {
+            "type": "integer",
+            "description": "Monotonic value that preserves the order of turns.",
+            "minimum": 0
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time when this turn started, in UTC."
+          },
+          "offsetMillis": {
+            "type": "integer",
+            "description": "Offset from transcript start in milliseconds.",
+            "minimum": 0
+          },
+          "participantId": {
+            "type": "string",
+            "description": "Identifier of the speaker as defined in participants.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "kind": {
+            "type": "string",
+            "description": "Type of turn.",
+            "enum": [
+              "utterance",
+              "system",
+              "agent_note"
+            ]
+          },
+          "channelSubType": {
+            "type": "string",
+            "description": "Optional channel sub type such as inbound_voice, callback, web_chat, email_initial, email_reply. Values are open ended. KO recommends a small stable set per channel.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "text": {
+            "type": "string",
+            "description": "Primary text content of the turn as KO should interpret it.",
+            "minLength": 1,
+            "maxLength": 16384
+          },
+          "originalText": {
+            "type": "string",
+            "description": "Optional raw text if the main text field holds a normalized or cleaned variant.",
+            "minLength": 1,
+            "maxLength": 16384
+          },
+          "language": {
+            "type": "string",
+            "description": "Language of this turn if different from transcript language."
+          },
+          "sentiment": {
+            "type": "number",
+            "format": "double",
+            "description": "Optional sentiment score in the range from minus one to plus one, if computed by the client."
+          },
+          "segments": {
+            "type": "array",
+            "description": "Optional timing segments for voice transcripts, for example ASR diarization segments within this turn. Voice transcripts can be provided without segments when only flat text is available.",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptSegment"
+            }
+          },
+          "redaction": {
+            "$ref": "#/components/schemas/TurnRedaction"
+          },
+          "metadata": {
+            "type": "array",
+            "description": "Turn level attributes, for example routing events, classification tags, error flags, or disposition codes. KO supports up to 20 metadata entries per turn.",
+            "maxItems": 20,
+            "items": {
+              "$ref": "#/components/schemas/Attribute"
+            }
+          }
+        }
+      },
+      "TranscriptSegment": {
+        "type": "object",
+        "description": "Optional fine grained segment inside a turn, usually for voice timing.",
+        "required": [
+          "startMillis",
+          "endMillis",
+          "text"
+        ],
+        "properties": {
+          "startMillis": {
+            "type": "integer",
+            "description": "Offset from transcript start in milliseconds where this segment begins.",
+            "minimum": 0
+          },
+          "endMillis": {
+            "type": "integer",
+            "description": "Offset from transcript start in milliseconds where this segment ends.",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string",
+            "description": "Text for this segment as produced by ASR or other source.",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double",
+            "description": "Optional confidence value supplied by ASR."
+          }
+        }
+      },
+      "TranscriptRedaction": {
+        "type": "object",
+        "description": "Describes redaction status and expectations for this transcript as provided by the client. KO always runs its own PII masking in addition to any upstream redaction.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Redaction status from the client perspective. KO uses this as a hint but does not rely on it exclusively.",
+            "enum": [
+              "none",
+              "partial",
+              "fully_redacted"
+            ]
+          },
+          "policy": {
+            "type": "string",
+            "description": "Optional label or identifier of the redaction policy applied upstream."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional explanation for how PII and sensitive data have been handled by the client."
+          }
+        }
+      },
+      "TurnRedaction": {
+        "type": "object",
+        "description": "Overrides transcript level redaction status for a specific turn.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Redaction status for this turn. 'Fully_redacted' means all direct identifiers such as names, account numbers, card numbers, phone numbers, and email addresses have been removed or replaced by tokens.",
+            "enum": [
+              "none",
+              "partial",
+              "fully_redacted"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "TranscriptAccepted": {
+        "type": "object",
+        "description": "Acknowledgement returned after a transcript is accepted.",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal KO identifier of this transcript.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "clientId": {
+            "type": "string",
+            "description": "The 'id' value supplied by the client in the Transcript payload.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "status": {
+            "type": "string",
+            "description": "Processing status for this transcript.",
+            "enum": [
+              "accepted",
+              "queued"
+            ]
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time at which KO accepted the transcript."
+          }
+        }
+      },
+      "GetTranscriptData": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Internal KO identifier of this transcript.",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "clientId": {
+                "type": "string",
+                "description": "The 'id' value supplied by the client in the original Transcript payload.",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Creation time in UTC."
+              },
+              "modified": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Last modification time in UTC."
+              },
+              "status": {
+                "type": "string",
+                "description": "Processing status inside KO. 'accepted' means the transcript was stored and queued for analysis. 'processing' means analysis is in progress. 'completed' means analysis finished and results are available in KO dashboards. 'failed' means analysis terminated with a permanent error.",
+                "enum": [
+                  "accepted",
+                  "processing",
+                  "completed",
+                  "failed"
+                ]
+              },
+              "analysisCompletedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Time when KO completed analysis of this transcript, if status is 'completed'."
+              },
+              "lastProcessingError": {
+                "type": "string",
+                "description": "Short description of the last processing error, populated when status is 'failed'."
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/Transcript"
+          }
+        ]
+      }
+    },
+    "examples": {
+      "TranscriptVoiceExample": {
+        "summary": "Voice call transcript, plain text turns",
+        "value": {
+          "id": "acme-voice-20251126-001",
+          "externalConversationId": "contact-987654321",
+          "source": "amazon_connect",
+          "channel": "voice",
+          "language": "en-US",
+          "started": "2025-11-26T18:01:23Z",
+          "ended": "2025-11-26T18:15:47Z",
+          "durationSeconds": 864,
+          "participants": [
+            {
+              "id": "customer-1",
+              "role": "customer",
+              "displayName": "Unknown caller"
+            },
+            {
+              "id": "agent-1",
+              "role": "agent",
+              "displayName": "Alex Smith",
+              "externalId": "agent123",
+              "metadata": [
+                {
+                  "name": "agent.team",
+                  "value": "Billing"
+                },
+                {
+                  "name": "agent.region",
+                  "value": "US-West"
+                }
+              ]
+            }
+          ],
+          "turns": [
+            {
+              "id": "t1",
+              "sequence": 1,
+              "timestamp": "2025-11-26T18:01:30Z",
+              "offsetMillis": 7000,
+              "participantId": "agent-1",
+              "kind": "system",
+              "channelSubType": "inbound_voice",
+              "text": "Thank you for calling Acme Telecom. My name is Alex. How can I help you today"
+            },
+            {
+              "id": "t2",
+              "sequence": 2,
+              "timestamp": "2025-11-26T18:01:40Z",
+              "offsetMillis": 17000,
+              "participantId": "customer-1",
+              "kind": "utterance",
+              "channelSubType": "inbound_voice",
+              "text": "Hi, my internet keeps dropping every few minutes. Can you check what is going on"
+            },
+            {
+              "id": "t3",
+              "sequence": 3,
+              "timestamp": "2025-11-26T18:02:15Z",
+              "offsetMillis": 52000,
+              "participantId": "agent-1",
+              "kind": "utterance",
+              "channelSubType": "inbound_voice",
+              "text": "I am sorry about the trouble. Let me pull up your account. Can you confirm your address"
+            }
+          ],
+          "redaction": {
+            "status": "partial",
+            "policy": "acme-voice-redaction-v2",
+            "notes": "Numbers and explicit addresses masked upstream."
+          },
+          "metadata": [
+            {
+              "name": "queue",
+              "value": "Residential broadband"
+            },
+            {
+              "name": "journey.id",
+              "value": "web-outage-flow-123"
+            },
+            {
+              "name": "outcome",
+              "value": "issue unresolved"
+            }
+          ]
+        }
+      },
+      "TranscriptChatExample": {
+        "summary": "Web chat transcript",
+        "value": {
+          "id": "acme-chat-20251126-002",
+          "externalConversationId": "chat-session-555777",
+          "source": "egain_chat",
+          "channel": "chat",
+          "language": "en-US",
+          "started": "2025-11-26T19:10:00Z",
+          "ended": "2025-11-26T19:18:12Z",
+          "durationSeconds": 492,
+          "participants": [
+            {
+              "id": "customer-1",
+              "role": "customer"
+            },
+            {
+              "id": "agent-1",
+              "role": "agent",
+              "displayName": "Taylor"
+            }
+          ],
+          "turns": [
+            {
+              "id": "t1",
+              "sequence": 1,
+              "timestamp": "2025-11-26T19:10:02Z",
+              "offsetMillis": 2000,
+              "participantId": "customer-1",
+              "kind": "utterance",
+              "channelSubType": "web_chat",
+              "text": "Hi, I cannot reset my password. The link in the email expired."
+            },
+            {
+              "id": "t2",
+              "sequence": 2,
+              "timestamp": "2025-11-26T19:10:10Z",
+              "offsetMillis": 10000,
+              "participantId": "agent-1",
+              "kind": "utterance",
+              "channelSubType": "web_chat",
+              "text": "I can help with that. Are you trying to access your personal or business account"
+            },
+            {
+              "id": "t3",
+              "sequence": 3,
+              "timestamp": "2025-11-26T19:10:20Z",
+              "offsetMillis": 20000,
+              "participantId": "customer-1",
+              "kind": "utterance",
+              "channelSubType": "web_chat",
+              "text": "Personal."
+            }
+          ],
+          "redaction": {
+            "status": "fully_redacted",
+            "policy": "acme-chat-redaction-v1",
+            "notes": "Customer identifiers removed before submission."
+          },
+          "metadata": [
+            {
+              "name": "queue",
+              "value": "Authentication"
+            },
+            {
+              "name": "entry.channel",
+              "value": "web"
+            }
+          ]
+        }
+      },
+      "TranscriptEmailExample": {
+        "summary": "Email thread transcript",
+        "value": {
+          "id": "acme-email-20251126-003",
+          "externalConversationId": "case-123456",
+          "source": "exchange_online",
+          "channel": "email",
+          "subject": "Incorrect charge on my credit card statement",
+          "language": "en-US",
+          "started": "2025-11-25T08:15:00Z",
+          "ended": "2025-11-26T09:05:00Z",
+          "participants": [
+            {
+              "id": "customer-1",
+              "role": "customer",
+              "displayName": "Jane Doe"
+            },
+            {
+              "id": "agent-1",
+              "role": "agent",
+              "displayName": "Support Team",
+              "metadata": [
+                {
+                  "name": "agent.queue",
+                  "value": "Credit card disputes"
+                }
+              ]
+            }
+          ],
+          "turns": [
+            {
+              "id": "t1",
+              "sequence": 1,
+              "timestamp": "2025-11-25T08:15:00Z",
+              "participantId": "customer-1",
+              "kind": "utterance",
+              "channelSubType": "email_initial",
+              "text": "Hello, I just noticed a charge from Acme Streaming on my credit card that I did not authorize. Can you explain what this charge is and remove it if it is an error"
+            },
+            {
+              "id": "t2",
+              "sequence": 2,
+              "timestamp": "2025-11-25T14:40:00Z",
+              "participantId": "agent-1",
+              "kind": "utterance",
+              "channelSubType": "email_reply",
+              "text": "Thank you for contacting Acme Bank. I have reviewed your account and the Acme Streaming charge is linked to a subscription started in July. If you do not recognize this subscription we can open a dispute on your behalf."
+            },
+            {
+              "id": "t3",
+              "sequence": 3,
+              "timestamp": "2025-11-26T09:05:00Z",
+              "participantId": "customer-1",
+              "kind": "utterance",
+              "channelSubType": "email_reply",
+              "text": "Please go ahead and open the dispute. I did not sign up for this subscription."
+            }
+          ],
+          "redaction": {
+            "status": "partial",
+            "policy": "acme-email-redaction-v3",
+            "notes": "Card numbers and full email addresses masked upstream."
+          },
+          "metadata": [
+            {
+              "name": "email.header.From",
+              "value": "\"Jane Doe\" <jane@example.com>"
+            },
+            {
+              "name": "email.header.To",
+              "value": "support@acmebank.com"
+            },
+            {
+              "name": "email.header.Message-Id",
+              "value": "<CAF12345@example.com>"
+            },
+            {
+              "name": "email.headers.raw",
+              "value": "From: \"Jane Doe\" <jane@example.com>\\nTo: support@acmebank.com\\nSubject: Incorrect charge on my credit card statement\\nDate: Tue, 25 Nov 2025 08:15:00 +0000\\nMessage-Id: <CAF12345@example.com>"
+            },
+            {
+              "name": "queue",
+              "value": "Credit card disputes"
+            },
+            {
+              "name": "case.status",
+              "value": "open"
+            }
+          ]
+        }
+      },
+      "GetTranscriptCompletedExample": {
+        "summary": "Completed transcript with analysis metadata",
+        "value": {
+          "id": "ko-123456789",
+          "clientId": "acme-voice-20251126-001",
+          "created": "2025-11-26T18:16:00Z",
+          "modified": "2025-11-26T18:17:30Z",
+          "status": "completed",
+          "analysisCompletedAt": "2025-11-26T18:17:25Z",
+          "lastProcessingError": null,
+          "externalConversationId": "contact-987654321",
+          "source": "amazon_connect",
+          "channel": "voice",
+          "language": "en-US",
+          "started": "2025-11-26T18:01:23Z",
+          "ended": "2025-11-26T18:15:47Z",
+          "durationSeconds": 864,
+          "participants": [
+            {
+              "id": "customer-1",
+              "role": "customer",
+              "displayName": "Unknown caller"
+            },
+            {
+              "id": "agent-1",
+              "role": "agent",
+              "displayName": "Alex Smith",
+              "externalId": "agent123"
+            }
+          ],
+          "turns": [
+            {
+              "id": "t1",
+              "sequence": 1,
+              "timestamp": "2025-11-26T18:01:30Z",
+              "offsetMillis": 7000,
+              "participantId": "agent-1",
+              "kind": "system",
+              "channelSubType": "inbound_voice",
+              "text": "Thank you for calling Acme Telecom. My name is Alex. How can I help you today"
+            }
+          ],
+          "redaction": {
+            "status": "partial",
+            "policy": "acme-voice-redaction-v2",
+            "notes": "Numbers and explicit addresses masked upstream."
+          },
+          "metadata": [
+            {
+              "name": "queue",
+              "value": "Residential broadband"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

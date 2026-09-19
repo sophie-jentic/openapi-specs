@@ -1,0 +1,177 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Prism Login API",
+    "description": "The Policy Reporter Login API allows licensed customers to retrieve a token for other API calls.\n\nSome useful links:\n- [PolicyCore](https://www.policyreporter.com/solutions/policycore/)\n- [Policy Reporter APIs](https://www.policyreporter.com/solutions/api/)",
+    "termsOfService": "https://portal.policyreporter.com/platform-terms-of-use",
+    "contact": {
+      "email": "info@policyreporter.com"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/PolicyReporter/prism-login/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://fusion-auth-dev.policyreporter.us",
+      "description": "Dev authentication server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "login",
+      "description": "User Login"
+    }
+  ],
+  "paths": {
+    "/api/login": {
+      "post": {
+        "tags": [
+          "login"
+        ],
+        "summary": "User Login",
+        "description": "Authenticate a user and return login information",
+        "parameters": [
+          {
+            "name": "X-FusionAuth-TenantId",
+            "in": "header",
+            "required": true,
+            "description": "The tenant ID to authenticate the user against",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "b78a059c-9f6e-4063-8dae-e5ace17b1080"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid login credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "applicationId",
+          "loginId",
+          "password"
+        ],
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the FusionAuth application",
+            "example": "6692addd-143e-4c04-9a62-d90c6a6a9785"
+          },
+          "loginId": {
+            "type": "string",
+            "description": "The user's login identifier (email or username)",
+            "example": "jwang@policyreporter.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "The user's password or authentication token",
+            "example": "iweqmF-oX4l4L6SVosBbXdF7soVdYb0mE3Hc0PUBA0A"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT access token"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh token for obtaining new access tokens"
+          },
+          "user": {
+            "type": "object",
+            "description": "User information",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "fieldErrors": {
+            "type": "object",
+            "description": "Field-specific validation errors"
+          },
+          "generalErrors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

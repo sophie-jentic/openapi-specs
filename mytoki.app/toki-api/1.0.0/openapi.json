@@ -1,0 +1,1810 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "API Documentation for Toki - A productivity management application for tasks, reminders, and more!\nToki API allows users to: - Create, update, and modify tasks - Create, update, and modify reminders - Create, update, and modify calendar events - View NASA APOD and parking garage availability - Reset forgotten passwords",
+    "version": "1.0.0",
+    "title": "Toki API",
+    "contact": {
+      "email": "dionlin12350@gmail.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/universityofcentralf-06a/toki-api/1.0.0"
+  },
+  "host": "mytoki.app",
+  "basePath": "/api",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User registration, authentication, and management"
+    },
+    {
+      "name": "Reminders",
+      "description": "Create, view, update, complete, and delete reminders"
+    },
+    {
+      "name": "Tasks",
+      "description": "Create, view, update, and delete tasks"
+    },
+    {
+      "name": "CalendarEvents",
+      "description": "Create, view, update, and delete calendar events"
+    },
+    {
+      "name": "Integrations",
+      "description": "External service integrations (e.g., NASA APOD, parking garages)"
+    }
+  ],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT token in Authorization header. Format: Bearer <token>\nExample: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTAyY2RlNDk3NDhiZDQzMWRkYjViMzciLCJmaXJzdE5hbWUiOiJhbGVzc2FuZHJvMCIsImxhc3ROYW1lIjoic2FuZHJpMTExIiwiaWF0IjoxNzYzNTM0OTk0fQ.3OjeZvlKGl8itQrIE8So32_xvZLby4wdZbd5Y8BYOCQ"
+    }
+  },
+  "paths": {
+    "/addUser": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Register a new user",
+        "description": "Creates a new user account and returns a verification token",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User registration details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User successfully created",
+            "schema": {
+              "$ref": "#/definitions/AddUserResponse"
+            },
+            "examples": {
+              "application/json": {
+                "id": "507f1f77bcf86cd799439011",
+                "name": "Dion",
+                "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "verificationToken": 123456,
+                "error": "success, send to login page"
+              }
+            }
+          },
+          "400": {
+            "description": "Email already registered",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "error": "Email already registered"
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "accessToken": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "id": -1,
+                "firstName": "",
+                "lastName": "",
+                "accessToken": "",
+                "error": "Internal server error occurred"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/loginUser": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Login a user",
+        "description": "Authenticates a user. Returns errors if email is not found or password is incorrect.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User login credentials",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful, verification email sent",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            },
+            "examples": {
+              "application/json": {
+                "id": "507f1f77bcf86cd799439011",
+                "firstName": "Dion",
+                "lastName": "Lin",
+                "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "verificationToken": 123456,
+                "error": "none, send to verify page"
+              }
+            }
+          },
+          "401": {
+            "description": "Incorrect password",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "error": "Incorrect password"
+              }
+            }
+          },
+          "404": {
+            "description": "Email not found",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "error": "Email not found"
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            },
+            "examples": {
+              "application/json": {
+                "error": "Server error: <details>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verifyUser": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Verify user email",
+        "description": "Verifies a user's email using the verification token sent via email",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Verification details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VerifyUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification successful",
+            "schema": {
+              "$ref": "#/definitions/VerifyUserResponse"
+            },
+            "examples": {
+              "application/json": {
+                "id": "507f1f77bcf86cd799439011",
+                "error": "success, send to Dashboard page"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forgotPass": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Request temporary password",
+        "description": "Generates and emails a temporary password to the user",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User email for password reset",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ForgotPassRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Temporary password sent",
+            "schema": {
+              "$ref": "#/definitions/ForgotPassResponse"
+            }
+          }
+        }
+      }
+    },
+    "/updateUser": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user details",
+        "description": "Updates user information (name, email, password)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Updated user information",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "schema": {
+              "$ref": "#/definitions/UpdateUserResponse"
+            }
+          }
+        }
+      }
+    },
+    "/deleteUser": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete user account",
+        "description": "Deletes a user account permanently",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User ID and access token",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/DeleteUserResponse"
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Logout user",
+        "description": "Invalidates the user's JWT token",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "JWT token",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LogoutRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "schema": {
+              "$ref": "#/definitions/LogoutResponse"
+            }
+          }
+        }
+      }
+    },
+    "/createReminder": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Create a new reminder",
+        "description": "Creates a new reminder for the authenticated user",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Reminder details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Reminder created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateReminderResponse"
+            }
+          }
+        }
+      }
+    },
+    "/viewReminder": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "View reminders",
+        "description": "Retrieves all reminders or a specific reminder for the user",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User ID and optional reminder ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ViewReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminders retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/ViewReminderResponse"
+            }
+          }
+        }
+      }
+    },
+    "/editReminder": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Edit a reminder",
+        "description": "Updates an existing reminder (identified by title)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Updated reminder details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EditReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder updated successfully",
+            "schema": {
+              "$ref": "#/definitions/EditReminderResponse"
+            }
+          }
+        }
+      }
+    },
+    "/completeReminder": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Mark reminder as complete",
+        "description": "Marks a reminder as completed (identified by title)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Reminder completion details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CompleteReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder marked as complete",
+            "schema": {
+              "$ref": "#/definitions/CompleteReminderResponse"
+            }
+          }
+        }
+      }
+    },
+    "/deleteReminder": {
+      "post": {
+        "tags": [
+          "Reminders"
+        ],
+        "summary": "Delete a reminder",
+        "description": "Deletes a reminder (identified by title)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Reminder deletion details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteReminderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reminder deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/DeleteReminderResponse"
+            }
+          }
+        }
+      }
+    },
+    "/createTask": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Create a new task",
+        "description": "Creates a new task for the authenticated user",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Task details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateTaskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateTaskResponse"
+            }
+          }
+        }
+      }
+    },
+    "/viewTask": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "View tasks",
+        "description": "Retrieves all tasks or a specific task for the user",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User ID and optional task ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ViewTaskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tasks retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/ViewTaskResponse"
+            }
+          }
+        }
+      }
+    },
+    "/editTask": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Edit a task",
+        "description": "Updates an existing task (identified by taskId)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Updated task details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EditTaskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task updated successfully",
+            "schema": {
+              "$ref": "#/definitions/EditTaskResponse"
+            }
+          }
+        }
+      }
+    },
+    "/deleteTask": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Delete a task",
+        "description": "Deletes a task (identified by taskId)",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Task deletion details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteTaskRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/DeleteTaskResponse"
+            }
+          }
+        }
+      }
+    },
+    "/createCalendarEvent": {
+      "post": {
+        "tags": [
+          "CalendarEvents"
+        ],
+        "summary": "Create a calendar event",
+        "description": "Creates a new calendar event",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Calendar event details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateCalendarEventRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event created successfully",
+            "schema": {
+              "$ref": "#/definitions/CreateCalendarEventResponse"
+            }
+          }
+        }
+      }
+    },
+    "/viewCalendarEvent": {
+      "post": {
+        "tags": [
+          "CalendarEvents"
+        ],
+        "summary": "View calendar events",
+        "description": "Retrieves all calendar events or a specific event",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "User ID and optional event ID",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ViewCalendarEventRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar events retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/ViewCalendarEventResponse"
+            }
+          }
+        }
+      }
+    },
+    "/editCalendarEvent": {
+      "post": {
+        "tags": [
+          "CalendarEvents"
+        ],
+        "summary": "Edit a calendar event",
+        "description": "Updates an existing calendar event",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Updated calendar event details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EditCalendarEventRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event updated successfully",
+            "schema": {
+              "$ref": "#/definitions/EditCalendarEventResponse"
+            }
+          }
+        }
+      }
+    },
+    "/deleteCalendarEvent": {
+      "post": {
+        "tags": [
+          "CalendarEvents"
+        ],
+        "summary": "Delete a calendar event",
+        "description": "Deletes a calendar event",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Calendar event deletion details",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeleteCalendarEventRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/DeleteCalendarEventResponse"
+            }
+          }
+        }
+      }
+    },
+    "/viewAPOD": {
+      "post": {
+        "tags": [
+          "Integrations"
+        ],
+        "summary": "View NASA APOD",
+        "description": "Retrieves NASA Astronomy Picture of the Day for a specific date. Requires an Authorization header with a valid JWT token.",
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": false,
+            "description": "Optional date for the APOD (YYYY-MM-DD). If omitted, today's date is used.",
+            "schema": {
+              "$ref": "#/definitions/ViewAPODRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "APOD retrieved successfully",
+            "schema": {
+              "$ref": "#/definitions/ViewAPODResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": "JWT token expired"
+        }
+      }
+    },
+    "AddUserRequest": {
+      "type": "object",
+      "required": [
+        "firstName",
+        "lastName",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "Dion"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "dionlin12350@gmail.com"
+        },
+        "password": {
+          "type": "string",
+          "format": "password",
+          "example": "COP4331"
+        }
+      }
+    },
+    "AddUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Doe"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "error": {
+          "type": "string",
+          "example": "success, send to login page"
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "dionlin12350@gmail.com"
+        },
+        "password": {
+          "type": "string",
+          "format": "password",
+          "example": "COP4331"
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "Dion"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Lin"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "verificationToken": {
+          "type": "integer",
+          "example": 123456
+        },
+        "error": {
+          "type": "string",
+          "example": "none, send to verify page"
+        }
+      }
+    },
+    "VerifyUserRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "verificationToken"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "dionlin12350@gmail.com"
+        },
+        "verificationToken": {
+          "type": "integer",
+          "example": 559930
+        }
+      }
+    },
+    "VerifyUserResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "error": {
+          "type": "string",
+          "example": "success, send to Dashboard page"
+        }
+      }
+    },
+    "ForgotPassRequest": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "john.doe@example.com"
+        }
+      }
+    },
+    "ForgotPassResponse": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "example": "john.doe@example.com"
+        },
+        "oldPassword": {
+          "type": "string",
+          "example": "oldPassword123"
+        },
+        "tempPassword": {
+          "type": "string",
+          "example": "temppasssRn?12"
+        },
+        "error": {
+          "type": "string",
+          "example": "none, send to login page"
+        }
+      }
+    },
+    "UpdateUserRequest": {
+      "type": "object",
+      "required": [
+        "id",
+        "accessToken"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Doe"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "example": "john.doe@example.com"
+        },
+        "password": {
+          "type": "string",
+          "format": "password",
+          "example": "newPassword123"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "UpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "email": {
+          "type": "string",
+          "example": "john.doe@example.com"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "Doe"
+        },
+        "password": {
+          "type": "string",
+          "example": "newPassword123"
+        },
+        "error": {
+          "type": "string",
+          "example": "all went fine"
+        }
+      }
+    },
+    "DeleteUserRequest": {
+      "type": "object",
+      "required": [
+        "id",
+        "accessToken"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "DeleteUserResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "error": {
+          "type": "string",
+          "example": "none, should be deleted"
+        }
+      }
+    },
+    "LogoutRequest": {
+      "type": "object",
+      "required": [
+        "jwtToken"
+      ],
+      "properties": {
+        "jwtToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "LogoutResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "jwtToken": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "CreateReminderRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "title",
+        "year",
+        "month",
+        "day"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting"
+        },
+        "desc": {
+          "type": "string",
+          "example": "Quarterly review meeting"
+        },
+        "status": {
+          "type": "string",
+          "example": "pending"
+        },
+        "priority": {
+          "type": "string",
+          "example": "high",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "year": {
+          "type": "integer",
+          "example": 2025
+        },
+        "month": {
+          "type": "integer",
+          "example": 11,
+          "minimum": 1,
+          "maximum": 12
+        },
+        "day": {
+          "type": "integer",
+          "example": 15,
+          "minimum": 1,
+          "maximum": 31
+        }
+      }
+    },
+    "CreateReminderResponse": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Team Meeting"
+        },
+        "desc": {
+          "type": "string",
+          "example": "Quarterly review meeting"
+        },
+        "status": {
+          "type": "string",
+          "example": "pending"
+        },
+        "priority": {
+          "type": "string",
+          "example": "high"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-15T00:00:00.000Z"
+        },
+        "error": {
+          "type": "string",
+          "example": "success, show like green thingy"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "ViewReminderRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "reminderId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439012",
+          "description": "Optional - if provided, returns specific reminder"
+        }
+      }
+    },
+    "ViewReminderResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "reminders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reminder"
+          }
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "Reminder": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439012"
+        },
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting"
+        },
+        "desc": {
+          "type": "string",
+          "example": "Quarterly review meeting"
+        },
+        "status": {
+          "type": "string",
+          "example": "pending"
+        },
+        "priority": {
+          "type": "string",
+          "example": "high"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-15T00:00:00.000Z"
+        },
+        "completed": {
+          "type": "object",
+          "properties": {
+            "isCompleted": {
+              "type": "boolean",
+              "example": false
+            },
+            "completedAt": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EditReminderRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken",
+        "title"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting",
+          "description": "Used to identify which reminder to edit"
+        },
+        "desc": {
+          "type": "string",
+          "example": "Updated description"
+        },
+        "status": {
+          "type": "string",
+          "example": "in-progress"
+        },
+        "priority": {
+          "type": "string",
+          "example": "medium"
+        },
+        "year": {
+          "type": "integer",
+          "example": 2025
+        },
+        "month": {
+          "type": "integer",
+          "example": 11
+        },
+        "day": {
+          "type": "integer",
+          "example": 16
+        }
+      }
+    },
+    "EditReminderResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting"
+        },
+        "desc": {
+          "type": "string",
+          "example": "Updated description"
+        },
+        "status": {
+          "type": "string",
+          "example": "in-progress"
+        },
+        "priority": {
+          "type": "string",
+          "example": "medium"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error": {
+          "type": "string",
+          "example": "reminder updated fine"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "CompleteReminderRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken",
+        "title"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting",
+          "description": "Used to identify which reminder to complete"
+        }
+      }
+    },
+    "CompleteReminderResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting"
+        },
+        "error": {
+          "type": "string",
+          "example": "reminder set to completed"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "DeleteReminderRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken",
+        "title"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "title": {
+          "type": "string",
+          "example": "Team Meeting",
+          "description": "Used to identify which reminder to delete"
+        }
+      }
+    },
+    "DeleteReminderResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "error": {
+          "type": "string",
+          "example": "reminder successfully deleted"
+        }
+      }
+    },
+    "CreateTaskRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken",
+        "title"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "title": {
+          "type": "string",
+          "example": "Complete project proposal"
+        },
+        "description": {
+          "type": "string",
+          "example": "Draft and submit Q4 project proposal"
+        },
+        "status": {
+          "type": "string",
+          "example": "not started",
+          "enum": [
+            "not started",
+            "in progress",
+            "completed"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "example": "medium",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-20T00:00:00.000Z"
+        },
+        "completed": {
+          "type": "object",
+          "properties": {
+            "isCompleted": {
+              "type": "boolean",
+              "example": false
+            },
+            "completedAt": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          }
+        }
+      }
+    },
+    "CreateTaskResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "taskId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439013"
+        },
+        "error": {
+          "type": "string",
+          "example": "success, task added to database"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "ViewTaskRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "taskId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439013",
+          "description": "Optional - if provided, returns specific task"
+        }
+      }
+    },
+    "ViewTaskResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Task"
+          },
+          "description": "Returned when viewing all tasks"
+        },
+        "task": {
+          "$ref": "#/definitions/Task",
+          "description": "Returned when viewing a specific task"
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "accessToken": {
+          "type": "string",
+          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      }
+    },
+    "Task": {
+      "type": "object",
+      "properties": {
+        "_id": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439013"
+        },
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "title": {
+          "type": "string",
+          "example": "Complete project proposal"
+        },
+        "description": {
+          "type": "string",
+          "example": "Draft and submit Q4 project proposal"
+        },
+        "status": {
+          "type": "string",
+          "example": "not started",
+          "enum": [
+            "not started",
+            "in progress",
+            "completed"
+          ]
+        },
+        "priority": {
+          "type": "string",
+          "example": "medium",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2025-11-20T00:00:00.000Z",
+          "nullable": true
+        },
+        "completed": {
+          "type": "object",
+          "properties": {
+            "isCompleted": {
+              "type": "boolean",
+              "example": false
+            },
+            "completedAt": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EditTaskRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "accessToken",
+        "taskId"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string",
+          "example": "507f1f77bcf86cd799439011"
+        },
+        "accessToken": null
+      }
+    },
+    "ViewAPODRequest": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01",
+          "description": "Optional APOD date. Defaults to today if omitted."
+        }
+      }
+    },
+    "ViewAPODResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "example": true
+        },
+        "title": {
+          "type": "string",
+          "example": "The Horsehead Nebula"
+        },
+        "hdurl": {
+          "type": "string",
+          "example": "https://apod.nasa.gov/apod/image/test.jpg"
+        },
+        "explanation": {
+          "type": "string",
+          "example": "This is NASA's Astronomy Picture of the Day..."
+        },
+        "thumbnailUrl": {
+          "type": "string",
+          "example": "https://apod.nasa.gov/apod/image/thumb.jpg"
+        },
+        "copyright": {
+          "type": "string",
+          "example": "NASA",
+          "nullable": true
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Generated API",
+    "version": "1.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/Personal9688/generated-api/1.0"
+  },
+  "servers": [
+    {
+      "url": "http://ctxw10vddna-212.servicead.sogei.it:9080/kb-proxy-web"
+    }
+  ],
+  "paths": {
+    "/kbp/cache-api/cache-data": {
+      "post": {
+        "summary": "Storage di un tracciato json in memory cache.",
+        "description": "Salva un json nella memory cache temporanea e restituisce la chiave per poter recupera il tracciato JSON",
+        "requestBody": {
+          "description": "JSON object da salvare nella memory cache, non \u00e8 prevista nessuna restrizione sulla struttura dati. Dati minimi da inserire cf, nome e cognome",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "cf": "CODICE_FISCALE",
+                "cognome": "ROSSI",
+                "nome": "MARIO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Request non valida o che non ha superato i controlli di validazione.",
+            "content": {
+              "text/plain": {
+                "example": "Request body size in (kb) greather than 10"
+              }
+            }
+          },
+          "503": {
+            "description": "Servizio di cache non disponibile.",
+            "content": {
+              "text/plain": {}
+            }
+          },
+          "200": {
+            "description": "Dato in cache caricato correttamente.",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/kbp/cache-api/fetch-data/{key}": {
+      "get": {
+        "summary": "Retrieve di un tracciato json dalla memory cache.",
+        "description": "Recupera un json dalla memory cache temporanea e tramite una chiave identificativa",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "chiave identificativa per il recupero del json dalla cache. L'uuid \u00e8 cryptato in AES256",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "zoZuX307FBNdDhyEUtLuwlq6kHo8hWTKClB9ZLmvt5rI7afLJBZ-A5jr-ycG-_3K"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Dato in cache non presente per la chiave fornita",
+            "content": {
+              "text/plain": {}
+            }
+          },
+          "503": {
+            "description": "Servizio di cache non disponibile.",
+            "content": {
+              "text/plain": {}
+            }
+          },
+          "200": {
+            "description": "Dato in cache estratto correttamente.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "cf": "CODICE_FISCALE",
+                  "cognome": "ROSSI",
+                  "nome": "MARIO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kbp/page-api/pages": {
+      "post": {
+        "summary": "Lista info pagine.",
+        "description": "Estrae le pagine censite a sistema",
+        "requestBody": {
+          "description": "input per estrazione delle pagine censite",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "la richiesta non pu\u00f2 essere elaborata a causa di errori di validazione.",
+            "content": {
+              "text/plain": {
+                "example": "application value contains invalid chars // application value is required"
+              }
+            }
+          },
+          "200": {
+            "description": "Response correttamente elaborata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                },
+                "example": [
+                  {
+                    "application": "AAPL1",
+                    "page": "PAGE1",
+                    "title": "PAGE1 TITLE",
+                    "urlPage": "http://intranet.sogei.it/Per-il-dipendente/Welfare-e-Benefit/Pagine/fondo-metasalute.aspx",
+                    "active": true
+                  },
+                  {
+                    "application": "AAPL1",
+                    "page": "PAGE2",
+                    "title": "PAGE2 TITLE",
+                    "urlPage": "http://intranet.sogei.it/Per-il-dipendente/Welfare-e-Benefit/Pagine/fondo-metasalute.aspx",
+                    "active": true
+                  },
+                  {
+                    "application": "AAPL1",
+                    "page": "PAGE3",
+                    "title": "PAGE3 TITLE",
+                    "urlPage": "http://intranet.sogei.it/Per-il-dipendente/Welfare-e-Benefit/Pagine/fondo-metasalute.aspx",
+                    "active": false
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kbp/page-api/pageurl/{application-key}/{page-key}": {
+      "get": {
+        "summary": "url pagina",
+        "description": "Estrae la url di una pagina attiva individuata tramite chiave applicazione e chiave pagina",
+        "parameters": [
+          {
+            "name": "application-key",
+            "in": "path",
+            "description": "chiave identificativa applicazione",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page-key",
+            "in": "path",
+            "description": "chiave identificativa pagina",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "url individuata correttamente",
+            "content": {
+              "text/plain": {
+                "example": "https://some-url.com/somepage.html"
+              }
+            }
+          },
+          "204": {
+            "description": "url pagina attiva non individuata con le chiavi fornite",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Page": {
+        "type": "object",
+        "properties": {
+          "application": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string"
+          },
+          "urlPage": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "PageInput": {
+        "required": [
+          "application",
+          "onlyActive"
+        ],
+        "type": "object",
+        "properties": {
+          "application": {
+            "description": "chiave applicazione",
+            "minLength": 1,
+            "pattern": "[\\w_-]+",
+            "type": "string",
+            "nullable": false
+          },
+          "page": {
+            "description": "chiave della pagina",
+            "pattern": "[\\w_-]*",
+            "type": "string",
+            "nullable": true
+          },
+          "onlyActive": {
+            "description": "se valorizzato a true effettua la ricerca sulle sole pagine attive",
+            "default": "true",
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

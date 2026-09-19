@@ -1,0 +1,986 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Store API - Items & Categories",
+    "version": "1.0.0",
+    "description": "Minimal OpenAPI definition for products (items), categories, brands, banners, and product types. \u0639\u0644\u0649 \u0623\u0633\u0627\u0633\u0647 \u062a\u0636\u064a\u0641 \u0628\u0627\u0642\u064a \u0627\u0644\u0640 endpoints \u0644\u0627\u062d\u0642\u064b\u0627.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/alamermarket/store-api-items-categories/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://shop.alamer-market.com/api",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Local"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductOption": {
+        "type": "object",
+        "description": "Product variant/option (child product)",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "parent": {
+            "type": "integer",
+            "description": "Parent product ID"
+          },
+          "barcode": {
+            "type": "string"
+          },
+          "itemid": {
+            "type": "integer",
+            "description": "ERP item id mapping"
+          },
+          "title_ar": {
+            "type": "string"
+          },
+          "title_en": {
+            "type": "string"
+          },
+          "desc_ar": {
+            "type": "string"
+          },
+          "desc_en": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "float"
+          },
+          "OrigPrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Original price before discount"
+          },
+          "hasoffer": {
+            "type": "boolean"
+          },
+          "img": {
+            "type": "string",
+            "description": "Image path or URL"
+          },
+          "hasimg": {
+            "type": "boolean"
+          },
+          "stock": {
+            "type": "number"
+          },
+          "category_id": {
+            "type": "integer"
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Product": {
+        "type": "object",
+        "description": "Main product representation",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "parent": {
+            "type": "integer",
+            "description": "0/null for main product; >0 for child"
+          },
+          "barcode": {
+            "type": "string"
+          },
+          "itemid": {
+            "type": "integer"
+          },
+          "title_ar": {
+            "type": "string"
+          },
+          "title_en": {
+            "type": "string"
+          },
+          "desc_ar": {
+            "type": "string"
+          },
+          "desc_en": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "Current effective price"
+          },
+          "OrigPrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Original/base price"
+          },
+          "hasoffer": {
+            "type": "boolean",
+            "description": "Whether there is active offer/promotion"
+          },
+          "img": {
+            "type": "string",
+            "description": "Image path or URL"
+          },
+          "hasimg": {
+            "type": "boolean"
+          },
+          "stock": {
+            "type": "number",
+            "description": "Available stock quantity"
+          },
+          "category_id": {
+            "type": "integer"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "description": "Child products / variants",
+            "items": {
+              "$ref": "#/components/schemas/ProductOption"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title_ar",
+          "title_en",
+          "price"
+        ],
+        "additionalProperties": true
+      },
+      "Category": {
+        "type": "object",
+        "description": "Product category / department",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "parent_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Parent category ID"
+          },
+          "name_ar": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          },
+          "img": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category image or banner"
+          },
+          "products": {
+            "type": "array",
+            "description": "Products directly under this category (when loaded)",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "children": {
+            "type": "array",
+            "description": "Child categories (optional)",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name_ar",
+          "name_en"
+        ],
+        "additionalProperties": true
+      },
+      "Brand": {
+        "type": "object",
+        "description": "Brand entity",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name_ar": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          },
+          "img": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "BannerChild": {
+        "type": "object",
+        "description": "Single banner child (link to product/category/etc.)",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of banner child (product, category, url, ...)"
+          },
+          "target_id": {
+            "type": "integer",
+            "description": "Target id (e.g. product_id or category_id)"
+          },
+          "img": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ProductType": {
+        "type": "object",
+        "description": "Product type used for grouping items",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name_ar": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "paths": {
+    "/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "List products",
+        "description": "Returns paginated list of products. The backend uses Laravel pagination.\n",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false,
+            "description": "Page number (Laravel paginate)"
+          },
+          {
+            "in": "query",
+            "name": "sortby",
+            "schema": {
+              "type": "integer"
+            },
+            "required": false,
+            "description": "0=random, 1=price desc, 2=price asc (based on controller logic)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "current_page": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Product"
+                      }
+                    },
+                    "per_page": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Create a new product",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get product by ID or barcode",
+        "description": "Controller supports both numeric ID and barcode in the same route.\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product numeric ID or barcode"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Update product",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Delete product",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Product deleted"
+          }
+        }
+      }
+    },
+    "/products/imgnoitem": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Products with image but no item mapping",
+        "responses": {
+          "200": {
+            "description": "List of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/itemnoimg": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Products with no image",
+        "responses": {
+          "200": {
+            "description": "List of products without images",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pdisplay": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Get promoted / offer products",
+        "description": "Returns products that are currently on promotion (offers).\n",
+        "responses": {
+          "200": {
+            "description": "Offer products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List categories",
+        "responses": {
+          "200": {
+            "description": "Categories list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Create category",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Category"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get category by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Update category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Category"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Delete category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted"
+          }
+        }
+      }
+    },
+    "/categories/{id}/meta": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get category meta (with products)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category with meta/products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{id}/childs": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get child categories",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Child categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{id}/siblings": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get sibling categories",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sibling categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Category"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories/{catid}/brand/{brandid}": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "Get products by category and brand",
+        "parameters": [
+          {
+            "name": "catid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "brandid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Products in category and brand",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brands": {
+      "get": {
+        "tags": [
+          "Brands"
+        ],
+        "summary": "List brands",
+        "responses": {
+          "200": {
+            "description": "Brands list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Brand"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Brands"
+        ],
+        "summary": "Create brand",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Brand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Brand created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/brands/{id}": {
+      "get": {
+        "tags": [
+          "Brands"
+        ],
+        "summary": "Get brand by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Brand",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brand"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Brand not found"
+          }
+        }
+      }
+    },
+    "/banners/{id}/childs": {
+      "get": {
+        "tags": [
+          "Banners"
+        ],
+        "summary": "Get banner children",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Banner children list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BannerChild"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prodtypes/{id}/cat": {
+      "get": {
+        "tags": [
+          "ProductTypes"
+        ],
+        "summary": "Get product types by category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product types for this category",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductType"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

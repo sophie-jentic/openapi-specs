@@ -1,0 +1,103 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Admin Zypher Salary Management API - salary_management.php",
+    "description": "Collection for `admin/zypher/salary_management.php`.\n\n**Auth**\n- All requests require `Authorization: Bearer <JWT_TOKEN>`.\n- Only users with `account_type = 'owner'` (from `getheaderdata($conn)`) are allowed.\n- Missing/invalid token \u2192 401; non-owner \u2192 403.\n\n**Endpoints**\n- `POST` (action=add): Add salary/attendance entry.\n- `GET` (optional periodtag): Generate salary sheet JSON + Excel download URL.\n",
+    "version": "1.0.0",
+    "contact": {},
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ahmed7shahabiorganiz/admin-zypher-salary-management-api-salary_managementphp/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://buyer.idzo.in"
+    }
+  ],
+  "paths": {
+    "/admin/zypher/salary_management.php": {
+      "get": {
+        "summary": "GET - Generate Salary Sheet (default previous month)",
+        "description": "Generate salary sheet for the **previous month** (default behavior when `periodtag` is omitted).\n\n**Logic**\n- `periodtag` used internally = `strtolower(date('F-Y', strtotime('first day of last month')))`\n  - Example: `August-2025` \u2192 `\"august-2025\"`.\n- Returns:\n  - `salary_data`: per-employee breakdown (base salary, adjustments, profit shares, etc.).\n  - `download_url`: public URL to the generated Excel file in `/downloads`.\n  - `totals`: total salary by bank and overall.\n\n**Success (200)**\n```json\n{\n  \"status\": \"success\",\n  \"message\": \"Salary sheet generated successfully\",\n  \"period_used\": \"august-2025\",\n  \"download_url\": \"https://buyer.idzo.in/downloads/salary_report_august_2025.xlsx\",\n  \"salary_data\": [\n    { \"Employee\": \"AFIL\", \"Base Salary\": 15000, \"Total\": 16000, \"bank\": \"IDZO\" }\n  ],\n  \"totals\": {\n    \"total_salary\": 50000,\n    \"total_salary_idzo\": 30000,\n    \"total_salary_zypher\": 20000\n  }\n}\n```",
+        "operationId": "getGenerateSalarySheetDefaultPreviousMonth",
+        "parameters": [
+          {
+            "name": "periodtag",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "august-2025"
+            },
+            "description": "Optional period to report, lowercase `month-year` (e.g. `august-2025`). If empty, previous month is used."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "summary": "POST - Add Salary Entry (normal debit/credit)",
+        "description": "Add a **normal debit/credit salary entry**.\n\n**Rules**\n- `action=add` is mandatory.\n- `employee` and `type` must be provided.\n- When `attendance` is **not** `true`, `amount` must be numeric.\n\n**Success (200)**\n```json\n{\n  \"status\": \"success\",\n  \"message\": \"Salary entry added successfully\",\n  \"id\": 123\n}\n```\n\n**Error (400)**\n```json\n{\n  \"status\": \"error\",\n  \"message\": \"...reason...\",\n  \"rowuser\": \"owner\"\n}\n```",
+        "operationId": "postAddSalaryEntryNormalDebitCredit",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "example": "add"
+                  },
+                  "attendance": {
+                    "type": "string",
+                    "example": "true"
+                  },
+                  "employee": {
+                    "type": "string",
+                    "example": "nishad"
+                  },
+                  "remarks": {
+                    "type": "string",
+                    "example": "Attendance"
+                  },
+                  "type": {
+                    "type": "string",
+                    "example": "credit"
+                  }
+                }
+              },
+              "examples": {
+                "POST - Add Salary Entry (normal debit/credit)": {
+                  "value": {
+                    "action": "add",
+                    "amount": "{{amount}}",
+                    "attendance": "",
+                    "employee": "{{employee}}",
+                    "remarks": "{{remarks}}",
+                    "type": "{{type}}"
+                  }
+                },
+                "POST - Mark Attendance (auto salary amount)": {
+                  "value": {
+                    "action": "add",
+                    "attendance": "true",
+                    "employee": "nishad",
+                    "remarks": "Attendance",
+                    "type": "credit"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

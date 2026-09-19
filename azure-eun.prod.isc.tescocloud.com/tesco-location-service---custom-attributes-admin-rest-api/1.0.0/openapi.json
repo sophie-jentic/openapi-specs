@@ -1,0 +1,668 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Tesco Location Service - Custom Attributes Admin REST API",
+    "version": "1.0.0",
+    "description": "The **Tesco Location Service Custom Attributes Admin REST API** provides management\nof spaces, buckets, attributes, attribute values, data exports/imports, and audit logging.\n\n## Authentication & Authorization\n- `sub` field of JWT Token \u2192 **User UUID** (Colleague UUID)\n- `clientId` field of JWT Token \u2192 **Service UUID**\n- **SPACE_ADMIN** type user \u2192 access to assigned spaces\n- **TLS_ADMIN** type user \u2192 access to all spaces\n- **Non-registered users** \u2192 read-only access\n\n## Safeguards\n- Deleting spaces, buckets, or attributes triggers protective mechanisms.\n- Export deleted data as CSV before deletion.\n- Deprecation flags allow restoration of entities safely.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/FrankDrebin/tesco-location-service-custom-attributes-admin-rest-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://azure-eun.prod.isc.tescocloud.com/tescolocation/admin/v1"
+    },
+    {
+      "url": "https://azure-eun.ppe.isc.tescocloud.com/tescolocation/admin/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Manage service and human users."
+    },
+    {
+      "name": "Spaces",
+      "description": "Create, update, and query spaces."
+    },
+    {
+      "name": "Buckets",
+      "description": "Manage data buckets within spaces."
+    },
+    {
+      "name": "Attributes",
+      "description": "Create, update, and delete attributes for locations."
+    },
+    {
+      "name": "Exports",
+      "description": "Export attribute data as CSV."
+    },
+    {
+      "name": "Imports",
+      "description": "Import attribute data from CSV."
+    },
+    {
+      "name": "Audit",
+      "description": "Retrieve audit events."
+    }
+  ],
+  "paths": {
+    "/service-users": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Onboard Service User",
+        "description": "Creates a new service user (TLS_ADMIN or SPACE_ADMIN).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "tls_admin_service_user": {
+                  "summary": "TLS_ADMIN Service User",
+                  "value": {
+                    "user_uuid": "b5aa2c18-325f-4c9a-9aa1-1df4cc0b57a8",
+                    "name": "Data Pipeline Automation",
+                    "email": "dataops-team@tesco.com",
+                    "user_type": "TLS_ADMIN",
+                    "description": "Service account for automated data pipelines requiring full platform admin access"
+                  }
+                },
+                "space_admin_service_user": {
+                  "summary": "SPACE_ADMIN Service User with multiple Space assignments",
+                  "value": {
+                    "user_uuid": "3e5254e9-e487-4f68-b816-b76fb18cfa3a",
+                    "name": "Cluster Sync Automation",
+                    "email": "infra-automation@tesco.com",
+                    "user_type": "SPACE_ADMIN",
+                    "description": "Service account for automated synchronisation of multiple spaces",
+                    "spaces": [
+                      "store-ops",
+                      "inventory-management",
+                      "delivery-network"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service user created successfully."
+          }
+        }
+      }
+    },
+    "/service-users/{service-uuid}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Delete Service User",
+        "parameters": [
+          {
+            "name": "service-uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service user deleted successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "User deleted successfully.",
+                  "user_id": "b12f7d8c-45af-4d91-bc23-91bb57b2a6a4"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/human-users": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Onboard Human User",
+        "description": "Creates or updates a human user based on colleague UUID or email.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "examples": {
+                "tls_admin_user": {
+                  "summary": "TLS_ADMIN user",
+                  "value": {
+                    "email": "john.smith@tesco.com",
+                    "user_type": "TLS_ADMIN"
+                  }
+                },
+                "space_admin_user": {
+                  "summary": "SPACE_ADMIN user",
+                  "value": {
+                    "email": "jane.doe@tesco.com",
+                    "user_type": "SPACE_ADMIN",
+                    "spaces": [
+                      "store-ops",
+                      "delivery-network"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User created or updated.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "user_uuid": "8c3c736e-98a6-4b1c-9b6d-2a6a5566d783",
+                  "name": "Jane Doe",
+                  "email": "jane.doe@tesco.com",
+                  "user_type": "SPACE_ADMIN",
+                  "spaces": [
+                    "store-ops",
+                    "delivery-network"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/human-users/{user-uuid}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get Human User by UUID",
+        "parameters": [
+          {
+            "name": "user-uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User data found.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "tls_admin_user": {
+                    "value": {
+                      "user_uuid": "c5b2c8f4-9a47-4c52-8e60-e62c7624793a",
+                      "name": "Workflow Service",
+                      "email": "workflow-service@tesco.com",
+                      "user_type": "TLS_ADMIN",
+                      "created_at": "2023-08-15T10:00:00Z"
+                    }
+                  },
+                  "space_admin_user": {
+                    "value": {
+                      "user_uuid": "8c3c736e-98a6-4b1c-9b6d-2a6a5566d783",
+                      "name": "Store Workflow Engine",
+                      "email": "store-workflow-engine@tesco.com",
+                      "user_type": "SPACE_ADMIN",
+                      "spaces": [
+                        {
+                          "name": "store-ops",
+                          "description": "Space for store operations",
+                          "data_owner_uuid": "f5299fec-1e4c-4802-92d9-f605ac0cc05d"
+                        },
+                        {
+                          "name": "delivery-network",
+                          "description": "Delivery networks data space"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get list of all Users",
+        "responses": {
+          "200": {
+            "description": "List of all service and human users.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "users": [
+                    {
+                      "user_uuid": "a6e8b926-f0e4-4c8f-86ae-0fcbf6d8d677",
+                      "is_service": false,
+                      "user_type": "TLS_ADMIN",
+                      "created_at": "2024-06-01T08:30:00Z"
+                    },
+                    {
+                      "user_uuid": "3e5254e9-e487-4f68-b816-b76fb18cfa3a",
+                      "name": "Cluster Sync Automation",
+                      "email": "infra-automation@tesco.com",
+                      "is_service": true,
+                      "user_type": "SPACE_ADMIN",
+                      "spaces": [
+                        "store-ops",
+                        "inventory-management"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/space/{space-name}": {
+      "put": {
+        "tags": [
+          "Spaces"
+        ],
+        "summary": "Create a new Space (Team Onboarding)",
+        "parameters": [
+          {
+            "name": "space-name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "description": "Space for CE Product Team",
+                "data_owner_email": "MatthiasMichel.Reik@tesco.com",
+                "data_steward_email": "Dusan.Starecek@tesco.com",
+                "zendesk_ticket": "https://tescosupportcentre.zendesk.com/agent/tickets/30122320",
+                "tescopedia_link": "https://tesco.sharepoint.com/sites/Tescopedia/Team.html?Id=764#View=Teams_View",
+                "space_admins": [
+                  "Milan.Pavlik@tesco.com",
+                  "Jiri.Vlach1@tesco.com"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Space created successfully."
+          },
+          "400": {
+            "description": "Invalid parameters.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "errors": [
+                    {
+                      "description": "Description must not exceed 5000 characters."
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Spaces"
+        ],
+        "summary": "Delete Space",
+        "parameters": [
+          {
+            "name": "space-name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Space deleted successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Space deleted successfully.",
+                  "space_name": "price-and-promotion"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spaces": {
+      "get": {
+        "tags": [
+          "Spaces"
+        ],
+        "summary": "Get list of spaces or filter by User UUID",
+        "parameters": [
+          {
+            "name": "user_uuid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of spaces.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "spaces": [
+                    {
+                      "name": "store-ops",
+                      "description": "Operations and management of in-store processes",
+                      "created_at": "2024-05-10T09:15:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spaces/{space-name}/buckets/{bucket-name}": {
+      "get": {
+        "tags": [
+          "Buckets"
+        ],
+        "summary": "Get Bucket details",
+        "parameters": [
+          {
+            "name": "space-name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket-name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bucket details.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "name": "product-data",
+                  "description": "Contains product metadata",
+                  "attributes": [
+                    {
+                      "name": "is_available",
+                      "description": "Indicates if product is available for sale",
+                      "json_schema": {
+                        "type": "boolean"
+                      }
+                    },
+                    {
+                      "name": "stock_count",
+                      "json_schema": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 5000
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/location/{location-uuid}": {
+      "get": {
+        "tags": [
+          "Attributes"
+        ],
+        "summary": "Get all attributes for a location",
+        "parameters": [
+          {
+            "name": "location-uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attributes by location.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "location_uuid": "123e4567-e89b-12d3-a456-426614174000",
+                  "spaces": [
+                    {
+                      "name": "inventory-management",
+                      "buckets": [
+                        {
+                          "name": "product-data",
+                          "attributes": [
+                            {
+                              "name": "is_available",
+                              "json_schema": {
+                                "type": "boolean"
+                              },
+                              "value": true
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports": {
+      "post": {
+        "tags": [
+          "Exports"
+        ],
+        "summary": "Start data export",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "attributes": [
+                  "Marketing.bucketA.is_active",
+                  "Operations.warehouse.temperature"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export started successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "export_uuid": "c7a1d278-4fbe-4e61-b7d4-10b476444f5d"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{export-id}": {
+      "get": {
+        "tags": [
+          "Exports"
+        ],
+        "summary": "Get Export status",
+        "parameters": [
+          {
+            "name": "export-id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export status.",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": {
+                      "status": "SUCCESS",
+                      "csv_data": "location_uuid,attribute,value",
+                      "user_uuid": "2247e0cc-a4d3-412f-b4fd-784356c73d8b",
+                      "completed_at": "2025-02-12T17:31:00Z"
+                    }
+                  },
+                  "failed": {
+                    "value": {
+                      "status": "FAILED",
+                      "errors": [
+                        "Export job timed out"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/import": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Start Import",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "csv_data": "location_uuid,attribute,value\nuuid1,flag,true"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import started.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "import_uuid": "e2a4fbc2-4de0-4bd6-bc8c-90ecfbd4179b",
+                  "status": "IN_PROGRESS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit": {
+      "get": {
+        "tags": [
+          "Audit"
+        ],
+        "summary": "Get Audit entries",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated audit event list.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "page": 1,
+                  "audit_events": [
+                    {
+                      "event_type": "USER_CREATED",
+                      "log": "User 'john.doe@tesco.com' onboarded successfully",
+                      "created_at": "2024-06-01T09:15:00Z"
+                    },
+                    {
+                      "event_type": "SPACE_CREATED",
+                      "log": "Space 'customer-analytics' created",
+                      "space_name": "customer-analytics",
+                      "created_at": "2024-06-04T10:45:33Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

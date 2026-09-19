@@ -1,0 +1,751 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Codele API",
+    "version": "1.0.0",
+    "description": "API for registration, email verification, login, cards search, challenge attempts, and leaderboards. Matches the Express server in server.js.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/school-830/codele/1.0.0"
+  },
+  "host": "codele.xyz",
+  "basePath": "/api",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "tags": [
+    {
+      "name": "System"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Verification"
+    },
+    {
+      "name": "Cards"
+    },
+    {
+      "name": "Challenges"
+    },
+    {
+      "name": "Leaderboard"
+    },
+    {
+      "name": "Account"
+    }
+  ],
+  "paths": {
+    "/test-db": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Check MongoDB connection status",
+        "responses": {
+          "200": {
+            "description": "Status payload",
+            "schema": {
+              "$ref": "#/definitions/TestDbResponse"
+            }
+          }
+        }
+      }
+    },
+    "/addcard": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Add a card for a user",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddCardRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation result",
+            "schema": {
+              "$ref": "#/definitions/AddCardResponse"
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login with email and password",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login response",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register a new user (email verification required)",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration result",
+            "schema": {
+              "$ref": "#/definitions/RegisterResponse"
+            }
+          }
+        }
+      }
+    },
+    "/verify-email": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Verify user email with a 6-digit code",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/VerifyEmailRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "schema": {
+              "$ref": "#/definitions/VerifyEmailResponse"
+            }
+          }
+        }
+      }
+    },
+    "/resend-verification": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Resend the verification code to an unverified email",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ResendVerificationRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resend result",
+            "schema": {
+              "$ref": "#/definitions/ResendVerificationResponse"
+            }
+          }
+        }
+      }
+    },
+    "/searchcards": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Search cards by text (prefix/contains)",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SearchCardsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "schema": {
+              "$ref": "#/definitions/SearchCardsResponse"
+            }
+          }
+        }
+      }
+    },
+    "/completechallenge": {
+      "post": {
+        "tags": [
+          "Challenges"
+        ],
+        "summary": "Record completion of a daily challenge",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CompleteChallengeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation result",
+            "schema": {
+              "$ref": "#/definitions/GenericErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/recordattempt": {
+      "post": {
+        "tags": [
+          "Challenges"
+        ],
+        "summary": "Record a single attempt for today's challenge",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RecordAttemptRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation result",
+            "schema": {
+              "$ref": "#/definitions/GenericErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/gettodayattempts/{userId}/{date}": {
+      "get": {
+        "tags": [
+          "Challenges"
+        ],
+        "summary": "Get attempt count (and completion) for a user on a date",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User ID (numeric or string)"
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Date in YYYY-MM-DD format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attempts summary",
+            "schema": {
+              "$ref": "#/definitions/GetTodayAttemptsResponse"
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard/score": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Top users by total score",
+        "responses": {
+          "200": {
+            "description": "Leaderboard data",
+            "schema": {
+              "$ref": "#/definitions/LeaderboardScoreResponse"
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard/streak": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Top users by longest streak",
+        "responses": {
+          "200": {
+            "description": "Leaderboard data",
+            "schema": {
+              "$ref": "#/definitions/LeaderboardStreakResponse"
+            }
+          }
+        }
+      }
+    },
+    "/updateaccount": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Update user email and/or password",
+        "description": "Requires userId. One of email or password must be provided.",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateAccountRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation result",
+            "schema": {
+              "$ref": "#/definitions/GenericErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "TestDbResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "connected",
+            "disconnected",
+            "error"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "usingInMemory": {
+          "type": "boolean"
+        },
+        "database": {
+          "type": "string",
+          "example": "LargeProject"
+        },
+        "collections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "userCount": {
+          "type": "integer"
+        },
+        "cardCount": {
+          "type": "integer"
+        }
+      }
+    },
+    "LoginRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Numeric UserID or MongoDB _id string",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "RegisterRequest": {
+      "type": "object",
+      "required": [
+        "firstName",
+        "lastName",
+        "email",
+        "password"
+      ],
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 6
+        }
+      }
+    },
+    "RegisterResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "requiresVerification": {
+          "type": "boolean",
+          "example": true
+        }
+      }
+    },
+    "VerifyEmailRequest": {
+      "type": "object",
+      "required": [
+        "email",
+        "code"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "code": {
+          "type": "string",
+          "description": "6-digit code"
+        }
+      }
+    },
+    "VerifyEmailResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "success": {
+          "type": "boolean",
+          "example": true
+        }
+      }
+    },
+    "ResendVerificationRequest": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "ResendVerificationResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        },
+        "success": {
+          "type": "boolean",
+          "example": true
+        }
+      }
+    },
+    "AddCardRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "card"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "card": {
+          "type": "string"
+        }
+      }
+    },
+    "AddCardResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "SearchCardsRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "search"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "search": {
+          "type": "string"
+        }
+      }
+    },
+    "SearchCardsResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "CompleteChallengeRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "challengeId",
+        "date"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "challengeId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "example": "2025-10-20"
+        },
+        "attempts": {
+          "type": "integer",
+          "default": 1
+        },
+        "score": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
+    "RecordAttemptRequest": {
+      "type": "object",
+      "required": [
+        "userId",
+        "challengeId",
+        "date",
+        "attemptNumber",
+        "passed"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "challengeId": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "example": "2025-10-20"
+        },
+        "attemptNumber": {
+          "type": "integer"
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "GetTodayAttemptsResponse": {
+      "type": "object",
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "example": 2
+        },
+        "completed": {
+          "type": "boolean",
+          "example": false
+        },
+        "score": {
+          "type": "integer",
+          "description": "Present when completed is true"
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "LeaderboardScoreResponse": {
+      "type": "object",
+      "properties": {
+        "leaderboard": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "totalScore": {
+                "type": "integer"
+              },
+              "totalCompletions": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "LeaderboardStreakResponse": {
+      "type": "object",
+      "properties": {
+        "leaderboard": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "longestStreak": {
+                "type": "integer"
+              },
+              "currentStreak": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    },
+    "UpdateAccountRequest": {
+      "type": "object",
+      "required": [
+        "userId"
+      ],
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Optional new email (must be unique)"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 6,
+          "description": "Optional new password"
+        }
+      }
+    },
+    "GenericErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "example": ""
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3347 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": " <b>E-Commerce Payments Services API</b><br/> The purpose of this document is to explain the use of the RestFUL Web Services  for integration with PaymentN&TS GROUP E-Commerce Payments Services.<br/> <br/> <b>  <a name='signature'>Message Signature</a> </b><br/> This topic describes how to sign API requests.<br/> <br/> <b>Summary of Signing Steps</b><br/> These are the steps required to sign a request:<br/> 1) Form the HTTPS request.<br/> 2) Create the signing string, which is based on parts of the request.<br/> 3) Create the signature from the signing string using <b>hmac-sha256</b> algorithm.<br/> 4) Add the resulting signature and other required information to the \"Authorization\" header in the request.<br/> <br/> <b>Specification You Need to Be Familiar With</b><br/> To learn how to perform steps 2-4 in the process above, refer to https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-10. It's a draft specification that forms the basis for how request signatures are handled. It describes generally how to form the signing string, how to create the signature, and how to add the signature and required information to the request. The remaining sections in this topic assume you're familiar with it. <br/> <br/> <b>Implementation Details</b><br/> <b>[Authorization Header]</b><br/> The \"Signature\" Authentication scheme (with an Authorization header), and not the Signature HTTP header, is used for signature.<br/> <b>[Required Headers]</b><br/> This section describes the headers that must be included in the signing string.<br/> For <b>GET</b> and <b>DELETE</b> requests (when there's no content in the request body), the signing string must include at least these headers:<br/> <samp> - <b>host</b> (as host:port in case of port different from 80, 443)<br/> - <b>date</b> (in <a href='https://tools.ietf.org/html/rfc1123'>RFC 1123</a>)<br/> - <b>(request-target)</b> (as described in https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-10)<br/> </samp> For <b>PUT</b> and <b>POST</b> requests (when there's content in the request body), the signing string must include at least these headers:<br/> <samp> - <b>host</b> (as host:port in case of port different from 80, 443)<br/> - <b>date</b> (in <a href='https://tools.ietf.org/html/rfc1123'>RFC 1123</a>)<br/> - <b>(request-target)</b> (as described in https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-10)<br/> - <b>digest</b> 'SHA-256=' + (BASE64 encoded string of the SHA-256 from request body) (ex. SHA-256=6iJfkOF3ra8+t09DtcpwjR6Kxt6lnv+aF5GtzZm6ue0=)<br/> </samp> For <b>multipart/form-data</b> requests, the signing string must include at least these headers:<br/> <samp> - <b>host</b> (as host:port in case of port different from 80, 443)<br/> - <b>date</b> (in <a href='https://tools.ietf.org/html/rfc1123'>RFC 1123</a>)<br/> - <b>(request-target)</b> (as described in https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-10)<br/> </samp> <b>[URL Encoding of Path and Query String]</b><br/> When forming the signing string, you must URL encode all parameters in the path and query string (but not the headers) according to <a href='https://tools.ietf.org/html/rfc3986'>RFC 3986</a>.<br/> <b>[Key Identifier]</b><br/> You must set <b>keyId</b> in the Authorization header with the same value of the <b>merId</b> in the request. <br/> <b>[Signing Algorithm]</b><br/> The signing algorithm must be HMAC-SHA256, and you must set algorithm=\"hmac-sha256\" in the Authorization header (notice the quotation marks).<br/> <b>[Example Header]</b><br/> Here's an example of the general syntax of the Authorization header (for a request with content in the body):<br/> <samp> Authorization: Signature keyId=\"<b>${merId}</b>\",algorithm=\"hmac-sha256\",headers=\"host date (request-target) digest\",signature=\"<b>${Base64(HMAC-SHA256(signing_string))}</b>\" </samp><br/> For signing string specification look at https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-10<br/> <br/> <b>Sample Code</b><br/> This section shows the basic code for signing API requests.<br/> - JAVA (https://github.com/tomitribe/http-signatures-java) <br/> - PHP (https://github.com/99designs/http-signatures-php) <br/> - RUBY (https://github.com/99designs/http-signatures-ruby) <br/> <br/> <b>Release Notes</b><br/> <b>Ver. 1</b><br/> First release<br/> <b>Ver. 2</b><br/> Added payer<br/> <b>Ver. 3</b><br/> ASI doc update<br/> <b>Ver. 4</b><br/> ASI doc update<br/> <b>Ver. 5</b><br/> Key derivation<br/> <b>Ver. 6</b><br/> Added callbackURL<br/> Modified order.destinationAddress.state -> order.destinationAddress.stateCode<br/> Modified order.billingAddress.state -> order.billingAddress.stateCode<br/> <b>Ver. 7</b><br/> Modified receiptPdf -> payload<br/> Added procRes.procName<br/> Added procRes.addData<br/> <b>Ver. 8</b><br/> <i>3DS 2.0</i><br/> Added threeD.protocolVersion<br/> Added threeD.eci<br/> Added threeD.dsTransId<br/> Modified threeD.cavv -> threeD.authenticationValue<br/> <i>New recurrent indicators</i><br/> Added pi.plainCardValue.payTokenIndicator<br/> Added txReq.recurrentIndicator<br/> Added txReq.recurrentIndicatorType<br/> Added txReq.txIndicatorType<br/> Added txReq.traceChainId<br/> <b>Ver. 9</b><br/> Fixed txReq.traceChainId definition<br/> <b>Ver. 10</b><br/> Added pi.plainCardValue.firstPayTokenIndicator<br/> Added VerifyPaymentResponse.pi.merCustId<br/> Added VerifyPaymentResponse.pi.billAccntId<br/> Added AuthPaymentResponse.pi.merCustId<br/> Added AuthPaymentResponse.pi.billAccntId<br/> <b>Ver. 11</b><br/> Added procRes.traceData<br/> <b>Ver. 12</b><br/> Removed txReq.recurrentIndicatorType<br/> Modified txReq.txIndicatorType.UNSCHEDULED<br/> <b>Ver. 12</b><br/> Added CaptureRequest.finalIndicator<br/> Added txReq.scaExemptionType<br/> Added txRes.scaExemptionType<br/> Added Tokenizer services<br/> <b>Ver. 13</b><br/> Added InitPayByMailRequest.payer<br/> Deprecated txReq.recurrendIndicator<br/> Modified txReq.txIndicatorType enum<br/> <b>Ver. 14</b><br/> Added procRes.traceData.settlementDate<br/> <b>Ver. 15</b><br/> Added payer.account<br/> Added SPAY to TokenizerRequest.pitype<br/> <b>Ver. 16</b><br/> Added pi.payload<br/> Deprecated pi.rawWalletValue<br/> <b>Ver. 17</b><br/> Added poiInfo.piType SMSG<br/> <b>Ver. 18</b><br/> Removed poiInfo.piType UCPO<br/> Removed poiInfo.piType UCSC<br/> Renamed poiInfo.piType SMSG to SAMP<br/> Added poiInfo.piType SAPP<br/> Added poiInfo.piType CLCK<br/> <b>Ver. 19</b><br/> Added checkout services</br> Added poiInfo.piType CCPT<br/> Added poiInfo.piType PCIP<br/> <b>Ver. 20</b><br/> Added paybymail delete service</br> Added paybymail url expiration</br> Added paybymail main details</br> ",
+    "version": "1.0.0",
+    "title": "N&TS GROUP E-Commerce Payments Services",
+    "termsOfService": "http://www.netsgroup.com",
+    "contact": {
+      "email": "paymentgateway@netsgroup.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/GIOV78_1/nts-group-e-commerce-payments-services/1.0.0"
+  },
+  "host": "api.netsgroup.com",
+  "basePath": "/v1/paymentgateway",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "paymentInit",
+      "description": "Online Payments"
+    },
+    {
+      "name": "paymentAuth",
+      "description": "Direct Payments"
+    },
+    {
+      "name": "paymentTran",
+      "description": "Transactional Services"
+    },
+    {
+      "name": "tokenizer",
+      "description": "Tokenizer Services"
+    },
+    {
+      "name": "payByMail",
+      "description": "Pay By Mail Payments"
+    },
+    {
+      "name": "checkout",
+      "description": "Online Checkout"
+    }
+  ],
+  "paths": {
+    "/pgw/payment/init": {
+      "post": {
+        "tags": [
+          "paymentInit"
+        ],
+        "summary": "Initialize an E-Commerce payment",
+        "description": "",
+        "operationId": "initPayment",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to initialize a payment",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InitPaymentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/InitPaymentResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/verify": {
+      "get": {
+        "tags": [
+          "paymentInit"
+        ],
+        "summary": "Verify payment by Id",
+        "description": "Returns information about a payment",
+        "operationId": "verifyPayment",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "paymentId",
+            "in": "query",
+            "description": "Id of Payment to return",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/VerifyPaymentResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/selector": {
+      "post": {
+        "tags": [
+          "paymentInit"
+        ],
+        "summary": "Retrieve linked payment poi",
+        "description": "Retrieve a list of possible payment poi linked to the selector poi",
+        "operationId": "selectorPaymentInstruments",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to retrieve linked points of interaction",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SelectorPaymentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/SelectorPaymentResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/auth": {
+      "post": {
+        "tags": [
+          "paymentAuth"
+        ],
+        "summary": "Process a direct payment",
+        "description": "",
+        "operationId": "authPayment",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to process direct payment",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AuthPaymentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/AuthPaymentResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/reversal": {
+      "post": {
+        "tags": [
+          "paymentTran"
+        ],
+        "summary": "Reversal an Authorized Transaction",
+        "description": "",
+        "operationId": "reversalPayment",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to process a reversal payment",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReversalRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/ReversalResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/capture": {
+      "post": {
+        "tags": [
+          "paymentTran"
+        ],
+        "summary": "Capture an Authorized Transaction",
+        "description": "",
+        "operationId": "capturePayment",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to capture an authorization payment",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CaptureRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/CaptureResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/payment/refund": {
+      "post": {
+        "tags": [
+          "paymentTran"
+        ],
+        "summary": "Refund a Sale/Captured Transaction",
+        "description": "",
+        "operationId": "refundPayment",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to process a refund",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RefundRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/RefundResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/paybymail/init": {
+      "post": {
+        "tags": [
+          "payByMail"
+        ],
+        "summary": "Initialize a PayByMail payment",
+        "description": "",
+        "operationId": "initPayByMail",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to initialize a Pay-by-mail request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/InitPayByMailRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/InitPayByMailResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/paybymail/verify": {
+      "get": {
+        "tags": [
+          "payByMail"
+        ],
+        "summary": "Verify a PayByMail payment by Id",
+        "description": "Returns information about a Pay-by-mail",
+        "operationId": "verifyPayByMail",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "mailId",
+            "in": "query",
+            "description": "Id of Pay-by-mail request to return",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/VerifyPayByMailResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/paybymail/delete": {
+      "delete": {
+        "tags": [
+          "payByMail"
+        ],
+        "summary": "Delete a PayByMail payment by Id",
+        "description": "Delete a PayByMail",
+        "operationId": "deletePayByMail",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "mailId",
+            "in": "query",
+            "description": "Id of Pay-by-mail request to delete",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/DeletePayByMailResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/tokenizer/check": {
+      "get": {
+        "tags": [
+          "tokenizer"
+        ],
+        "summary": "Check a PaymentInstrumentToken by Id",
+        "description": "Returns information about a PaymentInstrumentToken",
+        "operationId": "checkTokenizer",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          {
+            "name": "pitype",
+            "in": "query",
+            "description": "Payment Instrument Method Type",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "CC",
+              "PPAL",
+              "AMZP",
+              "SPAY"
+            ]
+          },
+          {
+            "name": "tokenValue",
+            "in": "query",
+            "description": "Alias or token",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/TokenizerResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/tokenizer/delete": {
+      "delete": {
+        "tags": [
+          "tokenizer"
+        ],
+        "summary": "Delete a PaymentInstrumentToken by Id",
+        "description": "Delete a PaymentInstrumentToken",
+        "operationId": "tokenizerDelete",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          {
+            "name": "pitype",
+            "in": "query",
+            "description": "Payment Instrument Method Type",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "CC",
+              "PPAL",
+              "AMZP",
+              "SPAY"
+            ]
+          },
+          {
+            "name": "tokenValue",
+            "in": "query",
+            "description": "Alias or token",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/BaseResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/checkout/complete": {
+      "post": {
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Process a checkout phase",
+        "description": "",
+        "operationId": "checkoutComplete",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "digest",
+            "in": "header",
+            "description": "'SHA-256=' + Digest header as BASE64(SHA-256(body))",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Object contains information to process direct payment",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CheckoutCompleteRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/CheckoutCompleteResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    },
+    "/pgw/checkout/info": {
+      "get": {
+        "tags": [
+          "checkout"
+        ],
+        "summary": "Get checkout info",
+        "description": "Returns information about a checkout",
+        "operationId": "checkoutInfo",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "host",
+            "in": "header",
+            "description": "Host header as host:port",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "in": "header",
+            "description": "Date header in RFC 1123",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "description": "Authorization header as described in <a href='#signature'>Message Signature</a>",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "X-signature-salt",
+            "in": "header",
+            "description": "Key derivation salt header",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-info",
+            "in": "header",
+            "description": "Key derivation info header: request date in RFC 1123",
+            "type": "string"
+          },
+          {
+            "name": "X-signature-alg",
+            "in": "header",
+            "description": "Key derivation algorithm header: HMAC-SHA256 or HMAC-SHA512",
+            "type": "string"
+          },
+          {
+            "name": "paymentId",
+            "in": "query",
+            "description": "Id of Payment to return",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          {
+            "name": "merId",
+            "in": "query",
+            "description": "Merchant Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16
+          },
+          {
+            "name": "txId",
+            "in": "query",
+            "description": "Merchant Transaction Id",
+            "required": true,
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "schema": {
+              "$ref": "#/definitions/CheckoutInfoResponse"
+            }
+          },
+          "400": {
+            "description": "Wrong request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "InitPaymentRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/TransactionRequest"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiProcessorInfoType"
+            },
+            "buyer": {
+              "$ref": "#/definitions/BuyerInit"
+            },
+            "payer": {
+              "$ref": "#/definitions/PayerBase"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoRegen"
+            },
+            "errorURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Merchant error url notification",
+              "example": "https://www.merchant.com/error"
+            },
+            "callbackURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": " Merchant callback url notification <br/> (After receiving the request, verify method must be invoked) <br/> HTTP POST request with following parameters: <br/> - merId <br/> - txId <br/> - paymentId <br/> ",
+              "example": "https://www.merchant.com/callback"
+            },
+            "notifyURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Merchant http url to notify transaction result",
+              "example": "https://www.merchant.com/done"
+            },
+            "order": {
+              "$ref": "#/definitions/Order"
+            },
+            "recurringInfo": {
+              "$ref": "#/definitions/RecurringInfoDef"
+            }
+          },
+          "description": "Object contains payment initialization request data",
+          "required": [
+            "txReq",
+            "buyer",
+            "notifyURL",
+            "errorURL"
+          ]
+        }
+      ]
+    },
+    "InitPaymentResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "description": "Payment Id linked to the transaction",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32,
+              "example": "00123858103104830100"
+            },
+            "redirectURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Payment Gateway url to collect payment instrument data",
+              "example": "https://api.netsgroup.com/payment"
+            }
+          },
+          "description": "Object contains payment initialization response data"
+        }
+      ]
+    },
+    "VerifyPaymentResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/TransactionResponse"
+            },
+            "amount": {
+              "$ref": "#/definitions/Amount"
+            },
+            "nssResult": {
+              "type": "string",
+              "pattern": "^[0-9]{3,3}$",
+              "example": "000",
+              "description": "Fraud prevention result code"
+            },
+            "payer": {
+              "$ref": "#/definitions/Payer"
+            },
+            "threeD": {
+              "$ref": "#/definitions/ThreeDDataBase"
+            },
+            "procRes": {
+              "$ref": "#/definitions/ProcessorResponse"
+            },
+            "payload": {
+              "$ref": "#/definitions/Payload"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiProcessorInfoBase"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoWallet"
+            },
+            "cardInfo": {
+              "$ref": "#/definitions/CardInfo"
+            },
+            "order": {
+              "$ref": "#/definitions/Order"
+            }
+          },
+          "description": "Object contains payment initialization response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "SelectorPaymentRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/TransactionRequest"
+            },
+            "buyer": {
+              "$ref": "#/definitions/BuyerBase"
+            }
+          },
+          "description": "Object contains payment selector request data",
+          "required": [
+            "txReq",
+            "buyer"
+          ]
+        }
+      ]
+    },
+    "SelectorPaymentResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/TransactionResponse"
+            },
+            "poiInfo": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PoiProcessorInfo"
+              },
+              "maxItems": 25
+            }
+          },
+          "description": "Object contains payment initialization response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "AuthPaymentRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/TransactionRequest"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiProcessorInfoType"
+            },
+            "buyer": {
+              "$ref": "#/definitions/BuyerAuth"
+            },
+            "threeD": {
+              "$ref": "#/definitions/ThreeDData"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfo"
+            },
+            "order": {
+              "$ref": "#/definitions/Order"
+            },
+            "callbackURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": " Merchant callback url notification <br/> (After receiving the request, verify method must be invoked) <br/> HTTP POST request with following parameters: <br/> - merId <br/> - txId <br/> - paymentId <br/> ",
+              "example": "https://www.merchant.com/callback"
+            }
+          },
+          "description": "Object contains payment initialization request data",
+          "required": [
+            "txReq"
+          ]
+        }
+      ]
+    },
+    "AuthPaymentResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/TransactionResponse"
+            },
+            "nssResult": {
+              "type": "string",
+              "pattern": "^[0-9]{3,3}$",
+              "example": "000",
+              "description": "Fraud prevention result code"
+            },
+            "payer": {
+              "$ref": "#/definitions/Payer"
+            },
+            "procRes": {
+              "$ref": "#/definitions/ProcessorResponse"
+            },
+            "payload": {
+              "$ref": "#/definitions/Payload"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoWallet"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiProcessorInfoBase"
+            },
+            "cardInfo": {
+              "$ref": "#/definitions/CardInfo"
+            }
+          },
+          "description": "Object contains payment response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "ReversalRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranRequest"
+        }
+      ]
+    },
+    "ReversalResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranResponse"
+        }
+      ]
+    },
+    "CaptureRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "finalIndicator": {
+              "description": "Indicates if the captured partial amount is final. If true implicit reversal will be called",
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      ]
+    },
+    "CaptureResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "pendingAmount": {
+              "$ref": "#/definitions/Amount"
+            }
+          }
+        }
+      ]
+    },
+    "RefundRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranRequest"
+        }
+      ]
+    },
+    "RefundResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseTranResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "pendingAmount": {
+              "$ref": "#/definitions/Amount"
+            }
+          }
+        }
+      ]
+    },
+    "InitPayByMailRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/TransactionRequest"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiProcessorInfoType"
+            },
+            "buyer": {
+              "$ref": "#/definitions/BuyerInit"
+            },
+            "payer": {
+              "$ref": "#/definitions/PayerBase"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoRegen"
+            },
+            "callbackURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": " Merchant callback url notification <br/> (After receiving the request, verify method must be invoked) <br/> HTTP POST request with following parameters: <br/> - merId <br/> - txId <br/> - paymentId <br/> ",
+              "example": "https://www.merchant.com/callback"
+            },
+            "linkType": {
+              "type": "string",
+              "description": "Link sending mode",
+              "enum": [
+                "MAIL",
+                "LINK"
+              ],
+              "example": "MAIL"
+            },
+            "order": {
+              "$ref": "#/definitions/Order"
+            },
+            "recurringInfo": {
+              "$ref": "#/definitions/RecurringInfoDef"
+            }
+          },
+          "description": "Object contains paybymail initialization request data",
+          "required": [
+            "txReq",
+            "buyer"
+          ]
+        }
+      ]
+    },
+    "InitPayByMailResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mailId": {
+              "description": "Mail Id linked to the transaction",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "linkURL": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Pay By Mail URL. Only for linkType LINK",
+              "example": "https://api.netsgroup.com/payment"
+            },
+            "linkExpDt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Link Expiration",
+              "example": "2023-03-27T02:01:00"
+            }
+          },
+          "description": "Object contains Pay By Mail initialization response data"
+        }
+      ]
+    },
+    "VerifyPayByMailResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/TransactionResponse"
+            },
+            "mailId": {
+              "description": "Mail Id linked to the transaction",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            },
+            "linkExpDt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Link Expiration",
+              "example": "2023-03-27T02:01:00"
+            },
+            "detail": {
+              "$ref": "#/definitions/PayByMailDetailResponse"
+            }
+          },
+          "description": "Object contains Pay By Mail initialization response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "DeletePayByMailResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mailId": {
+              "description": "Mail Id linked to the transaction",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            }
+          },
+          "description": "Object contains Pay By Mail delete response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "TokenizerResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "cardInfo": {
+              "$ref": "#/definitions/CardInfoBase"
+            },
+            "payer": {
+              "$ref": "#/definitions/Payer"
+            }
+          },
+          "description": "Object contains token response data"
+        }
+      ]
+    },
+    "CheckoutCompleteRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/CheckoutTransactionRequest"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoPayload"
+            }
+          },
+          "description": "Object contains payment checkout complete request data",
+          "required": [
+            "txReq",
+            "pi"
+          ]
+        }
+      ]
+    },
+    "CheckoutCompleteResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/TransactionResponse"
+            },
+            "pi": {
+              "$ref": "#/definitions/PaymentInstrumentInfoWallet"
+            }
+          },
+          "description": "Object contains payment checkout complete response data",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "CheckoutInfoResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txInfo": {
+              "$ref": "#/definitions/TransactionInfo"
+            },
+            "poiInfo": {
+              "$ref": "#/definitions/PoiInfo"
+            },
+            "order": {
+              "$ref": "#/definitions/Order"
+            }
+          },
+          "description": "Object contains payment checkout info",
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "BaseRequest": {
+      "type": "object",
+      "properties": {
+        "txHead": {
+          "$ref": "#/definitions/TransactionData"
+        }
+      },
+      "required": [
+        "txHead"
+      ]
+    },
+    "BaseResponse": {
+      "type": "object",
+      "properties": {
+        "txHead": {
+          "$ref": "#/definitions/TransactionRespData"
+        }
+      },
+      "required": [
+        "txHead"
+      ]
+    },
+    "BaseTranRequest": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseRequest"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txReq": {
+              "$ref": "#/definitions/RefTransactionRequest"
+            }
+          },
+          "required": [
+            "txReq"
+          ]
+        }
+      ]
+    },
+    "BaseTranResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BaseResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "txRes": {
+              "$ref": "#/definitions/RefTransactionResponse"
+            }
+          },
+          "required": [
+            "txRes"
+          ]
+        }
+      ]
+    },
+    "Amount": {
+      "type": "object",
+      "description": "Amount type",
+      "required": [
+        "value",
+        "currency"
+      ],
+      "properties": {
+        "value": {
+          "type": "integer",
+          "description": "Expressed in the smallest currency units (Ex: 1.02 EUR = 102 units)",
+          "format": "int32",
+          "example": 100
+        },
+        "currency": {
+          "type": "string",
+          "description": "Iso 4217 Currency Code",
+          "pattern": "^[A-Z]{3,3}$",
+          "example": "EUR"
+        }
+      }
+    },
+    "PayerBase": {
+      "description": "Object contains payer properties",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Payer First Name John",
+          "example": "John"
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Payer Last Name if available",
+          "example": "Doe"
+        }
+      }
+    },
+    "Payer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PayerBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Payer Email",
+              "example": "john.doe@email.com"
+            },
+            "account": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Payer Account",
+              "example": 98734983249283298
+            },
+            "msisdn": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "description": "Payer Mobile Phone",
+              "example": "+391231234567",
+              "pattern": "^(\\+)([0-9]{10,15})$"
+            }
+          }
+        }
+      ]
+    },
+    "BuyerBase": {
+      "type": "object",
+      "description": "Object contains buyer properties",
+      "required": [
+        "language"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Buyer Email",
+          "example": "john.doe@email.com"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 2,
+          "description": "ISO 3166-1 alpha-2 country code",
+          "example": "IT"
+        }
+      }
+    },
+    "BuyerInit": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BuyerBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Buyer First Name John",
+              "example": "John"
+            },
+            "lastName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Buyer Last Name if available",
+              "example": "Doe"
+            },
+            "msisdn": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "description": "Buyer Mobile Phone",
+              "example": "+391231234567",
+              "pattern": "^(\\+)([0-9]{10,15})$"
+            },
+            "homePhone": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "description": "Buyer Home Phone",
+              "example": "+391231234567",
+              "pattern": "^(\\+)([0-9]{10,15})$"
+            },
+            "workPhone": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "description": "Buyer Work Phone",
+              "example": "+391231234567",
+              "pattern": "^(\\+)([0-9]{10,15})$"
+            },
+            "account": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32,
+              "description": "Buyer Account iD",
+              "example": "123455-0233939"
+            },
+            "imei": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 15,
+              "description": "Buyer Imei Number",
+              "example": "356938035643809"
+            }
+          }
+        }
+      ]
+    },
+    "BuyerAuth": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/BuyerInit"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ipAddress": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 39,
+              "description": "Buyer ipaddress",
+              "example": "1.2.3.4"
+            },
+            "deviceUserAgent": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Buyer Device User Agent",
+              "example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36"
+            },
+            "deviceFingerPrint": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Buyer Device FingerPrint",
+              "example": "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMg=="
+            }
+          }
+        }
+      ]
+    },
+    "PlainCard": {
+      "description": "Object contains  payment instrument data",
+      "type": "object",
+      "properties": {
+        "pan": {
+          "type": "string",
+          "minLength": 13,
+          "maxLength": 19,
+          "description": "Pan account number",
+          "example": "4012001037141112"
+        },
+        "expDate": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "description": "Card Expiration Date in yyMM format",
+          "example": "1910"
+        },
+        "cvv2": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 4,
+          "description": "ccv2",
+          "example": "123"
+        },
+        "cardHolder": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Card Holder Name",
+          "example": "Surname,Name"
+        },
+        "payTokenIndicator": {
+          "type": "boolean",
+          "description": "Deprecated - use txIndicatorType - Payment Token Indicator. Indicates that the transaction was de-tokenised prior to being received by the Pgw"
+        },
+        "firstPayTokenIndicator": {
+          "type": "boolean",
+          "description": "Deprecated - use txIndicatorType - First Payment Token Indicator. Indicates that the transaction will be tokenised after being sent to the Pgw"
+        }
+      }
+    },
+    "PaymentInstrumentInfoBase": {
+      "description": "Object contains payment instrument content",
+      "type": "object",
+      "properties": {
+        "tokenValue": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Alias or token",
+          "example": "5100TTKVFXAS0001"
+        }
+      }
+    },
+    "PaymentInstrumentInfoWallet": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentInstrumentInfoBase"
+        },
+        {
+          "type": "object",
+          "description": "Object contains payment instrument content",
+          "properties": {
+            "merCustId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Customer Identifier",
+              "example": "123455"
+            },
+            "billAccntId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Billing Identifier",
+              "example": "123455-0233939"
+            }
+          }
+        }
+      ]
+    },
+    "PaymentInstrumentInfoRegen": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentInstrumentInfoWallet"
+        },
+        {
+          "type": "object",
+          "description": "Object contains payment instrument content",
+          "properties": {
+            "regenToken": {
+              "type": "boolean",
+              "description": "Customer Identifier",
+              "example": "false"
+            }
+          }
+        }
+      ]
+    },
+    "PaymentInstrumentInfoPayload": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentInstrumentInfoWallet"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "payload": {
+              "type": "string",
+              "minLength": 1,
+              "description": " Object contains Raw Payment payload, different for Payment Instrument <br/> <br/> For ApplePay: <br/> - Raw 'Payment Token' returned by ApplePay during payment validation <br/> <br/> For GooglePay: <br/> - Raw 'Payment Token' returned by GooglePay during payment validation <br/> <br/> For AmazonPay: <br/> - JSON object containing following parameters returned by AmazonPay: <br/> {<br/> \"amazonOrderReferenceId\": \"OrderID\" <br/> \"accessToken\": \"AccessToken\" <br/> }<br/> <br/> For WeChat: <br/> - JSON object containing following parameters: <br/> {<br/> \"trade_type\": \"Transaction Type: JSAPI or NATIVE\" <br/> \"openid\": \"User unique identifier, this field is only required when trade_type is JSAPI\" <br/> }<br/> <br/> For PCIpal: <br/> - JSON object containing following parameters: <br/> {<br/> &nbsp;&nbsp;\"encData\": \"Base64 Cipher RSA/ECB/PKCS1Padding PlainCard \", <br/> &nbsp;&nbsp;\"version\": \"IGFS_2\", <br/> &nbsp;&nbsp;\"publicKeyHash\": \"Base64 SHA-256 of the X509 encode public key\" <br/> }<br/> <br/> ",
+              "example": " { \"encData\": \"SiaETiCOTrAF8TFOON2lwtPeH1WdrA0l3Aiud+UPD1CEGXBCcEzNGmC5ByAw/i6+O7bPmKR/nADa8BBKY8wFHImEanfIK41rj05kcEPvyJbxDWpDWJC4IhOhUPh0pQyGwPOBZwsEW7ecy1mf5w38MvyNfpIQZ9MWzcr5d+ZHAg+wv/hIll2nXcU677TFkOth9To=\", \"version\": \"IGFS_2\", \"publicKeyHash\": \"TeFJFi43SJj7eUcU4puyI5FIw1I3Jzh8wiYJMn+K97o=\" } "
+            },
+            "rawWalletValue": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Deprecated - use payload"
+            },
+            "plainCardValue": {
+              "$ref": "#/definitions/PlainCard"
+            }
+          }
+        }
+      ]
+    },
+    "PaymentInstrumentInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentInstrumentInfoRegen"
+        },
+        {
+          "$ref": "#/definitions/PaymentInstrumentInfoPayload"
+        }
+      ]
+    },
+    "PoiProcessorInfoType": {
+      "type": "object",
+      "description": "Point of Interaction Type",
+      "properties": {
+        "pitype": {
+          "type": "string",
+          "description": "Payment Instrument Method Type, default selection on Pgw form",
+          "enum": [
+            "SEL",
+            "CC",
+            "AIDA",
+            "ALIP",
+            "AMZP",
+            "APAY",
+            "BMTP",
+            "CNDC",
+            "FIND",
+            "MYBK",
+            "MYEM",
+            "PPAL",
+            "PPOI",
+            "SM2P",
+            "SPAY",
+            "STS",
+            "WCHT",
+            "GPAY",
+            "PSTP",
+            "UNIP",
+            "SAMP",
+            "SAPP",
+            "CLCK",
+            "SCLP",
+            "CCPT",
+            "PCIP"
+          ],
+          "example": "CC",
+          "default": "SEL"
+        },
+        "addData": {
+          "type": "object",
+          "additionalProperties": true,
+          "maxItems": 5,
+          "description": " Object contains Additional Data, different for Payment Instrument <br/> <br/> For MyBank: <br/> - myBankValidationServiceId: CT00000 <br/> - myBankInitiatingPartySubID: 00000001 <br/> <br/> For AccountToPay: <br/> - pispIban : IT0000000000000000000000000 <br/> ",
+          "example": {
+            "keyOne": "valueOne",
+            "keyTwo": "valueTwo"
+          }
+        }
+      }
+    },
+    "PoiProcessorInfoBase": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PoiProcessorInfoType"
+        },
+        {
+          "type": "object",
+          "description": "Point of Interaction Info",
+          "properties": {
+            "poiId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "description": "Point of Interaction Id",
+              "example": "TEST_ECOM"
+            }
+          }
+        }
+      ]
+    },
+    "PoiProcessorInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PoiProcessorInfoBase"
+        },
+        {
+          "type": "object",
+          "description": "Point of Interaction Info",
+          "properties": {
+            "poiName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "Point of Interaction DS",
+              "example": "Terminal TEST Ecommerce"
+            },
+            "piName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Payment Istrument Name",
+              "example": "Carta di credito"
+            },
+            "procImgURL": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "description": "Data linked to the Merchant"
+            }
+          }
+        }
+      ]
+    },
+    "PoiInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PoiProcessorInfo"
+        },
+        {
+          "type": "object",
+          "description": "Point of Interaction info",
+          "properties": {
+            "merName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "description": "Merchant Name",
+              "example": "Merchant S.P.A"
+            },
+            "cardBrands": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "maxItems": 10,
+              "description": "Card schemas enabled for this merchant",
+              "example": [
+                "VISA",
+                "MASTERCARD",
+                "AMEX"
+              ]
+            }
+          },
+          "required": [
+            "pitype",
+            "merchantName"
+          ]
+        }
+      ]
+    },
+    "Payload": {
+      "description": " Object contains Raw Payment payload, different for Payment Instrument <br/> <br/> For WeChat NATIVE: <br/> - contentType: image/png <br/> - content: base64 image of the qrcode <br/> <br/> For WeChat JSAPI: <br/> - contentType: application/json <br/> - content: JSON object containing following parameters: <br/> {<br/> \"prepay_id\": \"Advance transaction ID created by WeChat\" <br/> }<br/> <br/> ",
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string",
+          "description": "Content-Type / MIME-Type of payload",
+          "example": "image/png"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of payload",
+          "example": "iVBORw0KGgoAAAANSUhEUgAAASwAAAEsAQAAAABRBrPYAAABX0lEQVR42u3aYZLDIAgFYG7G1T1Sb2CrPBAzQXuA185mO+nX/UElQFzp/zw+QkZGRkbWm8yHNhy0aTpLVjK14+/3eIkXfpasZoipoRlZXWfJbmwAe19HeMn+YyPAMn+wOskuLGF84JT1ZI/ysT/LKkO2tytjTUbdqLsashVeS2JJdWT2LvZJsoJpj7Ci6s7EVvsDZAfmxcOi2j2bn+WDLDEsQSzQreWz1CZ7Zd7gRVrHkezEcLHrq8nDmnRHVjDN4Vx3A5TszKzHk8fcj/mCrGA+u0osRgt4x9WQ7J1FQnuDh8FM2152yXa2GjoEWdHevXwLZDm8kctx2wmyCVnJbHzFrL9ubSLgZBWL8T8inGYLspI12bq62IZABSGr2Nq+iRkDS7IJ2YH56BoTf2qRye5stSuYyardMbK8fRNb1NriJifZgQX27a9FOlnJcu56Z+zXQSWrGP/RiIyMjOzCvhh+qVcbA2lHAAAAAElFTkSuQmCC"
+        }
+      }
+    },
+    "Order": {
+      "description": "Object contains order information",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Invoice Number",
+          "example": "2017123456"
+        },
+        "invoiceExpirationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Invoice Expiration Date",
+          "example": "2018-01-31"
+        },
+        "senderPostalCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8,
+          "description": "Merchant Zip Code",
+          "example": "20100"
+        },
+        "senderCountryCode": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 3,
+          "description": "ISO 3166-1 alpha-3 Merchant Country Code",
+          "example": "ITA"
+        },
+        "destinationName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Destination Name",
+          "example": "John Doe"
+        },
+        "destinationAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "destinationPhone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Destination Phone",
+          "example": "+391231234567",
+          "pattern": "^(\\+)([0-9]{10,15})$"
+        },
+        "destinationFax": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Destination Fax",
+          "example": "+391231234567",
+          "pattern": "^(\\+)([0-9]{10,15})$"
+        },
+        "destinationEmail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Email address",
+          "example": "support@netsw.it"
+        },
+        "destinationDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Shipping date",
+          "example": "2018-01-25"
+        },
+        "billingName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Billing name",
+          "example": "n&tsgroup"
+        },
+        "billingAddress": {
+          "$ref": "#/definitions/Address"
+        },
+        "billingPhone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Billing Phone",
+          "example": "+391231234567",
+          "pattern": "^(\\+)([0-9]{10,15})$"
+        },
+        "billingFax": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Billing Fax",
+          "example": "+391231234567",
+          "pattern": "^(\\+)([0-9]{10,15})$"
+        },
+        "billingEmail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Billing email",
+          "example": "support@netsw.it"
+        },
+        "freightAmount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "taxAmount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "vatCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Tax reference id",
+          "example": "12343213423434"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Order Note",
+          "example": "third floor."
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          },
+          "maxItems": 10
+        }
+      }
+    },
+    "Product": {
+      "description": "Object contains product information",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Product Code",
+          "example": "GV-N1050D5-2GD"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Product Description",
+          "example": "Scheda Video"
+        },
+        "items": {
+          "type": "integer",
+          "description": "Number of Items",
+          "example": 1
+        },
+        "amount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "imgURL": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "URL for retrieve the image of the product",
+          "example": "https://netsgroup.com/enabling-payment-solutions/device-management/"
+        }
+      }
+    },
+    "ThreeDDataBase": {
+      "description": "Object contains 3d secure data",
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "type": "string",
+          "description": "3DS Protocol Version",
+          "minLength": 5,
+          "maxLength": 8,
+          "example": "1.0.2"
+        },
+        "enrStatus": {
+          "type": "string",
+          "description": "3DS v1: Enrollment 3d-secure status",
+          "enum": [
+            "Y",
+            "N",
+            "U"
+          ],
+          "example": "Y"
+        },
+        "authStatus": {
+          "type": "string",
+          "description": "3DS v1: Authentication 3d-secure status",
+          "enum": [
+            "Y",
+            "N",
+            "U",
+            "A"
+          ],
+          "example": "Y"
+        },
+        "eci": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 2,
+          "description": "3DS v2: Electronic Commerce Indicator"
+        }
+      },
+      "required": [
+        "protocolVersion"
+      ]
+    },
+    "ThreeDData": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ThreeDDataBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "authenticationValue": {
+              "type": "string",
+              "description": "Token generared by ACS in base64 format",
+              "example": "12345678901234567890123456=="
+            },
+            "xid": {
+              "type": "string",
+              "description": "3DS v1: MPI transaction id in base64 format",
+              "example": "12345678901234567890123456=="
+            },
+            "dsTransId": {
+              "type": "string",
+              "minLength": 36,
+              "maxLength": 36,
+              "description": "3DS v2: DS Transaction Id"
+            }
+          }
+        }
+      ]
+    },
+    "CardInfoBase": {
+      "description": "Object contains credit / debit card (only for credit/debit card payment)",
+      "type": "object",
+      "properties": {
+        "maskedpan": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 19,
+          "description": "Pan masked",
+          "example": "423458xxxxxx1234"
+        },
+        "expDate": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "description": "Card Expiration Date in yyMM format",
+          "example": "1910"
+        }
+      }
+    },
+    "CardInfo": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CardInfoBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "brand": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32,
+              "description": "Card Scheme",
+              "example": "VISA"
+            }
+          }
+        }
+      ]
+    },
+    "TransactionInfo": {
+      "description": "Object contains Transaction Data",
+      "type": "object",
+      "required": [
+        "txOp"
+      ],
+      "properties": {
+        "txDt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction Time",
+          "example": "2018-01-23T10:15:43.521Z"
+        },
+        "txOp": {
+          "type": "string",
+          "description": "Transaction Operation",
+          "enum": [
+            "VERIFICATION",
+            "RESERVATION",
+            "SALE",
+            "TOKENIZATION"
+          ],
+          "example": "RESERVATION"
+        },
+        "txIndicatorType": {
+          "type": "string",
+          "description": "Transaction Type",
+          "enum": [
+            "CIT_UNSCHEDULED_COF_FIRST",
+            "CIT_RECURRENT_COF_FIRST",
+            "CIT_COF_FIRST",
+            "CIT_COF_NEXT",
+            "CIT_NOCOF",
+            "MOTO_UNSCHEDULED_COF_FIRST",
+            "MOTO_RECURRENT_COF_FIRST",
+            "MOTO_COF_FIRST",
+            "MOTO_NOCOF",
+            "MIT_UNSCHEDULED_COF_NEXT",
+            "MIT_RECURRENT_COF_NEXT",
+            "MIT_NOSHOW_COF_NEXT",
+            "MIT_DELAYCHARGE_COF_NEXT",
+            "MIT_COF_NEXT"
+          ],
+          "example": "CIT_NOCOF"
+        },
+        "txExpDt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction Expiration Time",
+          "example": "2018-01-23T10:25:43.521Z"
+        },
+        "amount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Order Description",
+          "example": "ISBN-13: 978-8804508359"
+        },
+        "customerRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Reference code for the Customer in the transaciton (when permitted)",
+          "example": "Company Payment of MMYYYY"
+        },
+        "merTxInfo": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256
+          },
+          "maxItems": 5,
+          "description": "Merchant information linked to the transaction",
+          "example": [
+            "addInfo1",
+            "addInfo2",
+            "addInfo3"
+          ]
+        }
+      }
+    },
+    "TransactionRequest": {
+      "description": "Object contains Transaction Data",
+      "allOf": [
+        {
+          "$ref": "#/definitions/TransactionInfo"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "recurrentIndicator": {
+              "type": "boolean",
+              "description": "Deprecated - use txIndicatorType RECURRENT"
+            },
+            "traceChainId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 36,
+              "description": "Transaction Identifier for recurrent payments",
+              "example": "550e8411-e29b-423d-a126-4432a554499o"
+            },
+            "scaExemptionType": {
+              "type": "string",
+              "description": "SCA Exemption type: * LOWVALUE - Low value transaction * TRA - Transaction Risk Analysis * DELEGATION - SCA Delegation\n",
+              "enum": [
+                "LOWVALUE",
+                "TRA",
+                "DELEGATION"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "TransactionData": {
+      "description": "Object contains Transaction Data",
+      "type": "object",
+      "required": [
+        "merId",
+        "txId"
+      ],
+      "properties": {
+        "merId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Merchant Id assigned by Terminal manager",
+          "example": "TEST_ECOM"
+        },
+        "txId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Merchant Transaction Id for reconciliation with acquirer/banks (when permitted)",
+          "example": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      }
+    },
+    "TransactionRespData": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/TransactionData"
+        },
+        {
+          "type": "object",
+          "required": [
+            "resultCode",
+            "errDescription"
+          ],
+          "properties": {
+            "resultCode": {
+              "description": "Payment Result Code",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "example": "IGFS_000"
+            },
+            "errDescription": {
+              "description": "Payment Result Description",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "description": "Object contains Transaction Response Data"
+        }
+      ]
+    },
+    "TransactionResponse": {
+      "properties": {
+        "paymentId": {
+          "description": "Payment Id linked to the transaction",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "example": "00123858103104830100"
+        },
+        "tranId": {
+          "description": "Payment Gateway Transaction Id",
+          "type": "integer",
+          "format": "int64",
+          "example": 3061705740916817
+        },
+        "status": {
+          "type": "string",
+          "description": "Payment Status",
+          "enum": [
+            "OK",
+            "PENDING",
+            "KO"
+          ],
+          "example": "OK"
+        },
+        "merTxInfo": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256
+          },
+          "maxItems": 5,
+          "description": "Merchant information linked to the transaction",
+          "example": [
+            "addInfo1",
+            "addInfo2",
+            "addInfo3"
+          ]
+        },
+        "scaExemptionType": {
+          "type": "string",
+          "description": "SCA Exemption applied to transaction: * LOWVALUE - Low value transaction * TRA - Transaction Risk Analysis * DELEGATION - SCA Delegation\n",
+          "enum": [
+            "LOWVALUE",
+            "TRA",
+            "DELEGATION"
+          ]
+        }
+      },
+      "description": "Object contains transaction response data",
+      "required": [
+        "status"
+      ]
+    },
+    "ProcessorResponse": {
+      "description": "Object contains processor info",
+      "type": "object",
+      "properties": {
+        "procId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2,
+          "description": "Processor Id assigned by Terminal Manager",
+          "example": "01"
+        },
+        "procName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Processor Name assigned by Terminal Manager",
+          "example": "AcquirerX"
+        },
+        "authCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Authorization Code returned by the issuer",
+          "example": "123456"
+        },
+        "traceData": {
+          "$ref": "#/definitions/TraceData"
+        },
+        "addData": {
+          "description": "Processor Additional data",
+          "type": "object",
+          "additionalProperties": true,
+          "example": {
+            "merId": "123456",
+            "posId": "111111"
+          }
+        }
+      }
+    },
+    "TraceData": {
+      "description": "Object contains trace data info",
+      "type": "object",
+      "properties": {
+        "traceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 36,
+          "description": "Trace ID",
+          "example": 12345
+        },
+        "acquirerTxId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 36,
+          "description": "Acquirer Transaction Identifier",
+          "example": 12345
+        },
+        "settlementDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Settlement Date",
+          "example": "2018-01-31"
+        }
+      }
+    },
+    "RefTransactionRequest": {
+      "description": "Object contains Transaction Data",
+      "type": "object",
+      "required": [
+        "origTranId"
+      ],
+      "properties": {
+        "txDt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction Time",
+          "example": "2018-01-23T10:15:43.521Z"
+        },
+        "origTranId": {
+          "description": "Original Payment Transaction Id",
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "merTxInfo": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256
+          },
+          "maxItems": 5,
+          "description": "Merchant information linked to the transaction",
+          "example": [
+            "addInfo1",
+            "addInfo2",
+            "addInfo3"
+          ]
+        }
+      }
+    },
+    "RefTransactionResponse": {
+      "description": "Object contains Transaction Data",
+      "type": "object",
+      "properties": {
+        "tranId": {
+          "description": "Payment Gateway Transaction Id",
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentId": {
+          "description": "Payment Id linked to the transaction",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "merTxInfo": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 256
+          },
+          "maxItems": 5,
+          "description": "Merchant information linked to the transaction",
+          "example": [
+            "addInfo1",
+            "addInfo2",
+            "addInfo3"
+          ]
+        }
+      }
+    },
+    "CheckoutTransactionRequest": {
+      "description": "Object contains Transaction Data",
+      "type": "object",
+      "required": [
+        "paymentId"
+      ],
+      "properties": {
+        "paymentId": {
+          "description": "Payment Id linked to the transaction",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "example": "00038772726105642073"
+        },
+        "txDt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Transaction Time",
+          "example": "2023-02-07T10:15:43.521Z"
+        },
+        "status": {
+          "type": "string",
+          "description": "Checkout Status",
+          "enum": [
+            "COMPLETED",
+            "CANCELLED"
+          ],
+          "example": "COMPLETED"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "required": [
+        "city",
+        "countryCode",
+        "street",
+        "postalCode",
+        "stateCode"
+      ],
+      "properties": {
+        "city": {
+          "type": "string",
+          "description": "Address City",
+          "minLength": 1,
+          "maxLength": 40,
+          "example": "Assago"
+        },
+        "countryCode": {
+          "type": "string",
+          "description": "ISO 3166-1 alpha-3 Address Country Code",
+          "minLength": 3,
+          "maxLength": 3,
+          "example": "ITA"
+        },
+        "street": {
+          "type": "string",
+          "description": "Address Line 1",
+          "minLength": 1,
+          "maxLength": 50,
+          "example": "strada 4"
+        },
+        "street2": {
+          "type": "string",
+          "description": "Address Line 2",
+          "minLength": 1,
+          "maxLength": 50,
+          "example": "palazzo a5"
+        },
+        "street3": {
+          "type": "string",
+          "description": "Address Line 3",
+          "minLength": 1,
+          "maxLength": 50,
+          "example": "milanofiori"
+        },
+        "postalCode": {
+          "type": "string",
+          "description": "Address Postal Code",
+          "minLength": 1,
+          "maxLength": 8,
+          "example": "20090"
+        },
+        "stateCode": {
+          "type": "string",
+          "description": "Address State/Province Code",
+          "minLength": 1,
+          "maxLength": 2,
+          "example": "MI"
+        }
+      }
+    },
+    "RecurringInfoDef": {
+      "description": "Object represents a request to set up a recurring payment, typically a subscription. Currently used only for ApplePay.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A description of the recurring payment",
+          "minLength": 1,
+          "maxLength": 128,
+          "example": "Recurrent payment for subscription item"
+        },
+        "managementURL": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "A URL exposed by the merchant where the user can update or delete the payment method for the recurring payment. When users remove a payment method, the system deletes the associated Apple Pay merchant token",
+          "example": "https://merchant.com/recurring-payment/management/"
+        },
+        "amount": {
+          "$ref": "#/definitions/Amount"
+        },
+        "frequency": {
+          "$ref": "#/definitions/RecurringFrequencyDef"
+        }
+      },
+      "required": [
+        "frequency"
+      ]
+    },
+    "RecurringFrequencyDef": {
+      "description": "The regular billing cycle for the recurring payment, including start and end dates, an interval, and an interval count.",
+      "type": "object",
+      "properties": {
+        "recurringStartDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date of the first payment.",
+          "example": "2022-10-23T10:25:43.521Z"
+        },
+        "intervalUnit": {
+          "type": "string",
+          "format": "string",
+          "description": "A type that indicates calendrical units, such as year, month, day, and hour.",
+          "enum": [
+            "YEAR",
+            "MONTH",
+            "DAY",
+            "VARIABLE"
+          ],
+          "example": "MONTH"
+        },
+        "intervalCount": {
+          "type": "integer",
+          "description": "The number of interval units that make up the total payment interval.",
+          "format": "int32",
+          "example": 6
+        },
+        "recurringEndDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date of the final payment",
+          "example": "2022-12-31T10:25:43.521Z"
+        },
+        "deferredPaymentDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date, in the future, of the payment. Set only with paymentTiming=deferred",
+          "example": "2023-05-14T10:25:43.521Z"
+        }
+      }
+    },
+    "PayByMailDetailResponse": {
+      "description": "Pay By Mail main details",
+      "type": "object",
+      "properties": {
+        "totalRetry": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Total number of retry",
+          "example": 2
+        },
+        "maxRetry": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Maximum number of retry",
+          "example": 3
+        },
+        "lastResultCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "description": "Last Payment Result Code",
+          "example": "IGFS_000"
+        },
+        "resDescription": {
+          "description": "Payment Result Description",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "example": "TRANSACTION OK"
+        },
+        "lastPaymentDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last Payment Date and Time",
+          "example": "2023-03-27T11:01:23"
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "More info about N&TSGROUP Payment Solution",
+    "url": "https://netsgroup.com/enabling-payment-solutions/"
+  }
+}

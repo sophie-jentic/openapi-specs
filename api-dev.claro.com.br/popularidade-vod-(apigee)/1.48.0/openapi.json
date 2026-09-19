@@ -1,0 +1,511 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Popularidade VOD (APIGEE)",
+    "description": "This is the documentation for Smart Content Popularity VOD API.",
+    "version": "1.48.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ANIRINO_1/popularidade-vod-apigee/1.48.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-dev.claro.com.br"
+    },
+    {
+      "url": "http://api-dev.claro.com.br"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "popularity",
+      "description": "List of most watched movies, series, TV shows of VOD content"
+    }
+  ],
+  "paths": {
+    "/recommendations-popularity": {
+      "get": {
+        "tags": [
+          "popularity"
+        ],
+        "summary": "Returns a list of most watched VOD contents",
+        "description": "Returns a list of most watched VOD contents",
+        "operationId": "getPopList",
+        "parameters": [
+          {
+            "name": "X-Client-Auth",
+            "in": "header",
+            "description": "A valid Bearer Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "Bearer {{token}}"
+            }
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "description": "specify the period of popularity calculations in number of days",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 30,
+              "enum": [
+                1,
+                7,
+                15,
+                30
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "in": "query",
+            "description": "Set your position in the total number of recommendations, you can use this parameter to get more recommendations",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "maximum number of recommendations to generate",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "filter response by content type.",
+            "schema": {
+              "type": "string",
+              "default": "all",
+              "enum": [
+                "movies",
+                "series",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "genres",
+            "in": "query",
+            "description": "filter response by genre name. Go to Genres Models to see all values. You can pass a list of values in the request ex: \"genres=com\u00e9dia&genres=feriado\", or \"genres=com\u00e9dia,drama,aventura\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "blockedgenres",
+            "in": "query",
+            "description": "filter the genres to be blocked in the query. The query can be passed through a list ex:\n\"blockdgenres=com\u00e9dia&genres=feriado\", or \"blockdgenres=com\u00e9dia,drama,aventura\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kids",
+            "in": "query",
+            "description": "Filter the response to return recommendations for kids, not kids or both",
+            "schema": {
+              "type": "string",
+              "default": "false",
+              "enum": [
+                "true",
+                "false",
+                "omit"
+              ]
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "description": "Filter the response by provider list. ex: telecine, clarovideo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "universe",
+            "in": "query",
+            "description": "Filter the response by universe of content",
+            "schema": {
+              "type": "string",
+              "default": "app",
+              "enum": [
+                "app",
+                "clarotvbox",
+                "amcobr"
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "description": "Filter the response by tags list. ex: \"soldado,natal\"",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponseApp"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ApiResponseClarotvbox"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ApiResponseAmcobr"
+                    }
+                  ]
+                },
+                "examples": {
+                  "app": {
+                    "$ref": "#/components/examples/appPopularity"
+                  },
+                  "clarotvbox": {
+                    "$ref": "#/components/examples/clarotvboxPopularity"
+                  },
+                  "amcobr": {
+                    "$ref": "#/components/examples/amcobrPopularity"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "UnprocessableEntity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponseApp": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "contents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "nowContentId": {
+                      "type": "integer",
+                      "description": "Content ID on NOW Online catalog. This is the providerID",
+                      "example": 1186554
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Type of the content",
+                      "enum": [
+                        "movies",
+                        "series"
+                      ]
+                    },
+                    "tmsId": {
+                      "type": "string",
+                      "description": "Gracenote TMS ID",
+                      "example": "MV012679960000"
+                    },
+                    "orderRank": {
+                      "type": "integer",
+                      "description": "Content popularity position",
+                      "example": 15
+                    },
+                    "plays": {
+                      "type": "integer",
+                      "description": "Number of plays",
+                      "example": 100
+                    }
+                  }
+                }
+              },
+              "position": {
+                "type": "integer",
+                "description": "Your position in the totalCount number.",
+                "example": 0
+              },
+              "totalCount": {
+                "type": "integer",
+                "description": "number of items in the recommendation system. This value will respect the filters of the request.",
+                "example": 100
+              }
+            }
+          }
+        }
+      },
+      "ApiResponseClarotvbox": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "contents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "nowContentId": {
+                      "type": "integer",
+                      "description": "Content ID on NOW Online catalog. This is the providerID",
+                      "example": 1186554
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Type of the content",
+                      "enum": [
+                        "movies",
+                        "series"
+                      ]
+                    },
+                    "tmsId": {
+                      "type": "string",
+                      "description": "Gracenote TMS ID",
+                      "example": "MV012679960000"
+                    },
+                    "orderRank": {
+                      "type": "integer",
+                      "description": "Content popularity position",
+                      "example": 15
+                    },
+                    "plays": {
+                      "type": "integer",
+                      "description": "Number of plays",
+                      "example": 100
+                    },
+                    "crid": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "TVA identifier",
+                        "example": "DISC2024051730331137"
+                      }
+                    }
+                  }
+                }
+              },
+              "position": {
+                "type": "integer",
+                "description": "Your position in the totalCount number.",
+                "example": 0
+              },
+              "totalCount": {
+                "type": "integer",
+                "description": "number of items in the recommendation system. This value will respect the filters of the request.",
+                "example": 100
+              }
+            }
+          }
+        }
+      },
+      "ApiResponseAmcobr": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "contents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "nowContentId": {
+                      "type": "integer",
+                      "description": "Content ID on NOW Online catalog. This is the providerID",
+                      "example": 1186554
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Type of the content",
+                      "enum": [
+                        "movies",
+                        "series"
+                      ]
+                    },
+                    "tmsId": {
+                      "type": "string",
+                      "description": "Gracenote TMS ID",
+                      "example": "MV012679960000"
+                    },
+                    "orderRank": {
+                      "type": "integer",
+                      "description": "Content popularity position",
+                      "example": 15
+                    },
+                    "plays": {
+                      "type": "integer",
+                      "description": "Number of plays",
+                      "example": 100
+                    },
+                    "groupId": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "Amcobr identifier",
+                        "example": "3424543"
+                      }
+                    }
+                  }
+                }
+              },
+              "position": {
+                "type": "integer",
+                "description": "Your position in the totalCount number.",
+                "example": 0
+              },
+              "totalCount": {
+                "type": "integer",
+                "description": "number of items in the recommendation system. This value will respect the filters of the request.",
+                "example": 100
+              }
+            }
+          }
+        }
+      },
+      "Error422": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error reason associated with error code.",
+                "example": "UNPROCESSABLE_ENTITY"
+              },
+              "message": {
+                "type": "string",
+                "description": "error message",
+                "example": "Argument error: parameter {wrong parameter name} is not accepted"
+              }
+            }
+          }
+        }
+      },
+      "AuthenticationError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error reason associated with error code.",
+                "example": "InvalidApiKeyError"
+              },
+              "message": {
+                "type": "string",
+                "description": "error message",
+                "example": "Forbidden"
+              }
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "appPopularity": {
+        "summary": "Response for app universe",
+        "value": {
+          "data": {
+            "contents": [
+              {
+                "nowContentId": 1000000949,
+                "tmsId": "SH017499590000",
+                "type": "series",
+                "orderRank": 1,
+                "plays": 48832
+              }
+            ],
+            "position": 0,
+            "totalCount": 10
+          }
+        }
+      },
+      "clarotvboxPopularity": {
+        "summary": "Response for clarotvbox universe",
+        "value": {
+          "data": {
+            "contents": [
+              {
+                "nowContentId": 1000000949,
+                "tmsId": "SH017499590000",
+                "type": "series",
+                "orderRank": 1,
+                "plays": 48832,
+                "crid": [
+                  "CAD80000058932522"
+                ]
+              }
+            ],
+            "position": 0,
+            "totalCount": 10
+          }
+        }
+      },
+      "amcobrPopularity": {
+        "summary": "Response for amcobr universe",
+        "value": {
+          "data": {
+            "contents": [
+              {
+                "nowContentId": 1000000949,
+                "tmsId": "SH017499590000",
+                "type": "series",
+                "orderRank": 1,
+                "plays": 48832,
+                "groupId": [
+                  "2345342"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "name": "X-Client-Auth",
+        "in": "header"
+      }
+    }
+  },
+  "x-original-swagger-version": "2.0"
+}

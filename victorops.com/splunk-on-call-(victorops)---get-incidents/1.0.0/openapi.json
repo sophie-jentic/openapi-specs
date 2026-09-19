@@ -1,0 +1,149 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Splunk On-Call (VictorOps) - Get Incidents",
+    "version": "1.0.0",
+    "description": "Conector para consultar incidentes no Splunk On-Call via GET /api-public/v1/incidents.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/welmar-d20/splunk-on-call-victorops-get-incidents/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.victorops.com/api-public/v1"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Incident": {
+        "type": "object",
+        "properties": {
+          "incidentNumber": {
+            "type": "integer"
+          },
+          "currentPhase": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "stateMessage": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IncidentList": {
+        "type": "object",
+        "properties": {
+          "incidents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Incident"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "x-ms-connection-parameters": {
+      "voApiId": {
+        "type": "string",
+        "uiDefinition": {
+          "displayName": "X-VO-Api-Id",
+          "description": "ID da API do Splunk On-Call",
+          "constraints": {
+            "required": true
+          }
+        }
+      },
+      "voApiKey": {
+        "type": "securestring",
+        "uiDefinition": {
+          "displayName": "X-VO-Api-Key",
+          "description": "Chave da API do Splunk On-Call",
+          "constraints": {
+            "required": true
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/incidents": {
+      "get": {
+        "summary": "Listar incidentes",
+        "description": "Retorna a lista de incidentes do Splunk On-Call.",
+        "operationId": "GetIncidents",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "N\u00famero de registros a pular (pagina\u00e7\u00e3o)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "N\u00famero m\u00e1ximo de registros a retornar."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de incidentes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N\u00e3o autorizado (verifique X-VO-Api-Id e X-VO-Api-Key)."
+          },
+          "429": {
+            "description": "Limite de chamadas excedido."
+          },
+          "500": {
+            "description": "Erro interno do Splunk On-Call."
+          }
+        }
+      }
+    }
+  },
+  "x-ms-capabilities": {
+    "policy": {
+      "exportTo": [
+        "logicapps",
+        "powerapps",
+        "powerautomate"
+      ]
+    }
+  },
+  "x-ms-apimPolicy": "<policies>\n  <inbound>\n    <base />\n    <set-header name=\"X-VO-Api-Id\" exists-action=\"override\">\n      <value>@connectionParameters('voApiId')</value>\n    </set-header>\n    <set-header name=\"X-VO-Api-Key\" exists-action=\"override\">\n      <value>@connectionParameters('voApiKey')</value>\n    </set-header>\n    <set-header name=\"Content-Type\" exists-action=\"override\">\n      <value>application/json</value>\n    </set-header>\n  </inbound>\n  <backend />\n  <outbound>\n    <base />\n  </outbound>\n  <on-error>\n    <base />\n  </on-error>\n</policies>"
+}

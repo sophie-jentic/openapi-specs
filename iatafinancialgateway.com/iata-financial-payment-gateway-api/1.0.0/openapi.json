@@ -1,0 +1,588 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IATA Financial Payment Gateway API",
+    "version": "1.0.0",
+    "description": "API for IATA Financial Payment Gateway to process and manage payments.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/smartshoppie/GeneratedAPI_2026-01-16-1937/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.iatafinancialgateway.com/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "payments",
+      "description": "Operations related to payment processing"
+    },
+    {
+      "name": "transactions",
+      "description": "Manage and query payment transactions"
+    },
+    {
+      "name": "refunds",
+      "description": "Refund processing operations"
+    }
+  ],
+  "paths": {
+    "/payments": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Initiate a new payment",
+        "description": "Create a new payment transaction in the IATA Financial Payment Gateway.",
+        "operationId": "createPayment",
+        "requestBody": {
+          "description": "Payment details to initiate a transaction",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payment request"
+          },
+          "401": {
+            "description": "Unauthorized access"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}": {
+      "get": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Retrieve payment details",
+        "description": "Get details of a specific payment by its identifier.",
+        "operationId": "getPaymentById",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "Unique identifier of the payment",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payment ID supplied"
+          },
+          "404": {
+            "description": "Payment not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Update payment information",
+        "description": "Update details of an existing payment transaction.",
+        "operationId": "updatePayment",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "Unique identifier of the payment to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Updated payment information",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid update request"
+          },
+          "404": {
+            "description": "Payment not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Cancel a payment",
+        "description": "Cancel an existing payment transaction by its identifier.",
+        "operationId": "cancelPayment",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "description": "Unique identifier of the payment to cancel",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment cancelled successfully"
+          },
+          "400": {
+            "description": "Invalid payment ID supplied"
+          },
+          "404": {
+            "description": "Payment not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "get": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "List payment transactions",
+        "description": "Retrieve a list of payment transactions with optional filters.",
+        "operationId": "listTransactions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter transactions by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "completed",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Filter transactions from this date (ISO 8601)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "Filter transactions up to this date (ISO 8601)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payment transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/refunds": {
+      "post": {
+        "tags": [
+          "refunds"
+        ],
+        "summary": "Initiate a refund",
+        "description": "Create a refund request for a completed payment.",
+        "operationId": "createRefund",
+        "requestBody": {
+          "description": "Refund request details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Refund successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refund request"
+          },
+          "404": {
+            "description": "Payment not found for refund"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/refunds/{refundId}": {
+      "get": {
+        "tags": [
+          "refunds"
+        ],
+        "summary": "Retrieve refund details",
+        "description": "Get details of a specific refund by its identifier.",
+        "operationId": "getRefundById",
+        "parameters": [
+          {
+            "name": "refundId",
+            "in": "path",
+            "description": "Unique identifier of the refund",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Refund details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refund ID supplied"
+          },
+          "404": {
+            "description": "Refund not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PaymentRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency",
+          "paymentMethod",
+          "payer"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount to be paid",
+            "example": 150.75
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "USD"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment method identifier",
+            "example": "credit_card"
+          },
+          "payer": {
+            "type": "object",
+            "description": "Payer information",
+            "required": [
+              "name",
+              "email"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "john.doe@example.com"
+              },
+              "phone": {
+                "type": "string",
+                "example": "+1234567890"
+              }
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional payment description",
+            "example": "Flight ticket payment"
+          }
+        }
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "description": "Unique identifier for the payment",
+            "example": "pay_1234567890"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the payment",
+            "enum": [
+              "pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "example": "completed"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "example": 150.75
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-01T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-01T12:05:00Z"
+          }
+        }
+      },
+      "PaymentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Updated payment description",
+            "example": "Updated flight ticket payment description"
+          },
+          "status": {
+            "type": "string",
+            "description": "Updated status of the payment",
+            "enum": [
+              "pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "example": "txn_987654321"
+          },
+          "paymentId": {
+            "type": "string",
+            "example": "pay_1234567890"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "example": "completed"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "example": 150.75
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-01T12:00:00Z"
+          }
+        }
+      },
+      "RefundRequest": {
+        "type": "object",
+        "required": [
+          "paymentId",
+          "amount"
+        ],
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "description": "Identifier of the payment to refund",
+            "example": "pay_1234567890"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "description": "Amount to refund",
+            "example": 50.0
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for refund",
+            "example": "Flight cancellation"
+          }
+        }
+      },
+      "RefundResponse": {
+        "type": "object",
+        "properties": {
+          "refundId": {
+            "type": "string",
+            "description": "Unique identifier for the refund",
+            "example": "ref_1234567890"
+          },
+          "paymentId": {
+            "type": "string",
+            "example": "pay_1234567890"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "example": 50.0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "failed"
+            ],
+            "example": "completed"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-02T10:00:00Z"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "400"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid request parameters"
+          }
+        }
+      }
+    }
+  },
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  }
+}

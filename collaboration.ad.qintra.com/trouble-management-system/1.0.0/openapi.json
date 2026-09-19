@@ -1,0 +1,458 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Trouble Management System",
+    "description": "The TMS (Ticket Manager Service / Trouble Management System) application provides a central layer of interfaces between trouble ticketing repositories and client applications that need to access trouble ticket data. </br> </br> TMS is a GOLD level application. For production issues use nettool to page out group 64765 for dev/test issues send an email to TMS Developers and someone will get back to you.",
+    "contact": {
+      "name": "Trouble Management",
+      "url": "http://collaboration.ad.qintra.com/bu/it/scph/otsossdev/networkit/TroubleManagement/default.aspx",
+      "email": "tmsdevl@centurylink.com"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/CenturyLink_APIs/tcem-tms-TMSCommon/1.0.0"
+  },
+  "host": "localhost",
+  "basePath": "/ServiceAssurance/v1/TroubleManagement",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json",
+    "application/xml"
+  ],
+  "produces": [
+    "application/json",
+    "application/xml"
+  ],
+  "tags": [
+    {
+      "name": "Tickets",
+      "description": "Get ticket details."
+    }
+  ],
+  "paths": {
+    "/tickets/": {
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Retrieves tickets based on search criteria.",
+        "description": "Retrieves tickets from Clarify, NTM, WFA, LMOS, TRACS and NMA based on search criteria. ",
+        "operationId": "retrieveTickets",
+        "parameters": [
+          {
+            "name": "Retrieve",
+            "in": "body",
+            "description": "Example Request",
+            "schema": {
+              "$ref": "#/definitions/TicketRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/TicketResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid Input",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          },
+          "500": {
+            "description": "System Error",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Updates a trouble ticket.",
+        "description": "Allows user to add logs, request closure and esclate a ticket. ",
+        "operationId": "updateTicket",
+        "parameters": [
+          {
+            "name": "Update",
+            "in": "body",
+            "description": "Example Update Request",
+            "schema": {
+              "$ref": "#/definitions/TicketUpdateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/TicketUpdateResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid Input",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          },
+          "500": {
+            "description": "System Error",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          }
+        }
+      }
+    },
+    "/tickets/{id}": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Retrieve ticket by ID.",
+        "description": "Retrieve ticket details for given ID. ",
+        "operationId": "retrieveTicketById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The Ticket Id to retrieve.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/TicketResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid Input",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          },
+          "500": {
+            "description": "System Error",
+            "schema": {
+              "$ref": "#/definitions/ExceptionResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "TicketRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "description": "Unique ID for each request. Please use your MAL id along with some value for example time in ticks or a guid to uniquely identify your request. This allows us to find your request when there are issues that need to be investigated. It will also tie the response to the request. 256 characters allowed",
+          "example": "SYSTEM_ID_07b7814555"
+        },
+        "initiator": {
+          "type": "string",
+          "description": "Specifies the system initiating the request. Also controls the values that will be returned, this allows us to customize the response items according to the needs of the initating system.",
+          "example": "CHI"
+        },
+        "retrieveType": {
+          "type": "array",
+          "description": "Specifies the type of items to return in the response. For example Summary, Detail, Logs",
+          "items": {
+            "type": "string",
+            "example": [
+              "Summary",
+              "Detail",
+              "Log"
+            ]
+          }
+        },
+        "targetVersion": {
+          "type": "object",
+          "description": "Major and minor versions. This will allow us to restrict values that are retunred on the response so that if new values are added and an interfacing application is not ready for them they will not be in the response. This is more critical for the XML response where new values can break the deserialization of the object.",
+          "properties": {
+            "major": {
+              "type": "number",
+              "example": "6"
+            },
+            "minor": {
+              "type": "number",
+              "example": "25"
+            }
+          }
+        },
+        "billingAccountID": {
+          "type": "array",
+          "description": "List of BAN (Billing Account Numbers) used to search for tickets.",
+          "items": {
+            "type": "string",
+            "example": [
+              "1234",
+              "3456",
+              "5678"
+            ]
+          }
+        },
+        "daysOfClosedTickets": {
+          "type": "string",
+          "example": "7",
+          "description": "Closed tickets more than the specified number of days will be excluded from the response."
+        }
+      }
+    },
+    "TicketResponse": {
+      "type": "object",
+      "properties": {
+        "tickets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Trouble Ticket ID."
+              },
+              "source": {
+                "type": "string",
+                "description": "Ticketing source system. EX. Clarify, NTM, WFAC, WFAC-L,..."
+              },
+              "status": {
+                "type": "string",
+                "description": "Status of the Ticket."
+              },
+              "lat": {
+                "type": "string",
+                "description": "Latitude of service location."
+              },
+              "lon": {
+                "type": "string",
+                "description": "Longitude of service location."
+              },
+              "circuit": {
+                "type": "string",
+                "description": "Circuit/Service ID for the ticket."
+              }
+            },
+            "example": [
+              {
+                "id": "ticket123",
+                "source": "Clarify",
+                "status": "Open",
+                "lat": "Lat123",
+                "lon": "Lon123",
+                "circuit": "CCT123"
+              },
+              {
+                "id": "ticket456",
+                "source": "Clarify",
+                "status": "Assigned",
+                "lat": "Lat456",
+                "lon": "Lon456",
+                "circuit": "CCT456"
+              }
+            ]
+          }
+        },
+        "requestId": {
+          "type": "string",
+          "description": "requestId can be used to corrrleate the request and response.",
+          "example": "CHI12345"
+        },
+        "ticketCount": {
+          "type": "integer",
+          "description": "number of tickets returned in response.",
+          "example": 10
+        },
+        "messageStatus": {
+          "type": "object",
+          "properties": {
+            "errorCode": {
+              "type": "integer",
+              "description": "numeric error code"
+            },
+            "userMessage": {
+              "type": "string",
+              "description": "human readable error message"
+            },
+            "transactionStatus": {
+              "type": "string",
+              "description": "(S)uccess, (F)ailure, (W)arning"
+            }
+          },
+          "example": {
+            "errorCode": "0",
+            "userMessage": "request was good",
+            "transactionStatus": "S"
+          }
+        }
+      },
+      "required": [
+        "requestId",
+        "messageStatus"
+      ]
+    },
+    "TicketUpdateRequest": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "description": "Unique ID for each request. Please use your MAL id along with some value for example time in ticks or a guid to uniquely identify your request. This allows us to find your request when there are issues that need to be investigated. It will also tie the response to the request. 256 characters allowed",
+          "example": "SYSTEM_ID_07b7814555"
+        },
+        "initiator": {
+          "type": "string",
+          "description": "Specifies the system initiating the request.",
+          "example": "CHI"
+        },
+        "id": {
+          "type": "string",
+          "description": "Trouble Ticket ID."
+        },
+        "source": {
+          "type": "string",
+          "description": "Ticketing source system. EX. Clarify, NTM, WFAC, WFAC-L,..."
+        },
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "logEntryType": {
+                "type": "string",
+                "description": "Specifies the type of note being added to the ticket",
+                "example": [
+                  "Internal",
+                  "external"
+                ]
+              },
+              "logEntryDate": {
+                "format": "date-time",
+                "type": "string",
+                "description": "this is the date/time of the log note, if not specified it will be set to current date/time"
+              },
+              "logEntryText": {
+                "type": "string",
+                "example": "Any text you want to send",
+                "description": "any text you want added to the ticket"
+              },
+              "logEntryInitiator": {
+                "type": "string",
+                "example": "John Doe",
+                "description": "something to identify who is adding the note"
+              }
+            }
+          }
+        },
+        "requestTicletBeClosed": {
+          "type": "boolean",
+          "example": [
+            "true",
+            "false"
+          ],
+          "description": "this will set an indicator stating that the customer has requested the ticket be closed."
+        },
+        "requestTicketEscalation": {
+          "type": "boolean",
+          "example": [
+            "true",
+            "false"
+          ],
+          "description": "this will escalate the ticket to the next level if allowed."
+        }
+      },
+      "required": [
+        "requestId",
+        "initiator",
+        "id",
+        "source"
+      ]
+    },
+    "TicketUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Trouble Ticket ID.",
+          "example": "ticket123"
+        },
+        "source": {
+          "type": "string",
+          "description": "Ticketing source system. EX. Clarify, NTM, WFAC, WFAC-L,..."
+        },
+        "messageStatus": {
+          "type": "object",
+          "properties": {
+            "errorCode": {
+              "type": "integer",
+              "description": "numeric error code"
+            },
+            "userMessage": {
+              "type": "string",
+              "description": "human readable error message"
+            },
+            "transactionStatus": {
+              "type": "string",
+              "description": "(S)uccess, (F)ailure, (W)arning"
+            }
+          },
+          "example": {
+            "errorCode": "0",
+            "userMessage": "request was good",
+            "transactionStatus": "S"
+          }
+        }
+      },
+      "required": [
+        "requestId",
+        "messageStatus"
+      ]
+    },
+    "Exception": {
+      "type": "object",
+      "required": [
+        "httpStatusCode"
+      ],
+      "properties": {
+        "httpStatusCode": {
+          "type": "integer",
+          "format": "int32",
+          "description": "HTTP Status Code",
+          "example": 400
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32",
+          "description": "CenturyLink Error Code",
+          "example": 400002
+        },
+        "message": {
+          "type": "string",
+          "description": "CenturyLink Defined Error Message",
+          "example": "Invalid query string"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Additional detail supporting the error",
+          "example": "CustomerName is not a valid query string parameter"
+        }
+      }
+    },
+    "ExceptionResponse": {
+      "type": "object",
+      "properties": {
+        "exception": {
+          "$ref": "#/definitions/Exception"
+        }
+      }
+    }
+  }
+}

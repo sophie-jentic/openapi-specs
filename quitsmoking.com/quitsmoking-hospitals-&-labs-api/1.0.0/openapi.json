@@ -1,0 +1,499 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "QuitSmoking Hospitals & Labs API",
+    "description": "API for managing hospitals and laboratories (CRUD operations with pagination and search)",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Frontend Team"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/other-a29-596/quitsmoking-hospitals-labs-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.quitsmoking.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/hospitals": {
+      "get": {
+        "summary": "Get All Hospitals/Labs",
+        "description": "Get paginated list of hospitals and labs with optional search",
+        "operationId": "getHospitals",
+        "tags": [
+          "Hospitals"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            },
+            "description": "Items per page"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search by name or location"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hospital",
+                "lab",
+                "clinic",
+                "center"
+              ]
+            },
+            "description": "Filter by type"
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by location (city/area)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of hospitals and labs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Hospital"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "currentPage": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "integer",
+                              "example": 5
+                            },
+                            "totalItems": {
+                              "type": "integer",
+                              "example": 48
+                            },
+                            "itemsPerPage": {
+                              "type": "integer",
+                              "example": 10
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add New Hospital/Lab",
+        "description": "Create a new hospital or lab record",
+        "operationId": "createHospital",
+        "tags": [
+          "Hospitals"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HospitalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Hospital/Lab created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Hospital added successfully"
+                        },
+                        "id": {
+                          "type": "string",
+                          "example": "hosp_123456"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hospitals/{id}": {
+      "get": {
+        "summary": "Get Hospital/Lab Details",
+        "description": "Get detailed information about a specific hospital or lab",
+        "operationId": "getHospitalById",
+        "tags": [
+          "Hospitals"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hospital/Lab ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hospital/Lab details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Hospital"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hospital/Lab not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Hospital/Lab",
+        "description": "Update an existing hospital or lab information",
+        "operationId": "updateHospital",
+        "tags": [
+          "Hospitals"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hospital/Lab ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HospitalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hospital/Lab updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Hospital updated successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hospital/Lab not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Hospital/Lab",
+        "description": "Delete a hospital or lab from the system",
+        "operationId": "deleteHospital",
+        "tags": [
+          "Hospitals"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hospital/Lab ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hospital/Lab deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Hospital deleted successfully"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hospital/Lab not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "Logout User",
+        "description": "Invalidate user session",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "example": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Hospital": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "hosp_123456"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cairo Medical Center"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hospital",
+              "lab",
+              "clinic",
+              "center"
+            ],
+            "example": "hospital",
+            "description": "Type of facility"
+          },
+          "location": {
+            "type": "string",
+            "example": "Nasr City, Cairo"
+          },
+          "article": {
+            "type": "string",
+            "description": "Description or article about the facility",
+            "example": "Leading medical center with 24/7 emergency services"
+          },
+          "mapLink": {
+            "type": "string",
+            "format": "uri",
+            "description": "Google Maps or location link",
+            "example": "https://maps.google.com/?q=30.123,31.456"
+          }
+        }
+      },
+      "HospitalInput": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "location"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200,
+            "example": "Cairo Medical Center"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "hospital",
+              "lab",
+              "clinic",
+              "center"
+            ],
+            "example": "hospital"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 3,
+            "example": "Nasr City, Cairo"
+          },
+          "article": {
+            "type": "string",
+            "maxLength": 2000,
+            "example": "Leading medical center with 24/7 emergency services"
+          },
+          "mapLink": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://maps.google.com/?q=30.123,31.456"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Error message"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Hospitals",
+      "description": "Hospital and laboratory management operations"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication operations"
+    }
+  ]
+}

@@ -1,0 +1,537 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MealScan API",
+    "description": "Meal image recognition and nutrition analysis API.\nUpload a photo of your meal to get AI-powered food identification\nand detailed nutritional information via Google Cloud Vision and Edamam.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Tastermonial",
+      "url": "https://tastermonial.app"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/tastermonial/MealScan/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Firebase ID token from client-side authentication"
+      }
+    },
+    "schemas": {
+      "Nutrition": {
+        "type": "object",
+        "properties": {
+          "calories": {
+            "type": "integer",
+            "example": 350
+          },
+          "totalFat": {
+            "type": "string",
+            "example": "12g"
+          },
+          "saturatedFat": {
+            "type": "string",
+            "example": "4g"
+          },
+          "cholesterol": {
+            "type": "string",
+            "example": "45mg"
+          },
+          "sodium": {
+            "type": "string",
+            "example": "480mg"
+          },
+          "totalCarbohydrates": {
+            "type": "string",
+            "example": "38g"
+          },
+          "dietaryFiber": {
+            "type": "string",
+            "example": "3g"
+          },
+          "sugars": {
+            "type": "string",
+            "example": "6g"
+          },
+          "protein": {
+            "type": "string",
+            "example": "22g"
+          },
+          "vitaminD": {
+            "type": "string",
+            "example": "0IU"
+          },
+          "calcium": {
+            "type": "string",
+            "example": "120mg"
+          },
+          "iron": {
+            "type": "string",
+            "example": "3mg"
+          },
+          "potassium": {
+            "type": "string",
+            "example": "310mg"
+          }
+        }
+      },
+      "MealResult": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Grilled Chicken Salad"
+          },
+          "servingSize": {
+            "type": "string",
+            "example": "1 serving (285g)"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "grilled chicken"
+            ]
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Gluten",
+              "Dairy"
+            ]
+          }
+        }
+      },
+      "AnalyzeResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": "/uploads/meal-1771319681565.jpeg"
+          },
+          "confidence": {
+            "type": "number",
+            "example": 92.3
+          },
+          "result": {
+            "$ref": "#/components/schemas/MealResult"
+          },
+          "warning": {
+            "type": "string",
+            "description": "Present when AI analysis was unavailable or failed"
+          }
+        }
+      },
+      "LogMealRequest": {
+        "type": "object",
+        "required": [
+          "meal"
+        ],
+        "properties": {
+          "meal": {
+            "$ref": "#/components/schemas/MealResult"
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": "/uploads/meal-1771319681565.jpeg"
+          },
+          "timezone": {
+            "type": "object",
+            "properties": {
+              "offsetSecs": {
+                "type": "integer",
+                "description": "UTC offset in seconds (e.g. 28800 for UTC+8)",
+                "example": 28800
+              }
+            }
+          }
+        }
+      },
+      "LogMealResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "entry": {
+            "type": "object",
+            "properties": {
+              "mealId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "foodLogId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "imageUrl": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "servingSize": {
+                "type": "string"
+              },
+              "nutrition": {
+                "$ref": "#/components/schemas/Nutrition"
+              },
+              "ingredients": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allergens": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "FoodLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Grilled Chicken Salad"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "servingSize": {
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/Nutrition"
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allergens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Meal": {
+        "type": "object",
+        "properties": {
+          "mealId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAtLocal": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAtOffsetSecs": {
+            "type": "integer"
+          },
+          "foodLogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoodLog"
+            }
+          }
+        }
+      },
+      "LoggedMealsResponse": {
+        "type": "object",
+        "properties": {
+          "meals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meal"
+            }
+          }
+        }
+      },
+      "SyncUserRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/analyze": {
+      "post": {
+        "summary": "Analyze a meal image",
+        "description": "Upload a meal photo for AI-powered food identification using Google Cloud Vision API,\nfollowed by nutritional analysis via the Edamam Nutrition API.\nFalls back to mock data if external APIs are unavailable.\n",
+        "tags": [
+          "Meals"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "image"
+                ],
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Meal image (JPEG, PNG, GIF, or WebP, max 10MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis result with nutrition data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No image file provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/sync-user": {
+      "post": {
+        "summary": "Sync authenticated user to database",
+        "description": "Upserts the Firebase-authenticated user into the users table.\nCalled automatically after sign-in from the frontend.\n",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User synced successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Firebase token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/log-meal": {
+      "post": {
+        "summary": "Log a meal",
+        "description": "Creates a meal record and associated food log entry in the database.\nStores nutrition data, ingredients, allergens, and timezone-aware timestamps.\nUses a three-step insert: meal row, food log row, then back-reference update.\n",
+        "tags": [
+          "Meals"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogMealRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Meal logged successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogMealResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No meal data provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Firebase token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logged-meals": {
+      "get": {
+        "summary": "Get logged meals",
+        "description": "Fetches all meals for the authenticated user, joined with their food log entries\nand grouped by meal. Results are ordered by most recent first.\n",
+        "tags": [
+          "Meals"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of meals with food logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggedMealsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Firebase token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

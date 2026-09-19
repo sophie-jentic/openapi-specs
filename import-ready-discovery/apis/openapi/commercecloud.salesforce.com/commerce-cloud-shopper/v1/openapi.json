@@ -1,0 +1,414 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Salesforce Commerce Cloud Shopper API (SCAPI)",
+    "description": "Salesforce B2C Commerce Shopper APIs provide headless commerce capabilities including product search, product details, baskets, orders, and customer management. Authentication uses SLAS (Shopper Login and API Access Service) OAuth2 flows.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://developer.salesforce.com/docs/commerce/commerce-api",
+    "x-jentic-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://{shortCode}.api.commercecloud.salesforce.com",
+      "variables": {
+        "shortCode": {
+          "description": "The short code for your B2C Commerce instance.",
+          "default": "SHORTCODE"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "slasOAuth2": []
+    }
+  ],
+  "paths": {
+    "/product/shopper-products/v1/organizations/{organizationId}/products/{productId}": {
+      "get": {
+        "operationId": "getProduct",
+        "summary": "Get a product by ID",
+        "description": "Retrieves product details including images, prices, and variations.",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "locale", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "currency", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "expand", "in": "query", "required": false, "description": "Expand product details (images, prices, variations, availability).", "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          },
+          "404": { "description": "Product not found." }
+        }
+      }
+    },
+    "/product/shopper-products/v1/organizations/{organizationId}/products": {
+      "get": {
+        "operationId": "getProducts",
+        "summary": "Get multiple products by IDs",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "ids", "in": "query", "required": true, "description": "Comma-separated product IDs (max 24).", "schema": { "type": "string" } },
+          { "name": "locale", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "currency", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/shopper-search/v1/organizations/{organizationId}/product-search": {
+      "get": {
+        "operationId": "productSearch",
+        "summary": "Search for products",
+        "description": "Provides keyword and refinement search for products.",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "required": false, "description": "Search query string.", "schema": { "type": "string" } },
+          { "name": "refine", "in": "query", "required": false, "description": "Refinement parameters.", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "sort", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "currency", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "locale", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "offset", "in": "query", "required": false, "schema": { "type": "integer", "default": 0 } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 25 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "hits": { "type": "array", "items": { "type": "object" } },
+                    "refinements": { "type": "array", "items": { "type": "object" } },
+                    "sortingOptions": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/shopper-search/v1/organizations/{organizationId}/search-suggestions": {
+      "get": {
+        "operationId": "getSearchSuggestions",
+        "summary": "Get search suggestions",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "q", "in": "query", "required": true, "description": "Search query prefix.", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 5 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search suggestions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "brandSuggestions": { "type": "object" },
+                    "categorySuggestions": { "type": "object" },
+                    "productSuggestions": { "type": "object" },
+                    "customSuggestions": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkout/shopper-baskets/v2/organizations/{organizationId}/baskets": {
+      "post": {
+        "operationId": "createBasket",
+        "summary": "Create a new basket",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currency": { "type": "string" },
+                  "customerInfo": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Basket created.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Basket" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkout/shopper-baskets/v2/organizations/{organizationId}/baskets/{basketId}": {
+      "get": {
+        "operationId": "getBasket",
+        "summary": "Get basket by ID",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "basketId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Basket details.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Basket" }
+              }
+            }
+          },
+          "404": { "description": "Basket not found." }
+        }
+      },
+      "delete": {
+        "operationId": "deleteBasket",
+        "summary": "Delete a basket",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "basketId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Basket deleted." }
+        }
+      }
+    },
+    "/checkout/shopper-baskets/v2/organizations/{organizationId}/baskets/{basketId}/items": {
+      "post": {
+        "operationId": "addItemToBasket",
+        "summary": "Add item to basket",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "basketId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "productId": { "type": "string" },
+                    "quantity": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated basket.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Basket" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/checkout/shopper-orders/v1/organizations/{organizationId}/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "summary": "Create an order from a basket",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["basketId"],
+                "properties": {
+                  "basketId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderNo": { "type": "string" },
+                    "status": { "type": "string" },
+                    "orderTotal": { "type": "number" },
+                    "currency": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customer/shopper-customers/v1/organizations/{organizationId}/customers/{customerId}": {
+      "get": {
+        "operationId": "getCustomer",
+        "summary": "Get customer details",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "customerId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customerId": { "type": "string" },
+                    "firstName": { "type": "string" },
+                    "lastName": { "type": "string" },
+                    "email": { "type": "string" },
+                    "login": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/product/shopper-products/v1/organizations/{organizationId}/categories/{categoryId}": {
+      "get": {
+        "operationId": "getCategory",
+        "summary": "Get a category by ID",
+        "parameters": [
+          { "name": "organizationId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "categoryId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "siteId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "levels", "in": "query", "required": false, "description": "Depth of subcategories to include.", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "parentCategoryId": { "type": "string" },
+                    "categories": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "slasOAuth2": {
+        "type": "oauth2",
+        "description": "Shopper Login and API Access Service (SLAS) OAuth2 authentication. Supports public client (PKCE) and private client (client credentials) flows.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://{shortCode}.api.commercecloud.salesforce.com/shopper/auth/v1/organizations/{organizationId}/oauth2/authorize",
+            "tokenUrl": "https://{shortCode}.api.commercecloud.salesforce.com/shopper/auth/v1/organizations/{organizationId}/oauth2/token",
+            "scopes": {
+              "sfcc.shopper-products": "Access to Shopper Products API",
+              "sfcc.shopper-search": "Access to Shopper Search API",
+              "sfcc.shopper-baskets-orders": "Access to Shopper Baskets and Orders APIs",
+              "sfcc.shopper-customers": "Access to Shopper Customers API"
+            }
+          },
+          "clientCredentials": {
+            "tokenUrl": "https://{shortCode}.api.commercecloud.salesforce.com/shopper/auth/v1/organizations/{organizationId}/oauth2/token",
+            "scopes": {
+              "sfcc.shopper-products": "Access to Shopper Products API",
+              "sfcc.shopper-search": "Access to Shopper Search API"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "brand": { "type": "string" },
+          "price": { "type": "number" },
+          "currency": { "type": "string" },
+          "longDescription": { "type": "string" },
+          "shortDescription": { "type": "string" },
+          "primaryCategoryId": { "type": "string" },
+          "imageGroups": { "type": "array", "items": { "type": "object" } },
+          "inventory": { "type": "object" },
+          "variationAttributes": { "type": "array", "items": { "type": "object" } }
+        }
+      },
+      "Basket": {
+        "type": "object",
+        "properties": {
+          "basketId": { "type": "string" },
+          "currency": { "type": "string" },
+          "productItems": { "type": "array", "items": { "type": "object" } },
+          "productTotal": { "type": "number" },
+          "orderTotal": { "type": "number" },
+          "taxTotal": { "type": "number" },
+          "shippingTotal": { "type": "number" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,908 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PC Configurator API",
+    "description": "Shopware Store API endpoints for the PC Configurator.\nUsed by the Vue.js frontend embedded in Dubaro and Memory PC shops.\n\n**Architecture:**\n- Init call returns the full configurator state from Shopware (no Orchestra call)\n- All texts come pre-translated based on the Sales Channel language context\n- Prices are gross (incl. tax)\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Dubaro Dev Team"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/8mylez-G/pc-configurator-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://shopware6.dubaro.de/store-api",
+      "description": "Dubaro Production"
+    },
+    {
+      "url": "https://shopware6.memorypc.de/store-api",
+      "description": "Memory PC Production"
+    },
+    {
+      "url": "https://daniel.emzdev.de/store-api",
+      "description": "Development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Configurator",
+      "description": "PC Configurator endpoints"
+    }
+  ],
+  "paths": {
+    "/configurator/init/{configurablePcId}": {
+      "get": {
+        "operationId": "configuratorInit",
+        "tags": [
+          "Configurator"
+        ],
+        "summary": "Initialize a PC configuration",
+        "description": "Returns everything the frontend needs to render the full configurator page.\nNo further API calls are required for the initial render.\n\nThe backend resolves the Sales Channel language from context,\nso all labels, names, tips, and badge texts come pre-translated.\n",
+        "parameters": [
+          {
+            "name": "configurablePcId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID or slug of the configurable PC",
+            "example": "gaming-pc-ryzen-9800x3d-rtx5090"
+          },
+          {
+            "name": "tenant",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dubaro",
+                "mpc"
+              ]
+            },
+            "description": "Sales Channel identifier",
+            "example": "dubaro"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ISO country code for tax/pricing",
+            "example": "DE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full configurator state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Configurable PC not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "InitResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "productNumber",
+          "name",
+          "pricing",
+          "pcStats",
+          "rgbPropertyIds",
+          "groups"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Configurable PC identifier",
+            "example": "018d5a2b-abcd-7000-8000-000000000001"
+          },
+          "productNumber": {
+            "type": "string",
+            "description": "Shopware product number",
+            "example": "102219"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the configuration",
+            "example": "Gaming-PC RYZEN 7 9800X3D mit RTX5090"
+          },
+          "baseProduct": {
+            "description": "The pre-configured base product. `null` for free configurator.\n",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BaseProduct"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/Pricing"
+          },
+          "pcStats": {
+            "$ref": "#/components/schemas/PcStats"
+          },
+          "rgbPropertyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Property IDs that represent \"RGB-f\u00e4hig\".\nFrontend uses these to identify which filter options = RGB\nand to power the RGB optimization recommendations.\n",
+            "example": [
+              "018d5a2b-f001-7000-8000-000000000002"
+            ]
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            },
+            "description": "Top-level navigation groups"
+          }
+        }
+      },
+      "Pricing": {
+        "type": "object",
+        "required": [
+          "basePrice",
+          "totalPrice",
+          "taxRate",
+          "currency"
+        ],
+        "properties": {
+          "basePrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Price of the default configuration (gross)",
+            "example": 2249.0
+          },
+          "totalPrice": {
+            "type": "number",
+            "format": "float",
+            "description": "Current total with all selections (gross)",
+            "example": 2748.7
+          },
+          "taxRate": {
+            "type": "number",
+            "format": "float",
+            "description": "Tax rate in percent",
+            "example": 19
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code",
+            "example": "EUR"
+          }
+        }
+      },
+      "BaseProduct": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "productNumber"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "018d5a2b-abcd-7000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Gaming-PC RYZEN 7 9800X3D mit RTX5090"
+          },
+          "productNumber": {
+            "type": "string",
+            "example": "102219"
+          },
+          "url": {
+            "type": "string",
+            "description": "Relative URL to the PDP",
+            "example": "/gaming-pc-ryzen-7-9800x3d/102219"
+          }
+        }
+      },
+      "PcStats": {
+        "type": "object",
+        "required": [
+          "cpu",
+          "gpu",
+          "psu",
+          "ssd",
+          "optimizationCount"
+        ],
+        "properties": {
+          "cpu": {
+            "type": "integer",
+            "description": "CPU benchmark score",
+            "example": 500000
+          },
+          "gpu": {
+            "type": "integer",
+            "description": "GPU benchmark score",
+            "example": 500000
+          },
+          "psu": {
+            "type": "string",
+            "description": "PSU efficiency rating label",
+            "enum": [
+              "Bronze",
+              "Silver",
+              "Gold",
+              "Platinum",
+              "Titan"
+            ],
+            "example": "Titan"
+          },
+          "ssd": {
+            "type": "object",
+            "required": [
+              "games",
+              "speed",
+              "bonus"
+            ],
+            "properties": {
+              "games": {
+                "type": "integer",
+                "description": "Approx. number of games that fit",
+                "example": 300
+              },
+              "speed": {
+                "type": "integer",
+                "description": "Read speed in MB/s",
+                "example": 14000
+              },
+              "bonus": {
+                "type": "integer",
+                "description": "Loading time bonus in percent",
+                "example": 12
+              }
+            }
+          },
+          "optimizationCount": {
+            "type": "integer",
+            "description": "Number of available optimization tips",
+            "example": 3
+          }
+        }
+      },
+      "Group": {
+        "type": "object",
+        "description": "Top-level navigation group.\nExamples: \"Hauptkomponenten\", \"Software & Dienstleistungen\", \"Zubeh\u00f6r\"\n",
+        "required": [
+          "id",
+          "name",
+          "icon",
+          "sortOrder",
+          "categories"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "018d5a2b-0000-7000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Hauptkomponenten"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon identifier",
+            "example": "cpu"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "description": "A component category (e.g. \"CPU\", \"GPU\", \"Modding\").\nContains all config for filters, search, view, and the components themselves.\n",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "sortOrder",
+          "required",
+          "multiSelect",
+          "multiQuantity",
+          "defaultView",
+          "searchEnabled",
+          "filters",
+          "components"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "018d5a2b-1234-7000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Geh\u00e4use"
+          },
+          "type": {
+            "type": "string",
+            "description": "Machine-readable type for category-specific frontend logic",
+            "enum": [
+              "housing",
+              "cpu",
+              "cooler",
+              "motherboard",
+              "ram",
+              "ssd_hdd",
+              "gpu",
+              "shipping_insurance",
+              "psu",
+              "modding",
+              "wlan_sound",
+              "optical_drive",
+              "operating_system",
+              "software",
+              "assembly",
+              "express",
+              "warranty",
+              "monitor",
+              "gaming_accessories",
+              "streaming_accessories",
+              "usb_accessories"
+            ],
+            "example": "housing"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "image": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Media"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Category image in the navigation"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "User must select at least one component",
+            "example": true
+          },
+          "multiSelect": {
+            "type": "boolean",
+            "description": "Multiple components can be selected at once",
+            "example": false
+          },
+          "multiQuantity": {
+            "type": "boolean",
+            "description": "Selected components can have quantity > 1",
+            "example": false
+          },
+          "defaultView": {
+            "type": "string",
+            "enum": [
+              "card",
+              "list"
+            ],
+            "description": "Default component view mode",
+            "example": "card"
+          },
+          "allowViewSwitch": {
+            "type": "boolean",
+            "description": "User can toggle between card and list view",
+            "example": true
+          },
+          "expanded": {
+            "type": "boolean",
+            "description": "Expanded by default in the navigation sidebar",
+            "example": true
+          },
+          "hasRecommendation": {
+            "type": "boolean",
+            "description": "Shows \"Empfohlen\" badge in the navigation",
+            "example": false
+          },
+          "hasTip": {
+            "type": "boolean",
+            "description": "Category has a general info/tip text",
+            "example": true
+          },
+          "hasDefault": {
+            "type": "boolean",
+            "description": "A default component exists",
+            "example": true
+          },
+          "hasSelections": {
+            "type": "boolean",
+            "description": "Currently has selected components",
+            "example": true
+          },
+          "searchEnabled": {
+            "type": "boolean",
+            "description": "Whether component search is available",
+            "example": true
+          },
+          "filters": {
+            "type": "array",
+            "description": "Filter definitions. Empty array if no filters.",
+            "items": {
+              "$ref": "#/components/schemas/Filter"
+            }
+          },
+          "displayProperties": {
+            "type": "array",
+            "description": "Properties shown on component cards (e.g. Formfaktor, Farbe)",
+            "items": {
+              "$ref": "#/components/schemas/DisplayProperty"
+            }
+          },
+          "mainGroups": {
+            "type": "array",
+            "description": "Section header labels for visual grouping of components.\nComponents reference these via `mainGroup`.\nExample: [\"AMD Ryzen 7\", \"AMD Ryzen 9\"]\n",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subgroups": {
+            "type": "array",
+            "description": "Accordion-style sub-sections.\nComponents reference these via `subgroupId`.\nUsed for GPU chip series, modding types, etc.\n",
+            "items": {
+              "$ref": "#/components/schemas/Subgroup"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Component"
+            }
+          }
+        }
+      },
+      "Filter": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "type",
+          "multiSelect",
+          "options"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique filter identifier within the category",
+            "example": "manufacturer"
+          },
+          "label": {
+            "type": "string",
+            "description": "Display label",
+            "example": "Hersteller"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "switch",
+              "chips",
+              "dropdown"
+            ],
+            "description": "- `switch` \u2014 Toggle (2 options, e.g. RGB on/off)\n- `chips` \u2014 Inline chip buttons\n- `dropdown` \u2014 Select menu\n",
+            "example": "dropdown"
+          },
+          "multiSelect": {
+            "type": "boolean",
+            "description": "Multiple options selectable",
+            "example": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyOption"
+            }
+          }
+        }
+      },
+      "DisplayProperty": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "options"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "formFactor"
+          },
+          "label": {
+            "type": "string",
+            "example": "Formfaktor"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyOption"
+            }
+          }
+        }
+      },
+      "PropertyOption": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Property ID \u2014 matches component `propertyIds`",
+            "example": "018d5a2b-f002-7000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fractal Design"
+          }
+        }
+      },
+      "Subgroup": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sortOrder"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "gpu-sub-5090"
+          },
+          "name": {
+            "type": "string",
+            "example": "RTX 5090"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Flaggschiff der neuen Generation mit 32GB VRAM"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "example": 1
+          },
+          "hasTip": {
+            "type": "boolean",
+            "example": false
+          },
+          "fanSlots": {
+            "description": "Only present on fan-type subgroups",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FanSlots"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "FanSlots": {
+        "type": "object",
+        "required": [
+          "totalSlots",
+          "preinstalledCount",
+          "preinstalledComponentId",
+          "allowRemovePreinstalled"
+        ],
+        "properties": {
+          "totalSlots": {
+            "type": "integer",
+            "description": "Total fan slots in the selected case",
+            "example": 13
+          },
+          "preinstalledCount": {
+            "type": "integer",
+            "description": "Number of pre-installed fans",
+            "example": 3
+          },
+          "preinstalledComponentId": {
+            "type": "string",
+            "description": "Component ID of the pre-installed fan",
+            "example": "108120"
+          },
+          "allowRemovePreinstalled": {
+            "type": "boolean",
+            "description": "Whether pre-installed fans can be removed",
+            "example": true
+          }
+        }
+      },
+      "Component": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "price",
+          "priceDiff",
+          "isDefault",
+          "selected",
+          "quantity",
+          "maxQuantity",
+          "disabled",
+          "propertyIds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Component ID (product number)",
+            "example": "102572"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fractal Design North XL Charcoal TG Dark"
+          },
+          "price": {
+            "type": "number",
+            "format": "float",
+            "description": "Absolute component price (gross)",
+            "example": 169.9
+          },
+          "priceDiff": {
+            "type": "number",
+            "format": "float",
+            "description": "Price difference relative to the default component.\n`+` = surcharge, `-` = discount, `0` = same as default.\nFrontend calculates total impact as `priceDiff * quantity`.\n",
+            "example": 0
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "This is the pre-configured default component",
+            "example": true
+          },
+          "selected": {
+            "type": "boolean",
+            "example": true
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Selected quantity (0 if not selected)",
+            "example": 1
+          },
+          "maxQuantity": {
+            "type": "integer",
+            "description": "Maximum selectable quantity",
+            "example": 1
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Component is incompatible and cannot be selected",
+            "example": false
+          },
+          "disabledReasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Human-readable incompatibility reasons",
+            "example": [
+              "Inkompatibel mit ausgew\u00e4hltem CPU-K\u00fchler"
+            ]
+          },
+          "propertyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Property IDs for filter matching.\nA component matches a filter option if this array contains the option's ID.\n",
+            "example": [
+              "018d5a2b-f001-7000-8000-000000000001",
+              "018d5a2b-f002-7000-8000-000000000001"
+            ]
+          },
+          "subgroupId": {
+            "type": "string",
+            "nullable": true,
+            "description": "References `subgroups[].id`",
+            "example": null
+          },
+          "mainGroup": {
+            "type": "string",
+            "nullable": true,
+            "description": "References `mainGroups[]` entry for visual sectioning",
+            "example": null
+          },
+          "sortOrder": {
+            "type": "integer",
+            "description": "Sort position within the category",
+            "example": 0
+          },
+          "image": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Media"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "badges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "All visual badges for this component, pre-resolved by the backend.\nExamples: \"Vorinstalliert\", \"Optimierung verf\u00fcgbar\", \"Bestseller\", \"Neu\"\n",
+            "example": [
+              "Vorinstalliert"
+            ]
+          },
+          "displayProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pre-resolved property names for display on the component card.\nOrder matches the category's `displayProperties` definition.\n",
+            "example": [
+              "Schwarz",
+              "Midi Tower"
+            ]
+          },
+          "tip": {
+            "type": "string",
+            "nullable": true,
+            "description": "Info/recommendation text for this component",
+            "example": "Dieses Geh\u00e4use bietet exzellenten Airflow."
+          },
+          "optimization": {
+            "description": "Optimization recommendation. Present if a better alternative exists.\n`null` if no optimization is available.\n",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Optimization"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slotsRequired": {
+            "type": "integer",
+            "description": "Fan slots required (0 for non-fan components)",
+            "example": 0
+          },
+          "isPreinstalled": {
+            "type": "boolean",
+            "description": "Whether this component comes pre-installed with the case.\nUsed for fan slot calculation logic. The visual badge is in `badges`.\n",
+            "example": false
+          },
+          "psuRating": {
+            "type": "string",
+            "nullable": true,
+            "description": "PSU efficiency rating (only for PSU components)",
+            "enum": [
+              "Bronze",
+              "Silver",
+              "Gold",
+              "Platinum",
+              "Titan"
+            ],
+            "example": null
+          }
+        }
+      },
+      "Optimization": {
+        "type": "object",
+        "required": [
+          "text",
+          "label"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Recommendation text",
+            "example": "Der Dark Rock Pro 5 bietet +15% mehr K\u00fchlleistung f\u00fcr nur 20\u20ac mehr."
+          },
+          "label": {
+            "type": "string",
+            "description": "Short badge label",
+            "example": "+15p Leistung"
+          },
+          "targetComponentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID of the recommended upgrade component.\nFrontend can use this to highlight or scroll to it.\n",
+            "example": "103003"
+          }
+        }
+      },
+      "Media": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://shopware6.dubaro.de/media/c6/b4/bd/102720_0001.jpg"
+          },
+          "thumbnails": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "url",
+                "width",
+                "height"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "width": {
+                  "type": "integer"
+                },
+                "height": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "404"
+                },
+                "code": {
+                  "type": "string",
+                  "example": "CONFIGURATOR_PC_NOT_FOUND"
+                },
+                "detail": {
+                  "type": "string",
+                  "example": "Configurable PC with ID 'xyz' not found."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2331 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BMW to RSA Provider (OpenAPI 3.1)",
+    "termsOfService": "http://swagger.io/terms/",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0",
+    "description": "REST API provided by the RSA Provider to receive and manage RSA cases and services.",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/LIQUIFIED777/bmw-to-rsa-provider-openapi-31/1.0.0"
+  },
+  "externalDocs": {
+    "description": "Find out more about Swagger",
+    "url": "http://swagger.io"
+  },
+  "servers": [
+    {
+      "url": "https://service.abc.net/v1",
+      "description": "Primary RSA Provider API server."
+    }
+  ],
+  "tags": [
+    {
+      "name": "cases",
+      "description": "Operations about RSA cases"
+    },
+    {
+      "name": "services",
+      "description": "Operations about RSA services"
+    }
+  ],
+  "paths": {
+    "/rsa/cases/{bmwCaseId}": {
+      "get": {
+        "tags": [
+          "cases"
+        ],
+        "summary": "Returns a case assosiated with the given bmwCaseId",
+        "description": "Returns a case by bmwCaseId",
+        "parameters": [
+          {
+            "name": "bmwCaseId",
+            "in": "path",
+            "description": "Identifier of a case, initially set by BMW OSA system.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getCase",
+        "security": [
+          {
+            "open_id_connect": [
+              "read:case"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsaCaseTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      }
+    },
+    "/rsa/cases": {
+      "post": {
+        "tags": [
+          "cases"
+        ],
+        "summary": "Create a new case",
+        "description": "Create an on-site assistance case and associated services in the provider's system",
+        "operationId": "createCase",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsaCaseTO"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "open_id_connect": [
+              "write:case"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "externalCaseId": {
+                      "type": "string",
+                      "description": "Identifier of the case in the provider's system created in response to this request."
+                    },
+                    "externalServiceIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Identifier of the service in the provider's system created in response to this request."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      }
+    },
+    "/rsa/cases/{bmwCaseId}/services/{bmwServiceId}": {
+      "get": {
+        "tags": [
+          "services"
+        ],
+        "summary": "Returns a service assosiated with the given bmwServiceId",
+        "description": "Returns a service by bmwServiceId",
+        "parameters": [
+          {
+            "name": "bmwCaseId",
+            "in": "path",
+            "description": "case to get the services of",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bmwServiceId",
+            "in": "path",
+            "description": "service to get the details",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getService",
+        "security": [
+          {
+            "open_id_connect": [
+              "read:case"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "services"
+        ],
+        "summary": "Cancel a service of a case",
+        "description": "Cancel an already existing on-site assistance service from an already ordered case. Returns the canceled service.",
+        "parameters": [
+          {
+            "name": "bmwCaseId",
+            "in": "path",
+            "description": "case to get the services of",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bmwServiceId",
+            "in": "path",
+            "description": "service to cancel",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "cancelService",
+        "security": [
+          {
+            "open_id_connect": [
+              "write:service"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      }
+    },
+    "/rsa/cases/{bmwCaseId}/services": {
+      "post": {
+        "tags": [
+          "services"
+        ],
+        "summary": "Add new services to a case",
+        "description": "Add one or more on-site assistance services to an already ordered case",
+        "parameters": [
+          {
+            "name": "bmwCaseId",
+            "in": "path",
+            "description": "The identifier of a case to add a service to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "addService",
+        "security": [
+          {
+            "open_id_connect": [
+              "write:service"
+            ]
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ServiceTO"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "externalServiceId": {
+                        "type": "string",
+                        "description": "Identifier of the service in the provider's system created in response to this request."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "services"
+        ],
+        "summary": "Returns a list of services for a case",
+        "description": "Get all on-site assistance services of an already ordered case",
+        "parameters": [
+          {
+            "name": "bmwCaseId",
+            "in": "path",
+            "description": "case to get the services of",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "operationId": "getServices",
+        "security": [
+          {
+            "open_id_connect": [
+              "read:service"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Resource not available"
+          },
+          "500": {
+            "$ref": "#/components/schemas/ErrorResponseTO"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponseTO": {
+        "description": "Response in case of an error",
+        "type": "object",
+        "required": [
+          "errorCode"
+        ],
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "Short error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed human readable error message describing the failure."
+          }
+        }
+      },
+      "RsaCaseTO": {
+        "type": "object",
+        "description": "Representation of an RSA case including customer, vehicle, eligibility and ordered services.",
+        "required": [
+          "bmwCaseId",
+          "priority",
+          "goodwill",
+          "customerCountryCodeIso",
+          "passengersNumberAdults",
+          "passengersNumberChildren",
+          "hasCustomerLuggage",
+          "hasTrailer",
+          "hasCustomerPets",
+          "hasRoofBox",
+          "hasBikeRack",
+          "breakdownCodes",
+          "eligibility",
+          "contact",
+          "vehicle",
+          "services",
+          "incidentType"
+        ],
+        "properties": {
+          "bmwCaseId": {
+            "type": "string",
+            "format": "uuid",
+            "examples": [
+              "60103990-17d7-404d-bfe3-89f0e09b2076"
+            ],
+            "description": "The unique case identifier, set by BMW OSA system."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "When the case has been initially created by BMW OSA system. Timestamp incl. timezone in ISO-8601 format."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T15:50:28.925Z"
+            ],
+            "description": "When the case has been updated by BMW OSA system. Timestamp incl. timezone in ISO-8601 format."
+          },
+          "goodwill": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "If TRUE, vehicle is covered independently of eligibilityStatus (explicitly set by Call Center Customer Agent in BMW OSA system)."
+          },
+          "priority": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "This flag indicates if a case has priority over other cases. Granted by Call Center Customer Agent in BMW OSA system, e.g. if there are small children onboard, the Agent will set this to TRUE."
+          },
+          "vip": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Flag indicating VIP status; may influence handling priority."
+          },
+          "gkl": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Flag indicating BMW Gro\u00dfe Klasse (luxury class) which may influence service handling."
+          },
+          "customerCountryCodeIso": {
+            "type": "string",
+            "examples": [
+              "DE"
+            ],
+            "maxLength": 2,
+            "minLength": 2,
+            "description": "The country of the customer. In ISO 3166 Alpha-2 country code."
+          },
+          "breakdownLocationCountryCodeIso": {
+            "type": "string",
+            "examples": [
+              "DE"
+            ],
+            "maxLength": 2,
+            "minLength": 2,
+            "description": "The country of the location where the breakdown occured. In ISO 3166 Alpha-2 country code."
+          },
+          "solutionLinkUrl": {
+            "type": "string",
+            "format": "link",
+            "minLength": 0,
+            "maxLength": 255,
+            "examples": [
+              "www.asd-link-for-breakdown-solution.com"
+            ],
+            "description": "Link to the Adaptive Solution Database."
+          },
+          "passengersNumberAdults": {
+            "type": "integer",
+            "examples": [
+              2,
+              4
+            ],
+            "min": 1,
+            "max": 10,
+            "description": "How many adults are in the breakdown vehicle?"
+          },
+          "passengersNumberChildren": {
+            "type": "integer",
+            "examples": [
+              0,
+              2
+            ],
+            "min": 0,
+            "max": 10,
+            "description": "How many children are in the breakdown vehicle?"
+          },
+          "hasCustomerLuggage": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Does the customer have luggage? True if yes."
+          },
+          "hasTrailer": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Does the vehicle has a trailer? True if yes."
+          },
+          "hasCustomerPets": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Does the customer have pets? True if yes."
+          },
+          "hasRoofBox": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Does the vehicle have a roof box? True if yes."
+          },
+          "hasBikeRack": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Does the vehicle have a bike rack? True if yes."
+          },
+          "breakdownCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "examples": [
+              "1850",
+              "1310"
+            ],
+            "description": "List of breakdown reasons/symptoms codes, e.g. ['1850', '1310']. These codes are known in BMW systems."
+          },
+          "breakdownNote": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "Customer is nervous."
+            ],
+            "description": "Additional information to the case."
+          },
+          "suspectedBreakdownReason": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "Nails in the tire, Damage to the Suspension."
+            ],
+            "description": "Detailed description of the breakdown reasons."
+          },
+          "incidentType": {
+            "type": "string",
+            "enum": [
+              "TECHNICAL_ERROR",
+              "DRIVER_ERROR",
+              "ACCIDENT",
+              "MAINTENANCE_LACK",
+              "EXTERNAL_ERROR"
+            ],
+            "maxLength": 50,
+            "description": "Classification of the incident."
+          },
+          "eligibility": {
+            "$ref": "#/components/schemas/EligibilityTO"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/ContactTO"
+          },
+          "vehicle": {
+            "$ref": "#/components/schemas/VehicleTO"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceTO"
+            }
+          }
+        }
+      },
+      "ContactTO": {
+        "type": "object",
+        "description": "Contact details of the customer associated with the case.",
+        "required": [
+          "firstName",
+          "lastName",
+          "phoneNumber",
+          "customerLanguageCodeIso"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "examples": [
+              "Max"
+            ],
+            "maxLength": 1024,
+            "description": "The first name of the customer."
+          },
+          "lastName": {
+            "type": "string",
+            "examples": [
+              "Mustermann"
+            ],
+            "maxLength": 1024,
+            "description": "The last name of the customer"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "maxLength": 64,
+            "examples": [
+              "+ 49 150121222233"
+            ],
+            "description": "The phone number of the customer. Including the phone country code."
+          },
+          "isMobilePhoneNumber": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Is the phone number a mobile one?"
+          },
+          "customerLanguageCodeIso": {
+            "type": "string",
+            "examples": [
+              "en-US"
+            ],
+            "maxLength": 10,
+            "description": "The language and country of the customer. Language as ISO 639-1, country as ISO 3166 Alpha-2."
+          },
+          "emailAddress": {
+            "type": "string",
+            "format": "e-mail",
+            "maxLength": 64,
+            "examples": [
+              "max@mustermann.com"
+            ],
+            "description": "Email address of the customer."
+          }
+        }
+      },
+      "EligibilityTO": {
+        "type": "object",
+        "description": "Eligibility information returned from BMW EGB system describing whether the vehicle is covered and warranty periods.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "COVERED",
+              "UNCOVERED",
+              "UNKNOWN"
+            ],
+            "maxLength": 64,
+            "description": "The EGB status of the customer's vehicle, calculated by BMW EGB system."
+          },
+          "programName": {
+            "type": "string",
+            "examples": [
+              "RSA program"
+            ],
+            "description": "The name of the EGB program."
+          },
+          "warrantyStartsAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "Start of warranty coverage period. In ISO-8601 format."
+          },
+          "warrantyEndsAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "End of warranty coverage period. In ISO-8601 format."
+          }
+        }
+      },
+      "VehicleTO": {
+        "type": "object",
+        "description": "Vehicle information related to the case.",
+        "required": [
+          "vin",
+          "brand",
+          "model"
+        ],
+        "properties": {
+          "vin": {
+            "type": "string",
+            "maxLength": 17,
+            "examples": [
+              "5J6RM4H59EL065450"
+            ],
+            "description": "The vehicle identification number of the vehicle."
+          },
+          "brand": {
+            "type": "string",
+            "maxLength": 64,
+            "enum": [
+              "BMW",
+              "MINI",
+              "ROLLS_ROYCE",
+              "MOTORRAD"
+            ],
+            "description": "The brand of the vehicle."
+          },
+          "isOwnershipBMW": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "Is this vehicle from an internal BMW vehicles pool."
+          },
+          "ownershipType": {
+            "type": "string",
+            "examples": [
+              "TEST_VEHICLE",
+              "PROTOTYPE",
+              "ERLKOENIG",
+              "customer-near test fleet(KNG/KNT)",
+              "company car (CCA/CCB/CCF/CCS)",
+              "event/press vehicle",
+              "COMPANY_RENTALS",
+              "JAWA"
+            ],
+            "description": "From which type is the BMW ownership?"
+          },
+          "model": {
+            "type": "string",
+            "examples": [
+              "iX3"
+            ],
+            "maxLength": 100,
+            "description": "The model of the vehicle."
+          },
+          "productionYear": {
+            "type": "string",
+            "maxLength": 20,
+            "examples": [
+              "2020"
+            ],
+            "description": "The production year of the vehicle."
+          },
+          "developmentCode": {
+            "type": "string",
+            "examples": [
+              "G20"
+            ],
+            "maxLength": 100,
+            "description": "The development code of the vehicle model."
+          },
+          "engineType": {
+            "type": "string",
+            "examples": [
+              "Electric"
+            ],
+            "maxLength": 64,
+            "description": "The engine type (e.g., Electric, Diesel)."
+          },
+          "isDigitalKeyUsage": {
+            "type": "boolean",
+            "examples": [
+              "false"
+            ],
+            "description": "Does the vehicle use a digital key?"
+          },
+          "mileageInKm": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              4230
+            ],
+            "description": "How many kilometers did the car run?"
+          },
+          "avgDistanceTravelledPerWeekInKm": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              1000
+            ],
+            "description": "Number of kilometers the car drives in average in one week."
+          },
+          "engineOilLevelPercentage": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              70
+            ],
+            "description": "Oil Level of the engine as percentage."
+          },
+          "batteryConditionPercentage": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              12
+            ],
+            "description": "State of charge of the 12V Battery as percentage."
+          },
+          "batteryHealthPercentage": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              95
+            ],
+            "description": "12V Battery health value as percentage."
+          },
+          "coolerTemperatureInCelsius": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              87
+            ],
+            "description": "Temperature of the engine coolant in degrees Celsius."
+          },
+          "outsideTemperatureInCelsius": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              23
+            ],
+            "description": "Ambient temperature at the breakdown location in degrees Celsius."
+          },
+          "tirePressure": {
+            "type": "object",
+            "description": "Tire pressures for each wheel measured in bar.",
+            "properties": {
+              "frontRightInBar": {
+                "type": "number",
+                "format": "float",
+                "examples": [
+                  2.3
+                ],
+                "description": "Pressure of the front right tire in bar."
+              },
+              "frontLeftInBar": {
+                "type": "number",
+                "format": "float",
+                "examples": [
+                  2.3
+                ],
+                "description": "Pressure of the front left tire in bar."
+              },
+              "rearRightInBar": {
+                "type": "number",
+                "format": "float",
+                "examples": [
+                  2.3
+                ],
+                "description": "Pressure of the rear right tire in bar."
+              },
+              "rearLeftInBar": {
+                "type": "number",
+                "format": "float",
+                "examples": [
+                  2.3
+                ],
+                "description": "Pressure of the rear left tire in bar."
+              }
+            }
+          },
+          "tankFillInLiter": {
+            "type": "number",
+            "format": "int64",
+            "examples": [
+              66
+            ],
+            "description": "Current tank fill in liters."
+          },
+          "stateOfChargePercentage": {
+            "type": "integer",
+            "format": "int64",
+            "examples": [
+              42
+            ],
+            "description": "Battery charge of electric vehicles in percentage."
+          },
+          "color": {
+            "type": "string",
+            "examples": [
+              "metallic blue"
+            ],
+            "maxLength": 100,
+            "description": "The color of the vehicle."
+          },
+          "transmissionType": {
+            "type": "string",
+            "maxLength": 50,
+            "enum": [
+              "AUTOMATIC",
+              "MANUAL"
+            ],
+            "description": "Transmission type of the vehicle."
+          },
+          "propulsionType": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "What type of fuel or propulsion the vehicle uses (e.g., Hybrid, Diesel, Electric)."
+          },
+          "licensePlate": {
+            "type": "string",
+            "maxLength": 64,
+            "examples": [
+              "B-MW1000"
+            ],
+            "description": "License plate of the vehicle."
+          },
+          "dtcs": {
+            "type": "string",
+            "examples": [
+              "C0045"
+            ],
+            "maxLength": 100,
+            "description": "Diagnostic trouble codes created by the vehicle in case of a problem."
+          }
+        }
+      },
+      "ServiceTO": {
+        "type": "object",
+        "description": "Representation of a service attached to a case. Uses a discriminator (serviceType) to specify the concrete service sub-type.",
+        "required": [
+          "bmwServiceId",
+          "serviceDetails"
+        ],
+        "properties": {
+          "bmwServiceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of a service, set by BMW OSA system.",
+            "examples": [
+              "c91147f5-41a7-4edc-a76a-1a22cb60d11b"
+            ]
+          },
+          "serviceDetails": {
+            "description": "Service specific details. One of the service sub-schemas (RRV, TOWING, TAXI, etc.) must be provided and is identified by the serviceType discriminator.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RrvTO"
+              },
+              {
+                "$ref": "#/components/schemas/TowingTO"
+              },
+              {
+                "$ref": "#/components/schemas/TaxiTO"
+              },
+              {
+                "$ref": "#/components/schemas/LocalPassengerTransportTO"
+              },
+              {
+                "$ref": "#/components/schemas/ReplacementVehicleTO"
+              },
+              {
+                "$ref": "#/components/schemas/HotelTO"
+              },
+              {
+                "$ref": "#/components/schemas/FlightTO"
+              },
+              {
+                "$ref": "#/components/schemas/TrainTO"
+              },
+              {
+                "$ref": "#/components/schemas/FerryTO"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "serviceType",
+              "mapping": {
+                "RRV": "#/components/schemas/RrvTO",
+                "TOWING": "#/components/schemas/TowingTO",
+                "TAXI": "#/components/schemas/TaxiTO",
+                "LOCAL_PASSENGER_TRANSPORT": "#/components/schemas/LocalPassengerTransportTO",
+                "REPLACEMENT_VEHICLE": "#/components/schemas/ReplacementVehicleTO",
+                "HOTEL": "#/components/schemas/HotelTO",
+                "FLIGHT": "#/components/schemas/FlightTO",
+                "TRAIN": "#/components/schemas/TrainTO",
+                "FERRY": "#/components/schemas/FerryTO"
+              }
+            }
+          }
+        }
+      },
+      "RrvTO": {
+        "type": "object",
+        "description": "RRV details.",
+        "required": [
+          "serviceType",
+          "isCustomerOnSite",
+          "isEnoughSpace",
+          "serviceLocation"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "RRV"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "When is the service scheduled by Call Center Agent? In ISO-8601 format."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "isCustomerOnSite": {
+            "type": "boolean",
+            "description": "Indicates whether the customer is physically present at the breakdown location."
+          },
+          "isEnoughSpace": {
+            "type": "boolean",
+            "description": "Indicates whether there is enough space at the breakdown location to perform the required work."
+          },
+          "locationType": {
+            "type": "string",
+            "maxLength": 50,
+            "enum": [
+              "BUSINESS_PARKING_LOT",
+              "BUSINESS_PARKING_STRUCTURE",
+              "BUSINESS_STREET",
+              "BUSINESS_IMPOUND_STORAGE",
+              "RESIDENCE_DRIVEWAY",
+              "RESIDENCE_HOME_GARAGE",
+              "RESIDENCE_PARKING_LOT",
+              "RESIDENCE_PARKING_STRUCTURE",
+              "RESIDENCE_STREET",
+              "OTHER_HIGHWAY",
+              "OTHER_OFF_ROAD",
+              "OTHER_STREET"
+            ],
+            "description": "Classification of the location type where the service will be performed."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationTO"
+          }
+        }
+      },
+      "TowingTO": {
+        "type": "object",
+        "description": "Towing service details including start/target locations and towing category.",
+        "required": [
+          "serviceType",
+          "isRepatriation",
+          "isVehicleAutomatic",
+          "canVehicleBeMoved",
+          "isEngineStartable",
+          "isCustomerOnSite",
+          "isEnoughSpace",
+          "dropOffTo",
+          "startLocation",
+          "targetLocation",
+          "distanceInKm",
+          "towCategory"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "TOWING"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "towCategory": {
+            "type": "string",
+            "maxLength": 255,
+            "enum": [
+              "TOWING",
+              "VEHICLE_RECOVERY",
+              "TOWING_AND_VEHICLE_RECOVERY",
+              "CRANE"
+            ],
+            "description": "Which kind of towing is needed?"
+          },
+          "isVehicleAutomatic": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Is the vehicle automatic? Transmission type."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "When is the service scheduled by Call Center Agent? In ISO-8601 format."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "servicePartnerName": {
+            "type": "string",
+            "examples": [
+              "BMW M\u00fcnchen"
+            ],
+            "description": "The name of the BMW dealer IF the drop off location is a BMW DEALER."
+          },
+          "servicePartnerPhoneNumber": {
+            "type": "string",
+            "examples": [
+              "+4917212345678"
+            ],
+            "description": "The phone number of the BMW dealer IF the drop off location is a BMW DEALER."
+          },
+          "canVehicleBeMoved": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Can the vehicle be moved TRUE or is it blocked? FALSE."
+          },
+          "isEngineStartable": {
+            "type": "boolean",
+            "examples": [
+              false
+            ],
+            "description": "Can the engine of the vehicle be started?"
+          },
+          "isCustomerOnSite": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Is the customer on site?"
+          },
+          "isEnoughSpace": {
+            "type": "boolean",
+            "examples": [
+              true
+            ],
+            "description": "Is there enough space to work on the vehicle?"
+          },
+          "locationType": {
+            "type": "string",
+            "maxLength": 50,
+            "enum": [
+              "BUSINESS_PARKING_LOT",
+              "BUSINESS_PARKING_STRUCTURE",
+              "BUSINESS_STREET",
+              "BUSINESS_IMPOUND_STORAGE",
+              "RESIDENCE_DRIVEWAY",
+              "RESIDENCE_HOME_GARAGE",
+              "RESIDENCE_PARKING_LOT",
+              "RESIDENCE_PARKING_STRUCTURE",
+              "RESIDENCE_STREET",
+              "OTHER_HIGHWAY",
+              "OTHER_OFF_ROAD",
+              "OTHER_STREET"
+            ],
+            "description": "Classification of the location where towing will take place."
+          },
+          "dropOffTo": {
+            "type": "string",
+            "maxLength": 30,
+            "enum": [
+              "DEALER",
+              "CHARGING_STATION",
+              "OTHER"
+            ],
+            "description": "Where the vehicle should be dropped off."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "distanceInKm": {
+            "type": "number",
+            "format": "float",
+            "examples": [
+              23.5
+            ],
+            "minimum": 0.0,
+            "description": "Calculated distance for the service."
+          },
+          "if": {
+            "description": "Conditional schema fragment used to indicate additional repatriation related constraints (kept for compatibility).",
+            "properties": {
+              "repatriation": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "description": "Additional required fields and structure when repatriation is true.",
+            "required": [
+              "repatriationScope",
+              "repatriationType",
+              "vehicleCondition",
+              "latestArrivalAtDestination",
+              "repatriationDistance",
+              "pickUpContact",
+              "dropOffContact",
+              "startLocation",
+              "targetLocation"
+            ],
+            "properties": {
+              "serviceType": {
+                "type": "string",
+                "examples": [
+                  "Repatriation"
+                ],
+                "description": "Indicates a repatriation service subtype."
+              },
+              "repatriationScope": {
+                "type": "string",
+                "enum": [
+                  "INTERNATIONAL",
+                  "NATIONAL"
+                ],
+                "description": "Scope of the repatriation."
+              },
+              "repatriationType": {
+                "type": "string",
+                "enum": [
+                  "COLLECTIVE_TRANSPORT",
+                  "SINGLE_TRANSPORT",
+                  "DRIVING_SERVICE"
+                ],
+                "description": "Type of repatriation transport."
+              },
+              "vehicleCondition": {
+                "type": "object",
+                "description": "Condition information about the vehicle for repatriation.",
+                "properties": {
+                  "isRepaired": {
+                    "type": "boolean",
+                    "description": "Whether the vehicle has been repaired."
+                  },
+                  "isRollable": {
+                    "type": "boolean",
+                    "description": "Whether the vehicle can be rolled/transported under its own wheels."
+                  }
+                }
+              },
+              "latestArrivalAtDestinationAt": {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2023-03-01T13:50:28.925Z"
+                ],
+                "description": "Latest acceptable arrival time at destination. In ISO-8601 format."
+              },
+              "repatriationDistanceInKm": {
+                "type": "number",
+                "format": "float",
+                "examples": [
+                  34.5
+                ],
+                "description": "Estimated repatriation distance in kilometers."
+              },
+              "pickUpContact": {
+                "description": "Details of the pick up contact; different structures depending on contact type.",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "name",
+                      "phoneNumber"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOMER"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "phoneNumber": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "contactFirstName"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "DEALER"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "isPhoneNumber": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "contactFirstName"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "WORKSHOP"
+                        ]
+                      },
+                      "name": {
+                        "type": "number"
+                      },
+                      "phoneNumber": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ],
+                "required": [
+                  "type"
+                ]
+              },
+              "noteForPickUp": {
+                "type": "string",
+                "examples": [
+                  "Please call Mr. BMW for correct address"
+                ],
+                "description": "Optional note for pick up instructions."
+              },
+              "dropOffContact": {
+                "description": "Details for the drop off contact; structure varies by contact type.",
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOMER"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "phoneNumber": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "DEALER"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "isPhoneNumber": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "WORKSHOP"
+                        ]
+                      },
+                      "name": {
+                        "type": "number"
+                      },
+                      "phoneNumber": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "TaxiTO": {
+        "type": "object",
+        "description": "Taxi service details including passenger counts and trip metadata.",
+        "required": [
+          "serviceType",
+          "isRepatriation",
+          "startLocation",
+          "targetLocation",
+          "isPrepaymentCustomer",
+          "distanceInKm",
+          "category",
+          "numberAdults",
+          "numberChildren",
+          "departureDateTime"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "TAXI"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "When is the service scheduled by Call Center Agent? In ISO-8601 format."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 255,
+            "enum": [
+              "PREMIUM",
+              "STANDARD"
+            ],
+            "description": "Category of taxi service (e.g., PREMIUM or STANDARD)."
+          },
+          "numberAdults": {
+            "type": "integer",
+            "examples": [
+              2,
+              4
+            ],
+            "min": 1,
+            "max": 10,
+            "description": "How many adults are relevant for this service?"
+          },
+          "numberChildren": {
+            "type": "integer",
+            "examples": [
+              0,
+              2
+            ],
+            "min": 0,
+            "max": 10,
+            "description": "How many children are relevant for this service?"
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "distanceInKm": {
+            "type": "number",
+            "format": "float",
+            "examples": [
+              23.5
+            ],
+            "minimum": 0.0,
+            "description": "Calculated distance for the service."
+          },
+          "departureDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to start the journey. In ISO-8601 format."
+          },
+          "arrivalDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to end the journey. In ISO-8601 format."
+          }
+        }
+      },
+      "LocalPassengerTransportTO": {
+        "type": "object",
+        "description": "Local passenger transport service details (e.g., shuttle or transfer).",
+        "required": [
+          "serviceType",
+          "isRepatriation",
+          "startLocation",
+          "targetLocation",
+          "isPrepaymentCustomer",
+          "distanceInKm",
+          "category",
+          "numberAdults",
+          "numberChildren",
+          "departureDateTime"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "LOCAL_PASSENGER_TRANSPORT"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "When is the service scheduled by Call Center Agent? In ISO-8601 format."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 255,
+            "enum": [
+              "PREMIUM",
+              "STANDARD"
+            ],
+            "description": "Category of the local passenger transport service."
+          },
+          "numberAdults": {
+            "type": "integer",
+            "examples": [
+              2,
+              4
+            ],
+            "min": 1,
+            "max": 10,
+            "description": "How many adults are relevant for this service?"
+          },
+          "numberChildren": {
+            "type": "integer",
+            "examples": [
+              0,
+              2
+            ],
+            "min": 0,
+            "max": 10,
+            "description": "How many children are relevant for this service?"
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "distanceInKm": {
+            "type": "number",
+            "format": "float",
+            "examples": [
+              23.5
+            ],
+            "minimum": 0.0,
+            "description": "Calculated distance for the service."
+          },
+          "departureDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to start the journey. In ISO-8601 format."
+          },
+          "arrivalDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to end the journey. In ISO-8601 format."
+          }
+        }
+      },
+      "ReplacementVehicleTO": {
+        "type": "object",
+        "description": "Replacement vehicle service details including reservation and driver information.",
+        "required": [
+          "serviceType",
+          "isDriverLicenseAvailable",
+          "reservationFrom",
+          "reservationUntil",
+          "startLocation",
+          "isPrepaymentCustomer",
+          "category",
+          "isRepatriation"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "REPLACEMENT_VEHICLE"
+            ],
+            "description": "The service type of the ordered RSA service."
+          },
+          "isProlongation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "Indicates if the reservation is a prolongation of an existing one."
+          },
+          "prolongationNote": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "1000 char free text. Mandadotry if isProlongation = true"
+            ],
+            "description": "Explanation when the reservation is a prolongation."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 255,
+            "enum": [
+              "SUBCOMPACT_CAR",
+              "COMPACT_CAR_UKL",
+              "MID_SIZE_CAR_KKL",
+              "MID_SIZE_LUXURY_CAR_MKL",
+              "LUXURY_CAR_GKL",
+              "LUXURY_CAR",
+              "MOTORCYCLE"
+            ],
+            "description": "The replacement vehicle category that is ordered."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "additionalDriverFirstName": {
+            "type": "string",
+            "maxLength": 50,
+            "examples": [
+              "Steffi"
+            ],
+            "description": "First name of an additional driver, if any."
+          },
+          "additionalDriverLastName": {
+            "type": "string",
+            "maxLength": 50,
+            "examples": [
+              "Graf"
+            ],
+            "description": "Last name of an additional driver, if any."
+          },
+          "isDriverLicenseAvailable": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the driver license of the driver (customer) is available."
+          },
+          "driverAge": {
+            "type": "integer",
+            "examples": [
+              25
+            ],
+            "description": "The age of the driver (customer)."
+          },
+          "driverLicenseNumber": {
+            "type": "string",
+            "maxLength": 50,
+            "examples": [
+              "A234234 SAF"
+            ],
+            "description": "The license number of the driver (customer)."
+          },
+          "reservationFrom": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "22023-03-01T13:50:28.925Z"
+            ],
+            "description": "Date/time from when the replacement car is needed. In ISO-8601 format."
+          },
+          "reservationUntil": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "22023-03-01T13:50:28.925Z"
+            ],
+            "description": "Date/time until when the replacement car is needed. In ISO-8601 format."
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO",
+            "description": "The location where the vehicle will be picked up."
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO",
+            "description": "The location where the vehicle will be returned."
+          }
+        }
+      },
+      "HotelTO": {
+        "type": "object",
+        "description": "Hotel accommodation details for the customer.",
+        "required": [
+          "serviceType",
+          "numberGuests",
+          "reservationFrom",
+          "reservationUntil",
+          "numberAdults",
+          "numberChildren",
+          "serviceLocation",
+          "isPrepaymentCustomer",
+          "hotelCategory",
+          "isRepatriation"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "HOTEL"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "reservationFrom": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "22023-03-01T13:50:28.925Z"
+            ],
+            "description": "The date and time on which the customer will check in. In ISO-8601 format."
+          },
+          "reservationUntil": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "22023-03-01T13:50:28.925Z"
+            ],
+            "description": "The date and time on which the customer will check out. In ISO-8601 format."
+          },
+          "isProlongation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "Indicates if the hotel reservation is a prolongation."
+          },
+          "prolongationNote": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "1000 char free text. Mandatory if isProlongation = true"
+            ],
+            "description": "Note describing the reason for prolongation when applicable."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "FOUR_STAR",
+              "FIVE_STAR"
+            ],
+            "description": "Requested hotel category."
+          },
+          "numberRooms": {
+            "type": "number",
+            "examples": [
+              2
+            ],
+            "description": "Number of rooms reserved."
+          },
+          "numberAdults": {
+            "type": "number",
+            "min": 1,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of adults in the reservation."
+          },
+          "numberChildren": {
+            "type": "number",
+            "min": 0,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of children in the reservation."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationTO",
+            "description": "Location of the Hotel."
+          }
+        }
+      },
+      "FlightTO": {
+        "type": "object",
+        "description": "Flight booking details when a flight service is arranged.",
+        "required": [
+          "serviceType",
+          "numberChildren",
+          "numberAdults",
+          "startLocation",
+          "targetLocation",
+          "isPrepaymentCustomer",
+          "isRepatriation",
+          "category",
+          "departureDateTime"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "examples": [
+              "FLIGHT"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "numberAdults": {
+            "type": "number",
+            "min": 1,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of adult passengers for the flight booking."
+          },
+          "numberChildren": {
+            "type": "number",
+            "min": 0,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of child passengers for the flight booking."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "ECONOMY_CLASS",
+              "BUSINESS_CLASS"
+            ],
+            "description": "Flight travel class."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "departureDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to start the journey. In ISO-8601 format."
+          },
+          "arrivalDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to end the journey. In ISO-8601 format."
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          }
+        }
+      },
+      "TrainTO": {
+        "type": "object",
+        "description": "Train booking details when a train service is arranged.",
+        "required": [
+          "serviceType",
+          "numberChildren",
+          "numberAdults",
+          "startLocation",
+          "targetLocation",
+          "isPrepaymentCustomer",
+          "isRepatriation",
+          "category",
+          "departureDateTime"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "examples": [
+              "Train"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "numberAdults": {
+            "type": "number",
+            "min": 1,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of adult passengers for the train booking."
+          },
+          "numberChildren": {
+            "type": "number",
+            "min": 0,
+            "max": 10,
+            "examples": [
+              2
+            ],
+            "description": "Number of child passengers for the train booking."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "NATIONAL",
+              "INTERNATIONAL",
+              "FIRST_CLASS_TICKET"
+            ],
+            "description": "Train ticket category requested."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "departureDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to start the journey. In ISO-8601 format."
+          },
+          "arrivalDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "examples": [
+              "2023-03-01T13:50:28.925Z"
+            ],
+            "description": "The day and time the service is supposed to end the journey. In ISO-8601 format."
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          }
+        }
+      },
+      "FerryTO": {
+        "type": "object",
+        "description": "Ferry transport details when a ferry is booked as part of the service.",
+        "required": [
+          "serviceType",
+          "numberAdults",
+          "numberChildren",
+          "startLocation",
+          "targetLocation",
+          "isPrepaymentCustomer",
+          "distanceInKm",
+          "isRepatriation"
+        ],
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "maxLength": 30,
+            "examples": [
+              "FERRY"
+            ],
+            "description": "The type of the ordered RSA service."
+          },
+          "isRepatriation": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the service is part of a repatriation."
+          },
+          "numberAdults": {
+            "type": "number",
+            "examples": [
+              2
+            ],
+            "description": "Number of adult passengers for the ferry booking."
+          },
+          "numberChildren": {
+            "type": "number",
+            "examples": [
+              2
+            ],
+            "description": "Number of child passengers for the ferry booking."
+          },
+          "isPrepaymentCustomer": {
+            "type": "boolean",
+            "examples": [
+              true,
+              false
+            ],
+            "description": "If the customer will pay for this service in advance."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Notes that the OSA Call Center Agent can add for the RSA Provider."
+          },
+          "startLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "targetLocation": {
+            "$ref": "#/components/schemas/LocationTO"
+          },
+          "distanceInKm": {
+            "type": "number",
+            "format": "float",
+            "examples": [
+              23.5
+            ],
+            "minimum": 0.0,
+            "description": "Calculated distance for the service."
+          }
+        }
+      },
+      "LocationTO": {
+        "type": "object",
+        "description": "Geographical and address information for a location used by services.",
+        "required": [
+          "longitude",
+          "latitude"
+        ],
+        "properties": {
+          "street": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "Maximilianstra\u00dfe"
+            ],
+            "description": "Street name of the location."
+          },
+          "houseNumber": {
+            "type": "string",
+            "maxLength": 25,
+            "examples": [
+              "5a"
+            ],
+            "description": "House number of the location."
+          },
+          "zip": {
+            "type": "string",
+            "maxLength": 32,
+            "examples": [
+              "80809"
+            ],
+            "description": "Postal code of the location."
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "Munich"
+            ],
+            "description": "City of the location."
+          },
+          "state": {
+            "type": "string",
+            "examples": [
+              "Bavaria"
+            ],
+            "description": "State or region of the location."
+          },
+          "countryCodeIso": {
+            "type": "string",
+            "examples": [
+              "DE"
+            ],
+            "maxLength": 2,
+            "minLength": 2,
+            "description": "The country of the customer. In ISO 3166 Alpha-2 country code."
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "examples": [
+              48.1372
+            ],
+            "description": "Longitude coordinate in decimal degrees."
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "examples": [
+              11.5755
+            ],
+            "description": "Latitude coordinate in decimal degrees."
+          },
+          "locationName": {
+            "type": "string",
+            "maxLength": 1000,
+            "examples": [
+              "BMW office parking"
+            ],
+            "description": "A human readable name for the location (e.g., 'BMW office parking')."
+          },
+          "directionOfTravel": {
+            "type": "string",
+            "maxLength": 2,
+            "enum": [
+              "N",
+              "E",
+              "S",
+              "W",
+              "NE",
+              "NW",
+              "SE",
+              "SW"
+            ],
+            "description": "Cardinal direction showing heading of a vehicle."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "open_id_connect": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "https://todo.com",
+        "description": "OpenID Connect security scheme used for authenticating requests to the API. Replace openIdConnectUrl with the provider's discovery endpoint."
+      }
+    }
+  },
+  "security": [
+    {
+      "open_id_connect": [
+        "read",
+        "write"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,890 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Proposio API",
+    "version": "1.0.0",
+    "description": "Multi-tenant SaaS API for managing users, clients, proposals, AI generation, scraping, settings, and billing.\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/RHYSGILLESPIE/ProposioAPI/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.proposio.com",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:4000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Tenant"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Clients"
+    },
+    {
+      "name": "Proposals"
+    },
+    {
+      "name": "AI"
+    },
+    {
+      "name": "Scraping"
+    },
+    {
+      "name": "Billing"
+    },
+    {
+      "name": "Settings"
+    }
+  ],
+  "paths": {
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Get current authenticated user profile",
+        "description": "Returns the authenticated user's details including userId, tenantId, role, status, and profile fields.\n",
+        "responses": {
+          "200": {
+            "description": "Authenticated user information"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}": {
+      "get": {
+        "tags": [
+          "Tenant"
+        ],
+        "summary": "Get tenant metadata",
+        "description": "Fetch information about this tenant such as company name and status.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant metadata returned"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Tenant"
+        ],
+        "summary": "Update tenant fields",
+        "description": "Partially update tenant fields such as companyName, websiteUrl, logoUrl, or status.\n",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tenant"
+        ],
+        "summary": "Soft-delete tenant",
+        "description": "Mark tenant as inactive (used when cancelling account).",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tenant deactivated"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List all users in the tenant",
+        "description": "Returns all active, invited, or disabled users in the tenant.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Invite a new user",
+        "description": "Creates a new Cognito user using AdminCreateUser and inserts a user record into DynamoDB with status \"invited\".\n",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "admin"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User invited successfully"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/users/{userId}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get a single user",
+        "description": "Return detailed information about a specific user in the tenant.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User record returned"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update user fields",
+        "description": "Partially update user fields such as role, status, firstName, or lastName.\n",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Remove user from tenant",
+        "description": "Deletes Cognito user and removes user record from DB.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/clients": {
+      "get": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "List clients",
+        "description": "Returns all clients associated with the tenant.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of clients"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Create client",
+        "description": "Create a new client for this tenant.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Client created"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/clients/{clientId}": {
+      "get": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Get client",
+        "description": "Fetch a specific client by ID.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client returned"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Update client",
+        "description": "Partially update client fields (name, website, notes, contact info).",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clients"
+        ],
+        "summary": "Delete client",
+        "description": "Permanently delete a client and related cached data.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Client deleted"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/proposals": {
+      "get": {
+        "tags": [
+          "Proposals"
+        ],
+        "summary": "List proposals",
+        "description": "List all proposals for this tenant.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of proposals"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Proposals"
+        ],
+        "summary": "Create proposal",
+        "description": "Create a new proposal draft.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Proposal created"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/proposals/{proposalId}": {
+      "get": {
+        "tags": [
+          "Proposals"
+        ],
+        "summary": "Get proposal",
+        "description": "Fetch a proposal by ID.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proposal returned"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Proposals"
+        ],
+        "summary": "Update proposal",
+        "description": "Partially update title, content, status, or fields of a proposal.\n",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proposal updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Proposals"
+        ],
+        "summary": "Delete proposal",
+        "description": "Delete a proposal permanently.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Proposal deleted"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/ai/proposals/generate": {
+      "post": {
+        "tags": [
+          "AI"
+        ],
+        "summary": "Generate proposal content",
+        "description": "Generates a proposal using LLM context from tenant and client data.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated proposal content returned"
+          }
+        }
+      }
+    }
+  },
+  "/tenant/{tenantId}/scrape/tenant-website": {
+    "post": {
+      "tags": [
+        "Scraping"
+      ],
+      "summary": "Scrape tenant website",
+      "description": "Scrapes the tenant website for branding and company info.",
+      "parameters": [
+        {
+          "name": "tenantId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "description": "Tenant website URL to scrape."
+                },
+                "forceRefresh": {
+                  "type": "boolean",
+                  "description": "Force re-scrape even if cached."
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tenant website scraped"
+        }
+      }
+    },
+    "/tenant/{tenantId}/scrape/client-website": {
+      "post": {
+        "tags": [
+          "Scraping"
+        ],
+        "summary": "Scrape client website",
+        "description": "Scrapes the client website for contextual information.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Client website scraped"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/billing/subscription": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Get subscription status",
+        "description": "Returns the tenant's active subscription, limits, and billing status.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription returned"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/billing/checkout": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Create checkout session",
+        "description": "Creates a Stripe Checkout session to activate or purchase subscription.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stripe checkout session URL returned"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/billing/portal": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Create billing portal session",
+        "description": "Returns a Stripe customer portal link for updating billing details.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stripe portal URL returned"
+          }
+        }
+      }
+    },
+    "/billing/webhook": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "summary": "Stripe webhook handler",
+        "description": "Handles subscription updates, renewals, and cancellations.",
+        "responses": {
+          "200": {
+            "description": "Webhook processed"
+          }
+        }
+      }
+    },
+    "/tenant/{tenantId}/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Get tenant settings",
+        "description": "Fetch settings like branding, defaults, scraper preferences.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant settings returned"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update tenant settings",
+        "description": "Partially update settings fields such as brandColor or template defaults.",
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant settings updated"
+          }
+        }
+      }
+    }
+  }
+}

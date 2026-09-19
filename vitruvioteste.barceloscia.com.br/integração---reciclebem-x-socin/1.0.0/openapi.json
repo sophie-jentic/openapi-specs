@@ -1,0 +1,543 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Integra\u00e7\u00e3o - RecicleBem x Socin",
+    "description": "Cole\u00e7\u00e3o de endpoints para integra\u00e7\u00e3o RecicleBem x Socin.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/TIAGOINABA_1/integracao-reciclebem-x-socin/1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-WS-TOKEN-AUTH",
+        "description": "Chave de API para integra\u00e7\u00e3o"
+      }
+    },
+    "schemas": {
+      "PaymentStatus": {
+        "type": "object",
+        "required": [
+          "total",
+          "transaction_id",
+          "status"
+        ],
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "O valor monet\u00e1rio total.",
+            "example": 25.4
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "UUID \u00fanico da autoriza\u00e7\u00e3o"
+          },
+          "status": {
+            "type": "string",
+            "description": "O status da autoriza\u00e7\u00e3o",
+            "enum": [
+              "authorized",
+              "insufficient-funds",
+              "rejected",
+              "pending",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "CreateAuthorizationPayload": {
+        "type": "object",
+        "description": "Representa uma solicita\u00e7\u00e3o de pagamento via RecicleBem.",
+        "required": [
+          "id",
+          "payment_total",
+          "items_quantity",
+          "cupom_fiscal",
+          "empresa",
+          "pdv",
+          "total"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador da venda gerado pelo PDV. Caso haja m\u00faltiplos pagamentos via RecicleBem na venda, utilize o mesmo ID. Limitado a 40 caracteres."
+          },
+          "payment_total": {
+            "type": "number",
+            "format": "float",
+            "description": "Valor total do pagamento com o saldo do RecicleBem",
+            "example": 10
+          },
+          "total": {
+            "type": "number",
+            "format": "float",
+            "description": "Valor total da venda",
+            "example": 50.25
+          },
+          "items_quantity": {
+            "type": "integer",
+            "description": "Quantidade de itens na compra",
+            "example": 3
+          },
+          "cupom_fiscal": {
+            "type": "string",
+            "description": "N\u00famero do cupom fiscal",
+            "example": "000123"
+          },
+          "empresa": {
+            "type": "integer",
+            "description": "Local de compra - ID da tabela de empresa da C5",
+            "example": 224
+          },
+          "pdv": {
+            "type": "integer",
+            "description": "ID do PDV",
+            "example": 5
+          }
+        }
+      },
+      "CreateAuthorizationResponse": {
+        "type": "object",
+        "description": "Um objeto com o ID da solicita\u00e7\u00e3o registrada.",
+        "required": [
+          "transaction_id",
+          "qr_code"
+        ],
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "description": "UUID da transa\u00e7\u00e3o registrada."
+          },
+          "qr_code": {
+            "type": "string",
+            "description": "Representa\u00e7\u00e3o em QRCode do UUID da transa\u00e7\u00e3o."
+          }
+        }
+      },
+      "FinishPaymentRequest": {
+        "type": "object",
+        "description": "Representa uma solicita\u00e7\u00e3o de finaliza\u00e7\u00e3o de pagamento via RecicleBem.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador da venda gerado pelo PDV. Caso haja m\u00faltiplos pagamentos via RecicleBem na venda, utilize o mesmo ID."
+          }
+        }
+      },
+      "PaymentReversalRequest": {
+        "type": "object",
+        "description": "Representa uma solicita\u00e7\u00e3o de estorno de pagamento via RecicleBem.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador da venda gerado pelo PDV. Caso haja m\u00faltiplos pagamentos via RecicleBem na venda, todos ser\u00e3o estornados."
+          }
+        }
+      },
+      "PaymentCancellationRequest": {
+        "type": "object",
+        "description": "Representa uma solicita\u00e7\u00e3o de cancelamento/estorno de pagamento individual.",
+        "required": [
+          "uuid"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "description": "Identificador da autoriza\u00e7\u00e3o retornado pelo endpoint de registro."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Motivo do cancelamento, opcional"
+          }
+        }
+      },
+      "PaymentReversal": {
+        "type": "object",
+        "description": "Representa um pagamento estornado",
+        "required": [
+          "req_uuid",
+          "uuid_estorno",
+          "valor"
+        ],
+        "properties": {
+          "req_uuid": {
+            "type": "string",
+            "description": "ID da transa\u00e7\u00e3o"
+          },
+          "uuid_estorno": {
+            "type": "string",
+            "description": "ID do movimento de estorno"
+          },
+          "valor": {
+            "type": "number",
+            "description": "Valor do estorno"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Resposta de Erro da API",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "c\u00f3digo do erro"
+          },
+          "message": {
+            "type": "string",
+            "description": "mensagem do erro"
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://vitruvioteste.barceloscia.com.br:9090",
+      "description": "Ambiente de testes"
+    },
+    {
+      "url": "http://davinti.barceloscia.com.br:9090/",
+      "description": "Ambiente de produ\u00e7\u00e3o"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/rest/api/integration/tokenauth/rb_socin_autorizacao_consulta": {
+      "get": {
+        "summary": "Consulta o status da autoriza\u00e7\u00e3o.\n",
+        "description": "Aceita o ID da transa\u00e7\u00e3o e retorna seu status.",
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pagamento encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "transaction_id n\u00e3o encontrado nos query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pagamento n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/api/integration/tokenauth/rb_socin_autorizacao": {
+      "get": {
+        "summary": "Consulta o status das autoriza\u00e7\u00f5es para determinado pagamento.\n",
+        "description": "Aceita o ID do pagamento e retorna as autoriza\u00e7\u00f5es.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pagamento encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentStatus"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID n\u00e3o encontrado nos query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pagamento n\u00e3o encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Registra uma nova autoriza\u00e7\u00e3o no pagamento especificado.",
+        "description": "Aceita os dados do pagamento e retorna o ID da transa\u00e7\u00e3o.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorizationPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Solicita\u00e7\u00e3o criada e registrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAuthorizationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisi\u00e7\u00e3o inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/api/integration/tokenauth/rb_socin_cancelar_autorizacao": {
+      "post": {
+        "summary": "Estorna a autoriza\u00e7\u00e3o especificada.",
+        "description": "Cancela a autoriza\u00e7\u00e3o de pagamento, e estorna seus pagamentos, se existirem.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentCancellationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Pagamento estornado com sucesso"
+          },
+          "400": {
+            "description": "Corpo da requisi\u00e7\u00e3o inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/api/integration/tokenauth/rb_socin_estorno": {
+      "post": {
+        "summary": "Estorna o pagamento especificado.",
+        "description": "Cancela todos os movimentos atrelados \u00e0 este pagamento.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentReversalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento estornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentReversal"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisi\u00e7\u00e3o inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rest/api/integration/tokenauth/rb_socin_finalizar": {
+      "post": {
+        "summary": "Finaliza o pagamento especificado.",
+        "description": "Efetiva as baixas de saldo autorizadas e cancela as pendentes, retornando todas as autoriza\u00e7\u00f5es registradas neste pagamento.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinishPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento finalizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentStatus"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo da requisi\u00e7\u00e3o inv\u00e1lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Tentativa de finaliza\u00e7\u00e3o n\u00e3o sucedida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentStatus"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

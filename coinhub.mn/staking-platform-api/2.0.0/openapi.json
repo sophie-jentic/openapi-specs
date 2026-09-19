@@ -1,0 +1,2098 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Staking Platform API",
+    "description": "API for Staking Platform application. Provides endpoints for managing staking plans, investments, and user operations.",
+    "version": "2.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/antiersolutionspvtlt/staking-platform-api/2.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v2",
+      "description": "Development server"
+    },
+    {
+      "url": "https://www.coinhub.mn/api/v2",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin Plans",
+      "description": "Admin endpoints for managing staking plans"
+    },
+    {
+      "name": "Admin Investments",
+      "description": "Admin endpoints for managing investments"
+    },
+    {
+      "name": "Investment Stake",
+      "description": "User endpoints for staking operations"
+    },
+    {
+      "name": "Investment Asset",
+      "description": "User endpoints for viewing available assets"
+    },
+    {
+      "name": "Management Members",
+      "description": "Management API for member operations"
+    },
+    {
+      "name": "Management Tools",
+      "description": "Management API utility endpoints"
+    }
+  ],
+  "paths": {
+    "/admin/plans": {
+      "get": {
+        "tags": [
+          "Admin Plans"
+        ],
+        "summary": "Get Plans list",
+        "description": "Retrieve a paginated list of staking plans",
+        "operationId": "getPlans",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "description": "Filter by plan state",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "active"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit the number of returned results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify the page of paginated results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Sort order",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "description": "Field to order by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "Total": {
+                "description": "Total number of records",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Per-Page": {
+                "description": "Number of records per page",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Page": {
+                "description": "Current page number",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Plan"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Plans"
+        ],
+        "summary": "Create Staking Plan",
+        "description": "Create a new staking plan with durations",
+        "operationId": "createPlan",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanCreateRequest"
+              },
+              "example": {
+                "currency_id": "BTC",
+                "min_amount": 0.001,
+                "max_amount": 10.0,
+                "durations_attributes": [
+                  {
+                    "no_of_days": 30,
+                    "apy": 5.5
+                  },
+                  {
+                    "no_of_days": 60,
+                    "apy": 7.0
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin Plans"
+        ],
+        "summary": "Update Staking Plan",
+        "description": "Update an existing staking plan",
+        "operationId": "updatePlan",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanUpdateRequest"
+              },
+              "example": {
+                "id": 1,
+                "min_amount": 0.002,
+                "max_amount": 20.0,
+                "durations_attributes": [
+                  {
+                    "no_of_days": 30,
+                    "apy": 6.0
+                  },
+                  {
+                    "no_of_days": 90,
+                    "apy": 8.5
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/admin/plans/{id}/duration/{duration_id}": {
+      "put": {
+        "tags": [
+          "Admin Plans"
+        ],
+        "summary": "Update Duration",
+        "description": "Update a specific duration for a plan",
+        "operationId": "updateDuration",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Plan ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "duration_id",
+            "in": "path",
+            "description": "Duration ID",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "no_of_days",
+                  "apy"
+                ],
+                "properties": {
+                  "no_of_days": {
+                    "type": "number",
+                    "format": "decimal",
+                    "description": "Number of days",
+                    "example": 45
+                  },
+                  "apy": {
+                    "type": "number",
+                    "format": "decimal",
+                    "description": "Annual percentage yield",
+                    "example": 6.5
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Duration updated successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/admin/plans/delete": {
+      "put": {
+        "tags": [
+          "Admin Plans"
+        ],
+        "summary": "Delete Plan",
+        "description": "Soft delete a staking plan by setting state to inactive",
+        "operationId": "deletePlan",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Plan ID",
+                    "example": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/admin/investments": {
+      "get": {
+        "tags": [
+          "Admin Investments"
+        ],
+        "summary": "Get Investment list",
+        "description": "Retrieve a paginated list of investments with filtering options",
+        "operationId": "getInvestments",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit the number of returned results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify the page of paginated results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Sort order",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "description": "Field to order by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "description": "Date range field",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created",
+                "updated",
+                "completed",
+                "started",
+                "finished"
+              ],
+              "default": "created"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start date (Unix timestamp)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End date (Unix timestamp)",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Filter by member email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Filter by investment ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "aasm_state",
+            "in": "query",
+            "description": "Filter by state",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency_id",
+            "in": "query",
+            "description": "Filter by currency ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "Filter by amount",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "decimal"
+            }
+          },
+          {
+            "name": "total_days",
+            "in": "query",
+            "description": "Filter by total days",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "decimal"
+            }
+          },
+          {
+            "name": "duration_left",
+            "in": "query",
+            "description": "Filter by duration left",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "Total": {
+                "description": "Total number of records",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Per-Page": {
+                "description": "Number of records per page",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Page": {
+                "description": "Current page number",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminInvestment"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin Investments"
+        ],
+        "summary": "Export Investments CSV",
+        "description": "Request CSV export of investments data via email",
+        "operationId": "exportInvestmentsCSV",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Export type",
+                    "example": "investments"
+                  },
+                  "range": {
+                    "type": "string",
+                    "enum": [
+                      "created",
+                      "updated",
+                      "completed",
+                      "started",
+                      "finished"
+                    ],
+                    "default": "created"
+                  },
+                  "from": {
+                    "type": "integer",
+                    "description": "Start date (Unix timestamp)"
+                  },
+                  "to": {
+                    "type": "integer",
+                    "description": "End date (Unix timestamp)"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Email search parameter"
+                  },
+                  "id": {
+                    "type": "integer",
+                    "description": "ID search parameter"
+                  },
+                  "currency_id": {
+                    "type": "string",
+                    "description": "Currency search parameter"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Amount search parameter"
+                  }
+                }
+              },
+              "example": {
+                "type": "investments",
+                "from": 1609459200,
+                "to": 1640995200,
+                "currency_id": "BTC"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CSV export request accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/admin/investments/{id}": {
+      "put": {
+        "tags": [
+          "Admin Investments"
+        ],
+        "summary": "Premature Withdraw",
+        "description": "Admin endpoint to trigger premature withdrawal of an investment",
+        "operationId": "prematureWithdrawInvestment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Investment ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawal processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminInvestment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/stake": {
+      "get": {
+        "tags": [
+          "Investment Stake"
+        ],
+        "summary": "Get Staking list",
+        "description": "Get current user's staking information including running and previous investments",
+        "operationId": "getStake",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stake"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Investment Stake"
+        ],
+        "summary": "Create Investment",
+        "description": "Create a new staking investment",
+        "operationId": "createInvestment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestmentCreateRequest"
+              },
+              "example": {
+                "amount": 1.5,
+                "total_days": 30,
+                "currency_id": "BTC",
+                "apy": 5.5
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Investment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInvestment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/stake/portfolio/rewards": {
+      "get": {
+        "tags": [
+          "Investment Stake"
+        ],
+        "summary": "Get Portfolio rewards list",
+        "description": "Get aggregated portfolio rewards grouped by currency",
+        "operationId": "getPortfolioRewards",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PortfolioReward"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/stake/{plan}": {
+      "get": {
+        "tags": [
+          "Investment Stake"
+        ],
+        "summary": "Get custom staking plan list",
+        "description": "Get user's running or exhausted staking plans",
+        "operationId": "getStakePlan",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "plan",
+            "in": "path",
+            "description": "Plan type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "running",
+                "exhausted"
+              ]
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "Filter by currency",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit the number of returned results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify the page of paginated results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Sort order",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "description": "Field to order by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "Total": {
+                "description": "Total number of records",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Per-Page": {
+                "description": "Number of records per page",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Page": {
+                "description": "Current page number",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInvestment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/stake/{id}": {
+      "put": {
+        "tags": [
+          "Investment Stake"
+        ],
+        "summary": "Premature Withdraw",
+        "description": "User endpoint to trigger premature withdrawal of their investment",
+        "operationId": "prematureWithdrawStake",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Investment ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Withdrawal processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInvestment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/asset": {
+      "get": {
+        "tags": [
+          "Investment Asset"
+        ],
+        "summary": "Get Staking Assets",
+        "description": "Get list of available staking plans with user balance information",
+        "operationId": "getAssets",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit the number of returned results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Specify the page of paginated results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Sort order",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "description": "Field to order by",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "headers": {
+              "Total": {
+                "description": "Total number of records",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Per-Page": {
+                "description": "Number of records per page",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Page": {
+                "description": "Current page number",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Asset"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/management/members": {
+      "post": {
+        "tags": [
+          "Management Members"
+        ],
+        "summary": "Create a member",
+        "description": "Create a new member via Management API (server-to-server)",
+        "operationId": "createMember",
+        "security": [
+          {
+            "ManagementJWT": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jwt"
+                ],
+                "properties": {
+                  "jwt": {
+                    "type": "object",
+                    "description": "JWT token containing member data",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "email",
+                          "uid",
+                          "level",
+                          "role",
+                          "state",
+                          "group"
+                        ],
+                        "properties": {
+                          "email": {
+                            "type": "string",
+                            "format": "email",
+                            "example": "user@example.com"
+                          },
+                          "uid": {
+                            "type": "string",
+                            "example": "U123456789"
+                          },
+                          "level": {
+                            "type": "integer",
+                            "example": 3
+                          },
+                          "role": {
+                            "type": "string",
+                            "example": "member"
+                          },
+                          "state": {
+                            "type": "string",
+                            "example": "active"
+                          },
+                          "group": {
+                            "type": "string",
+                            "example": "vip-0"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "jwt": {
+                  "data": {
+                    "email": "user@example.com",
+                    "uid": "U123456789",
+                    "level": 3,
+                    "role": "member",
+                    "state": "active",
+                    "group": "vip-0"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/management/members/group": {
+      "post": {
+        "tags": [
+          "Management Members"
+        ],
+        "summary": "Set user group",
+        "description": "Update a member's group via Management API",
+        "operationId": "setMemberGroup",
+        "security": [
+          {
+            "ManagementJWT": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jwt"
+                ],
+                "properties": {
+                  "jwt": {
+                    "type": "object",
+                    "description": "JWT token containing member data",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "uid",
+                          "group"
+                        ],
+                        "properties": {
+                          "uid": {
+                            "type": "string",
+                            "example": "U123456789"
+                          },
+                          "group": {
+                            "type": "string",
+                            "example": "vip-1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "jwt": {
+                  "data": {
+                    "uid": "U123456789",
+                    "group": "vip-1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member group updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/management/timestamp": {
+      "post": {
+        "tags": [
+          "Management Tools"
+        ],
+        "summary": "Get server timestamp",
+        "description": "Returns server time in ISO8601 format",
+        "operationId": "getTimestamp",
+        "security": [
+          {
+            "ManagementJWT": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jwt"
+                ],
+                "properties": {
+                  "jwt": {
+                    "type": "object",
+                    "description": "JWT token"
+                  }
+                }
+              },
+              "example": {
+                "jwt": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server timestamp",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-01-15T10:30:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token authentication for user and admin endpoints"
+      },
+      "ManagementJWT": {
+        "type": "apiKey",
+        "in": "body",
+        "name": "jwt",
+        "description": "JWT multisig authentication for Management API. JWT must be sent in request body as JSON object with 'jwt' key."
+      }
+    },
+    "schemas": {
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "currency_id": {
+            "type": "string",
+            "example": "BTC"
+          },
+          "currency_name": {
+            "type": "string",
+            "example": "Bitcoin"
+          },
+          "icon": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/icons/btc.png"
+          },
+          "min_amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 0.001
+          },
+          "max_amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 10.0
+          },
+          "state": {
+            "type": "string",
+            "example": "active"
+          },
+          "durations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Duration"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "currency_id",
+          "currency_name",
+          "min_amount",
+          "max_amount",
+          "state"
+        ]
+      },
+      "PlanCreateRequest": {
+        "type": "object",
+        "required": [
+          "currency_id",
+          "min_amount",
+          "max_amount",
+          "durations_attributes"
+        ],
+        "properties": {
+          "currency_id": {
+            "type": "string",
+            "description": "Plan currency ID",
+            "example": "BTC"
+          },
+          "min_amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Minimum investment amount",
+            "example": 0.001
+          },
+          "max_amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Maximum investment amount",
+            "example": 10.0
+          },
+          "durations_attributes": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "required": [
+                "no_of_days",
+                "apy"
+              ],
+              "properties": {
+                "no_of_days": {
+                  "type": "number",
+                  "format": "decimal",
+                  "description": "Number of days for this duration",
+                  "example": 30
+                },
+                "apy": {
+                  "type": "number",
+                  "format": "decimal",
+                  "description": "Annual percentage yield (as percentage, e.g., 5.5 for 5.5%)",
+                  "example": 5.5
+                }
+              }
+            }
+          }
+        }
+      },
+      "PlanUpdateRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "min_amount",
+          "max_amount",
+          "durations_attributes"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Plan ID",
+            "example": 1
+          },
+          "min_amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Minimum investment amount",
+            "example": 0.002
+          },
+          "max_amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Maximum investment amount",
+            "example": 20.0
+          },
+          "durations_attributes": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "type": "object",
+              "required": [
+                "no_of_days",
+                "apy"
+              ],
+              "properties": {
+                "no_of_days": {
+                  "type": "number",
+                  "format": "decimal",
+                  "description": "Number of days for this duration",
+                  "example": 30
+                },
+                "apy": {
+                  "type": "number",
+                  "format": "decimal",
+                  "description": "Annual percentage yield (as percentage)",
+                  "example": 6.0
+                }
+              }
+            }
+          }
+        }
+      },
+      "Duration": {
+        "type": "object",
+        "properties": {
+          "no_of_days": {
+            "type": "number",
+            "format": "decimal",
+            "example": 30
+          },
+          "apy": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Annual percentage yield (as percentage)",
+            "example": 5.5
+          }
+        },
+        "required": [
+          "no_of_days",
+          "apy"
+        ]
+      },
+      "UserInvestment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 1.5
+          },
+          "duration_left": {
+            "type": "integer",
+            "example": 25
+          },
+          "total_days": {
+            "type": "number",
+            "format": "decimal",
+            "example": 30
+          },
+          "currency_name": {
+            "type": "string",
+            "example": "Bitcoin"
+          },
+          "currency_id": {
+            "type": "string",
+            "example": "BTC"
+          },
+          "apy": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Annual percentage yield (as percentage)",
+            "example": 5.5
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/icons/btc.png"
+          },
+          "earning": {
+            "type": "number",
+            "format": "decimal",
+            "example": 0.06875
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal",
+            "example": 45000.0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00Z"
+          },
+          "aasm_state": {
+            "type": "string",
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "currency_id",
+          "currency_name",
+          "total_days",
+          "apy",
+          "aasm_state"
+        ]
+      },
+      "AdminInvestment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 1.5
+          },
+          "duration_left": {
+            "type": "integer",
+            "example": 25
+          },
+          "total_days": {
+            "type": "number",
+            "format": "decimal",
+            "example": 30
+          },
+          "total_earning": {
+            "type": "number",
+            "format": "decimal",
+            "example": 0.06875
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "currency_id": {
+            "type": "string",
+            "example": "BTC"
+          },
+          "currency_name": {
+            "type": "string",
+            "example": "Bitcoin"
+          },
+          "apy": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Annual percentage yield (as percentage)",
+            "example": 5.5
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal",
+            "example": 45000.0
+          },
+          "icon": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/icons/btc.png"
+          },
+          "state": {
+            "type": "string",
+            "example": "active"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00Z"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-31T00:00:00Z"
+          },
+          "cancelled_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Present only if state is early_withdraw",
+            "example": "2024-01-15T10:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "currency_id",
+          "currency_name",
+          "total_days",
+          "apy",
+          "state"
+        ]
+      },
+      "InvestmentCreateRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "total_days",
+          "currency_id",
+          "apy"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Investment amount",
+            "example": 1.5
+          },
+          "total_days": {
+            "type": "integer",
+            "description": "Investment duration in days",
+            "example": 30
+          },
+          "currency_id": {
+            "type": "string",
+            "description": "Currency ID for the investment",
+            "example": "BTC"
+          },
+          "apy": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Annual percentage yield (as percentage)",
+            "example": 5.5
+          }
+        }
+      },
+      "Stake": {
+        "type": "object",
+        "properties": {
+          "current_investment": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserInvestment"
+            },
+            "description": "Current running investments (limit 5)"
+          },
+          "previous_investment": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserInvestment"
+            },
+            "description": "Previous exhausted investments (limit 5)"
+          }
+        }
+      },
+      "PortfolioReward": {
+        "type": "object",
+        "properties": {
+          "currency_name": {
+            "type": "string",
+            "example": "Bitcoin"
+          },
+          "currency_id": {
+            "type": "string",
+            "example": "BTC"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/icons/btc.png"
+          },
+          "amount": {
+            "type": "number",
+            "format": "decimal",
+            "description": "Total earning for this currency",
+            "example": 0.15
+          }
+        },
+        "required": [
+          "currency_id",
+          "currency_name",
+          "amount"
+        ]
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "currency_id": {
+            "type": "string",
+            "example": "BTC"
+          },
+          "currency_name": {
+            "type": "string",
+            "example": "Bitcoin"
+          },
+          "icon_url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://example.com/icons/btc.png"
+          },
+          "min_amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 0.001
+          },
+          "max_amount": {
+            "type": "number",
+            "format": "decimal",
+            "example": 10.0
+          },
+          "state": {
+            "type": "string",
+            "example": "active"
+          },
+          "balance": {
+            "type": "number",
+            "format": "decimal",
+            "description": "User's balance for this currency",
+            "example": 2.5
+          },
+          "durations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Duration"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "currency_id",
+          "currency_name",
+          "min_amount",
+          "max_amount",
+          "state"
+        ]
+      },
+      "Member": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string",
+            "example": "U123456789"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "level": {
+            "type": "integer",
+            "example": 3
+          },
+          "role": {
+            "type": "string",
+            "example": "member"
+          },
+          "group": {
+            "type": "string",
+            "example": "vip-0"
+          },
+          "state": {
+            "type": "string",
+            "example": "active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00Z"
+          }
+        },
+        "required": [
+          "uid",
+          "email",
+          "level",
+          "role",
+          "group",
+          "state"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "plan.not_found",
+              "validation.error"
+            ]
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "plan.min_amount.non_positive_fees",
+              "plan.currency.invalid"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errors": [
+                "Invalid request parameters"
+              ]
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Invalid or missing authentication token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errors": [
+                "Unauthorized"
+              ]
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errors": [
+                "admin.ability.not_permitted"
+              ]
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "example": {
+              "errors": [
+                "plan.min_amount.non_positive_fees",
+                "investment.invalid_amount"
+              ]
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "errors": [
+                "Internal server error"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

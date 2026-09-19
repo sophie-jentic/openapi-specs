@@ -1,0 +1,1221 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "VPC Orchestrator API",
+    "description": "API for orchestrating VPC network components including VLAN, PORT, and PATH creation.\nThis service handles the lifecycle management of Virtual Private Cloud resources through Temporal workflows.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Network Orchestration Team",
+      "email": "network-orchestration@lumen.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://www.lumen.com/legal"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/CenturyLink_APIs/nod-composite-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/naasorchestrator",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api-dev.lumen.com/naasorchestrator",
+      "description": "Development environment"
+    },
+    {
+      "url": "https://api-uat.lumen.com/naasorchestrator",
+      "description": "UAT environment"
+    },
+    {
+      "url": "https://api.lumen.com/naasorchestrator",
+      "description": "Production environment"
+    }
+  ],
+  "tags": [
+    {
+      "name": "VPC Orchestration",
+      "description": "VPC network component orchestration operations"
+    }
+  ],
+  "paths": {
+    "/api/v1/networks/vpcs": {
+      "post": {
+        "tags": [
+          "VPC Orchestration"
+        ],
+        "summary": "Create VPC",
+        "description": "Creates a new Virtual Private Cloud with associated network components.\nThis operation is asynchronous and returns immediately with a resource ID and status URL for tracking progress.\n",
+        "operationId": "createVpc",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "header",
+            "required": true,
+            "description": "Customer account identifier",
+            "schema": {
+              "type": "string"
+            },
+            "example": "3-ZR8BVJRJWP"
+          },
+          {
+            "name": "orderSource",
+            "in": "header",
+            "required": false,
+            "description": "Source system of the order",
+            "schema": {
+              "type": "string"
+            },
+            "example": "PORTAL"
+          },
+          {
+            "name": "callbackUrl",
+            "in": "header",
+            "required": false,
+            "description": "URL for status callbacks",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": "https://api.customer.com/callbacks/vpc-status"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VpcBuildRequest"
+              },
+              "examples": {
+                "standard-vpc": {
+                  "summary": "Standard VPC creation",
+                  "value": {
+                    "requestId": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c",
+                    "customer": {
+                      "name": "Enterprise Customer Inc",
+                      "accountNumber": "3-ZR8BVJRJWP",
+                      "accountType": "ENTERPRISE"
+                    },
+                    "productType": "EDGE_COMPUTE_VPC",
+                    "serviceId": "CO/IRXX/425356/LVLC",
+                    "clliCode": "DENVCO01",
+                    "vlan": 100,
+                    "hosts": [
+                      {
+                        "name": "MINERLABBM020101",
+                        "portServiceId": "optional-port-service-id"
+                      }
+                    ],
+                    "path": {
+                      "pathName": "primary-path",
+                      "pathType": "mpls",
+                      "bandwidth": 1000
+                    },
+                    "timeoutInSeconds": 3600
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "VPC creation accepted and workflow initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NaasResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                      "requestStatusUrl": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VPC already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onJobComplete": {
+            "{$request.header.callbackUrl}": {
+              "post": {
+                "description": "Callback URL for VPC creation status updates",
+                "operationId": "onVpcCreationComplete",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/NaasCallbackPayload"
+                      },
+                      "example": {
+                        "source": "NAAS",
+                        "requestId": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c",
+                        "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                        "status": "SUCCESS",
+                        "operation": "BUILD",
+                        "links": {
+                          "self": {
+                            "href": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+                          }
+                        },
+                        "exception": null
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback processed successfully"
+                  },
+                  "400": {
+                    "description": "Invalid callback payload",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  },
+                  "500": {
+                    "description": "Internal server error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VPC Orchestration"
+        ],
+        "summary": "Submit delete request using either request Id or service Id",
+        "description": "NaaS will delete all the components of an end to end VPC which are tied up to given requestId or service id in NaaS. NaaS will return an operation url so the caller can do the polling to find out the current operation status",
+        "operationId": "deleteByRequestIdOrServiceId",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orderSource",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "callbackUrl",
+            "in": "header",
+            "required": false,
+            "description": "URL for status callbacks",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Request is accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NaasResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict, found multiple resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onJobComplete": {
+            "{$request.header.callbackUrl}": {
+              "post": {
+                "description": "Callback URL for VPC delete status updates",
+                "operationId": "onVpcDeleteComplete",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/NaasCallbackPayload"
+                      },
+                      "example": {
+                        "source": "NAAS",
+                        "requestId": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c",
+                        "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                        "status": "SUCCESS",
+                        "operation": "DELETE",
+                        "links": {
+                          "self": {
+                            "href": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+                          }
+                        },
+                        "exception": null
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback processed successfully"
+                  },
+                  "400": {
+                    "description": "Invalid callback payload",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  },
+                  "500": {
+                    "description": "Internal server error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/networks/vpcs/{resourceId}": {
+      "get": {
+        "tags": [
+          "VPC Orchestration"
+        ],
+        "summary": "Get VPC Status",
+        "description": "Check the request status by resource ID.\nRetrieves the current status and information for a VPC resource.\n",
+        "operationId": "getVpcStatus",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "header",
+            "required": true,
+            "description": "Customer account identifier",
+            "schema": {
+              "type": "string"
+            },
+            "example": "3-ZR8BVJRJWP"
+          },
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "description": "Unique identifier of the VPC resource",
+            "schema": {
+              "type": "string"
+            },
+            "example": "vpc-550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VPC status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VpcStatusResponse"
+                },
+                "examples": {
+                  "active": {
+                    "value": {
+                      "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                      "requestId": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c",
+                      "status": "SUCCESS",
+                      "operation": "BUILD",
+                      "requestDate": "2025-10-10T14:30:00Z",
+                      "customer": {
+                        "name": "Enterprise Customer Inc",
+                        "accountNumber": "3-ZR8BVJRJWP",
+                        "accountType": "ENTERPRISE"
+                      },
+                      "message": "VPC creation completed successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VPC not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "VPC Orchestration"
+        ],
+        "summary": "Submit VPC request to delete host/s from the build that have more than one host",
+        "description": "NaaS will return an operation url so the caller can do the polling to find out the current operation status",
+        "operationId": "modify_vpc",
+        "parameters": [
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "accountId",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VpcModifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VPC not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Request is accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NaasResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VPC Orchestration"
+        ],
+        "summary": "Delete VPC",
+        "description": "Deletes a VPC and all associated network components.\nThis operation is asynchronous and returns immediately with a resource ID and status URL for tracking progress.\n",
+        "operationId": "deleteVpc",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "header",
+            "required": true,
+            "description": "Customer account identifier",
+            "schema": {
+              "type": "string"
+            },
+            "example": "3-ZR8BVJRJWP"
+          },
+          {
+            "name": "orderSource",
+            "in": "header",
+            "required": false,
+            "description": "Source system of the order",
+            "schema": {
+              "type": "string"
+            },
+            "example": "PORTAL"
+          },
+          {
+            "name": "callbackUrl",
+            "in": "header",
+            "required": false,
+            "description": "URL for status callbacks",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "example": "https://api.customer.com/callbacks/vpc-status"
+          },
+          {
+            "name": "resourceId",
+            "in": "path",
+            "required": true,
+            "description": "Unique identifier of the VPC resource to delete",
+            "schema": {
+              "type": "string"
+            },
+            "example": "vpc-550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "VPC deletion accepted and workflow initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NaasResponse"
+                },
+                "examples": {
+                  "success": {
+                    "value": {
+                      "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                      "requestStatusUrl": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VPC not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VPC cannot be deleted (e.g., still has active connections)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "callbacks": {
+          "onJobComplete": {
+            "{$request.header.callbackUrl}": {
+              "post": {
+                "description": "Callback URL for VPC delete by resourceId status updates",
+                "operationId": "onVpcDeleteByResourceIdComplete",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/NaasCallbackPayload"
+                      },
+                      "example": {
+                        "source": "NAAS",
+                        "requestId": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c",
+                        "resourceId": "vpc-550e8400-e29b-41d4-a716-446655440000",
+                        "status": "SUCCESS",
+                        "operation": "DELETE",
+                        "links": {
+                          "self": {
+                            "href": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+                          }
+                        },
+                        "exception": null
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Callback processed successfully"
+                  },
+                  "400": {
+                    "description": "Invalid callback payload",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  },
+                  "500": {
+                    "description": "Internal server error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/ErrorResponse"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/networks/callback/{callbackId}": {
+      "post": {
+        "tags": [
+          "Orchestration Events"
+        ],
+        "description": "Callback URL for VPC and other orchestration activities",
+        "operationId": "callback",
+        "parameters": [
+          {
+            "name": "callbackId",
+            "in": "path",
+            "required": true,
+            "description": "Unique callback identifier of the resource workflow or activity.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "vpc-550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NaasCallbackPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed successfully"
+          },
+          "400": {
+            "description": "Invalid callback payload"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VpcBuildRequest": {
+        "required": [
+          "customer",
+          "hosts",
+          "productType",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "A unique identifier that is associated with customer's end-to-end build request",
+            "example": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerInfo"
+          },
+          "timeoutInSeconds": {
+            "type": "integer",
+            "description": "Timeout in seconds",
+            "format": "int32"
+          },
+          "productType": {
+            "type": "string",
+            "description": "Product Type",
+            "example": "either EDGE_COMPUTE_VPC or EDGE_COMPUTE_VNAT_UNTRUST",
+            "enum": [
+              "EDGE_COMPUTE_VPC",
+              "EDGE_COMPUTE_VNAT_UNTRUST"
+            ]
+          },
+          "serviceId": {
+            "type": "string",
+            "description": "The service ID; ServiceID required if VNI supplied. Give a CLLI code if there is no service ID",
+            "example": "CO/IRXX/425356/LVLC"
+          },
+          "clliCode": {
+            "type": "string",
+            "description": "The CLLI code; Give a service ID if there is no CLLI code",
+            "example": "must be 8 or 11 characters long"
+          },
+          "vlan": {
+            "type": "integer",
+            "description": "The vlan",
+            "format": "int32",
+            "example": 3
+          },
+          "hosts": {
+            "type": "array",
+            "description": "List of hosts and their names",
+            "example": [
+              {
+                "name": "MINERLABBM020101",
+                "portServiceId": "optional"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EdgeInternetHostInfo"
+            }
+          },
+          "path": {
+            "$ref": "#/components/schemas/VpcPathInfo"
+          }
+        }
+      },
+      "VpcModifyRequest": {
+        "required": [
+          "customer",
+          "hosts"
+        ],
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CustomerInfo"
+          },
+          "hosts": {
+            "type": "array",
+            "description": "List of hosts and their names to be kept, remove from this list the ones you want to delete",
+            "example": [
+              {
+                "name": "MINERLABBM020101"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EdgeInternetHostInfo"
+            }
+          }
+        }
+      },
+      "NaasResponse": {
+        "type": "object",
+        "required": [
+          "resourceId",
+          "requestStatusUrl"
+        ],
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "description": "Unique identifier of the created resource",
+            "example": "vpc-550e8400-e29b-41d4-a716-446655440000"
+          },
+          "requestStatusUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to check the status of the request",
+            "example": "https://api.lumen.com/naasorchestrator/api/v1/networks/vpcs/vpc-550e8400-e29b-41d4-a716-446655440000"
+          },
+          "operationId": {
+            "type": "string",
+            "description": "Unique identifier of the operation",
+            "example": "5573e8250b4d4a6f93369407bee6bdec"
+          }
+        }
+      },
+      "NaasCallbackPayload": {
+        "type": "object",
+        "required": [
+          "resourceId",
+          "status",
+          "operation"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Source of the callback payload.",
+            "example": "NAAS"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "A unique identifier that is associated with customer's end-to-end build request",
+            "example": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c"
+          },
+          "resourceId": {
+            "type": "string"
+          },
+          "jobId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string"
+          },
+          "links": {
+            "$ref": "#/components/schemas/Links"
+          },
+          "exception": {
+            "$ref": "#/components/schemas/NaasErrorDetail"
+          }
+        }
+      },
+      "Links": {
+        "type": "object",
+        "properties": {
+          "self": {
+            "$ref": "#/components/schemas/SelfLink"
+          }
+        }
+      },
+      "SelfLink": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string"
+          }
+        }
+      },
+      "CustomerInfo": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Customer name",
+            "example": "Enterprise Customer Inc"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Customer number or customer busOrg Id",
+            "example": "3-ZR8BVJRJWP"
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "ban": {
+            "type": "string",
+            "description": "Billing account number",
+            "example": "123456789"
+          }
+        }
+      },
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "ENTERPRISE",
+          "CONSUMER",
+          "GOVERNMENT"
+        ],
+        "description": "Type of customer account",
+        "example": "ENTERPRISE"
+      },
+      "VpcProductType": {
+        "type": "string",
+        "enum": [
+          "EDGE_COMPUTE_VPC",
+          "EDGE_COMPUTE_VNAT_UNTRUST"
+        ],
+        "description": "Product type for VPC",
+        "example": "EDGE_COMPUTE_VPC"
+      },
+      "EdgeInternetHostInfo": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Host name",
+            "example": "MINERLABBM020101"
+          },
+          "portServiceId": {
+            "type": "string",
+            "description": "Optional port service identifier",
+            "example": "optional-port-service-id"
+          },
+          "leafDevices": {
+            "type": "array",
+            "description": "optional list of leaf devices to be used for build",
+            "items": {
+              "$ref": "#/components/schemas/LeafDevice"
+            }
+          }
+        }
+      },
+      "LeafDevice": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "leaf device name",
+            "example": "ML4ECTSTQH007"
+          },
+          "lags": {
+            "type": "array",
+            "description": "list of lags",
+            "items": {
+              "$ref": "#/components/schemas/Lag"
+            }
+          }
+        }
+      },
+      "Lag": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "optional lag name",
+            "example": "ae100"
+          },
+          "vlan": {
+            "type": "string",
+            "description": "option vlan field",
+            "example": "70"
+          }
+        }
+      },
+      "VpcPathInfo": {
+        "type": "object",
+        "properties": {
+          "vni": {
+            "type": "string",
+            "description": "vni",
+            "example": "Optional field. If supplied, must also supply associated Service ID"
+          },
+          "peFilter": {
+            "type": "array",
+            "description": "Optional field, used with EDGE_COMPUTE_VNAT_UNTRUST_IPVPN.",
+            "items": {
+              "$ref": "#/components/schemas/PeFilter"
+            }
+          },
+          "peDevices": {
+            "type": "array",
+            "description": "The derived data",
+            "items": {
+              "$ref": "#/components/schemas/PeSwitch"
+            }
+          }
+        },
+        "description": "Information for Path Build"
+      },
+      "PeFilter": {
+        "required": [
+          "deviceName",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceName": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "description": "only needed for VNAT trust and untrust ipvpn"
+      },
+      "PeSwitch": {
+        "type": "object",
+        "properties": {
+          "deviceName": {
+            "type": "string"
+          },
+          "interfaceName": {
+            "type": "string"
+          },
+          "vlan": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          }
+        }
+      },
+      "VpcStatusResponse": {
+        "type": "object",
+        "required": [
+          "resourceId",
+          "requestId",
+          "status",
+          "operation",
+          "requestDate"
+        ],
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "description": "Unique identifier of the VPC resource",
+            "example": "vpc-550e8400-e29b-41d4-a716-446655440000"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Unique identifier of the original request",
+            "example": "41c998be-0de3-4cb2-8931-9fc3aecb1e6c"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "WIP",
+              "SUCCESS",
+              "FAILURE"
+            ],
+            "description": "Current status of the VPC",
+            "example": "SUCCESS"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "BUILD",
+              "DELETE",
+              "MODIFY"
+            ],
+            "description": "Type of operation performed",
+            "example": "BUILD"
+          },
+          "requestDate": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]{3,4}$",
+            "description": "When the request was submitted",
+            "example": "2025-10-10 14:30:00 CST"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerInfo"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable status message",
+            "example": "VPC creation completed successfully"
+          },
+          "exception": {
+            "$ref": "#/components/schemas/NaasErrorDetail"
+          },
+          "requestData": {
+            "$ref": "#/components/schemas/VpcBuildRequest"
+          }
+        }
+      },
+      "NaasErrorDetail": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code",
+            "example": "VPC_001"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "VPC creation failed"
+          },
+          "detail": {
+            "type": "string",
+            "description": "Detailed error information",
+            "example": "Network timeout during VLAN provisioning"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "status",
+          "error",
+          "message",
+          "path"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the error occurred",
+            "example": "2025-10-10T14:30:00Z"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "error": {
+            "type": "string",
+            "description": "Error type",
+            "example": "Bad Request"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Invalid VPC specification"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path that caused the error",
+            "example": "/api/v1/networks/vpcs"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional error details",
+            "example": [
+              "requestId is required",
+              "customer.name is required"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

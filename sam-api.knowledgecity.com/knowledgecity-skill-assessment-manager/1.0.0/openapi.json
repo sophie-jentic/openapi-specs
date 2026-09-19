@@ -1,0 +1,1388 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "description": "Production Server",
+      "url": "https://sam-api.knowledgecity.com/v1"
+    },
+    {
+      "description": "Stage Server",
+      "url": "https://sam-api.kcstage.pro/v1"
+    },
+    {
+      "description": "Experimental Server",
+      "url": "https://sam-api.kcexp.pro/v1"
+    },
+    {
+      "description": "SwaggerHub API Auto Mocking",
+      "url": "https://virtserver.swaggerhub.com/KCIntegrationTeam/SAM/1.0.0"
+    }
+  ],
+  "info": {
+    "description": "KnowledgeCity Skill Assessment Manager API",
+    "version": "1.0.0",
+    "title": "KnowledgeCity Skill Assessment Manager",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/KCIntegrationTeam/SAM/1.0.0"
+  },
+  "tags": [
+    {
+      "name": "stat",
+      "description": "Information about skill assessment activities"
+    },
+    {
+      "name": "assessments",
+      "description": "Manage assessments and their selected skills"
+    },
+    {
+      "name": "campaigns",
+      "description": "Manage campaigns"
+    },
+    {
+      "name": "skills",
+      "description": "Manage skills"
+    }
+  ],
+  "paths": {
+    "/stat": {
+      "get": {
+        "tags": [
+          "stat"
+        ],
+        "summary": "Get statistics for dashboard etc",
+        "description": "Returns general statistics for dashboard - number of assessments, campaigns, profiles, etc.",
+        "operationId": "getStats",
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stat"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/assessments": {
+      "get": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "Get list of assessments",
+        "description": "Returns a list of all assessments with their statistics",
+        "operationId": "getAssessments",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Assessment"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "Create new assessment",
+        "description": "Creates a new assessment with selected skill UUIDs and generates questions",
+        "operationId": "createAssessment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assessment"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/assessments/{assessmentId}": {
+      "get": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "Get assessment details",
+        "description": "Returns assessment information. Use expand query parameter to include additional details like skills.",
+        "operationId": "getAssessmentById",
+        "parameters": [
+          {
+            "name": "assessmentId",
+            "in": "path",
+            "required": true,
+            "description": "Assessment ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated list of fields to expand (e.g., skills)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "skills"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "assessments"
+        ],
+        "summary": "Delete assessment",
+        "description": "Deletes assessment by ID",
+        "operationId": "deleteAssessment",
+        "parameters": [
+          {
+            "name": "assessmentId",
+            "in": "path",
+            "required": true,
+            "description": "Assessment ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Assessment successfully deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "tags": [
+          "campaigns"
+        ],
+        "summary": "Get list of campaigns",
+        "description": "Returns a list of all campaigns",
+        "operationId": "getCampaigns",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "completed",
+                "draft"
+              ]
+            }
+          },
+          {
+            "name": "assessmentId",
+            "in": "query",
+            "description": "Filter by assessment ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset for pagination",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Campaign"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "campaigns"
+        ],
+        "summary": "Create new campaign",
+        "description": "Creates a new campaign with selected groups and training settings",
+        "operationId": "createCampaign",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCampaignRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Campaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/campaigns/{campaignId}": {
+      "get": {
+        "tags": [
+          "campaigns"
+        ],
+        "summary": "Get campaign details",
+        "description": "Returns full information about campaign",
+        "operationId": "getCampaignById",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "description": "Campaign ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "campaigns"
+        ],
+        "summary": "Delete campaign",
+        "description": "Deletes campaign by ID",
+        "operationId": "deleteCampaign",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "description": "Campaign ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Campaign successfully deleted"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/skills": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Get skills structure",
+        "description": "Returns full hierarchical structure of skills (categories, subcategories, skills) with UUIDs for each skill",
+        "operationId": "getSkills",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subcategory",
+            "in": "query",
+            "description": "Filter by subcategory",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/SkillCategory"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/skills/categories": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Get list of skill categories",
+        "description": "Returns a list of all skill categories",
+        "operationId": "getSkillCategories",
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "example": [
+                  "Communication",
+                  "Business",
+                  "Technology",
+                  "Safety & Compliance"
+                ]
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/skills/categories/{categoryName}/subcategories": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "Get subcategories for category",
+        "description": "Returns a list of subcategories for the specified category",
+        "operationId": "getSubcategories",
+        "parameters": [
+          {
+            "name": "categoryName",
+            "in": "path",
+            "required": true,
+            "description": "Category name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Stat": {
+        "type": "object",
+        "properties": {
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentStat"
+          },
+          "campaigns": {
+            "$ref": "#/components/schemas/CampaignStat"
+          },
+          "profiles": {
+            "$ref": "#/components/schemas/ProfileStat"
+          },
+          "assignments": {
+            "$ref": "#/components/schemas/AssignmentStat"
+          },
+          "recentActivity": {
+            "type": "array",
+            "description": "Recent activities",
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            }
+          }
+        }
+      },
+      "AssessmentStat": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "integer",
+            "description": "Number of active assessments",
+            "example": 10
+          }
+        }
+      },
+      "CampaignStat": {
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "integer",
+            "description": "Number of running campaigns",
+            "example": 10
+          }
+        }
+      },
+      "ProfileStat": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "Total number of user profiles",
+            "example": 1000
+          }
+        }
+      },
+      "AssignmentStat": {
+        "type": "object",
+        "properties": {
+          "taken": {
+            "type": "integer",
+            "description": "Number of assignments taken",
+            "example": 1000
+          }
+        }
+      },
+      "ActivityItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "assessment_created",
+              "campaign_created",
+              "assessment_completed"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique assessment identifier",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Assessment name",
+            "example": "Customer Service Excellence"
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment description",
+            "example": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation date",
+            "example": "2025-11-17T14:04:41.591Z"
+          },
+          "campaignCount": {
+            "type": "integer",
+            "description": "Number of campaigns using this assessment",
+            "example": 3
+          },
+          "completionCount": {
+            "type": "integer",
+            "description": "Number of assessment completions",
+            "example": 45
+          }
+        }
+      },
+      "AssessmentDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "skills": {
+                "type": "array",
+                "description": "Array of skills with quiz details (included when expand=skills)",
+                "items": {
+                  "$ref": "#/components/schemas/AssessmentSkill"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateAssessmentRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "skillIds"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Assessment name",
+            "example": "Customer Service Excellence"
+          },
+          "description": {
+            "type": "string",
+            "description": "Assessment description",
+            "example": ""
+          },
+          "skillIds": {
+            "type": "array",
+            "description": "Array of skill UUIDs to include in the assessment",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "example": [
+              "550e8400-e29b-41d4-a716-446655440000",
+              "550e8400-e29b-41d4-a716-446655440001",
+              "550e8400-e29b-41d4-a716-446655440002"
+            ]
+          }
+        }
+      },
+      "AssessmentSkill": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Skill name",
+            "example": ""
+          },
+          "description": {
+            "type": "string",
+            "description": "Skill description",
+            "example": ""
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Category ID",
+            "example": ""
+          },
+          "quiz": {
+            "$ref": "#/components/schemas/Quiz"
+          }
+        }
+      },
+      "Quiz": {
+        "type": "object",
+        "properties": {
+          "questions": {
+            "type": "array",
+            "description": "Array of quiz questions",
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestion"
+            }
+          }
+        }
+      },
+      "QuizQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Question identifier",
+            "example": ""
+          },
+          "order": {
+            "type": "integer",
+            "description": "Question order",
+            "example": 1
+          },
+          "answer": {
+            "type": "string",
+            "description": "Answer text or identifier",
+            "example": ""
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "multiple-choice",
+              "true-false",
+              "text"
+            ],
+            "description": "Question type",
+            "example": "multiple-choice"
+          },
+          "options": {
+            "type": "array",
+            "description": "Answer options (for multiple-choice questions)",
+            "items": {
+              "$ref": "#/components/schemas/QuizOption"
+            }
+          }
+        }
+      },
+      "QuizOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Option identifier",
+            "example": "opt1"
+          },
+          "text": {
+            "type": "string",
+            "description": "Option text",
+            "example": "To handle asynchronous operations more readably"
+          },
+          "isCorrect": {
+            "type": "boolean",
+            "description": "Whether this option is correct",
+            "example": true
+          }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique campaign identifier",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Campaign name",
+            "example": "Q1 Customer Service Training"
+          },
+          "assessmentId": {
+            "type": "integer",
+            "description": "Associated assessment ID",
+            "example": 1
+          },
+          "assessmentName": {
+            "type": "string",
+            "description": "Assessment name",
+            "example": "Customer Service Excellence"
+          },
+          "groups": {
+            "type": "array",
+            "description": "List of groups with access to the campaign",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Group ID",
+                  "example": "group-1"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Group name",
+                  "example": "Sales Team"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            },
+            "example": [
+              {
+                "id": "group-1",
+                "name": "Sales Team"
+              },
+              {
+                "id": "group-2",
+                "name": "Marketing Team"
+              }
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign start date",
+            "example": "2024-01-15"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign end date",
+            "example": "2024-02-15"
+          },
+          "totalAssessments": {
+            "type": "integer",
+            "description": "Total number of assigned assessments",
+            "example": 25
+          },
+          "completedAssessments": {
+            "type": "integer",
+            "description": "Number of completed assessments",
+            "example": 18
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "draft"
+            ],
+            "description": "Campaign status",
+            "example": "active"
+          },
+          "trainingSettings": {
+            "$ref": "#/components/schemas/TrainingSettings"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation date"
+          }
+        }
+      },
+      "CampaignDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Campaign"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "groupIds": {
+                "type": "array",
+                "description": "IDs of selected groups",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "users": {
+                "type": "array",
+                "description": "List of users in campaign",
+                "items": {
+                  "$ref": "#/components/schemas/CampaignUser"
+                }
+              },
+              "targetUsers": {
+                "type": "object",
+                "description": "Campaign target audience",
+                "additionalProperties": {
+                  "oneOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CampaignUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "User name"
+          },
+          "group": {
+            "type": "string",
+            "description": "User group"
+          },
+          "groupId": {
+            "type": "string",
+            "description": "Group ID"
+          },
+          "initialCompleted": {
+            "type": "boolean",
+            "description": "Whether initial assessment is completed"
+          },
+          "trainingCompleted": {
+            "type": "boolean",
+            "description": "Whether training is completed"
+          },
+          "followupCompleted": {
+            "type": "boolean",
+            "description": "Whether follow-up assessment is completed"
+          },
+          "assessmentId": {
+            "type": "integer",
+            "description": "Assessment ID"
+          }
+        }
+      },
+      "CreateCampaignRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "assessmentId",
+          "groupIds",
+          "startDate",
+          "endDate"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Campaign name",
+            "example": "Q1 Customer Service Training"
+          },
+          "assessmentId": {
+            "type": "integer",
+            "description": "Assessment ID to assign",
+            "example": 1
+          },
+          "groupIds": {
+            "type": "array",
+            "description": "IDs of selected groups",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "group-1",
+              "group-2"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign start date",
+            "example": "2024-01-15"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Campaign end date",
+            "example": "2024-02-15"
+          },
+          "trainingSettings": {
+            "$ref": "#/components/schemas/TrainingSettings"
+          }
+        }
+      },
+      "TrainingSettings": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether training is enabled",
+            "example": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individualized",
+              "level-based",
+              "same-for-all"
+            ],
+            "nullable": true,
+            "description": "Training type",
+            "example": "level-based"
+          },
+          "individualized": {
+            "$ref": "#/components/schemas/IndividualizedTraining"
+          },
+          "levelBased": {
+            "$ref": "#/components/schemas/LevelBasedTraining"
+          },
+          "sameForAll": {
+            "$ref": "#/components/schemas/SameForAllTraining"
+          }
+        }
+      },
+      "IndividualizedTraining": {
+        "type": "object",
+        "properties": {
+          "manualApproval": {
+            "type": "boolean",
+            "description": "Whether manual approval is required",
+            "example": false
+          },
+          "hoursPerMonth": {
+            "type": "number",
+            "description": "Training hours per month",
+            "example": 2
+          },
+          "monthsOfTraining": {
+            "type": "integer",
+            "description": "Number of months of training",
+            "example": 3
+          },
+          "requireReassessment": {
+            "type": "boolean",
+            "description": "Whether reassessment is required",
+            "example": false
+          }
+        }
+      },
+      "LevelBasedTraining": {
+        "type": "object",
+        "properties": {
+          "beginnerLearningPathId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Learning path ID for beginners"
+          },
+          "intermediateLearningPathId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Learning path ID for intermediate level"
+          },
+          "advancedLearningPathId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Learning path ID for advanced level"
+          },
+          "hoursPerMonth": {
+            "type": "number",
+            "description": "Training hours per month",
+            "example": 2
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Training completion deadline"
+          },
+          "requireReassessment": {
+            "type": "boolean",
+            "description": "Whether reassessment is required",
+            "example": false
+          },
+          "manualApproval": {
+            "type": "boolean",
+            "description": "Whether manual approval is required",
+            "example": false
+          }
+        }
+      },
+      "SameForAllTraining": {
+        "type": "object",
+        "properties": {
+          "learningPathIds": {
+            "type": "array",
+            "description": "List of learning path IDs",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "lp-1",
+              "lp-2"
+            ]
+          },
+          "hoursPerMonth": {
+            "type": "number",
+            "description": "Training hours per month",
+            "example": 2
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Training completion deadline"
+          },
+          "requireReassessment": {
+            "type": "boolean",
+            "description": "Whether reassessment is required",
+            "example": false
+          },
+          "manualApproval": {
+            "type": "boolean",
+            "description": "Whether manual approval is required",
+            "example": false
+          }
+        }
+      },
+      "SkillCategory": {
+        "type": "object",
+        "properties": {
+          "subcategories": {
+            "type": "object",
+            "description": "Skill subcategories",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SkillSubcategory"
+            }
+          }
+        }
+      },
+      "SkillSubcategory": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "description": "List of skills in subcategory",
+            "items": {
+              "$ref": "#/components/schemas/Skill"
+            }
+          }
+        }
+      },
+      "Skill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique skill identifier",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Skill name",
+            "example": "Effective Presentations"
+          },
+          "description": {
+            "type": "string",
+            "description": "Skill description",
+            "example": "Develop expertise in Effective Presentations to enhance professional effectiveness."
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Number of results per page",
+            "example": 20
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Offset for pagination",
+            "example": 40
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of items",
+            "example": 230
+          }
+        },
+        "required": [
+          "limit",
+          "offset",
+          "total"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "description": "Error information",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code",
+                "example": "SOME_ERROR_CODE"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human readable description",
+                "example": "Human readable description."
+              },
+              "details": {
+                "type": "array",
+                "description": "Optional additional error details",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "description": "Field name that has an error",
+                      "example": "title"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message for this field",
+                      "example": "Title is required."
+                    }
+                  },
+                  "required": [
+                    "field",
+                    "message"
+                  ]
+                }
+              },
+              "requestId": {
+                "type": "string",
+                "description": "Optional request identifier",
+                "example": "9f0dcd92a25f43cbb8"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "validationError": {
+                "value": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Some fields are invalid.",
+                    "details": [
+                      {
+                        "field": "title",
+                        "message": "Title is required."
+                      },
+                      {
+                        "field": "category_id",
+                        "message": "Category does not exist."
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "notFound": {
+                "value": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Course not found."
+                  }
+                }
+              },
+              "emailExists": {
+                "value": {
+                  "error": {
+                    "code": "EMAIL_ALREADY_EXISTS",
+                    "message": "A user with this email is already registered."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "internalError": {
+                "value": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Unexpected error occurred.",
+                    "requestId": "9f0dcd92a25f43cbb8"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

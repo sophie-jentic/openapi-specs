@@ -1,0 +1,546 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Mautic API",
+    "description": "Mautic is an open-source marketing automation platform. This API provides programmatic access to contacts, companies, campaigns, emails, forms, segments, and more. Self-hosted instances expose the API at {your-mautic-url}/api/.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://devdocs.mautic.org/"
+  },
+  "servers": [
+    {
+      "url": "https://{instance}/api",
+      "description": "Mautic instance API",
+      "variables": {
+        "instance": {
+          "default": "your-mautic-instance.com",
+          "description": "Your Mautic instance hostname"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "OAuth2": ["full"]
+    }
+  ],
+  "paths": {
+    "/contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "List Contacts",
+        "description": "Get a list of contacts (leads).",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search filter string"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 30 }
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "orderByDir",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["asc", "desc"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "contacts": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/components/schemas/Contact" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createContact",
+        "summary": "Create Contact",
+        "description": "Create a new contact.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created contact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contact": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contacts/{id}": {
+      "get": {
+        "operationId": "getContact",
+        "summary": "Get Contact",
+        "description": "Get a single contact by ID.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contact": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateContact",
+        "summary": "Update Contact",
+        "description": "Update a contact's fields.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated contact",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contact": { "$ref": "#/components/schemas/Contact" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteContact",
+        "summary": "Delete Contact",
+        "description": "Delete a contact.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Contact deleted" }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "operationId": "listCompanies",
+        "summary": "List Companies",
+        "description": "Get a list of companies.",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "start", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "companies": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/components/schemas/Company" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCompany",
+        "summary": "Create Company",
+        "description": "Create a new company.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CompanyInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created company",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "company": { "$ref": "#/components/schemas/Company" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "operationId": "listCampaigns",
+        "summary": "List Campaigns",
+        "description": "Get a list of campaigns.",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "start", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "campaigns": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/components/schemas/Campaign" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "operationId": "getCampaign",
+        "summary": "Get Campaign",
+        "description": "Get a single campaign.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "campaign": { "$ref": "#/components/schemas/Campaign" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/contact/{contactId}/add": {
+      "post": {
+        "operationId": "addContactToCampaign",
+        "summary": "Add Contact to Campaign",
+        "description": "Add a contact to a campaign.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "contactId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Contact added to campaign" }
+        }
+      }
+    },
+    "/emails": {
+      "get": {
+        "operationId": "listEmails",
+        "summary": "List Emails",
+        "description": "Get a list of email templates.",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "start", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Email list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "emails": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/components/schemas/Email" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/emails/{id}/contact/{contactId}/send": {
+      "post": {
+        "operationId": "sendEmailToContact",
+        "summary": "Send Email to Contact",
+        "description": "Send an email to a specific contact.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "contactId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tokens": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "description": "Custom token replacements for the email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Email sent" }
+        }
+      }
+    },
+    "/segments": {
+      "get": {
+        "operationId": "listSegments",
+        "summary": "List Segments",
+        "description": "Get a list of contact segments (lists).",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "start", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Segment list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "lists": {
+                      "type": "object",
+                      "additionalProperties": { "$ref": "#/components/schemas/Segment" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/segments/{id}/contact/{contactId}/add": {
+      "post": {
+        "operationId": "addContactToSegment",
+        "summary": "Add Contact to Segment",
+        "description": "Add a contact to a segment.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "contactId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Contact added to segment" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authorization. Mautic also supports HTTP Basic Auth with API credentials.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://{instance}/oauth/v2/authorize",
+            "tokenUrl": "https://{instance}/oauth/v2/token",
+            "scopes": {
+              "full": "Full API access"
+            }
+          }
+        }
+      },
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "HTTP Basic authentication (must be enabled in Mautic configuration)"
+      }
+    },
+    "schemas": {
+      "Contact": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "isPublished": { "type": "boolean" },
+          "dateAdded": { "type": "string", "format": "date-time" },
+          "dateModified": { "type": "string", "format": "date-time" },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "core": {
+                "type": "object",
+                "properties": {
+                  "firstname": { "type": "object", "properties": { "value": { "type": "string" } } },
+                  "lastname": { "type": "object", "properties": { "value": { "type": "string" } } },
+                  "email": { "type": "object", "properties": { "value": { "type": "string" } } },
+                  "company": { "type": "object", "properties": { "value": { "type": "string" } } }
+                }
+              }
+            }
+          },
+          "points": { "type": "integer" },
+          "tags": { "type": "array", "items": { "type": "object", "properties": { "tag": { "type": "string" } } } }
+        }
+      },
+      "ContactInput": {
+        "type": "object",
+        "properties": {
+          "firstname": { "type": "string" },
+          "lastname": { "type": "string" },
+          "email": { "type": "string" },
+          "company": { "type": "string" },
+          "phone": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "country": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "overwriteWithBlank": { "type": "boolean", "default": false }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "isPublished": { "type": "boolean" },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "core": {
+                "type": "object",
+                "properties": {
+                  "companyname": { "type": "object", "properties": { "value": { "type": "string" } } },
+                  "companyemail": { "type": "object", "properties": { "value": { "type": "string" } } },
+                  "companywebsite": { "type": "object", "properties": { "value": { "type": "string" } } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CompanyInput": {
+        "type": "object",
+        "properties": {
+          "companyname": { "type": "string" },
+          "companyemail": { "type": "string" },
+          "companywebsite": { "type": "string" },
+          "companycity": { "type": "string" },
+          "companystate": { "type": "string" },
+          "companycountry": { "type": "string" }
+        }
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "isPublished": { "type": "boolean" },
+          "dateAdded": { "type": "string", "format": "date-time" },
+          "dateModified": { "type": "string", "format": "date-time" },
+          "events": { "type": "object" },
+          "leads": { "type": "object" }
+        }
+      },
+      "Email": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "subject": { "type": "string" },
+          "isPublished": { "type": "boolean" },
+          "emailType": { "type": "string", "enum": ["template", "list"] },
+          "language": { "type": "string" },
+          "readCount": { "type": "integer" },
+          "sentCount": { "type": "integer" }
+        }
+      },
+      "Segment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "alias": { "type": "string" },
+          "description": { "type": "string" },
+          "isPublished": { "type": "boolean" },
+          "isGlobal": { "type": "boolean" },
+          "dateAdded": { "type": "string", "format": "date-time" },
+          "dateModified": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

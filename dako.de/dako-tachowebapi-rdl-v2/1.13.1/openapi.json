@@ -1,0 +1,795 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.13.1",
+    "title": "DAKO-TachowebAPI-Rdl-v2",
+    "description": "REST-API for RDL",
+    "termsOfService": "",
+    "contact": {
+      "name": "DAKO GmbH",
+      "url": "https://www.dako.de",
+      "email": "api@dako.de"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/MARIOSIGNORINO_1/dako-tachowebapi-rdl-v2/1.13.1"
+  },
+  "basePath": "/rest",
+  "paths": {
+    "/companycards": {
+      "get": {
+        "tags": [
+          "CompanyCards"
+        ],
+        "description": "Returns company-card/s for account/company",
+        "operationId": "RestCompanycardsGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "company",
+            "in": "query",
+            "description": "Filter by DAKO-company-ID",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "online",
+            "in": "query",
+            "description": "Filter by whether company-card is inserted in card-racks",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "account",
+            "in": "query",
+            "description": "Filter by child-account",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "uniqueItems": false,
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CompanyCard"
+              }
+            }
+          },
+          "204": {
+            "description": "<li>No company-card/s for account/company</li>"
+          },
+          "400": {
+            "description": "<li>Company invalid</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/companycards/{companyCard}": {
+      "get": {
+        "tags": [
+          "CompanyCards"
+        ],
+        "description": "Returns company-card/s",
+        "operationId": "RestCompanycardsByCompanyCardGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "companyCard",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "uniqueItems": false,
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CompanyCard"
+              }
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          },
+          "404": {
+            "description": "<li>Company-card/s not found</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/companycards/sessions": {
+      "post": {
+        "tags": [
+          "CompanyCardsSessions"
+        ],
+        "description": "Creates session with company-card from account/company",
+        "operationId": "RestCompanycardsSessionsPost",
+        "consumes": [
+          "application/json-patch+json",
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "companyCards",
+            "in": "body",
+            "description": "If not set any company-card will be used",
+            "required": false,
+            "schema": {
+              "uniqueItems": false,
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CompanyCard"
+              }
+            }
+          },
+          {
+            "name": "company",
+            "in": "query",
+            "description": "Filter by DAKO-company-ID",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "account",
+            "in": "query",
+            "description": "Filter by child-account",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "Minutes after session will be deleted automatically",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 3
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "<li>Headers Location and DAKO-Session-Token</li>",
+            "schema": {
+              "$ref": "#/definitions/CompanyCardSession"
+            }
+          },
+          "202": {
+            "description": "<li>Company-card/s busy. Try again later</li>"
+          },
+          "204": {
+            "description": "<li>No company-card/s for account/company</li>"
+          },
+          "207": {
+            "description": "<li>Communication-timeout/error with company-card/s</li>"
+          },
+          "400": {
+            "description": "<li>Company-card/s or company invalid</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/companycards/sessions/{token}": {
+      "get": {
+        "tags": [
+          "CompanyCardsSessions"
+        ],
+        "description": "Returns ATR from company-card",
+        "operationId": "RestCompanycardsSessionsByTokenGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Returned by POST on 201",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "DAKO-Session-Token",
+            "in": "header",
+            "description": "Obsolete",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Base64-bytes. Example: \"O5uXwAox/kWAZwVntgQBAACBBf4=\"</li>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          },
+          "404": {
+            "description": "<li>Session with token not found</li>"
+          },
+          "502": {
+            "description": "<li>Communication-error with company-card</li>"
+          },
+          "504": {
+            "description": "<li>Communication-timeout with company-card</li>"
+          }
+        },
+        "deprecated": true,
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      },
+      "delete": {
+        "tags": [
+          "CompanyCardsSessions"
+        ],
+        "description": "Deletes session with company-card",
+        "operationId": "RestCompanycardsSessionsByTokenDelete",
+        "consumes": [],
+        "produces": [],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Returned by POST on 201",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "DAKO-Session-Token",
+            "in": "header",
+            "description": "Obsolete",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Session with company-card deleted</li>"
+          },
+          "202": {
+            "description": "<li>Communication-timeout/error with company-card</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          },
+          "404": {
+            "description": "<li>Session with token not found</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      },
+      "patch": {
+        "tags": [
+          "CompanyCardsSessions"
+        ],
+        "description": "Sends/returns APDU-command/response to/from company-card",
+        "operationId": "RestCompanycardsSessionsByTokenPatch",
+        "consumes": [
+          "application/json-patch+json",
+          "application/json",
+          "text/json",
+          "application/*+json"
+        ],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Returned by POST on 201",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "DAKO-Session-Token",
+            "in": "header",
+            "description": "Obsolete",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "command",
+            "in": "body",
+            "description": "Base64-bytes. Example: \"AKQCDAIAAg==\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Base64-bytes. Example: \"kAA=\"</li>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "<li>Command invalid</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          },
+          "404": {
+            "description": "<li>Session with token not found</li>"
+          },
+          "502": {
+            "description": "<li>Communication-error with company-card</li>"
+          },
+          "504": {
+            "description": "<li>Communication-timeout with company-card</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Returns the current version of the service.",
+        "operationId": "version",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Returns 200-OK if the service is alive.",
+        "operationId": "health",
+        "consumes": [],
+        "produces": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/drivers/{driver}/downloadasap": {
+      "post": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Requests download ASAP for driver",
+        "operationId": "RestDriversByDriverDownloadasapPost",
+        "consumes": [],
+        "produces": [],
+        "parameters": [
+          {
+            "name": "driver",
+            "in": "path",
+            "description": "Alpha-2-country-code + card-number of driver",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Download ASAP for driver already requested</li>"
+          },
+          "201": {
+            "description": "<li>Download ASAP for driver requested</li>"
+          },
+          "400": {
+            "description": "<li>Driver invalid</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/token": {
+      "get": {
+        "tags": [
+          "Token"
+        ],
+        "operationId": "RestTokenGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "$ref": "#/definitions/JwtToken"
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/token/{accessToken}/refresh": {
+      "get": {
+        "tags": [
+          "Token"
+        ],
+        "operationId": "RestTokenByAccessTokenRefreshGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "accessToken",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "refreshToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "$ref": "#/definitions/JwtToken"
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/refresh": {
+      "get": {
+        "tags": [
+          "Token"
+        ],
+        "operationId": "RestRefreshGet",
+        "consumes": [],
+        "produces": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Success</li>",
+            "schema": {
+              "$ref": "#/definitions/JwtToken"
+            }
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    },
+    "/vehicles/{vehicle}/downloadasap": {
+      "post": {
+        "tags": [
+          "Vehicles"
+        ],
+        "summary": "Requests download ASAP for vehicle",
+        "operationId": "RestVehiclesByVehicleDownloadasapPost",
+        "consumes": [],
+        "produces": [],
+        "parameters": [
+          {
+            "name": "vehicle",
+            "in": "path",
+            "description": "VIN of vehicle",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "<li>Download ASAP for vehicle already requested</li>"
+          },
+          "201": {
+            "description": "<li>Download ASAP for vehicle requested</li>"
+          },
+          "400": {
+            "description": "<li>Vehicle invalid</li>"
+          },
+          "401": {
+            "description": "<li>Authentication data missing or invalid</li>"
+          }
+        },
+        "security": [
+          {
+            "Basic": []
+          },
+          {
+            "JWT": []
+          }
+        ],
+        "x-isRestricted": false
+      }
+    }
+  },
+  "definitions": {
+    "CompanyCard": {
+      "description": "Company-card for RDL-authentication",
+      "type": "object",
+      "properties": {
+        "extendedSerialNumber": {
+          "description": "ID of IC of company-card",
+          "type": "string",
+          "example": "00-37-BA-7D-05-15-04-40"
+        },
+        "cardNumber": {
+          "description": "Card-number imprinted on company-card",
+          "type": "string",
+          "example": "DU00000000146F00"
+        },
+        "country": {
+          "description": "alpha-2-country-code of company-card",
+          "type": "string",
+          "example": "DE"
+        },
+        "companyName": {
+          "description": "Company-name imprinted on company-card",
+          "type": "string",
+          "readOnly": true,
+          "example": "DAKO"
+        },
+        "expirationDate": {
+          "format": "date-time",
+          "description": "Expiration-date imprinted on company-card",
+          "type": "string",
+          "readOnly": true,
+          "example": "2020-05-20T00:00:00Z"
+        },
+        "online": {
+          "description": "Indicates whether company-card is inserted in card-racks",
+          "type": "boolean",
+          "readOnly": true,
+          "example": "true"
+        },
+        "inSession": {
+          "description": "Indicates whether company-card is currently in session",
+          "type": "boolean",
+          "readOnly": true,
+          "example": "true"
+        }
+      }
+    },
+    "CompanyCardSession": {
+      "type": "object",
+      "properties": {
+        "companyCard": {
+          "$ref": "#/definitions/CompanyCard",
+          "readOnly": true
+        },
+        "token": {
+          "description": "Onetime token to be used with this company-card-session",
+          "type": "string",
+          "readOnly": true,
+          "example": "9c08d42f6e7e403ca9bae40716f7f2b6"
+        },
+        "expirationTime": {
+          "format": "date-time",
+          "description": "Time at which session will be deleted automatically",
+          "type": "string",
+          "readOnly": true,
+          "example": "2019-07-20T10:32:09Z"
+        },
+        "atr": {
+          "description": "ATR of company-card as Base64-bytes",
+          "type": "string",
+          "readOnly": true,
+          "example": "O5uXwAox/kWAZwVntgQBAACBBf4="
+        }
+      }
+    },
+    "StatisticsEntry": {
+      "type": "object",
+      "properties": {
+        "requestTimeUtc": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "executionTime": {
+          "type": "string"
+        },
+        "accessor": {
+          "type": "string"
+        },
+        "resultCode": {
+          "format": "int32",
+          "type": "integer"
+        }
+      }
+    },
+    "JwtToken": {
+      "type": "object",
+      "properties": {
+        "refresh": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Basic": {
+      "type": "basic"
+    },
+    "JWT": {
+      "name": "Authorization",
+      "in": "header",
+      "type": "apiKey",
+      "description": "JWT-token authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
+    }
+  },
+  "security": [
+    {
+      "Basic": [],
+      "JWT": []
+    }
+  ],
+  "tags": []
+}

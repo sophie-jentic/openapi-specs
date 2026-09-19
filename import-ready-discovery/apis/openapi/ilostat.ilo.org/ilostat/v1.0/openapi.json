@@ -1,0 +1,344 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ILO ILOSTAT SDMX REST API",
+    "description": "International Labour Organization ILOSTAT API providing access to international labour statistics via the SDMX REST protocol. Provides data on employment, unemployment, wages, working conditions, and other labour market indicators.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "ILO Department of Statistics",
+      "url": "https://ilostat.ilo.org"
+    },
+    "x-jentic-source-url": "https://ilostat.ilo.org/resources/sdmx-tools/",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "https://www.ilo.org/sdmx/rest",
+      "description": "ILO SDMX REST API (redirects to webapps.ilo.org)"
+    }
+  ],
+  "paths": {
+    "/dataflow/{agencyID}": {
+      "get": {
+        "operationId": "getDataflows",
+        "summary": "List available dataflows from a given agency",
+        "description": "Returns all available SDMX dataflows (datasets) for the specified agency, typically ILO.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "description": "The agency identifier (e.g., ILO)",
+            "schema": {
+              "type": "string",
+              "default": "ILO"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["structurespecificdata", "genericdata", "jsondata", "csv"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of dataflows",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/vnd.sdmx.structure+xml;version=2.1": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agency not found"
+          }
+        }
+      }
+    },
+    "/dataflow/{agencyID}/{dataflowID}/{version}": {
+      "get": {
+        "operationId": "getDataflowById",
+        "summary": "Get a specific dataflow definition",
+        "description": "Returns the SDMX dataflow definition for a specific dataset, including its structure and dimensions.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "description": "The agency identifier",
+            "schema": {
+              "type": "string",
+              "default": "ILO"
+            }
+          },
+          {
+            "name": "dataflowID",
+            "in": "path",
+            "required": true,
+            "description": "The dataflow identifier (e.g., DF_EAP_TEAP_SEX_AGE_NB)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "description": "The version of the dataflow",
+            "schema": {
+              "type": "string",
+              "default": "1.0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dataflow definition"
+          },
+          "404": {
+            "description": "Dataflow not found"
+          }
+        }
+      }
+    },
+    "/data/{agencyID},{dataflowID},{version}/{key}": {
+      "get": {
+        "operationId": "getData",
+        "summary": "Query data from a specific dataflow",
+        "description": "Retrieves data observations from a specific ILOSTAT dataflow. The key parameter specifies dimension values separated by dots.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "description": "Agency identifier (e.g., ILO)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataflowID",
+            "in": "path",
+            "required": true,
+            "description": "Dataflow identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "description": "Version of the dataflow",
+            "schema": {
+              "type": "string",
+              "default": "1.0"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "Dimension values separated by dots. Use empty segments for wildcards (e.g., ARG.A..SEX_T.AGE_AGGREGATE_TOTAL)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startPeriod",
+            "in": "query",
+            "description": "Start period for data filter (e.g., 2020)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endPeriod",
+            "in": "query",
+            "description": "End period for data filter (e.g., 2021)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Response format",
+            "schema": {
+              "type": "string",
+              "enum": ["jsondata", "csv", "genericdata", "structurespecificdata"]
+            }
+          },
+          {
+            "name": "dimensionAtObservation",
+            "in": "query",
+            "description": "Dimension at observation level",
+            "schema": {
+              "type": "string",
+              "enum": ["AllDimensions", "TIME_PERIOD"]
+            }
+          },
+          {
+            "name": "detail",
+            "in": "query",
+            "description": "Amount of detail returned",
+            "schema": {
+              "type": "string",
+              "enum": ["full", "dataonly", "serieskeysonly", "nodata"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data observations matching the query"
+          },
+          "404": {
+            "description": "No data found for the given query"
+          },
+          "413": {
+            "description": "Response too large"
+          }
+        }
+      }
+    },
+    "/codelist/{agencyID}/{codelistID}/{version}": {
+      "get": {
+        "operationId": "getCodelist",
+        "summary": "Get a codelist definition",
+        "description": "Returns the codes and descriptions for a specific SDMX codelist used in ILOSTAT dataflows.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "codelistID",
+            "in": "path",
+            "required": true,
+            "description": "The codelist identifier (e.g., CL_SEX)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Codelist definition with codes"
+          },
+          "404": {
+            "description": "Codelist not found"
+          }
+        }
+      }
+    },
+    "/datastructure/{agencyID}/{dsdID}/{version}": {
+      "get": {
+        "operationId": "getDataStructure",
+        "summary": "Get a data structure definition",
+        "description": "Returns the SDMX Data Structure Definition (DSD) describing dimensions, attributes, and measures for a dataset.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dsdID",
+            "in": "path",
+            "required": true,
+            "description": "Data structure definition identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data structure definition"
+          },
+          "404": {
+            "description": "DSD not found"
+          }
+        }
+      }
+    },
+    "/conceptscheme/{agencyID}/{conceptSchemeID}/{version}": {
+      "get": {
+        "operationId": "getConceptScheme",
+        "summary": "Get a concept scheme definition",
+        "description": "Returns an SDMX concept scheme describing the statistical concepts used in ILOSTAT datasets.",
+        "parameters": [
+          {
+            "name": "agencyID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "conceptSchemeID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Concept scheme definition"
+          },
+          "404": {
+            "description": "Concept scheme not found"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,546 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "VCLINIC - API de Integra\u00e7\u00e3o",
+    "description": "API p\u00fablica para integra\u00e7\u00e3o externa (lembrete de consultas e agendamentos externos).",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/venxtecnologia/ClickMassa/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.vclinic.com.br/v1",
+      "description": "Produ\u00e7\u00e3o"
+    },
+    {
+      "url": "http://localhost:3333/v1",
+      "description": "Desenvolvimento"
+    },
+    {
+      "description": "SwaggerHub API Auto Mocking",
+      "url": "https://virtserver.swaggerhub.com/venxtecnologia/ClickMassa/1.0.0"
+    }
+  ],
+  "paths": {
+    "/reminder": {
+      "get": {
+        "tags": [
+          "Reminder"
+        ],
+        "summary": "Buscar lembretes de consultas",
+        "description": "Retorna consultas agendadas por empresa e data.",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "6e7c4bcd-d011-4373-8315-26c5b85c0008"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "description": "Data no formato YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-02-06"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de lembretes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReminderResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro ao buscar lembretes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/patients-absents": {
+      "get": {
+        "tags": [
+          "Absents"
+        ],
+        "summary": "Buscar pacientes faltantes (ausentes) no dia",
+        "description": "Retorna a lista de pacientes que faltaram na data informada.",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "6e7c4bcd-d011-4373-8315-26c5b85c0008"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "description": "Data no formato YYYY-MM-DD",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-02-06"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pacientes ausentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AbsentPatientResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro ao buscar pacientes ausentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/patients-birthdays": {
+      "get": {
+        "tags": [
+          "Birthdays"
+        ],
+        "summary": "Buscar pacientes aniversariantes do dia",
+        "description": "Retorna os pacientes vinculados \u00e0 empresa que fazem anivers\u00e1rio na data atual (timezone America/Sao_Paulo).",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "6e7c4bcd-d011-4373-8315-26c5b85c0008"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pacientes aniversariantes do dia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BirthdayPatientResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro ao buscar pacientes aniversariantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scheduling-online": {
+      "post": {
+        "tags": [
+          "Scheduling"
+        ],
+        "summary": "Realizar agendamento online de paciente",
+        "description": "Cria um agendamento para um paciente em uma escala espec\u00edfica.\nCaso o paciente j\u00e1 esteja agendado na mesma agenda, retorna mensagem informativa.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchedulingOnlineRequest"
+              },
+              "example": {
+                "company_id": "6e7c4bcd-d011-4373-8315-26c5b85c0008",
+                "escala_id": "57b21ea0-db15-4152-a6f4-27f5818a060e",
+                "id_doctor": "f1dc0a9c-9a24-441b-89ad-830be15468f8",
+                "horario_marcacao": "08:00:00",
+                "cpfReq": "000.009.504-40",
+                "nomeCompleto": "ALVARO BERNARDO DE OLIVEIRA ALVES",
+                "emailContato": "",
+                "id_convenio": "a36838e3-3452-428e-a3e5-9ca5702a1db5",
+                "phone": "(83) 98806-4000"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agendamento processado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                },
+                "examples": {
+                  "ja_agendado": {
+                    "summary": "Paciente j\u00e1 agendado",
+                    "value": {
+                      "message": "Voc\u00ea j\u00e1 est\u00e1 marcado nesta agenda!"
+                    }
+                  },
+                  "sucesso": {
+                    "summary": "Agendamento realizado com sucesso",
+                    "value": {
+                      "message": "Agendamento realizado com sucesso!"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro ao realizar agendamento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchedulingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AbsentPatientResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "be515c52-bb1d-4a99-aceb-5f8f623cac39"
+          },
+          "observation": {
+            "type": "string",
+            "nullable": true
+          },
+          "online_schedule": {
+            "type": "boolean"
+          },
+          "time_onhold": {
+            "type": "string",
+            "nullable": true
+          },
+          "time_consultation": {
+            "type": "string",
+            "nullable": true
+          },
+          "profissionaDaSaude": {
+            "type": "string",
+            "example": "Jo\u00e3o Fernandes"
+          },
+          "horario": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "dia": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-02-06T03:00:00.000Z"
+          },
+          "patient": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string",
+                "example": "Alien"
+              },
+              "telefone": {
+                "type": "string",
+                "example": "11999998888"
+              }
+            }
+          }
+        }
+      },
+      "SchedulingOnlineRequest": {
+        "type": "object",
+        "required": [
+          "company_id",
+          "escala_id",
+          "id_doctor",
+          "horario_marcacao",
+          "cpfReq",
+          "nomeCompleto",
+          "id_convenio",
+          "phone"
+        ],
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "6e7c4bcd-d011-4373-8315-26c5b85c0008"
+          },
+          "escala_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "57b21ea0-db15-4152-a6f4-27f5818a060e"
+          },
+          "id_doctor": {
+            "type": "string",
+            "format": "uuid",
+            "example": "f1dc0a9c-9a24-441b-89ad-830be15468f8"
+          },
+          "tipo_marcacao": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tipo da marca\u00e7\u00e3o (se aplic\u00e1vel)",
+            "example": "ONLINE"
+          },
+          "horario_marcacao": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "cpfReq": {
+            "type": "string",
+            "example": "000.009.504-40"
+          },
+          "nomeCompleto": {
+            "type": "string",
+            "example": "ALVARO BERNARDO DE OLIVEIRA ALVES"
+          },
+          "emailContato": {
+            "type": "string",
+            "nullable": true,
+            "example": "alvaro@email.com"
+          },
+          "id_convenio": {
+            "type": "string",
+            "format": "uuid",
+            "example": "a36838e3-3452-428e-a3e5-9ca5702a1db5"
+          },
+          "phone": {
+            "type": "string",
+            "example": "(83) 98806-4000"
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Agendamento realizado com sucesso!"
+          }
+        }
+      },
+      "ReminderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "qr_code": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "example": "08:00:00"
+          },
+          "observation": {
+            "type": "string",
+            "nullable": true
+          },
+          "online_schedule": {
+            "type": "boolean"
+          },
+          "time_onhold": {
+            "type": "string",
+            "nullable": true
+          },
+          "time_consultation": {
+            "type": "string",
+            "nullable": true
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/Schedule"
+          },
+          "patient": {
+            "type": "object",
+            "properties": {
+              "nome": {
+                "type": "string"
+              },
+              "telefone": {
+                "type": "string"
+              }
+            }
+          },
+          "link": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "profissionaDaSaude": {
+            "type": "string"
+          }
+        }
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "end_time": {
+            "type": "string"
+          },
+          "interval_time": {
+            "type": "integer"
+          },
+          "doctor": {
+            "$ref": "#/components/schemas/Doctor"
+          }
+        }
+      },
+      "Doctor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rqe": {
+            "type": "string"
+          },
+          "cnes": {
+            "type": "string"
+          },
+          "people": {
+            "$ref": "#/components/schemas/People"
+          }
+        }
+      },
+      "People": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "phone1": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "error getting reminder"
+          }
+        }
+      },
+      "ErrorSchedulingResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "error scheduling patient"
+          }
+        }
+      },
+      "BirthdayPatientResponse": {
+        "type": "object",
+        "properties": {
+          "prontuario_number": {
+            "type": "string",
+            "example": "PRT-000123"
+          },
+          "patient_id_externo": {
+            "type": "string",
+            "format": "uuid",
+            "example": "b1c2d3e4-f567-8901-2345-6789abcdef01"
+          },
+          "nome": {
+            "type": "string",
+            "example": "ALVARO BERNARDO DE OLIVEIRA ALVES"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "alvaro@email.com"
+          },
+          "telefone": {
+            "type": "string",
+            "example": "11999998888"
+          },
+          "dataDoNascimento": {
+            "type": "string",
+            "format": "date-time",
+            "example": "1993-02-12T03:00:00.000Z"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1514 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Helius Validator API",
+    "description": "API for querying Solana validator performance metrics, rewards, earnings, and APY calculations.",
+    "version": "0.1.0",
+    "contact": {
+      "name": "Helius",
+      "url": "https://helius.dev"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/hey-e11/helius-validator-api/0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://208.91.110.199:8080",
+      "description": "Production server"
+    },
+    {
+      "url": "http://208.91.110.182:8080",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Rewards"
+    },
+    {
+      "name": "Votes"
+    },
+    {
+      "name": "Earnings"
+    },
+    {
+      "name": "APY"
+    },
+    {
+      "name": "Performance"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/rewards": {
+      "get": {
+        "tags": [
+          "Rewards"
+        ],
+        "summary": "Get validator rewards history",
+        "description": "Retrieve historical rewards including inflation, block rewards, Jito tips, and vote fees.",
+        "operationId": "getValidatorRewards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "start_timestamp",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_timestamp",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "start_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 790
+            }
+          },
+          {
+            "name": "end_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "reward_type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mev",
+                "block",
+                "inflation",
+                "votefees"
+              ]
+            }
+          },
+          {
+            "name": "aggregate_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timestamp",
+                "epoch"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1000,
+              "maximum": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RewardsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/rewards/forecast": {
+      "get": {
+        "tags": [
+          "Rewards"
+        ],
+        "summary": "Get rewards forecast",
+        "description": "Generate a rewards forecast based on historical performance.\n\nModels: `rolling_average` (mean \u00b1 std dev) or `linear_regression` (trend extrapolation).\n\nAPY formula: `((1 + epoch_return)^182.5 - 1) * 100`\n",
+        "operationId": "getRewardsForecast",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "forecast_period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "180d",
+                "1y"
+              ],
+              "default": "30d"
+            }
+          },
+          {
+            "name": "lookback_days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "minimum": 7,
+              "maximum": 365
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rolling_average",
+                "linear_regression"
+              ],
+              "default": "rolling_average"
+            }
+          },
+          {
+            "name": "include_breakdown",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RewardsForecastResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/votes": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "Get validator voting history",
+        "description": "Retrieve voting activity including vote fees, leader slots, and skip information.",
+        "operationId": "getValidatorVotes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "start_timestamp",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "end_timestamp",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "start_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 790
+            }
+          },
+          {
+            "name": "end_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "aggregate_by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timestamp",
+                "epoch"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1000,
+              "maximum": 10000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VotesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/earnings": {
+      "get": {
+        "tags": [
+          "Earnings"
+        ],
+        "summary": "Get validator earnings",
+        "description": "Comprehensive earnings data including voting, block production, rewards breakdown, and commission splits.",
+        "operationId": "getValidatorEarnings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "90d",
+                "1y"
+              ],
+              "default": "30d"
+            }
+          },
+          {
+            "name": "start_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 790
+            }
+          },
+          {
+            "name": "end_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarningsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/apy": {
+      "get": {
+        "tags": [
+          "APY"
+        ],
+        "summary": "Get validator APY",
+        "description": "Calculate APY using the Dune methodology: per-epoch APY averaged.\n\nGross APY is before commission; Net APY is after commission deductions.\n",
+        "operationId": "getValidatorApy",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d",
+                "1y",
+                "epoch"
+              ],
+              "default": "30d"
+            }
+          },
+          {
+            "name": "start_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 790
+            }
+          },
+          {
+            "name": "end_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "include_forecast",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    },
+    "/validators/{vote_account}/performance": {
+      "get": {
+        "tags": [
+          "Performance"
+        ],
+        "summary": "Get validator performance metrics",
+        "description": "Operational metrics including vote participation, skip rate, and data quality.",
+        "operationId": "getValidatorPerformance",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VoteAccount"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "90d",
+                "1y"
+              ],
+              "default": "30d"
+            }
+          },
+          {
+            "name": "start_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 790
+            }
+          },
+          {
+            "name": "end_epoch",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/ValidatorNotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "VoteAccount": {
+        "name": "vote_account",
+        "in": "path",
+        "required": true,
+        "description": "Validator's vote account public key (base58)",
+        "schema": {
+          "type": "string",
+          "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$"
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "ValidatorNotFound": {
+        "description": "Validator not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "service"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "RewardRecord": {
+        "type": "object",
+        "required": [
+          "slot",
+          "epoch",
+          "timestamp",
+          "vote_fees_lamports",
+          "jito_tips_lamports"
+        ],
+        "properties": {
+          "slot": {
+            "type": "integer"
+          },
+          "epoch": {
+            "type": "integer"
+          },
+          "timestamp": {
+            "type": "integer"
+          },
+          "vote_fees_lamports": {
+            "type": "integer"
+          },
+          "inflation_rewards_lamports": {
+            "type": "integer",
+            "nullable": true
+          },
+          "block_rewards_lamports": {
+            "type": "integer",
+            "nullable": true
+          },
+          "jito_tips_lamports": {
+            "type": "integer"
+          }
+        }
+      },
+      "AggregatedReward": {
+        "type": "object",
+        "required": [
+          "key",
+          "total_vote_fees",
+          "total_inflation_rewards",
+          "total_block_rewards",
+          "total_jito_tips",
+          "total_lamports",
+          "slot_count"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "total_vote_fees": {
+            "type": "integer"
+          },
+          "total_inflation_rewards": {
+            "type": "integer"
+          },
+          "total_block_rewards": {
+            "type": "integer"
+          },
+          "total_jito_tips": {
+            "type": "integer"
+          },
+          "total_lamports": {
+            "type": "integer"
+          },
+          "slot_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "RewardsResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "records",
+          "total_count"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardRecord"
+            }
+          },
+          "aggregated": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AggregatedReward"
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "VoteRecord": {
+        "type": "object",
+        "required": [
+          "slot",
+          "epoch",
+          "timestamp",
+          "vote_fee_lamports",
+          "was_leader",
+          "was_skipped"
+        ],
+        "properties": {
+          "slot": {
+            "type": "integer"
+          },
+          "epoch": {
+            "type": "integer"
+          },
+          "timestamp": {
+            "type": "integer"
+          },
+          "vote_fee_lamports": {
+            "type": "integer"
+          },
+          "was_leader": {
+            "type": "boolean"
+          },
+          "was_skipped": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AggregatedVote": {
+        "type": "object",
+        "required": [
+          "key",
+          "total_votes",
+          "total_vote_fees",
+          "blocks_as_leader",
+          "blocks_skipped"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "total_votes": {
+            "type": "integer"
+          },
+          "total_vote_fees": {
+            "type": "integer"
+          },
+          "blocks_as_leader": {
+            "type": "integer"
+          },
+          "blocks_skipped": {
+            "type": "integer"
+          }
+        }
+      },
+      "VotesResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "records",
+          "total_count"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoteRecord"
+            }
+          },
+          "aggregated": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AggregatedVote"
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "VotingPerformance": {
+        "type": "object",
+        "required": [
+          "total_votes",
+          "vote_participation_rate_pct",
+          "total_vote_fees_lamports"
+        ],
+        "properties": {
+          "total_votes": {
+            "type": "integer"
+          },
+          "vote_participation_rate_pct": {
+            "type": "number"
+          },
+          "total_vote_fees_lamports": {
+            "type": "integer"
+          }
+        }
+      },
+      "BlockProductionPerformance": {
+        "type": "object",
+        "required": [
+          "total_leader_slots",
+          "blocks_produced",
+          "blocks_skipped",
+          "skip_rate_pct"
+        ],
+        "properties": {
+          "total_leader_slots": {
+            "type": "integer"
+          },
+          "blocks_produced": {
+            "type": "integer"
+          },
+          "blocks_skipped": {
+            "type": "integer"
+          },
+          "skip_rate_pct": {
+            "type": "number"
+          }
+        }
+      },
+      "RewardsBreakdownPct": {
+        "type": "object",
+        "required": [
+          "inflation",
+          "block_rewards",
+          "jito_tips"
+        ],
+        "properties": {
+          "inflation": {
+            "type": "number"
+          },
+          "block_rewards": {
+            "type": "number"
+          },
+          "jito_tips": {
+            "type": "number"
+          }
+        }
+      },
+      "CommissionRates": {
+        "type": "object",
+        "required": [
+          "staking",
+          "jito_mev",
+          "priority_fees"
+        ],
+        "properties": {
+          "staking": {
+            "type": "integer"
+          },
+          "jito_mev": {
+            "type": "integer"
+          },
+          "priority_fees": {
+            "type": "integer"
+          }
+        }
+      },
+      "EarningsBreakdown": {
+        "type": "object",
+        "required": [
+          "inflation_rewards_lamports",
+          "inflation_rewards_sol",
+          "jito_tips_lamports",
+          "jito_tips_sol",
+          "block_rewards_lamports",
+          "block_rewards_sol"
+        ],
+        "properties": {
+          "inflation_rewards_lamports": {
+            "type": "integer"
+          },
+          "inflation_rewards_sol": {
+            "type": "number"
+          },
+          "jito_tips_lamports": {
+            "type": "integer"
+          },
+          "jito_tips_sol": {
+            "type": "number"
+          },
+          "block_rewards_lamports": {
+            "type": "integer"
+          },
+          "block_rewards_sol": {
+            "type": "number"
+          },
+          "gross_total_lamports": {
+            "type": "integer"
+          },
+          "gross_total_sol": {
+            "type": "number"
+          },
+          "net_total_lamports": {
+            "type": "integer"
+          },
+          "net_total_sol": {
+            "type": "number"
+          }
+        }
+      },
+      "EarningsSplit": {
+        "type": "object",
+        "required": [
+          "validator",
+          "stakers"
+        ],
+        "properties": {
+          "validator": {
+            "$ref": "#/components/schemas/EarningsBreakdown"
+          },
+          "stakers": {
+            "$ref": "#/components/schemas/EarningsBreakdown"
+          }
+        }
+      },
+      "CommissionInfo": {
+        "type": "object",
+        "required": [
+          "rates",
+          "split"
+        ],
+        "properties": {
+          "rates": {
+            "$ref": "#/components/schemas/CommissionRates"
+          },
+          "split": {
+            "$ref": "#/components/schemas/EarningsSplit"
+          }
+        }
+      },
+      "RewardsPerformance": {
+        "type": "object",
+        "required": [
+          "gross_earnings_lamports",
+          "gross_earnings_sol",
+          "vote_fees_lamports",
+          "vote_fees_sol",
+          "inflation_rewards_lamports",
+          "block_rewards_lamports",
+          "jito_tips_lamports",
+          "breakdown_pct"
+        ],
+        "properties": {
+          "gross_earnings_lamports": {
+            "type": "integer"
+          },
+          "gross_earnings_sol": {
+            "type": "number"
+          },
+          "vote_fees_lamports": {
+            "type": "integer"
+          },
+          "vote_fees_sol": {
+            "type": "number"
+          },
+          "inflation_rewards_lamports": {
+            "type": "integer"
+          },
+          "block_rewards_lamports": {
+            "type": "integer"
+          },
+          "jito_tips_lamports": {
+            "type": "integer"
+          },
+          "breakdown_pct": {
+            "$ref": "#/components/schemas/RewardsBreakdownPct"
+          },
+          "commission": {
+            "$ref": "#/components/schemas/CommissionInfo",
+            "nullable": true
+          }
+        }
+      },
+      "EarningsMetadata": {
+        "type": "object",
+        "required": [
+          "start_timestamp",
+          "end_timestamp",
+          "query_timestamp"
+        ],
+        "properties": {
+          "start_timestamp": {
+            "type": "integer"
+          },
+          "end_timestamp": {
+            "type": "integer"
+          },
+          "query_timestamp": {
+            "type": "integer"
+          }
+        }
+      },
+      "Earnings": {
+        "type": "object",
+        "required": [
+          "voting",
+          "block_production",
+          "rewards"
+        ],
+        "properties": {
+          "voting": {
+            "$ref": "#/components/schemas/VotingPerformance"
+          },
+          "block_production": {
+            "$ref": "#/components/schemas/BlockProductionPerformance"
+          },
+          "rewards": {
+            "$ref": "#/components/schemas/RewardsPerformance"
+          }
+        }
+      },
+      "EarningsResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "period",
+          "start_epoch",
+          "end_epoch",
+          "total_epochs",
+          "earnings",
+          "metadata"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "start_epoch": {
+            "type": "integer"
+          },
+          "end_epoch": {
+            "type": "integer"
+          },
+          "total_epochs": {
+            "type": "integer"
+          },
+          "earnings": {
+            "$ref": "#/components/schemas/Earnings"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EarningsMetadata"
+          }
+        }
+      },
+      "ApyBreakdown": {
+        "type": "object",
+        "required": [
+          "inflation_apy_pct",
+          "mev_apy_pct",
+          "block_rewards_apy_pct"
+        ],
+        "properties": {
+          "inflation_apy_pct": {
+            "type": "number"
+          },
+          "mev_apy_pct": {
+            "type": "number"
+          },
+          "block_rewards_apy_pct": {
+            "type": "number"
+          }
+        }
+      },
+      "EpochApyData": {
+        "type": "object",
+        "required": [
+          "epoch",
+          "stake_lamports",
+          "staking_rewards_lamports",
+          "block_rewards_lamports",
+          "mev_rewards_lamports",
+          "total_rewards_lamports",
+          "apy_pct"
+        ],
+        "properties": {
+          "epoch": {
+            "type": "integer"
+          },
+          "stake_lamports": {
+            "type": "integer"
+          },
+          "staking_rewards_lamports": {
+            "type": "integer"
+          },
+          "block_rewards_lamports": {
+            "type": "integer"
+          },
+          "mev_rewards_lamports": {
+            "type": "integer"
+          },
+          "total_rewards_lamports": {
+            "type": "integer"
+          },
+          "apy_pct": {
+            "type": "number"
+          }
+        }
+      },
+      "ApyCalculationBasis": {
+        "type": "object",
+        "required": [
+          "total_stake_lamports",
+          "total_earnings_lamports",
+          "days",
+          "epochs_covered",
+          "start_timestamp",
+          "end_timestamp"
+        ],
+        "properties": {
+          "total_stake_lamports": {
+            "type": "integer"
+          },
+          "total_earnings_lamports": {
+            "type": "integer"
+          },
+          "days": {
+            "type": "integer"
+          },
+          "epochs_covered": {
+            "type": "integer"
+          },
+          "start_timestamp": {
+            "type": "integer"
+          },
+          "end_timestamp": {
+            "type": "integer"
+          },
+          "stake_source": {
+            "type": "string"
+          },
+          "staking_rewards_source": {
+            "type": "string"
+          },
+          "calculation_method": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ApyForecast": {
+        "type": "object",
+        "required": [
+          "projected_annual_apy_pct",
+          "confidence",
+          "based_on_days"
+        ],
+        "properties": {
+          "projected_annual_apy_pct": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "based_on_days": {
+            "type": "integer"
+          }
+        }
+      },
+      "ApyData": {
+        "type": "object",
+        "required": [
+          "gross_apy_pct",
+          "net_apy_pct",
+          "breakdown"
+        ],
+        "properties": {
+          "gross_apy_pct": {
+            "type": "number"
+          },
+          "net_apy_pct": {
+            "type": "number"
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/ApyBreakdown"
+          }
+        }
+      },
+      "ApyResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "period",
+          "apy",
+          "calculation_basis"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "apy": {
+            "$ref": "#/components/schemas/ApyData"
+          },
+          "calculation_basis": {
+            "$ref": "#/components/schemas/ApyCalculationBasis"
+          },
+          "epoch_apy_data": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EpochApyData"
+            }
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/ApyForecast",
+            "nullable": true
+          }
+        }
+      },
+      "ForecastedRewards": {
+        "type": "object",
+        "required": [
+          "inflation_rewards_lamports",
+          "inflation_rewards_sol",
+          "mev_rewards_lamports",
+          "mev_rewards_sol",
+          "block_rewards_lamports",
+          "block_rewards_sol",
+          "total_lamports",
+          "total_sol"
+        ],
+        "properties": {
+          "inflation_rewards_lamports": {
+            "type": "integer"
+          },
+          "inflation_rewards_sol": {
+            "type": "number"
+          },
+          "mev_rewards_lamports": {
+            "type": "integer"
+          },
+          "mev_rewards_sol": {
+            "type": "number"
+          },
+          "block_rewards_lamports": {
+            "type": "integer"
+          },
+          "block_rewards_sol": {
+            "type": "number"
+          },
+          "total_lamports": {
+            "type": "integer"
+          },
+          "total_sol": {
+            "type": "number"
+          }
+        }
+      },
+      "ForecastProjection": {
+        "type": "object",
+        "required": [
+          "apy_pct",
+          "rewards"
+        ],
+        "properties": {
+          "apy_pct": {
+            "type": "number"
+          },
+          "rewards": {
+            "$ref": "#/components/schemas/ForecastedRewards"
+          }
+        }
+      },
+      "ForecastProjections": {
+        "type": "object",
+        "required": [
+          "conservative",
+          "baseline",
+          "optimistic"
+        ],
+        "properties": {
+          "conservative": {
+            "$ref": "#/components/schemas/ForecastProjection"
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/ForecastProjection"
+          },
+          "optimistic": {
+            "$ref": "#/components/schemas/ForecastProjection"
+          }
+        }
+      },
+      "ForecastMethodology": {
+        "type": "object",
+        "required": [
+          "lookback_days",
+          "epochs_analyzed",
+          "confidence",
+          "confidence_interval_pct",
+          "method"
+        ],
+        "properties": {
+          "lookback_days": {
+            "type": "integer"
+          },
+          "epochs_analyzed": {
+            "type": "integer"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "confidence_interval_pct": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "rolling_average",
+              "linear_regression"
+            ]
+          },
+          "apy_std_dev_pct": {
+            "type": "number",
+            "description": "rolling_average only"
+          },
+          "slope_pct_per_epoch": {
+            "type": "number",
+            "description": "linear_regression only"
+          },
+          "intercept_pct": {
+            "type": "number",
+            "description": "linear_regression only"
+          },
+          "r_squared": {
+            "type": "number",
+            "description": "linear_regression only"
+          },
+          "standard_error_pct": {
+            "type": "number",
+            "description": "linear_regression only"
+          }
+        }
+      },
+      "RewardsForecastResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "forecast_period_days",
+          "projections",
+          "methodology",
+          "query_timestamp"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "forecast_period_days": {
+            "type": "integer"
+          },
+          "projections": {
+            "$ref": "#/components/schemas/ForecastProjections"
+          },
+          "methodology": {
+            "$ref": "#/components/schemas/ForecastMethodology"
+          },
+          "query_timestamp": {
+            "type": "integer"
+          }
+        }
+      },
+      "DataQuality": {
+        "type": "object",
+        "required": [
+          "total_epochs",
+          "high_participation_epochs",
+          "lower_participation_epochs",
+          "missing_epochs",
+          "avg_vote_participation_pct",
+          "expected_total_slots",
+          "total_slots_voted",
+          "total_slots_not_voted"
+        ],
+        "properties": {
+          "total_epochs": {
+            "type": "integer"
+          },
+          "high_participation_epochs": {
+            "type": "integer"
+          },
+          "lower_participation_epochs": {
+            "type": "integer"
+          },
+          "missing_epochs": {
+            "type": "integer"
+          },
+          "avg_vote_participation_pct": {
+            "type": "number"
+          },
+          "expected_total_slots": {
+            "type": "integer"
+          },
+          "total_slots_voted": {
+            "type": "integer"
+          },
+          "total_slots_not_voted": {
+            "type": "integer"
+          }
+        }
+      },
+      "SkipRateStats": {
+        "type": "object",
+        "required": [
+          "total_leader_slots",
+          "blocks_produced",
+          "blocks_skipped",
+          "skip_rate_pct",
+          "has_skip_data"
+        ],
+        "properties": {
+          "total_leader_slots": {
+            "type": "integer"
+          },
+          "blocks_produced": {
+            "type": "integer"
+          },
+          "blocks_skipped": {
+            "type": "integer"
+          },
+          "skip_rate_pct": {
+            "type": "number"
+          },
+          "has_skip_data": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EpochGap": {
+        "type": "object",
+        "required": [
+          "epoch",
+          "expected_slots",
+          "slots_voted",
+          "slots_not_voted",
+          "vote_participation_pct"
+        ],
+        "properties": {
+          "epoch": {
+            "type": "integer"
+          },
+          "expected_slots": {
+            "type": "integer"
+          },
+          "slots_voted": {
+            "type": "integer"
+          },
+          "slots_not_voted": {
+            "type": "integer"
+          },
+          "vote_participation_pct": {
+            "type": "number"
+          }
+        }
+      },
+      "PerformanceResponse": {
+        "type": "object",
+        "required": [
+          "vote_account",
+          "period",
+          "start_epoch",
+          "end_epoch",
+          "data_quality",
+          "skip_rate",
+          "query_timestamp"
+        ],
+        "properties": {
+          "vote_account": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "start_epoch": {
+            "type": "integer"
+          },
+          "end_epoch": {
+            "type": "integer"
+          },
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "skip_rate": {
+            "$ref": "#/components/schemas/SkipRateStats"
+          },
+          "epoch_gaps": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/EpochGap"
+            }
+          },
+          "query_timestamp": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

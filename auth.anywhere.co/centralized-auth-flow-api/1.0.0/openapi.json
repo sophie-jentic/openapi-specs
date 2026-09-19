@@ -1,0 +1,421 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Centralized Auth Flow API",
+    "description": "A RESTful API for centralized OAuth authorization flow. This API provides endpoints to generate authorization URLs and exchange authorization codes for social provider tokens across multiple providers including Google, Facebook, LinkedIn, Microsoft and Apple.\n\nThis API is designed for server-to-server integrations where the client application handles the OAuth callback and code exchange directly. All endpoints are publicly accessible and do not require authentication.\n\nSome useful links:\n- [Centralized Auth Flow Documentation](https://anywhereworks.atlassian.net/wiki/spaces/LP/pages/1536589845/Login+Sign+up+flow+v2)\n- [The Lucy Auth Repository](https://github.com/Adaptavant/FullAuthModules)",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/other-0c2-382/Centralized-login-signup-flow/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://auth.anywhere.co",
+      "description": "Production"
+    },
+    {
+      "url": "https://auth.staging.anywhere.co",
+      "description": "Staging"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Centralized Auth Flow",
+      "description": "Endpoints for managing centralized OAuth authorization flow across multiple social providers"
+    }
+  ],
+  "paths": {
+    "/o/oauth-clients/{oauthClientId}/providers/{providerName}/auth-url": {
+      "post": {
+        "tags": [
+          "Centralized Auth Flow"
+        ],
+        "summary": "Generate authorization URL",
+        "description": "Generates an authorization URL for the specified OAuth provider. The state parameter is automatically generated and included in the authorization URL for CSRF protection. The client should redirect the user to this URL to initiate the OAuth flow.\n\nThis endpoint does not require authentication and is publicly accessible.",
+        "operationId": "generateAuthorizationUrl",
+        "parameters": [
+          {
+            "name": "oauthClientId",
+            "in": "path",
+            "required": true,
+            "description": "Lucy auth OAuth clientId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOOGLE",
+                "FACEBOOK",
+                "MICROSOFT",
+                "APPLE",
+                "LINKEDIN"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request payload containing the callback URL for OAuth redirect",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthUrlRequest"
+              },
+              "examples": {
+                "httpsCallback": {
+                  "summary": "HTTPS callback URL",
+                  "value": {
+                    "callbackUrl": "https://your-app.com/oauth/callback"
+                  }
+                },
+                "localhostCallback": {
+                  "summary": "Localhost callback for development",
+                  "value": {
+                    "callbackUrl": "http://localhost:3000/callback"
+                  }
+                },
+                "postmessage": {
+                  "summary": "Postmessage for client-side flows",
+                  "value": {
+                    "callbackUrl": "postmessage"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization URL generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUrlResponse"
+                },
+                "examples": {
+                  "googleAuth": {
+                    "summary": "Google authorization URL",
+                    "value": {
+                      "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...&state=abc123&scope=openid+email+profile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters or validation errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missingCallback": {
+                    "summary": "Missing callback URL",
+                    "value": {
+                      "ok": false,
+                      "error": "bad_request",
+                      "msg": "callbackUrl is required"
+                    }
+                  },
+                  "invalidCallback": {
+                    "summary": "Invalid callback URL format",
+                    "value": {
+                      "ok": false,
+                      "error": "bad_request",
+                      "msg": "Invalid redirectUri format: no protocol: test"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/o/oauth-clients/{oauthClientId}/providers/{providerName}/exchange": {
+      "post": {
+        "tags": [
+          "Centralized Auth Flow"
+        ],
+        "summary": "Exchange authorization code for tokens",
+        "description": "Exchanges the authorization code received from the OAuth provider for access tokens and user information. The state parameter is optional but recommended for validation. This endpoint creates or updates a SocialAccessToken entry without associating it with a specific contact.\n\nThis endpoint does not require authentication and is publicly accessible.",
+        "operationId": "exchangeAuthCode",
+        "parameters": [
+          {
+            "name": "oauthClientId",
+            "in": "path",
+            "required": true,
+            "description": "Lucy auth OAuth clientId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "providerName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GOOGLE",
+                "FACEBOOK",
+                "MICROSOFT",
+                "APPLE",
+                "LINKEDIN"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request payload containing authorization code and callback URL",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenExchangeRequest"
+              },
+              "examples": {
+                "withState": {
+                  "summary": "Exchange with state parameter",
+                  "value": {
+                    "authCode": "test-authcode",
+                    "callbackUrl": "https://your-app.com/oauth/callback",
+                    "state": "abc123xyz456"
+                  }
+                },
+                "withoutState": {
+                  "summary": "Exchange without state parameter",
+                  "value": {
+                    "authCode": "test-authcode",
+                    "callbackUrl": "https://your-app.com/oauth/callback"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization code exchanged successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenExchangeResponse"
+                },
+                "examples": {
+                  "googleTokens": {
+                    "summary": "Google token exchange response",
+                    "value": {
+                      "accessToken": "test-access-token",
+                      "expiresOn": 3600,
+                      "email": "user@example.com",
+                      "emailVerified": true,
+                      "providerUserId": "1234567890",
+                      "firstName": "John",
+                      "lastName": "Doe",
+                      "socialAccessTokenId": "test-accesstoken-id",
+                      "scopes": [
+                        "openid",
+                        "email",
+                        "profile"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters, invalid authorization code, or expired authorization code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missingAuthCode": {
+                    "summary": "Missing authorization code",
+                    "value": {
+                      "ok": false,
+                      "error": "bad_request",
+                      "msg": "authCode is required"
+                    }
+                  },
+                  "invalidAuthCode": {
+                    "summary": "Invalid or expired authorization code",
+                    "value": {
+                      "ok": false,
+                      "error": "bad_request",
+                      "msg": "Failed to retrieve user information from provider"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OAuth client not found or invalid provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "clientNotFound": {
+                    "summary": "Failed to verify with social provider",
+                    "value": {
+                      "error": "access_denied",
+                      "msg": "access denied"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthUrlRequest": {
+        "type": "object",
+        "required": [
+          "callbackUrl"
+        ],
+        "properties": {
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URI to redirect to after user authorization. Supports HTTPS URLs, localhost URLs for development,  and the special value \"postmessage\" for client-side flows."
+          }
+        }
+      },
+      "AuthUrlResponse": {
+        "type": "object",
+        "required": [
+          "authorizationUrl"
+        ],
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The authorization URL with state parameter included. Redirect the user to this URL to initiate the OAuth flow."
+          }
+        }
+      },
+      "TokenExchangeRequest": {
+        "type": "object",
+        "required": [
+          "authCode",
+          "callbackUrl"
+        ],
+        "properties": {
+          "authCode": {
+            "type": "string",
+            "description": "Authorization code received from the OAuth provider callback"
+          },
+          "callbackUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The same callback URI used in the authorization request"
+          },
+          "state": {
+            "type": "string",
+            "description": "Optional state parameter for validation (recommended for CSRF protection)"
+          }
+        }
+      },
+      "TokenExchangeResponse": {
+        "type": "object",
+        "required": [
+          "accessToken",
+          "email",
+          "providerUserId",
+          "socialAccessTokenId"
+        ],
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access token for the social provider"
+          },
+          "expiresOn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp when the access token expires (in milliseconds)"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scopes granted by the user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address from the social provider"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Whether the email is verified by the social provider"
+          },
+          "providerUserId": {
+            "type": "string",
+            "description": "User's unique identifier from the social provider"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "User's first name (may be null if not provided by the provider)"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "User's last name (may be null if not provided by the provider)"
+          },
+          "socialAccessTokenId": {
+            "type": "string",
+            "description": "Unique identifier for the stored social access token"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "error",
+          "msg"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Indicates whether the request was successful (always false for error responses)"
+          },
+          "error": {
+            "type": "string",
+            "description": "Machine-readable error code",
+            "enum": [
+              "bad_request",
+              "unauthorized",
+              "forbidden",
+              "not_found",
+              "internal_error",
+              "access_denied",
+              "invalid_request",
+              "unprocessable_entity"
+            ]
+          },
+          "msg": {
+            "type": "string",
+            "description": "Human-readable error message describing what went wrong"
+          }
+        }
+      }
+    }
+  }
+}

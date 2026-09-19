@@ -1,0 +1,2201 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SAP Commerce Cloud OCC REST API",
+    "description": "SAP Commerce Cloud Omni Commerce Connect (OCC) REST API provides access to core commerce functionality including product catalog, shopping carts, orders, and user management. The OCC API follows RESTful conventions and is the primary API for storefront and headless commerce integrations.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "SAP",
+      "url": "https://help.sap.com/docs/SAP_COMMERCE_CLOUD_PUBLIC_CLOUD"
+    },
+    "x-jentic-source-url": "https://help.sap.com/docs/SAP_COMMERCE_CLOUD_PUBLIC_CLOUD/9d346683b0084da2938be8a285c0c27a/",
+    "x-provenance": "jentic-generated"
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}/occ/v2/{baseSiteId}",
+      "description": "SAP Commerce Cloud OCC v2 endpoint",
+      "variables": {
+        "baseUrl": {
+          "default": "https://api.your-commerce-cloud.com",
+          "description": "Base URL of your SAP Commerce Cloud instance"
+        },
+        "baseSiteId": {
+          "default": "electronics",
+          "description": "Base site identifier (e.g. electronics, apparel-uk)"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "oauth2": ["basic"]
+    }
+  ],
+  "paths": {
+    "/products/search": {
+      "get": {
+        "operationId": "searchProducts",
+        "summary": "Search products",
+        "description": "Searches for products in the catalog with full-text search, filtering, sorting, and faceting capabilities.",
+        "tags": ["Products"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Full-text search query or Solr query"
+          },
+          {
+            "name": "currentPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Current page number (zero-based)"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "Number of results per page"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Sort code (e.g. relevance, topRated, name-asc, name-desc, price-asc, price-desc)"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration (BASIC, DEFAULT, FULL, or specific fields)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSearchPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/products/{productCode}": {
+      "get": {
+        "operationId": "getProduct",
+        "summary": "Get product details",
+        "description": "Retrieves detailed information about a specific product by its code.",
+        "tags": ["Products"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "productCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product code"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      }
+    },
+    "/products/{productCode}/reviews": {
+      "get": {
+        "operationId": "getProductReviews",
+        "summary": "Get product reviews",
+        "description": "Retrieves reviews for a specific product.",
+        "tags": ["Products"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "productCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product code"
+          },
+          {
+            "name": "maxCount",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum number of reviews to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reviews": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Review"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProductReview",
+        "summary": "Create a product review",
+        "description": "Creates a new review for a product.",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "productCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Product code"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Review"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogs": {
+      "get": {
+        "operationId": "getCatalogs",
+        "summary": "List catalogs",
+        "description": "Retrieves all catalogs for the base site.",
+        "tags": ["Catalogs"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "catalogs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Catalog"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogs/{catalogId}/{catalogVersionId}/categories/{categoryId}": {
+      "get": {
+        "operationId": "getCatalogCategory",
+        "summary": "Get catalog category",
+        "description": "Retrieves a specific category within a catalog version.",
+        "tags": ["Catalogs"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "catalogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Catalog ID"
+          },
+          {
+            "name": "catalogVersionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Catalog version ID (e.g. Online)"
+          },
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Category ID"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogVersion"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts": {
+      "get": {
+        "operationId": "getUserCarts",
+        "summary": "List user carts",
+        "description": "Retrieves all carts for a user. Use 'current' for authenticated user or 'anonymous' for anonymous carts.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID, email, or 'current' for authenticated user, 'anonymous' for guest"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          },
+          {
+            "name": "savedCartsOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Return only saved carts"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "carts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cart"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCart",
+        "summary": "Create a cart",
+        "description": "Creates a new cart for the user.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Cart created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cart"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}": {
+      "get": {
+        "operationId": "getCart",
+        "summary": "Get cart details",
+        "description": "Retrieves details of a specific cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cart"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cart not found"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCart",
+        "summary": "Delete a cart",
+        "description": "Deletes a cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart deleted"
+          },
+          "404": {
+            "description": "Cart not found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}/entries": {
+      "get": {
+        "operationId": "getCartEntries",
+        "summary": "List cart entries",
+        "description": "Retrieves all entries (line items) in a cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderEntries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OrderEntry"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addCartEntry",
+        "summary": "Add entry to cart",
+        "description": "Adds a new product entry to the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["product", "quantity"],
+                "properties": {
+                  "product": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "Product code"
+                      }
+                    }
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "description": "Quantity to add"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartModification"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}/entries/{entryNumber}": {
+      "patch": {
+        "operationId": "updateCartEntry",
+        "summary": "Update cart entry",
+        "description": "Updates the quantity of an existing cart entry.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "name": "entryNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Entry number (zero-based)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entry updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartModification"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "removeCartEntry",
+        "summary": "Remove cart entry",
+        "description": "Removes an entry from the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "name": "entryNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Entry number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entry removed"
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}/addresses/delivery": {
+      "post": {
+        "operationId": "setCartDeliveryAddress",
+        "summary": "Set delivery address",
+        "description": "Sets or creates a delivery address for the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Address"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Delivery address set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Address"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}/deliverymode": {
+      "get": {
+        "operationId": "getCartDeliveryMode",
+        "summary": "Get cart delivery mode",
+        "description": "Returns the delivery mode selected for the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery mode",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryMode"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setCartDeliveryMode",
+        "summary": "Set cart delivery mode",
+        "description": "Sets the delivery mode for the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          },
+          {
+            "name": "deliveryModeId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Delivery mode ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery mode set"
+          }
+        }
+      }
+    },
+    "/users/{userId}/carts/{cartId}/deliverymodes": {
+      "get": {
+        "operationId": "getCartDeliveryModes",
+        "summary": "List available delivery modes",
+        "description": "Returns all delivery modes available for the cart.",
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available delivery modes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deliveryModes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DeliveryMode"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/orders": {
+      "get": {
+        "operationId": "getUserOrders",
+        "summary": "List user orders",
+        "description": "Retrieves the order history for a user.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "statuses",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated order statuses to filter by"
+          },
+          {
+            "name": "currentPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Sort criteria"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderHistoryList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "placeOrder",
+        "summary": "Place an order",
+        "description": "Places an order from the specified cart. The cart must have a delivery address, delivery mode, and payment details set.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "cartId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cart ID to place as order"
+          },
+          {
+            "name": "termsChecked",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Whether terms and conditions were accepted"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Order placed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - cart not ready for checkout"
+          }
+        }
+      }
+    },
+    "/users/{userId}/orders/{orderCode}": {
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Get order details",
+        "description": "Retrieves details of a specific order.",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "orderCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Order code"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "operationId": "registerUser",
+        "summary": "Register a new user",
+        "description": "Creates a new customer account.",
+        "tags": ["Users"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["uid", "password", "firstName", "lastName"],
+                "properties": {
+                  "uid": {
+                    "type": "string",
+                    "description": "User email address used as unique ID"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "titleCode": {
+                    "type": "string",
+                    "description": "Title code (mr, mrs, miss, ms, dr, rev)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - validation error"
+          },
+          "409": {
+            "description": "Conflict - user already exists"
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "operationId": "getUser",
+        "summary": "Get user profile",
+        "description": "Retrieves the user profile.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateUser",
+        "summary": "Update user profile",
+        "description": "Updates the user profile.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "titleCode": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "object",
+                    "properties": {
+                      "isocode": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "currency": {
+                    "type": "object",
+                    "properties": {
+                      "isocode": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUser",
+        "summary": "Delete user account",
+        "description": "Deletes a customer account.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted"
+          }
+        }
+      }
+    },
+    "/users/{userId}/addresses": {
+      "get": {
+        "operationId": "getUserAddresses",
+        "summary": "List user addresses",
+        "description": "Retrieves all addresses in the user's address book.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "addresses": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Address"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createUserAddress",
+        "summary": "Create user address",
+        "description": "Creates a new address in the user's address book.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Address"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Address"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/paymentdetails": {
+      "get": {
+        "operationId": "getUserPaymentDetails",
+        "summary": "List user payment details",
+        "description": "Retrieves all stored payment details for a user.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID or 'current'"
+          },
+          {
+            "name": "saved",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Return only saved payment details"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment details list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PaymentDetails"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stores": {
+      "get": {
+        "operationId": "searchStores",
+        "summary": "Search stores",
+        "description": "Searches for physical stores based on location or query.",
+        "tags": ["Stores"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query (e.g. city name)"
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Latitude for geo search"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Longitude for geo search"
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Search radius in km"
+          },
+          {
+            "name": "currentPage",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Page size"
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Store search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stores": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/currencies": {
+      "get": {
+        "operationId": "getCurrencies",
+        "summary": "List currencies",
+        "description": "Returns all available currencies for the base store.",
+        "tags": ["Miscellaneous"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Currency list"
+          }
+        }
+      }
+    },
+    "/languages": {
+      "get": {
+        "operationId": "getLanguages",
+        "summary": "List languages",
+        "description": "Returns all available languages for the base store.",
+        "tags": ["Miscellaneous"],
+        "security": [],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "DEFAULT"
+            },
+            "description": "Response field configuration"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Language list"
+          }
+        }
+      }
+    },
+    "/titles": {
+      "get": {
+        "operationId": "getTitles",
+        "summary": "List titles",
+        "description": "Returns all available titles (Mr, Mrs, etc.).",
+        "tags": ["Miscellaneous"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Title list"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "description": "SAP Commerce Cloud OAuth 2.0 authentication. Client credentials for server-to-server, authorization code or resource owner password for user-context operations.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "{baseUrl}/authorizationserver/oauth/token",
+            "scopes": {
+              "basic": "Basic access"
+            }
+          },
+          "password": {
+            "tokenUrl": "{baseUrl}/authorizationserver/oauth/token",
+            "scopes": {
+              "basic": "Basic access"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "imageType": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "averageRating": {
+            "type": "number",
+            "format": "double"
+          },
+          "numberOfReviews": {
+            "type": "integer"
+          },
+          "stock": {
+            "type": "object",
+            "properties": {
+              "stockLevelStatus": {
+                "type": "string"
+              },
+              "stockLevel": {
+                "type": "integer"
+              }
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "purchasable": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductSearchPage": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "selected": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "freeTextSearch": {
+            "type": "string"
+          },
+          "facets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "values": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          },
+          "totalResults": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "string"
+          }
+        }
+      },
+      "Price": {
+        "type": "object",
+        "properties": {
+          "currencyIso": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          },
+          "formattedValue": {
+            "type": "string"
+          },
+          "priceType": {
+            "type": "string",
+            "enum": ["BUY", "FROM"]
+          }
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "guid": {
+            "type": "string"
+          },
+          "totalItems": {
+            "type": "integer"
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "totalPriceWithTax": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "deliveryAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "deliveryMode": {
+            "$ref": "#/components/schemas/DeliveryMode"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderEntry"
+            }
+          },
+          "paymentInfo": {
+            "$ref": "#/components/schemas/PaymentDetails"
+          }
+        }
+      },
+      "CartModification": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "string"
+          },
+          "quantityAdded": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "entry": {
+            "$ref": "#/components/schemas/OrderEntry"
+          },
+          "statusMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "OrderEntry": {
+        "type": "object",
+        "properties": {
+          "entryNumber": {
+            "type": "integer"
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "basePrice": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "updateable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "statusDisplay": {
+            "type": "string"
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "totalPriceWithTax": {
+            "$ref": "#/components/schemas/Price"
+          },
+          "deliveryAddress": {
+            "$ref": "#/components/schemas/Address"
+          },
+          "deliveryMode": {
+            "$ref": "#/components/schemas/DeliveryMode"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderEntry"
+            }
+          },
+          "paymentInfo": {
+            "$ref": "#/components/schemas/PaymentDetails"
+          }
+        }
+      },
+      "OrderHistoryList": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "titleCode": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "object",
+            "properties": {
+              "isocode": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "language": {
+            "type": "object",
+            "properties": {
+              "isocode": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "titleCode": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "town": {
+            "type": "string"
+          },
+          "region": {
+            "type": "object",
+            "properties": {
+              "isocode": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "object",
+            "properties": {
+              "isocode": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "phone": {
+            "type": "string"
+          },
+          "defaultAddress": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DeliveryMode": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "deliveryCost": {
+            "$ref": "#/components/schemas/Price"
+          }
+        }
+      },
+      "PaymentDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accountHolderName": {
+            "type": "string"
+          },
+          "cardNumber": {
+            "type": "string"
+          },
+          "cardType": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "expiryMonth": {
+            "type": "string"
+          },
+          "expiryYear": {
+            "type": "string"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "defaultPayment": {
+            "type": "boolean"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "Review": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "headline": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number",
+            "format": "double"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "principal": {
+            "type": "object",
+            "properties": {
+              "uid": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Catalog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "catalogVersions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogVersion"
+            }
+          }
+        }
+      },
+      "CatalogVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Products",
+      "description": "Product catalog search and retrieval"
+    },
+    {
+      "name": "Catalogs",
+      "description": "Catalog and category browsing"
+    },
+    {
+      "name": "Carts",
+      "description": "Shopping cart management"
+    },
+    {
+      "name": "Orders",
+      "description": "Order placement and history"
+    },
+    {
+      "name": "Users",
+      "description": "User registration, profile, and address management"
+    },
+    {
+      "name": "Stores",
+      "description": "Physical store locator"
+    },
+    {
+      "name": "Miscellaneous",
+      "description": "Currencies, languages, and other configuration"
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "B2B Distributors API",
+    "description": "<p>Services for B2B distributors (create orders, Order Confirmation, Delivery, Invoice and availability).</p>",
+    "version": "1.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/sesturillo/b2b-distributors-api/1.0"
+  },
+  "servers": [
+    {
+      "url": "https://rocasanitariosa-is-dev.apibhubenterprise.cfapps.eu20.hana.ondemand.com/product/Distributors/api/B2B_1_0",
+      "description": "API server"
+    }
+  ],
+  "paths": {
+    "/CreateOrderOneTimeAddress": {
+      "post": {
+        "tags": [
+          "Order"
+        ],
+        "summary": "Create a new order with a one-time shipping address.",
+        "description": "<p>Creates orders. Before start using this service please contact with Customer Service. Some internal arrangements are needed.</p>\n<ul>\n <li><p>Order</p></li>\n <ul>\n  <li>Distributor reference: Customer order code (works as \u201ccustomer reference\u201d. No duplicates are allowed. This reference is used in order confirmations and delivery notes.</li>\n  <li>Ship to: The OneTime address to ship the order.</li>\n  <li>Distributor comment: Comments to be added to the order.</li>\n  <li>Desired delivery date: Desired date to delivery.</li>\n  <li>Full order: Option to avoid partial deliveries.</li>\n  <li>Pallet rounding: The number of products is rounded to the pallet capacity for that product.</li>\n  <li>SalesOrg: Sales Organization</li>\n  <li>DistChannel: Distribution channel</li>\n  <li>Division: Division</li>\n </ul>\n <li><p>Entries (1..n)</p></li>\n <ul>\n  <li>Grouping: Grouping</li>\n  <li>Material number: Roca Group material code</li>\n  <li>Quantity: Quantity in units</li>\n  <li>Desired delivery date: Desired date to delivery this material.</li>\n </ul>\n</ul>\n<p>In case of \"palet discount\", a split in two lines (one with full palet and one with picking) is needed.</p>",
+        "parameters": [
+          {
+            "name": "APIKey",
+            "in": "header",
+            "description": "APIKey",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Invalid ApiKey": {
+                    "value": {
+                      "fault": {
+                        "faultstring": "Invalid ApiKey",
+                        "detail": {
+                          "errorcode": "oauth.v2.InvalidApiKey"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "Missing Body Request": {
+                    "value": {
+                      "fault": {
+                        "faultstring": "Raising fault. Fault name : CheckBodyNotNull",
+                        "detail": {
+                          "errorcode": "steps.raisefault.RaiseFault"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Order": {
+        "required": [
+          "desiredDeliveryDate",
+          "distChannel",
+          "division",
+          "salesOrg",
+          "shipTo"
+        ],
+        "type": "object",
+        "properties": {
+          "fullOrder": {
+            "type": "boolean",
+            "description": "Indicates if this is a full order."
+          },
+          "palletRounding": {
+            "type": "boolean",
+            "description": "Indicates if apply a rounding pallet."
+          },
+          "distributorComment": {
+            "type": "string",
+            "description": "Additional comments from the distributor.",
+            "example": "Comment example"
+          },
+          "desiredDeliveryDate": {
+            "type": "string",
+            "description": "The desired delivery date in YYYYMMDD format.",
+            "example": "20250129"
+          },
+          "salesOrg": {
+            "type": "string",
+            "description": "Sales Organization.",
+            "example": "300"
+          },
+          "distChannel": {
+            "type": "string",
+            "description": "Distribution channel.",
+            "example": "01"
+          },
+          "division": {
+            "type": "string",
+            "description": "division.",
+            "example": "01"
+          },
+          "entries": {
+            "type": "array",
+            "description": "A list of order entries.",
+            "items": {
+              "$ref": "#/components/schemas/OrderEntry"
+            }
+          },
+          "shipTo": {
+            "type": "string",
+            "description": "OneTime customer address.",
+            "$ref": "#/components/schemas/Address"
+          },
+          "distributorReference": {
+            "type": "string",
+            "description": "A unique reference code for the distributor.",
+            "example": "0000017002"
+          }
+        }
+      },
+      "OrderEntry": {
+        "required": [
+          "materialNumber",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "grouping": {
+            "type": "integer",
+            "description": "The grouping for the product.",
+            "example": 1
+          },
+          "desiredDeliveryDate": {
+            "type": "string",
+            "description": "The desired delivery date for this line item in YYYYMMDD format.",
+            "example": "20250129"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "The quantity of the product.",
+            "example": 5
+          },
+          "materialNumber": {
+            "type": "string",
+            "description": "The unique code of the product.",
+            "example": "A5A3596CN0"
+          }
+        }
+      },
+      "Address": {
+        "required": [
+          "firstName",
+          "lastName",
+          "phone",
+          "email",
+          "street",
+          "city",
+          "postalCode",
+          "country",
+          "region"
+        ],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "Name of the person who will receive the shipment.",
+            "example": "Manuel"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Surname of the person who will receive the shipment.",
+            "example": "G\u00f3mez"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Phone number of the person who will receive the shipment.",
+            "example": "+34 987654321"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email of the person who will receive the shipment.",
+            "example": "customerEmail@myemail.com"
+          },
+          "street": {
+            "type": "string",
+            "description": "Street of the shipping address.",
+            "example": "Calle Falsa 123"
+          },
+          "city": {
+            "type": "string",
+            "description": "City of the shipping address.",
+            "example": "Madrid"
+          },
+          "postalCode": {
+            "type": "string",
+            "description": "Postal code of the shipping address.",
+            "example": "28080"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country isocode (https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes) of the shipping address.",
+            "example": "ES"
+          },
+          "region": {
+            "type": "string",
+            "description": "Region number of the shipping address. Use to match with SAP region number.",
+            "example": "28"
+          }
+        }
+      }
+    }
+  }
+}

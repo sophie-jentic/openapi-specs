@@ -1,0 +1,723 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SearXNG Search API",
+    "description": "SearXNG is a free internet metasearch engine which aggregates results from various search services and databases. This OpenAPI spec documents the search API endpoints available on any SearXNG instance.",
+    "version": "1.0.0",
+    "license": {
+      "name": "AGPL-3.0",
+      "url": "https://github.com/searxng/searxng/blob/master/LICENSE"
+    },
+    "contact": {
+      "name": "SearXNG Project",
+      "url": "https://github.com/searxng/searxng"
+    },
+    "x-jentic-source-url": "https://docs.searxng.org/dev/search_api.html"
+  },
+  "servers": [
+    {
+      "url": "https://search.ononoki.org",
+      "description": "Public SearXNG instance (replace with your own instance URL)"
+    }
+  ],
+  "paths": {
+    "/search": {
+      "get": {
+        "operationId": "searchGet",
+        "summary": "Search via GET",
+        "description": "Perform a search query using URL query parameters. Returns results in the specified format (HTML, JSON, CSV, or RSS).",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The search query string, passed to external search services."
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of active search categories."
+          },
+          {
+            "name": "engines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of active search engines."
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search language code (e.g., 'en', 'fr', 'de')."
+          },
+          {
+            "name": "pageno",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Search results page number."
+          },
+          {
+            "name": "time_range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "month",
+                "year"
+              ]
+            },
+            "description": "Time range filter for results."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv",
+                "rss"
+              ]
+            },
+            "description": "Output format. If not specified, returns HTML."
+          },
+          {
+            "name": "results_on_new_tab",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ],
+              "default": 0
+            },
+            "description": "Open results on new tab."
+          },
+          {
+            "name": "image_proxy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Proxy image results through SearXNG."
+          },
+          {
+            "name": "autocomplete",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "dbpedia",
+                "duckduckgo",
+                "mwmbl",
+                "startpage",
+                "wikipedia",
+                "swisscows",
+                "qwant"
+              ]
+            },
+            "description": "Autocomplete service provider."
+          },
+          {
+            "name": "safesearch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2
+              ]
+            },
+            "description": "Safe search filter level. 0=off, 1=moderate, 2=strict."
+          },
+          {
+            "name": "theme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "simple"
+            },
+            "description": "UI theme name."
+          },
+          {
+            "name": "enabled_plugins",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of enabled plugin names."
+          },
+          {
+            "name": "disabled_plugins",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of disabled plugin names."
+          },
+          {
+            "name": "enabled_engines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of enabled engine names."
+          },
+          {
+            "name": "disabled_engines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of disabled engine names."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/rss+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "xml"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - requested format is disabled on this instance"
+          }
+        }
+      },
+      "post": {
+        "operationId": "searchPost",
+        "summary": "Search via POST",
+        "description": "Perform a search query using form data. Same parameters as GET.",
+        "tags": [
+          "Search"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "q"
+                ],
+                "properties": {
+                  "q": {
+                    "type": "string",
+                    "description": "The search query string."
+                  },
+                  "categories": {
+                    "type": "string",
+                    "description": "Comma-separated list of categories."
+                  },
+                  "engines": {
+                    "type": "string",
+                    "description": "Comma-separated list of engines."
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "Search language code."
+                  },
+                  "pageno": {
+                    "type": "integer",
+                    "default": 1
+                  },
+                  "time_range": {
+                    "type": "string",
+                    "enum": [
+                      "day",
+                      "month",
+                      "year"
+                    ]
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "csv",
+                      "rss"
+                    ]
+                  },
+                  "safesearch": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - requested format is disabled on this instance"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "operationId": "searchRootGet",
+        "summary": "Search via root path (GET)",
+        "description": "Alias for /search. Perform a search query using URL query parameters.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The search query string."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv",
+                "rss"
+              ]
+            },
+            "description": "Output format."
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of categories."
+          },
+          {
+            "name": "engines",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated list of engines."
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search language code."
+          },
+          {
+            "name": "pageno",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "time_range",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "month",
+                "year"
+              ]
+            }
+          },
+          {
+            "name": "safesearch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "searchRootPost",
+        "summary": "Search via root path (POST)",
+        "description": "Alias for /search via POST.",
+        "tags": [
+          "Search"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "q"
+                ],
+                "properties": {
+                  "q": {
+                    "type": "string"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "csv",
+                      "rss"
+                    ]
+                  },
+                  "categories": {
+                    "type": "string"
+                  },
+                  "engines": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "pageno": {
+                    "type": "integer",
+                    "default": 1
+                  },
+                  "safesearch": {
+                    "type": "integer",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/autocompleter": {
+      "get": {
+        "operationId": "autocomplete",
+        "summary": "Autocomplete suggestions",
+        "description": "Get search autocomplete suggestions for a partial query.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Partial search query for autocomplete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Autocomplete suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config": {
+      "get": {
+        "operationId": "getConfig",
+        "summary": "Get instance configuration",
+        "description": "Returns the configuration of this SearXNG instance including available categories, engines, languages, and plugins.",
+        "tags": [
+          "Configuration"
+        ],
+        "responses": {
+          "200": {
+            "description": "Instance configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "engines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "plugins": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "instance_name": {
+                      "type": "string"
+                    },
+                    "locales": {
+                      "type": "object"
+                    },
+                    "default_locale": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query that was executed."
+          },
+          "number_of_results": {
+            "type": "number",
+            "description": "Estimated total number of results."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "corrections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "infoboxes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "infobox": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "urls": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                },
+                "img_src": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unresponsive_engines": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "engine": {
+            "type": "string"
+          },
+          "parsed_url": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "engines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "score": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string"
+          },
+          "pretty_url": {
+            "type": "string"
+          },
+          "thumbnail": {
+            "type": "string",
+            "format": "uri"
+          },
+          "img_src": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Search",
+      "description": "Search query endpoints"
+    },
+    {
+      "name": "Configuration",
+      "description": "Instance configuration endpoints"
+    }
+  ],
+  "x-jentic-no-auth-reason": "SearXNG is a self-hosted metasearch engine with no built-in API authentication. Access control is managed at the infrastructure level."
+}

@@ -1,0 +1,1102 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CCIP API",
+    "description": "API for Cross-Chain Interoperability Protocol (CCIP).\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CCIP API Support"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/asdf-86d/ccip-intents-api/1.0.0"
+  },
+  "x-examples": {
+    "token-amount-example": {
+      "tokenAddress": "0xA0b86a33E6ba76E6F7c4AB4C3F05C7E0d3D7E2F6B",
+      "amount": "1000000"
+    },
+    "network-info-evm-example": {
+      "name": "ethereum-mainnet",
+      "chainSelector": "5009297550715157269",
+      "chainId": "1",
+      "chainFamily": "EVM"
+    },
+    "network-info-svm-example": {
+      "name": "solana-mainnet",
+      "chainSelector": "124615329519749607",
+      "chainId": "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+      "chainFamily": "SVM"
+    },
+    "lane-example": {
+      "sourceNetworkInfo": "network-info-evm-example",
+      "destNetworkInfo": "network-info-svm-example",
+      "routerAddress": "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D"
+    },
+    "error-example": {
+      "error": "NOT_FOUND",
+      "message": "The requested resource was not found"
+    },
+    "evm-extra-args-example": {
+      "gasLimit": "400000",
+      "allowOutOfOrderExecution": false
+    },
+    "svm-extra-args-example": {
+      "computeUnits": 400000,
+      "accountIsWritableBitmap": "15",
+      "allowOutOfOrderExecution": false,
+      "tokenReceiver": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+      "accounts": [
+        "Account1Address",
+        "Account2Address"
+      ]
+    },
+    "message-evm-to-svm-example": {
+      "messageId": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "sender": "0x742d35Cc6634C0532925a3b8D5c8C22C5B2D8a3E",
+      "receiver": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+      "status": "SUCCESS",
+      "sourceNetworkInfo": "network-info-evm-example",
+      "destNetworkInfo": "network-info-svm-example",
+      "routerAddress": "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D",
+      "sendTransactionHash": "0x9428deb1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "sendTimestamp": "2023-12-01T10:30:00Z",
+      "receiptTransactionHash": "3vZ8qJ1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "receiptTimestamp": "2023-12-01T10:45:00Z",
+      "data": "0x1234567890abcdef",
+      "feeToken": "0xA0b86a33E6ba76E6F7c4AB4C3F05C7E0d3D7E2F6B",
+      "feeTokenAmount": "5000000",
+      "tokenAmounts": [
+        "token-amount-example"
+      ],
+      "extraArgs": "svm-extra-args-example",
+      "ready_for_manual_execution": false
+    },
+    "lane-latency-example": {
+      "lane": "lane-example",
+      "totalMs": 900000
+    },
+    "error-not-found-example": {
+      "error": "NOT_FOUND",
+      "message": "The requested message was not found"
+    },
+    "error-server-error-example": {
+      "error": "INTERNAL_SERVER_ERROR",
+      "message": "An unexpected error occurred while processing the request"
+    },
+    "intent-quote-request-example": {
+      "originChainSelector": "5009297550715157269",
+      "destinationChainSelector": "4949039107694359620",
+      "inputToken": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "outputToken": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      "inputAmount": "1000000",
+      "sender": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7",
+      "recipient": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7",
+      "calldata": "0x"
+    },
+    "intent-transaction-example": {
+      "to": "0x15a7cA97D1ed168fB34a4055CEFa2E2f9Bdb6C75",
+      "data": "0xabcdef1234567890",
+      "value": "0",
+      "chainId": "1"
+    },
+    "intent-quote-response-example": {
+      "inputAmount": "1000000",
+      "expectedOutputAmount": "999000",
+      "estimatedExecutionTime": 1800,
+      "transaction": "intent-transaction-example",
+      "deadline": 1734192060,
+      "refundable": false
+    },
+    "intent-status-response-example": {
+      "intentId": "0xe429343c7b4c75e8c14ae8810b1fc8df20de32f05fa907c4839aa80a2c2db13e",
+      "transactionHash": "0xabc1234567890def1234567890abcdef1234567890abcdef1234567890abcdef",
+      "status": "PENDING",
+      "subStatus": "WaitingToFulfill",
+      "originChainSelector": "5009297550715157269",
+      "destinationChainSelector": "4949039107694359620",
+      "fulfillmentTxHash": null
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.ccip.chain.link/v1",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/message/{messageId}": {
+      "get": {
+        "summary": "Retrieve a Single Message",
+        "description": "Fetches a single Message object by its unique messageId.\n",
+        "operationId": "getMessage",
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the message (64-character hex string with 0x prefix)",
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{64}$",
+              "example": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful. The response body contains the Message object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                },
+                "example": "message-evm-to-svm-example"
+              }
+            }
+          },
+          "404": {
+            "description": "Message not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": "error-not-found-example"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid message ID format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "INVALID_MESSAGE_ID",
+                  "message": "The provided message ID format is invalid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": "error-server-error-example"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lanes/latency": {
+      "get": {
+        "summary": "Retrieve Lane Latency",
+        "description": "Fetches latency information for a specific lane between source and destination networks using chain selectors",
+        "operationId": "getLaneLatency",
+        "tags": [
+          "Lanes"
+        ],
+        "parameters": [
+          {
+            "name": "sourceChainSelector",
+            "in": "query",
+            "required": true,
+            "description": "The CCIP chain selector identifier for the source network.\nThis is a uint64 value represented as a string.\nSee the official chain selectors repository: https://github.com/smartcontractkit/chain-selectors/blob/v1.0.60/selectors.yml\n",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "example": "5009297550715157269"
+            }
+          },
+          {
+            "name": "destChainSelector",
+            "in": "query",
+            "required": true,
+            "description": "The CCIP chain selector identifier for the destination network.\nThis is a uint64 value represented as a string.\nSee the official chain selectors repository: https://github.com/smartcontractkit/chain-selectors/blob/v1.0.60/selectors.yml\n",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$",
+              "example": "4949039107694359620"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful. The response body contains the LaneLatency object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaneLatency"
+                },
+                "example": "lane-latency-example"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "INVALID_PARAMETERS",
+                  "message": "Missing or invalid required parameters"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lane not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "LANE_NOT_FOUND",
+                  "message": "Lane with the specified parameters was not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "INTERNAL_SERVER_ERROR",
+                  "message": "An unexpected error occurred while processing the request"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intents/quotes": {
+      "post": {
+        "summary": "Create quote for intent",
+        "description": "Create a quote for a cross-chain swap or bridge operation.\nReturns executable transaction data that can be submitted on-chain.\n",
+        "operationId": "getIntentQuote",
+        "tags": [
+          "Intents"
+        ],
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "description": "API key to validate caller. This is not entirely public yet.\nThis may be required on some routes for some time.\n",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentQuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quote generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentQuoteResponse"
+                },
+                "example": "intent-quote-response-example"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "INVALID_REQUEST",
+                  "message": "Invalid chain selector provided"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "UNAUTHORIZED",
+                  "message": "API key is required"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No route available for the requested chain/token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ROUTE_NOT_FOUND",
+                  "message": "No provider available for the requested route"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": "error-server-error-example"
+              }
+            }
+          },
+          "502": {
+            "description": "Bad gateway - Provider error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "PROVIDER_ERROR",
+                  "message": "Intent provider returned an error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intents/tx/{txHash}": {
+      "get": {
+        "summary": "Get all intent statuses for a transaction",
+        "description": "Retrieve the status of all intents created in a specific transaction.\nSupports batched intents where multiple intents are created in a single transaction.\n",
+        "operationId": "getIntentsByTxHash",
+        "tags": [
+          "Intents"
+        ],
+        "parameters": [
+          {
+            "name": "txHash",
+            "in": "path",
+            "required": true,
+            "description": "Intent creation transaction hash",
+            "schema": {
+              "type": "string"
+            },
+            "example": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Intent statuses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IntentStatusResponse"
+                  }
+                },
+                "example": [
+                  "intent-status-response-example"
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "NOT_FOUND",
+                  "message": "No intents found for the provided transaction hash"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": "error-server-error-example"
+              }
+            }
+          },
+          "502": {
+            "description": "Bad gateway - Provider error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "PROVIDER_ERROR",
+                  "message": "Intent provider returned an error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/intents/id/{intentId}": {
+      "get": {
+        "summary": "Get intent status by ID",
+        "description": "Retrieve the status of a specific intent by its intentId.\nIntentId can be found in intent status responses by querying via txHash.\n",
+        "operationId": "getIntentById",
+        "tags": [
+          "Intents"
+        ],
+        "parameters": [
+          {
+            "name": "intentId",
+            "in": "path",
+            "required": true,
+            "description": "Unique intent identifier",
+            "schema": {
+              "type": "string"
+            },
+            "example": "0xe429343c7b4c75e8c14ae8810b1fc8df20de32f05fa907c4839aa80a2c2db13e"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Intent status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentStatusResponse"
+                },
+                "example": "intent-status-response-example"
+              }
+            }
+          },
+          "404": {
+            "description": "Intent not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "NOT_FOUND",
+                  "message": "Intent not found with the provided ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": "error-server-error-example"
+              }
+            }
+          },
+          "502": {
+            "description": "Bad gateway - Provider error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "PROVIDER_ERROR",
+                  "message": "Intent provider returned an error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "required": [
+          "messageId",
+          "sender",
+          "receiver",
+          "status",
+          "sourceNetworkInfo",
+          "destNetworkInfo",
+          "sendTransactionHash",
+          "sendTimestamp",
+          "feeToken",
+          "feeTokenAmount",
+          "tokenAmounts",
+          "extraArgs",
+          "ready_for_manual_execution"
+        ],
+        "properties": {
+          "origin": {
+            "type": "string",
+            "nullable": true,
+            "description": "Address of the user account that originally initiated the transaction (tx.origin) on the source chain. Format depends on source chain family (20-byte hex for EVM, base58 for Solana).",
+            "example": "0x742d35Cc6634C0532925a3b8D5c8C22C5B2D8a3E"
+          },
+          "messageId": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{64}$",
+            "description": "Globally unique message identifier derived from a hash of:\n- Source/destination chain selectors and onRamp address (for lane uniqueness)\n- Message content (sender, receiver, data, tokens, fees, extraArgs)\n- Sequence number and nonce (for ordering and replay protection)\nThis ensures global uniqueness across all CCIP lanes and prevents replay attacks.\n",
+            "example": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+          },
+          "sender": {
+            "type": "string",
+            "description": "Address of the account that called ccipSend() on the source chain router.\nFormat depends on source chain family (20-byte hex for EVM, base58 for Solana).\n",
+            "example": "0x742d35Cc6634C0532925a3b8D5c8C22C5B2D8a3E"
+          },
+          "receiver": {
+            "type": "string",
+            "description": "Address of the intended recipient contract/account on the destination chain.\nFormat depends on destination chain family. Encoded as bytes in the message.\n",
+            "example": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+          },
+          "status": {
+            "type": "string",
+            "x-extensible-enum": [
+              "SENT",
+              "SOURCE_FINALIZED",
+              "COMMITTED",
+              "BLESSED",
+              "SUCCESS",
+              "FAILED"
+            ],
+            "description": "The current status of the CCIP message through its lifecycle:\n- `SENT`: Transaction submitted and waiting for source chain confirmation\n- `SOURCE_FINALIZED`: Transaction confirmed on source chain and ready for CCIP processing\n- `COMMITTED`: Message committed to destination chain's commit store and staged for execution\n- `BLESSED`: Message approved by CCIP oracle network and ready for execution\n- `SUCCESS`: Message successfully executed on destination chain\n- `FAILED`: Message execution failed but can be manually retried\n",
+            "example": "SUCCESS"
+          },
+          "sourceNetworkInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkInfo"
+              }
+            ],
+            "description": "Information about the blockchain network where the message originated"
+          },
+          "destNetworkInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkInfo"
+              }
+            ],
+            "description": "Information about the blockchain network where the message will be executed"
+          },
+          "routerAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Address of the CCIP router contract that processed this message on the source chain.\nMay be null if the router address is not available.\n",
+            "example": "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D"
+          },
+          "sendTransactionHash": {
+            "type": "string",
+            "description": "Transaction hash of the ccipSend() call on the source chain.\nFormat depends on source chain family.\n",
+            "example": "0x9428deb1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+          },
+          "sendTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the message was sent.\n",
+            "example": "2023-12-01T10:30:00Z"
+          },
+          "receiptTransactionHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction hash of the message execution on the destination chain.\nNull if message hasn't been executed yet. Format depends on destination chain family.\n",
+            "example": "3vZ8qJ1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+          },
+          "receiptTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "ISO 8601 timestamp when the message was executed on destination chain.\nNull if message hasn't been executed yet.\n",
+            "example": "2023-12-01T10:45:00Z"
+          },
+          "data": {
+            "type": "string",
+            "nullable": true,
+            "description": "Arbitrary data payload to be delivered to the receiver contract encoded as hex string.\n",
+            "example": "0x1234567890abcdef"
+          },
+          "feeToken": {
+            "type": "string",
+            "description": "Address of the token used to pay CCIP fees on the source chain.\n",
+            "example": "0xA0b86a33E6ba76E6F7c4AB4C3F05C7E0d3D7E2F6B"
+          },
+          "feeTokenAmount": {
+            "type": "string",
+            "description": "Amount of fee tokens paid for this message (in token's smallest unit).\n",
+            "example": "5000000"
+          },
+          "tokenAmounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TokenAmount"
+            },
+            "description": "Array of token transfers included in this message.\n"
+          },
+          "extraArgs": {
+            "type": "object",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/GenericExtraArgsV2"
+              },
+              {
+                "$ref": "#/components/schemas/SVMExtraArgsV1"
+              }
+            ],
+            "description": "Extra arguments for message execution.\n"
+          },
+          "ready_for_manual_execution": {
+            "type": "boolean",
+            "description": "Whether this message can be manually executed if automatic execution failed.\n",
+            "example": false
+          }
+        },
+        "example": "message-evm-to-svm-example"
+      },
+      "TokenAmount": {
+        "type": "object",
+        "required": [
+          "tokenAddress",
+          "amount"
+        ],
+        "properties": {
+          "tokenAddress": {
+            "type": "string",
+            "description": "Address of the token contract on the source chain.\nFormat depends on source chain family.\n",
+            "example": "0xA0b86a33E6ba76E6F7c4AB4C3F05C7E0d3D7E2F6B"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount of tokens to transfer in the token's smallest unit (wei, lamports, etc.).\nMust be positive and within token's transfer limits.\n",
+            "example": "1000000"
+          }
+        },
+        "example": "token-amount-example"
+      },
+      "NetworkInfo": {
+        "type": "object",
+        "required": [
+          "name",
+          "chainSelector",
+          "chainId",
+          "chainFamily"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name identifier for the blockchain network.\nUsed for display purposes and network identification.\n",
+            "example": "ethereum-mainnet"
+          },
+          "chainSelector": {
+            "type": "string",
+            "description": "The CCIP chain selector identifier for the network.\nThis is a uint64 value represented as a string.\nSee the official chain selectors repository: https://github.com/smartcontractkit/chain-selectors/blob/v1.0.60/selectors.yml\n",
+            "pattern": "^[0-9]+$",
+            "example": "5009297550715157269"
+          },
+          "chainId": {
+            "type": "string",
+            "description": "Native chain identifier (EIP-155 for EVM, genesis hash for SVM, etc.).\n",
+            "example": "1"
+          },
+          "chainFamily": {
+            "type": "string",
+            "x-extensible-enum": [
+              "EVM",
+              "SVM",
+              "APTOS"
+            ],
+            "description": "Blockchain family/architecture type.\nDetermines message format, address encoding, and execution model.\n",
+            "example": "EVM"
+          }
+        },
+        "example": "network-info-evm-example"
+      },
+      "Lane": {
+        "type": "object",
+        "required": [
+          "sourceNetworkInfo",
+          "destNetworkInfo",
+          "routerAddress"
+        ],
+        "properties": {
+          "sourceNetworkInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkInfo"
+              }
+            ],
+            "description": "Source blockchain network information for this lane"
+          },
+          "destNetworkInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkInfo"
+              }
+            ],
+            "description": "Destination blockchain network information for this lane"
+          },
+          "routerAddress": {
+            "type": "string",
+            "description": "Address of the CCIP router contract on the source chain for this lane.\n",
+            "example": "0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D"
+          }
+        },
+        "example": "lane-example"
+      },
+      "LaneLatency": {
+        "type": "object",
+        "required": [
+          "lane",
+          "totalMs"
+        ],
+        "properties": {
+          "lane": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Lane"
+              }
+            ],
+            "description": "The lane (source-destination pair) for which latency is measured"
+          },
+          "totalMs": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "90th percentile latency in milliseconds for message delivery on this lane.\n",
+            "example": 900000
+          }
+        },
+        "example": "lane-latency-example"
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Machine-readable error code",
+            "example": "NOT_FOUND"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error description",
+            "example": "The requested resource was not found"
+          }
+        },
+        "example": "error-example"
+      },
+      "GenericExtraArgsV2": {
+        "type": "object",
+        "properties": {
+          "gasLimit": {
+            "type": "string",
+            "description": "Gas limit for message execution on the destination EVM chain.\nDefault is 200,000 gas if not specified in the original message.\n",
+            "example": "400000"
+          },
+          "allowOutOfOrderExecution": {
+            "type": "boolean",
+            "description": "Whether this message can be executed out of order relative to other messages \nfrom the same sender.\n",
+            "example": false
+          }
+        },
+        "required": [
+          "gasLimit",
+          "allowOutOfOrderExecution"
+        ],
+        "example": "evm-extra-args-example"
+      },
+      "SVMExtraArgsV1": {
+        "type": "object",
+        "properties": {
+          "computeUnits": {
+            "type": "integer",
+            "description": "Compute units allocated for message execution on the destination SVM chain.\n",
+            "example": 400000
+          },
+          "accountIsWritableBitmap": {
+            "type": "string",
+            "description": "Bitmap indicating which accounts in the accounts array are writable.\nEach bit corresponds to an account position.\n",
+            "example": "15"
+          },
+          "allowOutOfOrderExecution": {
+            "type": "boolean",
+            "description": "Whether this message can be executed out of order relative to other messages \nfrom the same sender.\n",
+            "example": false
+          },
+          "tokenReceiver": {
+            "type": "string",
+            "description": "Address for token delivery, separate from the message receiver.\nRequired if the message includes token transfers.\n",
+            "example": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional accounts needed for message execution on SVM.\n",
+            "example": [
+              "Account1Address",
+              "Account2Address"
+            ],
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "computeUnits",
+          "accountIsWritableBitmap",
+          "allowOutOfOrderExecution",
+          "tokenReceiver",
+          "accounts"
+        ],
+        "example": "svm-extra-args-example"
+      },
+      "IntentQuoteRequest": {
+        "type": "object",
+        "required": [
+          "originChainSelector",
+          "destinationChainSelector",
+          "inputToken",
+          "outputToken",
+          "inputAmount",
+          "sender",
+          "recipient"
+        ],
+        "properties": {
+          "originChainSelector": {
+            "type": "string",
+            "description": "CCIP chain selector for the source blockchain.\nString representation of uint64 selector value.\n",
+            "example": "5009297550715157269"
+          },
+          "destinationChainSelector": {
+            "type": "string",
+            "description": "CCIP chain selector for the destination blockchain.\nString representation of uint64 selector value.\n",
+            "example": "4949039107694359620"
+          },
+          "inputToken": {
+            "type": "string",
+            "description": "Token address on the origin chain.\nMust be a valid contract address format for the origin chain.\n",
+            "example": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+          },
+          "outputToken": {
+            "type": "string",
+            "description": "Desired token address on the destination chain.\nMust be a valid contract address format for the destination chain.\n",
+            "example": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+          },
+          "inputAmount": {
+            "type": "string",
+            "description": "Amount of input tokens in smallest unit (e.g., wei for ETH, lamports for SOL).\nMust be a positive integer string to preserve precision.\n",
+            "example": "1000000000"
+          },
+          "sender": {
+            "type": "string",
+            "description": "Address initiating the intent, as msg.sender, not tx.origin.\n",
+            "example": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "Address receiving tokens on the destination chain.\nFormat depends on destination chain type.\n",
+            "example": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+          },
+          "calldata": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]*$",
+            "description": "Optional execution data as hex-encoded bytes.\nProvide the raw calldata to execute on the recipient contract.\n",
+            "example": "0x51ab28a90000000000000000000000000000000000000000000000000000000067452f8a"
+          }
+        },
+        "example": "intent-quote-request-example"
+      },
+      "IntentQuoteResponse": {
+        "type": "object",
+        "required": [
+          "inputAmount",
+          "expectedOutputAmount",
+          "estimatedExecutionTime",
+          "transaction",
+          "deadline",
+          "refundable"
+        ],
+        "properties": {
+          "inputAmount": {
+            "type": "string",
+            "description": "Echo of the requested input amount for confirmation.\n",
+            "example": "1000000000"
+          },
+          "expectedOutputAmount": {
+            "type": "string",
+            "description": "Expected amount of output tokens after all fees.\nIn smallest unit of the output token.\n",
+            "example": "999000000"
+          },
+          "estimatedExecutionTime": {
+            "type": "integer",
+            "description": "Estimated time for intent execution in seconds.\n",
+            "example": 180
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/IntentTransaction"
+          },
+          "deadline": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp by which the transaction must be submitted on-chain.\nAfter this time, the quote is no longer valid.\n",
+            "example": 1704067200
+          },
+          "refundable": {
+            "type": "boolean",
+            "description": "Whether the intent supports refunds if execution fails.\nExample, Eco: true, EverClear: false.\n",
+            "example": false
+          }
+        },
+        "example": "intent-quote-response-example"
+      },
+      "IntentTransaction": {
+        "type": "object",
+        "required": [
+          "to",
+          "data",
+          "value",
+          "chainId"
+        ],
+        "properties": {
+          "to": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]{40}$",
+            "description": "Contract address to invoke to create the intent.\n",
+            "example": "0x15a7cA97D1ed168fB34a4055CEFa2E2f9Bdb6C75"
+          },
+          "data": {
+            "type": "string",
+            "pattern": "^0x[a-fA-F0-9]*$",
+            "description": "Encoded transaction data ready for execution.\n",
+            "example": "0xabcdef1234567890"
+          },
+          "value": {
+            "type": "string",
+            "description": "Native token value to send with transaction (usually \"0\").\n",
+            "example": "0"
+          },
+          "chainId": {
+            "type": "string",
+            "description": "Chain ID where this transaction should be executed.\nTypically the origin chain ID.\n",
+            "example": "1"
+          }
+        },
+        "example": "intent-transaction-example"
+      },
+      "IntentStatusResponse": {
+        "type": "object",
+        "required": [
+          "intentId",
+          "transactionHash",
+          "status",
+          "originChainSelector"
+        ],
+        "properties": {
+          "intentId": {
+            "type": "string",
+            "description": "Unique identifier for the intent.\n",
+            "example": "0xe429343c7b4c75e8c14ae8810b1fc8df20de32f05fa907c4839aa80a2c2db13e"
+          },
+          "transactionHash": {
+            "type": "string",
+            "description": "Intent creation transaction hash on origin chain.\n",
+            "example": "0xabc1234567890def1234567890abcdef1234567890abcdef1234567890abcdef"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "FAILED"
+            ],
+            "description": "High-level intent status.\nPENDING: Intent is processing.\nCOMPLETED: Intent has been fulfilled.\nFAILED: Intent has failed and cannot be fulfilled.\n",
+            "example": "PENDING"
+          },
+          "subStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "More detailed status information, can be provider-specific.\nExamples: waitingToFulfill, waitingForRefund, fulfilled, refunded.\n",
+            "example": "WaitingToFulfill"
+          },
+          "originChainSelector": {
+            "type": "string",
+            "description": "CCIP chain selector where the intent was created.\n",
+            "example": "5009297550715157269"
+          },
+          "destinationChainSelector": {
+            "type": "string",
+            "nullable": true,
+            "description": "CCIP chain selector where the intent will be/was fulfilled.\nMay be null if not yet determined.\n",
+            "example": "4949039107694359620"
+          },
+          "fulfillmentTxHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction hash of the intent fulfillment on destination chain.\nNull if not yet fulfilled.\n",
+            "example": "0xdef4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+          }
+        },
+        "example": "intent-status-response-example"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Messages",
+      "description": "Operations related to CCIP messages"
+    },
+    {
+      "name": "Lanes",
+      "description": "Operations related to CCIP lanes and latency information"
+    },
+    {
+      "name": "Intents",
+      "description": "Operations related to intents."
+    }
+  ]
+}

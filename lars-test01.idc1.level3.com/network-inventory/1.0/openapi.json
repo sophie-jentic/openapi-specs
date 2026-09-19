@@ -1,0 +1,2220 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Network Inventory",
+    "description": "Network Inventory API <br> Also referred to as NDS Inventory <br> <br> Leverage the live network and traditional inventory systems to find the next available resource in real-time. <br> Eliminates conflicts between the network and inventory when selecting the next available resource. <br> Automation systems use this API to improve success rates.\n",
+    "contact": {
+      "name": "Activation System Dev Support",
+      "url": "https://lumen-cdn.atlassian.net/wiki/spaces/ASD/pages/158433380/Network+Inventory",
+      "email": "ActivationSystemDev-Support@centurylink.com"
+    },
+    "license": {
+      "name": "Proprietary Lumen"
+    },
+    "version": "1.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/CenturyLink_APIs/network-inventory-core/1.0"
+  },
+  "servers": [
+    {
+      "url": "http://lars-test01.idc1.level3.com:18080/nds.inventory.service/",
+      "description": "lars test 01"
+    },
+    {
+      "url": "http://lars-test02.corp.intranet:18080/nds.inventory.service/",
+      "description": "lars test 02"
+    },
+    {
+      "url": "http://lars-test03.test.intranet:18080/nds.inventory.service/",
+      "description": "lars test 03"
+    },
+    {
+      "url": "http://lars-test04.test.intranet:18080/nds.inventory.service/",
+      "description": "lars test 04"
+    }
+  ],
+  "paths": {
+    "/v1/reserve": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "operationId": "postReserve",
+        "summary": "Reserve resource",
+        "description": "<h1> This API is deprecated. Please use /v1/domain/reservation instead.</h1> <p> The main concept to understand in this service is a domain.  A domain is used to reserve a resource.  sVlan is an example of a resource.  The complete list of resources, their attributes, and descriptions are available in the schema.  Their names end with Resource, SVlanResource... </p> <h3>Basics:</h3> <p> A domain is populated with information used to reserve a resource.  It contains 3 main sections: </p> <h4>Information Section</h4> <p> These values are only used for logging and debugging.  They have no impact on the actual service and are optional.  They include: requestId, serviceId, circuitId </p> <h4>Allowable Section</h4> <p> These values are used to find the next available value of a resource.  The required fields are: min, max.  These values tell the service which range you want the next available value to be in. </p> <h4>Resource Section</h4> <p> These values specify the resource you want to reserve.  They include the name of the resource,  network information about the resource, and which inventory system you want to reserve the resource in. </p> <h3>Matching Resource Values:</h3> <p> If you want multiple resources to have the same value, you can put multiple resources in a domain.  In the case of sVlan and subInterface, sometimes Engineering wants the values to match.  This option provides that funcationality. </p> <h3>Request Details:</h3> <p> This serivce takes a domainRequest which contains a list of domains.  In most cases there will only be 1 domain in the domainRequest.  It allows multiple domains as a convience for calling systems.  Submitting 2 domains in 1 domainRequest will accomplish the same as 2 domainRequests with 1 domain in each. </p> <h3>Service Details:</h3> <h4>SOLR</h4> <p> In addition to the different inventory systems this service interacts with, there is also an internal SOLR index for each resource.  This is used mostly for race conditions when multiple requests for the same resouce come into the service.  The SOLR index is cleared out every 30 minutes.  It is always used for each resource so it is not necessary to include in the request but can be if you like. <br><br> It also enables reservations of resources that do not live in any inventory system.  Some resources, such as offnetSVlan, are not inventoried in any system.  In these cases the network is the only source of record.  All values in the network and SOLR are considered in use and will be excluded as possible next available values. </p>        \n",
+        "tags": [
+          "Reserve [Deprecated]"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "debug",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Defaults to false, set to true to run without updating inventory."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/domainRequestJSON"
+              },
+              "examples": {
+                "sVlan": {
+                  "summary": "sVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "subInterface": {
+                  "summary": "subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}                  \n"
+                },
+                "sVlan_subInterface": {
+                  "summary": "sVlan and subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        },                                                \n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}       \n"
+                },
+                "offnetSVlan": {
+                  "summary": "offnetSVlan",
+                  "description": "This example includes the optional SOLR since this value is not in any inventory system.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"offnetSVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"pVlan\": \"1000\",\n              \"network\": \"\",\n              \"solr\": \"\"\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "netexOracleSVlan": {
+                  "summary": "Netex Oracle sVlan",
+                  "description": "The first device is used to call the NetEx API, the 2nd is the device on our network.  This example treats the NetEx API similar to the network and will fail if there is an issue with the API.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"us-phoenix-1\",\n              \"interface\": \"CenturyLink-phx2-cyrus1-1\",\n              \"netexOracle\": {\n                \"query\": \"\"\n              }\n            },                            \n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "layer3RouteTarget_layer3RouteDistinguisher": {
+                  "summary": "layer3RouteTarget and layer3RouteDistinguisher",
+                  "description": "The same pool of numbers is used to determine the layer3RouteTarget and layer3RouteDistinguisher so we only need to go SASI and VPN Inventory once under the layer3RouteTarget resource.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"40000\",\n          \"max\": \"65000\"\n        },\n        \"layer3RouteTarget\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": \"\"\n              },\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"                                    \n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              },\n              \"vpn\": {\n                \"verify\": \"\"\n              }\n            }\n          ]\n        },                                                \n        \"layer3RouteDistinguisher\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": \"\"\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}                         \n"
+                },
+                "layer2RouteTarget": {
+                  "summary": "layer2RouteTarget !NOT Implemented yet!",
+                  "description": "!NOT Implemented Yet!.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd\",\n          \"max\": \"tbd\"\n        },\n        \"layer2RouteTarget\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": \"\"\n              },\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"                                    \n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}        \n"
+                },
+                "nniVlan": {
+                  "summary": "nniVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd 1\",\n          \"max\": \"tbd 4096\"\n        },\n        \"nniVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "cVlan": {
+                  "summary": "cVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd 1\",\n          \"max\": \"tbd 4096\"\n        },\n        \"cVlan\": {\n          \"device\": [\n            {\n              \"name\": \"LABBRMCOYJ301\",\n              \"interface\": \"TenGigE0/0/0/23\",\n              \"network\": \"\",\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}         \n"
+                },
+                "layer2VpnId": {
+                  "summary": "layer2VpnId",
+                  "description": "Since this is a global number and Sasi is the source, you probably do not want to continueOnFail.  Global numbers only need to be queried and updated once per Inventory System.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1000000\",\n          \"max\": \"2000000\"\n        },\n        \"layer2VpnId\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZN9K001\",\n              \"network\": \"\",\n              \"sasi\": \"\"\n            },\n            {\n              \"name\": \"LABWSTZN9K002\",\n              \"network\": \"\"\n            }                              \n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "sdp": {
+                  "summary": "sdp",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1\",\n          \"max\": \"40000\"\n        },\n        \"sdp\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZNNA001\",\n              \"network\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "ies": {
+                  "summary": "ies",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1\",\n          \"max\": \"1000000\"\n        },\n        \"ies\": {\n          \"device\": [\n            {\n              \"name\": \"EAR1.ZUN1\",\n              \"network\": {},\n              \"alcatel\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "entryId": {
+                  "summary": "entryId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"MVL-000002\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"1300\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"1300\",\n                    \"max\": \"4294967295\",\n                    \"increment\": \"10\"\n                },\n                \"entryId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"ear1.zun1\",\n                            \"policy\": \"ddos2-dynamic-check\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "siteId": {
+                  "summary": "siteId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"00/VLXX/038811/LUMN\",\n                \"requestId\": \"70390100\",\n                \"requestedValue\": \"1\",\n                \"allowable\": {\n                    \"min\": \"1\",\n                    \"max\": \"1000\",\n                    \"increment\": \"1\"\n                },\n                \"siteId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"vrr41.zun1\",\n                            \"routeTarget\": \"6745:210012472\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "segmentRoutingTunnel": {
+                  "summary": "segmentRoutingTunnel",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"0\",\n                    \"max\": \"65535\"\n                },\n                \"segmentRoutingTunnel\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": {}\n                            },\n                            \"sasi\": {\n                                \"query\": {\n                                    \"continueOnFail\": \"\"\n                                },\n                                \"update\": {\n                                    \"continueOnFail\": \"\"\n                                }\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "aggregateInterface": {
+                  "summary": "aggregateInterface",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"3\",\n                    \"max\": \"39\"\n                },\n                \"aggregateInterface\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "qosId": {
+                  "summary": "qosId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"50\",\n                    \"max\": \"65535\"\n                },\n                \"qosId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/domainRequest"
+              },
+              "examples": {
+                "sVlan": {
+                  "summary": "sVlan",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>100</min>\n      <max>4092</max>\n    </allowable>\n    <sVlan>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </sVlan>\n  </domain>\n</domainRequest>\n"
+                },
+                "subInterface": {
+                  "summary": "subInterface",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>100</min>\n      <max>4092</max>\n    </allowable>\n    <subInterface>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </subInterface>\n  </domain>\n</domainRequest>\n"
+                },
+                "sVlan_subInterface": {
+                  "summary": "sVlan and subInterface",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>100</min>\n      <max>4092</max>\n    </allowable>\n    <sVlan>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </sVlan>                      \n    <subInterface>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </subInterface>\n  </domain>\n</domainRequest>          \n"
+                },
+                "offnetSVlan": {
+                  "summary": "offnetSVlan",
+                  "description": "This example includes the optional SOLR since this value is not in any inventory system.",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>100</min>\n      <max>4092</max>\n    </allowable>\n    <offnetSVlan>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <pVlan>1000</pVlan>\n        <network/>\n        <solr/>\n      </device>\n    </offnetSVlan>\n  </domain>\n</domainRequest>           \n"
+                },
+                "netexOracleSVlan": {
+                  "summary": "Netex Oracle sVlan",
+                  "description": "The first device is used to call the NetEx API, the 2nd is the device on our network.  This example treats the NetEx API similar to the network and will fail if there is an issue with the API.",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>100</min>\n      <max>4092</max>\n    </allowable>\n    <sVlan>\n      <device>\n        <name>us-phoenix-1</name>\n        <interface>CenturyLink-phx2-cyrus1-1</interface>\n        <netexOracle>\n          <query/>\n        </netexOracle>\n      </device>                      \n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </sVlan>\n  </domain>\n</domainRequest>\n"
+                },
+                "layer3RouteTarget_layer3RouteDistinguisher": {
+                  "summary": "layer3RouteTarget and layer3RouteDistinguisher",
+                  "description": "The same pool of numbers is used to determine the layer3RouteTarget and layer3RouteDistinguisher so we only need to go SASI and VPN Inventory once under the layer3RouteTarget resource.",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n    <domain>\n        <requestId>1</requestId>\n        <serviceId>ABC123</serviceId>\n        <circuitId>ZYX987</circuitId>\n        <allowable>\n            <min>40000</min>\n            <max>65000</max>\n        </allowable>\n        <layer3RouteTarget>\n            <device>\n                <name>VRR41.ZUN1</name>\n                <network>\n                    <verify/>\n                </network>\n                <sasi>\n                    <query>\n                      <continueOnFail/>\n                    </query>\n                    <update>\n                      <continueOnFail/>\n                    </update>\n                </sasi>  \n                <vpn>\n                    <verify/>\n                </vpn>\n            </device>\n        </layer3RouteTarget>\n        <layer3RouteDistinguisher>\n            <device>\n                <name>VRR41.ZUN1</name>\n                <network>\n                    <verify/>\n                </network>\n            </device>\n        </layer3RouteDistinguisher>        \n    </domain>\n</domainRequest>                  \n"
+                },
+                "layer2RouteTarget": {
+                  "summary": "layer2RouteTarget !NOT Implemented Yet!",
+                  "description": "!Not Implmented Yet!.",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n    <domain>\n        <requestId>1</requestId>\n        <serviceId>ABC123</serviceId>\n        <circuitId>ZYX987</circuitId>\n        <allowable>\n            <min>tbd</min>\n            <max>tbd</max>\n        </allowable>\n        <layer2RouteTarget>\n            <device>\n                <name>VRR41.ZUN1</name>\n                <network>\n                    <verify/>\n                </network>\n                <sasi>\n                    <query>\n                      <continueOnFail/>\n                    </query>\n                    <update>\n                      <continueOnFail/>\n                    </update>\n                </sasi>  \n            </device>\n        </layer2RouteTarget>\n    </domain>\n</domainRequest>     \n"
+                },
+                "nniVlan": {
+                  "summary": "nniVlan",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>tbd 1</min>\n      <max>tbd 4096</max>\n    </allowable>\n    <nniVlan>\n      <device>\n        <name>edge1.zun1</name>\n        <interface>ae36</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </nniVlan>\n  </domain>\n</domainRequest>\n"
+                },
+                "cVlan": {
+                  "summary": "cVlan",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>tbd 1</min>\n      <max>tbd 4096</max>\n    </allowable>\n    <cVlan>\n      <device>\n        <name>LABBRMCOYJ301</name>\n        <interface>TenGigE0/0/0/23</interface>\n        <network/>\n        <sasi>\n          <query>\n            <continueOnFail/>\n          </query>\n          <update>\n            <continueOnFail/>\n          </update>\n        </sasi>\n      </device>\n    </cVlan>\n  </domain>\n</domainRequest> \n"
+                },
+                "layer2VpnId": {
+                  "summary": "layer2VpnId",
+                  "description": "Since this is a global number and Sasi is the source, you probably do not want to continueOnFail.  Global numbers only need to be queried and updated once per Inventory System.",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n    <domain>\n        <requestId>1</requestId>\n        <serviceId>ABC123</serviceId>\n        <circuitId>ZYX987</circuitId>\n        <allowable>\n            <min>1000000</min>\n            <max>2000000</max>\n        </allowable>\n        <layer2VpnId>\n            <device>\n                <name>LABWSTZN9K001</name>\n                <network/>\n                <sasi/>\n            </device>\n            <device>\n                <name>LABWSTZN9K002</name>\n                <network/>\n            </device>                              \n        </layer2RouteTarget>\n    </domain>\n</domainRequest>\n"
+                },
+                "sdp": {
+                  "summary": "sdp",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>1</min>\n      <max>40000</max>\n    </allowable>\n    <sdp>\n      <device>\n        <name>LABWSTZNNA001</name>\n        <network/>\n      </device>\n    </sdp>\n  </domain>\n</domainRequest>\n"
+                },
+                "ies": {
+                  "summary": "ies",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<domainRequest>\n  <domain>\n    <requestId>ABC123</requestId>\n    <serviceId>VA/KXFN/437922/LVLC</serviceId>\n    <circuitId>00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC</circuitId>\n    <allowable>\n      <min>1</min>\n      <max>1000000</max>\n    </allowable>\n    <ies>\n      <device>\n        <name>EAR1.ZUN1</name>\n        <network/>\n        <alcatel/>\n      </device>\n    </ies>\n  </domain>\n</domainRequest>\n"
+                },
+                "entryId": {
+                  "summary": "entryId",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <domainRequest>\n    <domain>\n        <serviceId>MVL-000002</serviceId>\n        <requestId>3069749</requestId>\n        <requestedValue>1300</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>1300</min>\n            <max>4294967295</max>\n            <increment>10</increment>\n        </allowable>\n        <entryId>\n            <device>\n                <name>ear1.zun1</name>\n                <policy>ddos2-dynamic-check</policy>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </entryId>\n    </domain>\n</domainRequest>\n"
+                },
+                "siteId": {
+                  "summary": "siteId",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <domainRequest>\n    <domain>\n        <serviceId>00/VLXX/038811/LUMN</serviceId>\n        <requestId>70390100</requestId>\n        <requestedValue>1</requestedValue>\n        <allowable>\n            <min>1</min>\n            <max>1000</max>\n            <increment>1</increment>\n        </allowable>\n        <siteId>\n            <device>\n                <name>vrr41.zun1</name>\n                <routeTarget>6745:210012472</routeTarget>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </siteId>\n    </domain>\n</domainRequest>\n"
+                },
+                "segmentRoutingTunnel": {
+                  "summary": "segmentRoutingTunnel",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> <domainRequest>\n    <domain>\n        <serviceId>CO/L9XZ/113664/LUMN</serviceId>\n        <requestId>3069749</requestId>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>0</min>\n            <max>65535</max>\n        </allowable>\n        <segmentRoutingTunnel>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query/>\n                </network>\n                <sasi>\n                    <query>\n                        <continueOnFail/>\n                    </query>\n                    <update>\n                        <continueOnFail/>\n                    </update>\n                </sasi>\n            </device>\n        </segmentRoutingTunnel>\n    </domain>\n</domainRequest>\n"
+                },
+                "aggregateInterface": {
+                  "summary": "aggregateInterface",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainRequest>\n    <domain>\n        <serviceId>CO/L9XZ/113664/LUMN</serviceId>\n        <requestId>3069749</requestId>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>3</min>\n            <max>39</max>\n        </allowable>\n        <aggregateInterface>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </aggregateInterface>\n    </domain>\n</domainRequest>\n"
+                },
+                "qosId": {
+                  "summary": "qosId",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainRequest>\n    <domain>\n        <serviceId>CO/L9XZ/113664/LUMN</serviceId>\n        <requestId>3069749</requestId>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>50</min>\n            <max>65535</max>\n        </allowable>\n        <qosId>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </qosId>\n    </domain>\n</domainRequest>\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domainResponse"
+                },
+                "examples": {
+                  "aggregateInterface": {
+                    "summary": "aggregateInterface",
+                    "value": "{\n  \"domainResponse\": {\n    \"domain\": [\n      {\n        \"serviceID\": \"CO/L9XZ/113664/LUMN\",\n        \"requestID\": \"3069749\",\n        \"requestedValue\": \"0\",\n        \"ignoreInventoryIfFull\": \"true\",\n        \"allowable\": {\n          \"min\": \"3\",\n          \"max\": \"39\"\n        },\n        \"aggregateInterface\": {\n          \"device\": [\n            {\n              \"name\": \"LAB4COZWYJ001\",\n              \"network\": {\n                \"query\": \"true\"\n              }\n            }\n          ]\n        },\n        \"message\": \"Inventory system(s): solr updated, value: 3\",\n        \"reservedValue\": \"3\"\n      }\n    ]\n  }\n}\n"
+                  },
+                  "qosId": {
+                    "summary": "qosId",
+                    "value": "{\n  \"domainResponse\": {\n    \"domain\": [\n      {\n        \"serviceID\": \"CO/L9XZ/113664/LUMN\",\n        \"requestID\": \"3069749\",\n        \"requestedValue\": \"0\",\n        \"ignoreInventoryIfFull\": \"true\",\n        \"allowable\": {\n          \"min\": \"50\",\n          \"max\": \"65535\"\n        },\n        \"qosId\": {\n          \"device\": [\n            {\n              \"name\": \"LAB4COZWYJ001\",\n              \"network\": {\n                \"query\": \"true\"\n              }\n            }\n          ]\n        },\n        \"message\": \"Inventory system(s): solr updated, value: 6\",\n        \"reservedValue\": \"6\"\n      }\n    ]\n  }\n}\n"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/domainResponse"
+                },
+                "examples": {
+                  "aggregateInterface": {
+                    "summary": "aggregateInterface",
+                    "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainResponse>\n    <domain _listIndex=\"0\">\n        <serviceID>CO/L9XZ/113664/LUMN</serviceID>\n        <requestID>3069749</requestID>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>3</min>\n            <max>39</max>\n        </allowable>\n        <aggregateInterface>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </aggregateInterface>\n        <message>Inventory system(s): solr updated, value: 3</message>\n        <reservedValue>3</reservedValue>\n    </domain>\n</domainResponse>\n"
+                  },
+                  "qosId": {
+                    "summary": "qosId",
+                    "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainResponse>\n    <domain _listIndex=\"0\">\n        <serviceID>CO/L9XZ/113664/LUMN</serviceID>\n        <requestID>3069749</requestID>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>50</min>\n            <max>65535</max>\n        </allowable>\n        <qosId>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </qosId>\n        <message>Inventory system(s): solr updated, value: 6</message>\n        <reservedValue>6</reservedValue>\n    </domain>\n</domainResponse>\n"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/v1/domains/reservation": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "operationId": "postDomainsReservation",
+        "summary": "Reserve resource",
+        "description": "<p> The main concept to understand in this service is a domain.  A domain is used to reserve a resource.  sVlan is an example of a resource.  The complete list of resources, their attributes, and descriptions are available in the schema.  Their names end with Resource, SVlanResource... </p> <h3>Basics:</h3> <p> A domain is populated with information used to reserve a resource.  It contains 3 main sections: </p> <h4>Information Section</h4> <p> These values are only used for logging and debugging.  They have no impact on the actual service and are optional.  They include: requestId </p> <h4>Allowable Section</h4> <p> These values are used to find the next available value of a resource.  The required fields are: min, max.  These values tell the service which range you want the next available value to be in. </p> <h4>Resource Section</h4> <p> These values specify the resource you want to reserve.  They include the name of the resource,  network information about the resource, and which inventory system you want to reserve the resource in. </p> <h3>Matching Resource Values:</h3> <p> If you want multiple resources to have the same value, you can put multiple resources in a domain.  In the case of sVlan and subInterface, sometimes Engineering wants the values to match.  This option provides that funcationality. </p> <h3>Request Details:</h3> <p> This serivce takes a domainRequest which contains a list of domains.  In most cases there will only be 1 domain in the domainRequest.  It allows multiple domains as a convience for calling systems.  Submitting 2 domains in 1 domainRequest will accomplish the same as 2 domainRequests with 1 domain in each. </p> <h3>Service Details:</h3> <h4>SOLR</h4> <p> In addition to the different inventory systems this service interacts with, there is also an internal SOLR index for each resource.  This is used mostly for race conditions when multiple requests for the same resouce come into the service.  The SOLR index is cleared out every 30 minutes.  It is always used for each resource so it is not necessary to include in the request but can be if you like. <br><br> It also enables reservations of resources that do not live in any inventory system.  Some resources, such as offnetSVlan, are not inventoried in any system.  In these cases the network is the only source of record.  All values in the network and SOLR are considered in use and will be excluded as possible next available values. </p>        \n",
+        "tags": [
+          "Reserve"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "debug",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Defaults to false, set to true to run without updating inventory."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/domainRequestJSON"
+              },
+              "examples": {
+                "sVlan": {
+                  "summary": "sVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "subInterface": {
+                  "summary": "subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}                  \n"
+                },
+                "sVlan_subInterface": {
+                  "summary": "sVlan and subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        },                                                \n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}       \n"
+                },
+                "offnetSVlan": {
+                  "summary": "offnetSVlan",
+                  "description": "This example includes the optional SOLR since this value is not in any inventory system.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"offnetSVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"pVlan\": \"1000\",\n              \"network\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "netexOracleSVlan": {
+                  "summary": "Netex Oracle sVlan",
+                  "description": "The first device is used to call the NetEx API, the 2nd is the device on our network.  This example treats the NetEx API similar to the network and will fail if there is an issue with the API.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"100\",\n          \"max\": \"4092\"\n        },\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"us-phoenix-1\",\n              \"interface\": \"CenturyLink-phx2-cyrus1-1\",\n              \"netexOracle\": {\n                \"query\": {}\n              }\n            },                            \n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "layer3RouteTarget_layer3RouteDistinguisher": {
+                  "summary": "layer3RouteTarget and layer3RouteDistinguisher",
+                  "description": "The same pool of numbers is used to determine the layer3RouteTarget and layer3RouteDistinguisher so we only need to go SASI and VPN Inventory once under the layer3RouteTarget resource.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"40000\",\n          \"max\": \"65000\"\n        },\n        \"layer3RouteTarget\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": {}\n              },\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"                                    \n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              },\n              \"vpn\": {\n                \"verify\": {}\n              }\n            }\n          ]\n        },                                                \n        \"layer3RouteDistinguisher\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": {}\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}                         \n"
+                },
+                "layer2RouteTarget": {
+                  "summary": "layer2RouteTarget !NOT Implemented yet!",
+                  "description": "!NOT Implemented Yet!.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd\",\n          \"max\": \"tbd\"\n        },\n        \"layer2RouteTarget\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"network\": {\n                \"verify\": {}\n              },\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"                                    \n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}        \n"
+                },
+                "nniVlan": {
+                  "summary": "nniVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd 1\",\n          \"max\": \"tbd 4096\"\n        },\n        \"nniVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "cVlan": {
+                  "summary": "cVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"tbd 1\",\n          \"max\": \"tbd 4096\"\n        },\n        \"cVlan\": {\n          \"device\": [\n            {\n              \"name\": \"LABBRMCOYJ301\",\n              \"interface\": \"TenGigE0/0/0/23\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "layer2VpnId": {
+                  "summary": "layer2VpnId",
+                  "description": "Since this is a global number and Sasi is the source, you probably do not want to continueOnFail.  Global numbers only need to be queried and updated once per Inventory System.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1000000\",\n          \"max\": \"2000000\"\n        },\n        \"layer2VpnId\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZN9K001\",\n              \"network\": \"\",\n              \"sasi\": \"\"\n            },\n            {\n              \"name\": \"LABWSTZN9K002\",\n              \"network\": \"\"\n            }                              \n          ]\n        }\n      }\n    ]\n  }\n}   \n"
+                },
+                "layer2VpnSiteId": {
+                  "summary": "layer2VpnSiteId",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1\",\n          \"max\": \"100\"\n        },\n        \"layer2VpnSiteId\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"routeTarget\": \"6745:210001640\",\n              \"vpnServiceId\": \"00/VLXM/425569/LVLC\",\n              \"network\": {},\n              \"sasi\": {\n                \"query\": {\n                  \"continueOnFail\": \"\"\n                },\n                \"update\": {\n                  \"continueOnFail\": \"\"\n                }\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "sdp": {
+                  "summary": "sdp",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1\",\n          \"max\": \"40000\"\n        },\n        \"sdp\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZNNA001\",\n              \"network\": {},\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "ies": {
+                  "summary": "ies",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"serviceId\": \"VA/KXFN/437922/LVLC\",\n        \"circuitId\": \"00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC\",\n        \"allowable\": {\n          \"min\": \"1\",\n          \"max\": \"1000000\"\n        },\n        \"ies\": {\n          \"device\": [\n            {\n              \"name\": \"EAR1.ZUN1\",\n              \"network\": {},\n              \"alcatel\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "entryId": {
+                  "summary": "entryId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"MVL-000002\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"1300\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"1300\",\n                    \"max\": \"4294967295\",\n                    \"increment\": \"10\"\n                },\n                \"entryId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"ear1.zun1\",\n                            \"policy\": \"ddos2-dynamic-check\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "siteId": {
+                  "summary": "siteId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"00/VLXX/038811/LUMN\",\n                \"requestId\": \"70390100\",\n                \"requestedValue\": \"1\",\n                \"allowable\": {\n                    \"min\": \"1\",\n                    \"max\": \"1000\",\n                    \"increment\": \"1\"\n                },\n                \"siteId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"vrr41.zun1\",\n                            \"routeTarget\": \"6745:210012472\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "segmentRoutingTunnel": {
+                  "summary": "segmentRoutingTunnel",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"0\",\n                    \"max\": \"65535\"\n                },\n                \"segmentRoutingTunnel\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": {}\n                            },\n                            \"sasi\": {\n                                \"query\": {\n                                    \"continueOnFail\": \"\"\n                                },\n                                \"update\": {\n                                    \"continueOnFail\": \"\"\n                                }\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "aggregateInterface": {
+                  "summary": "aggregateInterface",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"3\",\n                    \"max\": \"39\"\n                },\n                \"aggregateInterface\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "qosId": {
+                  "summary": "qosId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"CO/L9XZ/113664/LUMN\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"0\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"50\",\n                    \"max\": \"65535\"\n                },\n                \"qosId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"LAB4COZWYJ001\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                 }\n             }\n         ]\n     }\n }\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domainResponse"
+                },
+                "examples": {
+                  "aggregateInterface": {
+                    "summary": "aggregateInterface",
+                    "value": "{\n  \"domainResponse\": {\n    \"domain\": [\n      {\n        \"serviceID\": \"CO/L9XZ/113664/LUMN\",\n        \"requestID\": \"3069749\",\n        \"requestedValue\": \"0\",\n        \"ignoreInventoryIfFull\": \"true\",\n        \"allowable\": {\n          \"min\": \"3\",\n          \"max\": \"39\"\n        },\n        \"aggregateInterface\": {\n          \"device\": [\n            {\n              \"name\": \"LAB4COZWYJ001\",\n              \"network\": {\n                \"query\": \"true\"\n              }\n            }\n          ]\n        },\n        \"message\": \"Inventory system(s): solr updated, value: 3\",\n        \"reservedValue\": \"3\"\n      }\n    ]\n  }\n}\n"
+                  },
+                  "qosId": {
+                    "summary": "qosId",
+                    "value": "{\n  \"domainResponse\": {\n    \"domain\": [\n      {\n        \"serviceID\": \"CO/L9XZ/113664/LUMN\",\n        \"requestID\": \"3069749\",\n        \"requestedValue\": \"0\",\n        \"ignoreInventoryIfFull\": \"true\",\n        \"allowable\": {\n          \"min\": \"50\",\n          \"max\": \"65535\"\n        },\n        \"qosId\": {\n          \"device\": [\n            {\n              \"name\": \"LAB4COZWYJ001\",\n              \"network\": {\n                \"query\": \"true\"\n              }\n            }\n          ]\n        },\n        \"message\": \"Inventory system(s): solr updated, value: 6\",\n        \"reservedValue\": \"6\"\n      }\n    ]\n  }\n}\n"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/domainResponse"
+                },
+                "examples": {
+                  "aggregateInterface": {
+                    "summary": "aggregateInterface",
+                    "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainResponse>\n    <domain _listIndex=\"0\">\n        <serviceID>CO/L9XZ/113664/LUMN</serviceID>\n        <requestID>3069749</requestID>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>3</min>\n            <max>39</max>\n        </allowable>\n        <aggregateInterface>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </aggregateInterface>\n        <message>Inventory system(s): solr updated, value: 3</message>\n        <reservedValue>3</reservedValue>\n    </domain>\n</domainResponse>\n"
+                  },
+                  "qosId": {
+                    "summary": "qosId",
+                    "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <domainResponse>\n    <domain _listIndex=\"0\">\n        <serviceID>CO/L9XZ/113664/LUMN</serviceID>\n        <requestID>3069749</requestID>\n        <requestedValue>0</requestedValue>\n        <ignoreInventoryIfFull>true</ignoreInventoryIfFull>\n        <allowable>\n            <min>50</min>\n            <max>65535</max>\n        </allowable>\n        <qosId>\n            <device>\n                <name>LAB4COZWYJ001</name>\n                <network>\n                    <query>true</query>\n                </network>\n            </device>\n        </qosId>\n        <message>Inventory system(s): solr updated, value: 6</message>\n        <reservedValue>6</reservedValue>\n    </domain>\n</domainResponse>\n"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/v1/domains/filter": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "operationId": "postDomainsFilter",
+        "summary": "Filter/search domain(s)/resource(s)",
+        "description": "<p> The main concept to understand in this service is a domain.  A domain is used to search a resource.  sVlan is an example of a resource.  The complete list of resources, their attributes, and descriptions are available in the schema.  Their names end with Resource, SVlanFilterResource... </p> <h3>Basics:</h3> <p> A domain is populated with information used to search a resource.  It contains 2 main sections: </p> <h4>Information Section</h4> <p> These values are only used for logging and debugging.  They have no impact on the actual service and are optional.  They include: requestId </p> <h4>Resource Section</h4> <p> These values specify the resource you want to search.  They include the name of the resource,  network information about the resource, and which inventory system you want to search the resource in. </p> <h3>Matching Resource Values:</h3> <p> If you want to search multiple resources, you can put multiple resources in a domain.  In the case of sVlan and subInterface, sometimes Engineering wants the values to match.  This option provides that funcationality. </p> <h3>Request Details:</h3> <p> This serivce takes a domainFilterRequest which contains a list of domains.  In most cases there will only be 1 domain in the domainFilterRequest.  It allows multiple domains as a convience for calling systems.  Submitting 2 domains in 1 domainRequest will accomplish the same as 2 domainRequests with 1 domain in each. </p> <h3>Service Details:</h3> <h4>SOLR</h4> <p> In addition to the different inventory systems this service interacts with, there is also an internal SOLR index for each resource.  This is used mostly for race conditions when multiple requests for the same resouce come into the service.  The SOLR index is cleared out every 30 minutes.  It is always used for each resource so it is not necessary to include in the request but can be if you like. <br><br> It also enables reservations of resources that do not live in any inventory system.  Some resources, such as offnetSVlan, are not inventoried in any system.  In these cases the network is the only source of record.  All values in the network and SOLR are considered in use. </p>        \n",
+        "tags": [
+          "Filter"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/domainFilterRequestJSON"
+              },
+              "examples": {
+                "sVlan": {
+                  "summary": "sVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}  \n"
+                },
+                "subInterface": {
+                  "summary": "subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}    \n"
+                },
+                "sVlan_subInterface": {
+                  "summary": "sVlan and subInterface",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        },                                                \n        \"subInterface\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}                         \n"
+                },
+                "offnetSVlan": {
+                  "summary": "offnetSVlan",
+                  "description": "This example includes the optional SOLR since this value is not in any inventory system.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"offnetSVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"pVlan\": \"1000\",\n              \"network\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n} \n"
+                },
+                "netexOracleSVlan": {
+                  "summary": "Netex Oracle sVlan",
+                  "description": "The first device is used to call the NetEx API, the 2nd is the device on our network.  This example treats the NetEx API similar to the network and will fail if there is an issue with the API.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"sVlan\": {\n          \"device\": [\n            {\n              \"name\": \"us-phoenix-1\",\n              \"interface\": \"CenturyLink-phx2-cyrus1-1\",\n              \"netexOracle\": {}\n            },                            \n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}       \n"
+                },
+                "layer3RouteTarget_layer3RouteDistinguisher": {
+                  "summary": "layer3RouteTarget and layer3RouteDistinguisher",
+                  "description": "The same pool of numbers is used to determine the layer3RouteTarget and layer3RouteDistinguisher so we only need to go SASI once under the layer3RouteTarget resource.",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"layer3RouteTarget\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }                                                \n      }\n    ]\n  }\n}       \n"
+                },
+                "nniVlan": {
+                  "summary": "nniVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"nniVlan\": {\n          \"device\": [\n            {\n              \"name\": \"edge1.zun1\",\n              \"interface\": \"ae36\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}            \n"
+                },
+                "cVlan": {
+                  "summary": "cVlan",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"7d36dc70-5a65-43b0-acb5-02dbf6e1a43c\",\n        \"cVlan\": {\n          \"device\": [\n            {\n              \"name\": \"LABBRMCOYJ301\",\n              \"interface\": \"TenGigE0/0/0/23\",\n              \"network\": {},\n              \"sasi\": {},                                \n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n} \n"
+                },
+                "layer2VpnId": {
+                  "summary": "layer2VpnId",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"layer2VpnId\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZN9K001\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            },\n            {\n              \"name\": \"LABWSTZN9K002\",\n              \"network\": {}\n            }                              \n          ]\n        }\n      }\n    ]\n  }\n}    \n"
+                },
+                "layer2VpnSiteId": {
+                  "summary": "layer2VpnSiteId",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"layer2VpnSiteId\": {\n          \"device\": [\n            {\n              \"name\": \"VRR41.ZUN1\",\n              \"routeTarget\": \"6745:210001640\",\n              \"vpnServiceId\": \"00/VLXM/425569/LVLC\",\n              \"network\": {},\n              \"sasi\": {},\n              \"solr\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "sdp": {
+                  "summary": "sdp",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"sdp\": {\n          \"device\": [\n            {\n              \"name\": \"LABWSTZNNA001\",\n              \"network\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "ies": {
+                  "summary": "ies",
+                  "value": "{\n  \"domainRequest\": {\n    \"domain\": [\n      {\n        \"requestId\": \"ABC123\",\n        \"ies\": {\n          \"device\": [\n            {\n              \"name\": \"EAR1.ZUN1\",\n              \"network\": {},\n              \"alcatel\": {}\n            }\n          ]\n        }\n      }\n    ]\n  }\n}\n"
+                },
+                "entryId": {
+                  "summary": "entryId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"MVL-000002\",\n                \"requestId\": \"3069749\",\n                \"requestedValue\": \"1300\",\n                \"ignoreInventoryIfFull\": \"true\",\n                \"allowable\": {\n                    \"min\": \"1300\",\n                    \"max\": \"4294967295\",\n                    \"increment\": \"10\"\n                },\n                \"entryId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"ear1.zun1\",\n                            \"policy\": \"ddos2-dynamic-check\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                },
+                "siteId": {
+                  "summary": "siteId",
+                  "value": "{\n    \"domainRequest\": {\n        \"domain\": [\n            {\n                \"serviceId\": \"00/VLXX/038811/LUMN\",\n                \"requestId\": \"70390100\",\n                \"requestedValue\": \"1\",\n                \"allowable\": {\n                    \"min\": \"1\",\n                    \"max\": \"1000\",\n                    \"increment\": \"1\"\n                },\n                \"siteId\": {\n                    \"device\": [\n                        {\n                            \"name\": \"vrr41.zun1\",\n                            \"routeTarget\": \"6745:210012472\",\n                            \"network\": {\n                                \"query\": \"true\"\n                            }\n                        }\n                    ]\n                }\n            }\n        ]\n    }\n}\n"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domainFilterResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/v1/version": {
+      "get": {
+        "tags": [
+          "Application Status"
+        ],
+        "operationId": "getVersion",
+        "summary": "Returns current application version information.",
+        "description": "Returns current application version information: version, build, and commit.",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/200_Version"
+          },
+          "408": {
+            "$ref": "#/components/responses/408_RequestTimeout"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/503_ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "tags": [
+          "Application Status"
+        ],
+        "operationId": "getHealth",
+        "summary": "Returns current Bill of Health of all components.",
+        "description": "Returns current Bill of Health of all components.",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/200_Health"
+          },
+          "408": {
+            "$ref": "#/components/responses/408_RequestTimeout"
+          },
+          "502": {
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "$ref": "#/components/responses/503_ServiceUnavailable"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BasicAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "responses": {
+      "200_Version": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/versionResponse"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/versionResponse"
+            }
+          }
+        }
+      },
+      "408_RequestTimeout": {
+        "description": "Request Timeout"
+      },
+      "503_ServiceUnavailable": {
+        "description": "Service Unavailable"
+      },
+      "200_Health": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "checks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Component ID",
+                        "example": "rubicon"
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Component status UP/DOWN",
+                        "example": "UP"
+                      },
+                      "data": {
+                        "type": "object",
+                        "description": "Component details",
+                        "example": {
+                          "size": 20
+                        }
+                      }
+                    }
+                  }
+                },
+                "outcome": {
+                  "type": "string",
+                  "description": "Application status UP/DOWN",
+                  "example": "UP"
+                }
+              }
+            }
+          }
+        }
+      },
+      "503_Health": {
+        "description": "Service Unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "checks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Component ID",
+                        "example": "rubicon"
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "Component status UP/DOWN",
+                        "example": "DOWN"
+                      }
+                    }
+                  }
+                },
+                "outcome": {
+                  "type": "string",
+                  "description": "Application status UP/DOWN",
+                  "example": "DOWN"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "versionResponse": {
+        "type": "object",
+        "xml": {
+          "name": "version"
+        },
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "nds.inventory.service",
+            "description": "Application name"
+          },
+          "version": {
+            "type": "string",
+            "example": "23.5",
+            "description": "Application version"
+          },
+          "build": {
+            "type": "integer",
+            "format": "int32",
+            "example": "63",
+            "description": "Application build number"
+          },
+          "commit": {
+            "type": "string",
+            "example": "f1a12f6be92dc82b9dace365da70559b1832d367",
+            "description": "Application git commit ID"
+          }
+        },
+        "required": [
+          "title",
+          "version",
+          "build",
+          "commit"
+        ]
+      },
+      "domainRequest": {
+        "type": "object",
+        "description": "Domain request in XML.",
+        "properties": {
+          "domain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "At least 1 resource needs to be included.",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CommonDomainProps"
+                }
+              ],
+              "properties": {
+                "sVlan": {
+                  "$ref": "#/components/schemas/SVlanResource"
+                },
+                "subInterface": {
+                  "$ref": "#/components/schemas/SubInterfaceResource"
+                },
+                "offnetSVlan": {
+                  "$ref": "#/components/schemas/OffnetSVlanResource"
+                },
+                "layer3RouteTarget": {
+                  "$ref": "#/components/schemas/Layer3RouteTargetResource"
+                },
+                "layer3RouteDistinguisher": {
+                  "$ref": "#/components/schemas/Layer3RouteDistinguisherResource"
+                },
+                "layer2RouteTarget": {
+                  "$ref": "#/components/schemas/Layer2RouteTargetResource"
+                },
+                "nniVlan": {
+                  "$ref": "#/components/schemas/NniVlanResource"
+                },
+                "cVlan": {
+                  "$ref": "#/components/schemas/CVlanResource"
+                },
+                "layer2VpnId": {
+                  "$ref": "#/components/schemas/Layer2VpnIdResource"
+                },
+                "layer2VpnSiteId": {
+                  "$ref": "#/components/schemas/Layer2VpnSiteIdResource"
+                },
+                "segmentRoutingTunnel": {
+                  "$ref": "#/components/schemas/SegmentRoutingTunnelResource"
+                },
+                "aggregateInterface": {
+                  "$ref": "#/components/schemas/AggregateInterfaceResource"
+                },
+                "qosId": {
+                  "$ref": "#/components/schemas/QosIdResource"
+                },
+                "sdp": {
+                  "$ref": "#/components/schemas/SdpResource"
+                },
+                "ies": {
+                  "$ref": "#/components/schemas/IesResource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "domainRequestJSON": {
+        "type": "object",
+        "description": "Domain request in JSON.",
+        "properties": {
+          "domainRequest": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "At least 1 resource needs to be included.",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/CommonDomainProps"
+                    }
+                  ],
+                  "properties": {
+                    "sVlan": {
+                      "$ref": "#/components/schemas/SVlanResource"
+                    },
+                    "subInterface": {
+                      "$ref": "#/components/schemas/SubInterfaceResource"
+                    },
+                    "offnetSVlan": {
+                      "$ref": "#/components/schemas/OffnetSVlanResource"
+                    },
+                    "layer3RouteTarget": {
+                      "$ref": "#/components/schemas/Layer3RouteTargetResource"
+                    },
+                    "layer3RouteDistinguisher": {
+                      "$ref": "#/components/schemas/Layer3RouteDistinguisherResource"
+                    },
+                    "layer2RouteTarget": {
+                      "$ref": "#/components/schemas/Layer2RouteTargetResource"
+                    },
+                    "nniVlan": {
+                      "$ref": "#/components/schemas/NniVlanResource"
+                    },
+                    "cVlan": {
+                      "$ref": "#/components/schemas/CVlanResource"
+                    },
+                    "layer2VpnId": {
+                      "$ref": "#/components/schemas/Layer2VpnIdResource"
+                    },
+                    "layer2VpnSiteId": {
+                      "$ref": "#/components/schemas/Layer2VpnSiteIdResource"
+                    },
+                    "segmentRoutingTunnel": {
+                      "$ref": "#/components/schemas/SegmentRoutingTunnelResource"
+                    },
+                    "aggregateInterface": {
+                      "$ref": "#/components/schemas/AggregateInterfaceResource"
+                    },
+                    "qosId": {
+                      "$ref": "#/components/schemas/QosIdResource"
+                    },
+                    "sdp": {
+                      "$ref": "#/components/schemas/SdpResource"
+                    },
+                    "ies": {
+                      "$ref": "#/components/schemas/IesResource"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "domainFilterRequestJSON": {
+        "type": "object",
+        "description": "Domain filter request in JSON.",
+        "required": [
+          "domainRequest"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "domainRequest": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "description": "At least 1 resource needs to be included.",
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/CommonDomainFilterProps"
+                    }
+                  ],
+                  "properties": {
+                    "sVlan": {
+                      "$ref": "#/components/schemas/SVlanFilterResource"
+                    },
+                    "subInterface": {
+                      "$ref": "#/components/schemas/SubInterfaceFilterResource"
+                    },
+                    "offnetSVlan": {
+                      "$ref": "#/components/schemas/OffnetSVlanFilterResource"
+                    },
+                    "layer3RouteTarget": {
+                      "$ref": "#/components/schemas/Layer3RouteTargetFilterResource"
+                    },
+                    "nniVlan": {
+                      "$ref": "#/components/schemas/NniVlanFilterResource"
+                    },
+                    "cVlan": {
+                      "$ref": "#/components/schemas/CVlanFilterResource"
+                    },
+                    "layer2VpnId": {
+                      "$ref": "#/components/schemas/Layer2VpnIdFilterResource"
+                    },
+                    "layer2VpnSiteId": {
+                      "$ref": "#/components/schemas/Layer2VpnSiteIdFilterResource"
+                    },
+                    "segmentRoutingTunnel": {
+                      "$ref": "#/components/schemas/SegmentRoutingTunnelFilterResource"
+                    },
+                    "aggregateInterface": {
+                      "$ref": "#/components/schemas/AggregateInterfaceFilterResource"
+                    },
+                    "qosId": {
+                      "$ref": "#/components/schemas/QosIdFilterResource"
+                    },
+                    "sdp": {
+                      "$ref": "#/components/schemas/SdpFilterResource"
+                    },
+                    "ies": {
+                      "$ref": "#/components/schemas/IesFilterResource"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "domainResponse": {
+        "type": "object",
+        "description": "Domain response.",
+        "properties": {
+          "domain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "The resource(s) in the request will be included.",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CommonDomainProps"
+                }
+              ],
+              "properties": {
+                "sVlan": {
+                  "$ref": "#/components/schemas/SVlanResource"
+                },
+                "subInterface": {
+                  "$ref": "#/components/schemas/SubInterfaceResource"
+                },
+                "offnetSVlan": {
+                  "$ref": "#/components/schemas/OffnetSVlanResource"
+                },
+                "layer3RouteTarget": {
+                  "$ref": "#/components/schemas/Layer3RouteTargetResource"
+                },
+                "layer3RouteDistinguisher": {
+                  "$ref": "#/components/schemas/Layer3RouteDistinguisherResource"
+                },
+                "layer2RouteTarget": {
+                  "$ref": "#/components/schemas/Layer2RouteTargetResource"
+                },
+                "nniVlan": {
+                  "$ref": "#/components/schemas/NniVlanResource"
+                },
+                "cVlan": {
+                  "$ref": "#/components/schemas/CVlanResource"
+                },
+                "layer2VpnId": {
+                  "$ref": "#/components/schemas/Layer2VpnIdResource"
+                },
+                "layer2VpnSiteId": {
+                  "$ref": "#/components/schemas/Layer2VpnSiteIdResource"
+                },
+                "segmentRoutingTunnel": {
+                  "$ref": "#/components/schemas/SegmentRoutingTunnelResource"
+                },
+                "aggregateInterface": {
+                  "$ref": "#/components/schemas/AggregateInterfaceResource"
+                },
+                "qosId": {
+                  "$ref": "#/components/schemas/QosIdResource"
+                },
+                "sdp": {
+                  "$ref": "#/components/schemas/SdpResource"
+                },
+                "ies": {
+                  "$ref": "#/components/schemas/IesResource"
+                },
+                "reservedValue": {
+                  "type": "string",
+                  "description": "If a resource was reserved the value will be here.  If there was an error this field will not be present.",
+                  "example": "106"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "If there was an error it will be in this field.  If there is no error this field will not be present.",
+                  "example": "Unable to connect to device edge1.zun1"
+                },
+                "warning": {
+                  "type": "string",
+                  "description": "If a resource was reserved but there was an issue the was ignored it will be in this field.  If there is no warning this field will not be present.",
+                  "example": "Warning 1: Error(s) running query for QueryInventoryReservationService"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "If a resource was reserved this field will give some information of what was done.  If there is an error this field will not be present.",
+                  "example": "Inventory system(s): solr updated, value: 106"
+                }
+              }
+            }
+          }
+        }
+      },
+      "domainFilterResponse": {
+        "type": "object",
+        "description": "Domain response.",
+        "properties": {
+          "domain": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "The resource(s) in the request will be included.",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CommonDomainFilterProps"
+                }
+              ],
+              "properties": {
+                "sVlan": {
+                  "$ref": "#/components/schemas/SVlanFilterResource"
+                },
+                "subInterface": {
+                  "$ref": "#/components/schemas/SubInterfaceFilterResource"
+                },
+                "offnetSVlan": {
+                  "$ref": "#/components/schemas/OffnetSVlanFilterResource"
+                },
+                "layer3RouteTarget": {
+                  "$ref": "#/components/schemas/Layer3RouteTargetFilterResource"
+                },
+                "nniVlan": {
+                  "$ref": "#/components/schemas/NniVlanFilterResource"
+                },
+                "cVlan": {
+                  "$ref": "#/components/schemas/CVlanFilterResource"
+                },
+                "layer2VpnId": {
+                  "$ref": "#/components/schemas/Layer2VpnIdFilterResource"
+                },
+                "layer2VpnSiteId": {
+                  "$ref": "#/components/schemas/Layer2VpnSiteIdFilterResource"
+                },
+                "segmentRoutingTunnel": {
+                  "$ref": "#/components/schemas/SegmentRoutingTunnelFilterResource"
+                },
+                "aggregateInterface": {
+                  "$ref": "#/components/schemas/AggregateInterfaceFilterResource"
+                },
+                "qosId": {
+                  "$ref": "#/components/schemas/QosIdFilterResource"
+                },
+                "sdp": {
+                  "$ref": "#/components/schemas/SdpFilterResource"
+                },
+                "ies": {
+                  "$ref": "#/components/schemas/IesFilterResource"
+                },
+                "filterValues": {
+                  "type": "array",
+                  "description": "If a resource was queried the values will be here.  If there was an error this field will not be present.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": "[106,108,120,150,160]"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "If there was an error it will be in this field.  If there is no error this field will not be present.",
+                  "example": "Unable to connect to device edge1.zun1"
+                },
+                "warning": {
+                  "type": "string",
+                  "description": "If there was an issue querying a resource but it was ignored it will be in this field.  If there is no warning this field will not be present.",
+                  "example": "Warning 1: Error(s) running query for QueryInventoryReservationService"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "If a resource was queried this field will give some information of what was done.  If there is an error this field will not be present.",
+                  "example": "Inventory system(s): solr"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CommonDomainProps": {
+        "type": "object",
+        "description": "These values are common for all domains.",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "example": "7d36dc70-5a65-43b0-acb5-02dbf6e1a43c",
+            "description": "Any unique value provided by the calling system.  There is no check to make sure this value is unique but if duplicates are used it makes debugging more difficult.  Only used for logging and debugging."
+          },
+          "serviceId": {
+            "type": "string",
+            "example": "VA/KXFN/437922/LVLC",
+            "description": "Service id from order entry.  Only used for logging and debugging."
+          },
+          "circuitId": {
+            "type": "string",
+            "example": "00/VLXX/001887/LUMN_CA/KXFN/648039/LVLC",
+            "description": "Circuit id from order entry.  Only used for logging and debugging."
+          },
+          "requestedValue": {
+            "type": "string",
+            "example": "100",
+            "description": "This value is used to reserve the resource.  It will only be used if it is available in the network/systems specified below.  If it is not available or not included in the request the next available value will be used to reserve the resource."
+          },
+          "ignoreInventoryIfFull": {
+            "type": "string",
+            "example": "",
+            "description": "If no next available value is available, the range is full, ignore inventory and only try to find requestedValue/next available in the network  !!!Think about the impact to inventory, this may be best suited for dynamic requests only?!!!  Defaults to false if not included.  <br>This is a self-closing tag.  For JSON it needs to be an empty string."
+          },
+          "skipInventoryIfAvailableInNetwork": {
+            "type": "string",
+            "example": "",
+            "description": "If there is a requestedValue and it is free in the network, skip querying/updating inventory.  This is a legacy option.  Shouldn't be used in almost all cases.  Defaults to false if not included.   <br>This is a self-closing tag.  For JSON it needs to be an empty string."
+          },
+          "numberOfValuesToTry": {
+            "type": "string",
+            "example": "5",
+            "description": "The default value for each resource is configured in nds.inventory.properties but this will override that value.  Most of the defaults are 5 but for busy specifc domains touching the same resource it could be helpful to have a larger value to avoid colisions and increase performance."
+          },
+          "allowable": {
+            "$ref": "#/components/schemas/AllowableObj"
+          }
+        },
+        "required": [
+          "allowable"
+        ]
+      },
+      "CommonDomainFilterProps": {
+        "type": "object",
+        "description": "These values are common for all domains.",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "example": "7d36dc70-5a65-43b0-acb5-02dbf6e1a43c",
+            "description": "Any unique value provided by the calling system.  There is no check to make sure this value is unique but if duplicates are used it makes debugging more difficult.  Only used for logging and debugging."
+          }
+        }
+      },
+      "AllowableObj": {
+        "type": "object",
+        "description": "Used to calculate the next available value.",
+        "properties": {
+          "min": {
+            "type": "string",
+            "example": "100",
+            "description": "Minimum value to use for next available."
+          },
+          "max": {
+            "type": "string",
+            "example": "4092",
+            "description": "Maximum value to use for next available."
+          },
+          "increment": {
+            "type": "string",
+            "example": "1",
+            "default": "1",
+            "description": "Find the lowest used value then increment by this value to calculate the next available."
+          },
+          "exclusion": {
+            "type": "array",
+            "description": "Value(s) to exclude when calculating next available.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "example": "200",
+                  "description": "Start of range to exclude.  If end is not provided single value to exclude."
+                },
+                "end": {
+                  "type": "string",
+                  "example": "300",
+                  "description": "End of range to exclude."
+                }
+              },
+              "required": [
+                "start"
+              ]
+            }
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ]
+      },
+      "QueryObj": {
+        "type": "object",
+        "description": "Used to query a resource.  This will get all in-use values.  <br>If the property continueOnFail is excluded it defaults to false.",
+        "properties": {
+          "continueOnFail": {
+            "type": "string",
+            "example": "",
+            "description": "If there is any issue with the query it will be ignored.  <br>For querying the network this should NOT be set in almost all cases.  One of the main points of Network Inventory is to make sure we do not use in-use network values.  For querying an inventory system this should be set in almost all cases. We do not want inventory to impact network builds.  <br>This is a self-closing tag in XML.  For JSON it needs to be an empty string."
+          }
+        }
+      },
+      "VerifyObj": {
+        "type": "object",
+        "description": "Used to verify a resource.  For resources that take too long to query this verify should be used.  Instead of getting all in-use values like query, this will make 1 call with the possible next available value to see if it is available.  <br>If the property continueOnFail is excluded it defaults to false.",
+        "properties": {
+          "continueOnFail": {
+            "type": "string",
+            "example": "",
+            "description": "If there is any issue with the verify it will be ignored.  <br>For verifying the network this should NOT be set in almost all cases.  One of the main points of Network Inventory is to make sure we do not use in-use network values.  For verifying an inventory system this should be set in almost all cases. We do not want inventory to impact network builds.   <br>This is a self-closing tag in XML.  For JSON it needs to be an empty string."
+          }
+        }
+      },
+      "UpdateObj": {
+        "type": "object",
+        "description": "Used to update a resource.  <br>If the property continueOnFail is excluded it defaults to false.",
+        "properties": {
+          "continueOnFail": {
+            "type": "string",
+            "example": "",
+            "description": "If there is any issue with the update it will be ignored.  This should be set in almost all cases.  We do not want inventory to impact network builds.  <br>This is a self-closing tag in XML.  For JSON it needs to be an empty string."
+          }
+        }
+      },
+      "NetworkQueryObj": {
+        "type": "object",
+        "description": "Used to query the network.  <br>If the property query is excluded it defaults to query which is the most common case for interacting with the network.",
+        "properties": {
+          "query": {
+            "$ref": "#/components/schemas/QueryObj"
+          }
+        }
+      },
+      "NetworkVerifyObj": {
+        "type": "object",
+        "description": "Used to verify with the network.",
+        "properties": {
+          "verify": {
+            "$ref": "#/components/schemas/VerifyObj"
+          }
+        }
+      },
+      "InventoryQueryUpdateObj": {
+        "type": "object",
+        "description": "Used to query and update an inventory system.  <br>If both properties query and update are excluded it defaults to query and update, which is the most common case for interacting with an inventory system.",
+        "properties": {
+          "query": {
+            "$ref": "#/components/schemas/QueryObj"
+          },
+          "update": {
+            "$ref": "#/components/schemas/UpdateObj"
+          }
+        }
+      },
+      "InventoryQueryObj": {
+        "type": "object",
+        "description": "Used to query an inventory system.  <br>If query is excluded it defaults to query",
+        "properties": {
+          "query": {
+            "$ref": "#/components/schemas/QueryObj"
+          }
+        }
+      },
+      "InventoryVerifyObj": {
+        "type": "object",
+        "description": "Used to verify with an inventory system.",
+        "properties": {
+          "verify": {
+            "$ref": "#/components/schemas/QueryObj"
+          }
+        }
+      },
+      "SVlanResource": {
+        "type": "object",
+        "description": "sVlan resource.  Use to query the network and SASI, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "netexOracle": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "SubInterfaceResource": {
+        "type": "object",
+        "description": "subInterface resource.  Use to query the network and SASI, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "OffnetSVlanResource": {
+        "type": "object",
+        "description": "offnetSVlan resource.  Use to query the network and SOLR, then update SOLR.  This value is not in inventory.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "pVlan": {
+                  "type": "string",
+                  "example": "1000",
+                  "description": "Provider vlan"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface",
+                "pVlan"
+              ]
+            }
+          }
+        }
+      },
+      "Layer3RouteTargetResource": {
+        "type": "object",
+        "description": "layer3RouteTarget resource.  Use to query SASI, verify with the network and VPN inventory, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkVerifyObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "vpn": {
+                  "$ref": "#/components/schemas/InventoryVerifyObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "Layer3RouteDistinguisherResource": {
+        "type": "object",
+        "description": "layer3RouteDistinguisher resource.  Use to query SOLR, verify with the network, then update SOLR.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkVerifyObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "Layer2RouteTargetResource": {
+        "type": "object",
+        "description": "layer2RouteTarget resource.  Use to query SASI, verify with the network, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkVerifyObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "NniVlanResource": {
+        "type": "object",
+        "description": "nniVlan resource.  Use to query the network and SASI, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "CVlanResource": {
+        "type": "object",
+        "description": "cVlan resource.  Use to query the network and SASI, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABBRMCOYJ301",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "TenGigE0/0/0/23",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "Layer2VpnIdResource": {
+        "type": "object",
+        "description": "layer2VpnId resource.  Use to query SASI, verify with the network, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABWSTZN9K001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "Layer2VpnSiteIdResource": {
+        "type": "object",
+        "description": "layer2VpnSiteId resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "routeTarget": {
+                  "type": "string",
+                  "example": "6745:210001640",
+                  "description": "Network route target, used to query the route reflector"
+                },
+                "vpnServiceId": {
+                  "type": "string",
+                  "example": "00/VLXM/425569/LVLC",
+                  "description": "Vpn service id, used to query SASI"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name",
+                "routeTarget",
+                "vpnServiceId"
+              ]
+            }
+          }
+        }
+      },
+      "SegmentRoutingTunnelResource": {
+        "type": "object",
+        "description": "segmentRoutingTunnel resource.  Use to query the network and SASI, then update SASI.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "AggregateInterfaceResource": {
+        "type": "object",
+        "description": "aggregateInterface resource.  Use to query the network, then update SOLR.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "QosIdResource": {
+        "type": "object",
+        "description": "qosId resource.  Use to query the network, then update SOLR.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "SdpResource": {
+        "type": "object",
+        "description": "sdp resource.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABWSTZNNA001",
+                  "description": "Network Nokia device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "IesResource": {
+        "type": "object",
+        "description": "Ies resource.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "EAR1.ZUN1",
+                  "description": "Network Nokia device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryUpdateObj"
+                },
+                "alcatel": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "SVlanFilterResource": {
+        "type": "object",
+        "description": "sVlan filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "netexOracle": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "SubInterfaceFilterResource": {
+        "type": "object",
+        "description": "subInterface filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "OffnetSVlanFilterResource": {
+        "type": "object",
+        "description": "offnetSVlan filter resource.  Use to query the network and SOLR.  This value is not in inventory.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "pVlan": {
+                  "type": "string",
+                  "example": "1000",
+                  "description": "Provider vlan"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface",
+                "pVlan"
+              ]
+            }
+          }
+        }
+      },
+      "Layer3RouteTargetFilterResource": {
+        "type": "object",
+        "description": "layer3RouteTarget filter resource.  Use to query SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "NniVlanFilterResource": {
+        "type": "object",
+        "description": "nniVlan filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "edge1.zun1",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "ae36",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "CVlanFilterResource": {
+        "type": "object",
+        "description": "cVlan filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABBRMCOYJ301",
+                  "description": "Network device name"
+                },
+                "interface": {
+                  "type": "string",
+                  "example": "TenGigE0/0/0/23",
+                  "description": "Interface name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "interface"
+              ]
+            }
+          }
+        }
+      },
+      "Layer2VpnIdFilterResource": {
+        "type": "object",
+        "description": "layerVpnId filter resource.  Use to query SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABWSTZN9K001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "Layer2VpnSiteIdFilterResource": {
+        "type": "object",
+        "description": "layerVpnSiteId filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "VRR41.ZUN1",
+                  "description": "Route reflector device name"
+                },
+                "routeTarget": {
+                  "type": "string",
+                  "example": "6745:210001640",
+                  "description": "Network route target, used to query the route reflector"
+                },
+                "vpnServiceId": {
+                  "type": "string",
+                  "example": "00/VLXM/425569/LVLC",
+                  "description": "Vpn service id, used to query SASI"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name",
+                "routeTarget",
+                "vpnServiceId"
+              ]
+            }
+          }
+        }
+      },
+      "IesFilterResource": {
+        "type": "object",
+        "description": "ies filter resource.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "EAR1.ZUN1",
+                  "description": "Network Nokia device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "alcatel": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "SdpFilterResource": {
+        "type": "object",
+        "description": "sdp filter resource.",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LABWSTZNNA001",
+                  "description": "Network Nokia device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "SegmentRoutingTunnelFilterResource": {
+        "type": "object",
+        "description": "segmentRoutingTunnel filter resource.  Use to query the network and SASI",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "sasi": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "AggregateInterfaceFilterResource": {
+        "type": "object",
+        "description": "aggregateInterface filter resource.  Use to query the network",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "QosIdFilterResource": {
+        "type": "object",
+        "description": "qosId filter resource.  Use to query the network",
+        "properties": {
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "LAB4COZWYJ001",
+                  "description": "Network device name"
+                },
+                "network": {
+                  "$ref": "#/components/schemas/NetworkQueryObj"
+                },
+                "solr": {
+                  "$ref": "#/components/schemas/InventoryQueryObj"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ESL Orchestrator API",
+    "version": "1.0.0",
+    "description": "Internal APIs for the ESL Orchestrator.\nThese APIs are **internal-only** and accessed over **mTLS** via:\ninternal.esl.acetech.cloud\n",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/acetech-india/esl-orchestrator-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://internal.esl.acetech.cloud/internal/orchestrator/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Jobs"
+    },
+    {
+      "name": "Execution Plans"
+    },
+    {
+      "name": "Dispatch"
+    },
+    {
+      "name": "Reconciliation"
+    },
+    {
+      "name": "Gateway Callback"
+    }
+  ],
+  "paths": {
+    "/jobs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "List orchestrator jobs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "ready",
+                "dispatching",
+                "waiting_ack",
+                "retrying",
+                "completed",
+                "partial",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "storeId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scheduleId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedJobsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Create a new orchestrator job (internal system use only)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{jobId}": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get details of a job",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/execution-plans": {
+      "post": {
+        "tags": [
+          "Execution Plans"
+        ],
+        "summary": "Create a new execution plan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExecutionPlanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Execution plan created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionPlan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dispatch": {
+      "post": {
+        "tags": [
+          "Dispatch"
+        ],
+        "summary": "Dispatch tag update payloads to Gateway Service",
+        "description": "Dispatches packets to store Gateway(s).  \nGateway returns ACK/NACK via /gateway-callback.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DispatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Dispatch accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reconcile": {
+      "post": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "summary": "Reconcile tag state with cloud expectations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reconciliation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconcileResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gateway-callback": {
+      "post": {
+        "tags": [
+          "Gateway Callback"
+        ],
+        "summary": "Receive ACK/NACK callbacks from Gateway",
+        "description": "Gateway pushes TAG-level ACK/NACK.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GatewayCallback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed"
+          }
+        }
+      }
+    }
+  }
+}

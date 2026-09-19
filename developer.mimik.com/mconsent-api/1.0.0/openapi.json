@@ -1,0 +1,1478 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "mConsent API",
+    "description": "**mConsent** provides unified consent management across the platform - communication preferences, data-sharing permissions, and feature-level opt-ins - with org-configurable consent policies.\n\n## What this service does\n- **Communication Consent** - Manages permission to contact users via specific channels (email, sms, push) for marketing, transactional, or operational purposes.\n- **Data-Sharing Consent** - Controls whether a user's data can be collected, processed, or shared for analytics (wearable-data, clinical-data).\n- **Feature Consent** - Manages opt-in for specific product features that process user data (AI coaching, health reports, nudges).\n- **Organization Consent Policies** - Org-level configuration defining which consents are required, optional, or disabled for members.\n- **Immutable Consent History** - Consent records are never deleted; revocation sets status and timestamp for full audit trail.\n\n## Conventions\n- All successful JSON responses wrap results under a top-level `data` property.\n- OAuth2 scopes gate admin/system/user operations (see **Security Schemes**).\n- IDs are strings; timestamps are ISO-8601 date-times with UTC `Z` (e.g., `2026-03-12T14:30:00Z`).\n\n## Notes\n- mConsent replaces consent functionality previously embedded in mPO. See migration plan in requirements documentation.\n- Consent records are immutable - revocation sets `status: revoked` and `revokedAt` timestamp. Records are never physically deleted.\n- Organization consent policies control onboarding flow and feature availability per org.\n\n<p><a href=\"https://bitbucket.org/mimiktech/swagger-mconsent/src\">Repository</a></p>\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "mimik technology inc.",
+      "url": "https://developer.mimik.com/",
+      "email": "support@mimik.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/mimik/mconsent/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/mConsent/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Admin",
+      "description": "Administrative operations - consent policy management and system info"
+    },
+    {
+      "name": "System",
+      "description": "Server-to-server calls - user consent queries"
+    },
+    {
+      "name": "User",
+      "description": "End-user operations - grant, revoke, and view own consents"
+    }
+  ],
+  "paths": {
+    "/users/{userId}/consents": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Grant consent",
+        "description": "Grants a consent record for the specified user. The consent is created with `status: active`.\n\nIf an active consent already exists for the same `userId + category + scope` combination\n(and `channel` for communication consents), the request is idempotent and returns the\nexisting consent record with a `200` response.\n\nThe `version` field records the consent policy version the user agreed to at the time of grant.\n",
+        "operationId": "grantConsent",
+        "x-swagger-router-controller": "consentController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewConsent"
+              },
+              "example": {
+                "category": "data-sharing",
+                "scope": "wearable-data",
+                "source": "app",
+                "version": "1.0"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consent granted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Consent"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "cns-550e8400-e29b-41d4-a716-001",
+                    "userId": "880e8400-e29b-41d4-a716-446655440000",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "status": "active",
+                    "grantedAt": "2026-03-12T14:30:00Z",
+                    "revokedAt": null,
+                    "source": "app",
+                    "version": "1.0",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-12T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Consent already exists (idempotent) - returns existing active consent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Consent"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "cns-550e8400-e29b-41d4-a716-001",
+                    "userId": "880e8400-e29b-41d4-a716-446655440000",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "status": "active",
+                    "grantedAt": "2026-03-12T14:30:00Z",
+                    "revokedAt": null,
+                    "source": "app",
+                    "version": "1.0",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-12T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "UserSecurity": [
+              "create:consent"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "User",
+          "System"
+        ],
+        "summary": "List user consents",
+        "description": "Returns a paginated list of consent records for the specified user.\nSupports filtering by category, scope, channel, and status.\n\nDefault status filter is `active` - to see revoked consents or full history, set `status=revoked` or `status=all`.\n\nUserSecurity callers can only list their own consents. SystemSecurity callers can list any user's consents.\n\n**Service-to-service consent checks:** Use query filters to verify consent status.\nFor example, `GET /users/{userId}/consents?category=data-sharing&scope=wearable-data&status=active`\nreturns an empty list if the user has not consented.\n",
+        "operationId": "listUserConsents",
+        "x-swagger-router-controller": "consentController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageSizeParam"
+          },
+          {
+            "$ref": "#/components/parameters/StartAfterParam"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by consent category: `communication`, `data-sharing`, or `feature`",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "communication",
+                "data-sharing",
+                "feature"
+              ]
+            },
+            "example": "data-sharing"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Filter by scope within the category (e.g., `marketing`, `wearable-data`, `ai-coaching`)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "wearable-data"
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "description": "Filter by contact channel (only applicable for `communication` category): `email`, `sms`, `push`",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "email",
+                "sms",
+                "push"
+              ]
+            },
+            "example": "email"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by consent status. Default: `active`. Use `all` to include revoked consents.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "revoked",
+                "all"
+              ],
+              "default": "active"
+            },
+            "example": "active"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user consents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Consent"
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Total number of matching consents (omitted when using startAfter)",
+                      "example": 5
+                    },
+                    "nextPageUrl": {
+                      "type": "string",
+                      "description": "URL for the next page of results (null when no more pages)",
+                      "nullable": true,
+                      "example": null
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "cns-550e8400-e29b-41d4-a716-001",
+                      "userId": "880e8400-e29b-41d4-a716-446655440000",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "category": "data-sharing",
+                      "scope": "wearable-data",
+                      "status": "active",
+                      "grantedAt": "2026-03-12T14:30:00Z",
+                      "revokedAt": null,
+                      "source": "app",
+                      "version": "1.0",
+                      "createdAt": "2026-03-12T14:30:00Z",
+                      "updatedAt": "2026-03-12T14:30:00Z"
+                    },
+                    {
+                      "id": "cns-550e8400-e29b-41d4-a716-002",
+                      "userId": "880e8400-e29b-41d4-a716-446655440000",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "category": "communication",
+                      "scope": "transactional",
+                      "status": "active",
+                      "grantedAt": "2026-03-12T14:30:00Z",
+                      "revokedAt": null,
+                      "source": "web",
+                      "version": "1.0",
+                      "channel": "email",
+                      "value": "member@example.com",
+                      "createdAt": "2026-03-12T14:30:00Z",
+                      "updatedAt": "2026-03-12T14:30:00Z"
+                    }
+                  ],
+                  "count": 2,
+                  "nextPageUrl": null
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "UserSecurity": [
+              "read:consent"
+            ]
+          },
+          {
+            "SystemSecurity": [
+              "read:consent"
+            ]
+          }
+        ]
+      }
+    },
+    "/users/{userId}/consents/{id}": {
+      "get": {
+        "tags": [
+          "User",
+          "System"
+        ],
+        "summary": "Get specific consent",
+        "description": "Returns a single consent record by ID. Includes full consent details\nregardless of status (active or revoked).\n",
+        "operationId": "getConsent",
+        "x-swagger-router-controller": "consentController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/ConsentIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved consent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Consent"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "cns-550e8400-e29b-41d4-a716-001",
+                    "userId": "880e8400-e29b-41d4-a716-446655440000",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "status": "active",
+                    "grantedAt": "2026-03-12T14:30:00Z",
+                    "revokedAt": null,
+                    "source": "app",
+                    "version": "1.0",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-12T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "UserSecurity": [
+              "read:consent"
+            ]
+          },
+          {
+            "SystemSecurity": [
+              "read:consent"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Revoke consent",
+        "description": "Revokes an active consent by setting `status: revoked` and recording the `revokedAt` timestamp.\nThe consent record is **not deleted** - it remains for audit history.\n\nAttempting to revoke a consent that is linked to a `required` consent policy returns `403 Forbidden`.\nRevoking an already-revoked consent returns `200` with the existing revoked record (idempotent).\n\nEmits a `consent.revoked` event to Kinesis for downstream consumers (Analytics Consumer, Notification Service).\n",
+        "operationId": "revokeConsent",
+        "x-swagger-router-controller": "consentController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/ConsentIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consent revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Consent"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "cns-550e8400-e29b-41d4-a716-001",
+                    "userId": "880e8400-e29b-41d4-a716-446655440000",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "status": "revoked",
+                    "grantedAt": "2026-03-12T14:30:00Z",
+                    "revokedAt": "2026-03-15T09:00:00Z",
+                    "source": "app",
+                    "version": "1.0",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-15T09:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cannot revoke a required consent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "statusCode": 403,
+                  "title": "Forbidden",
+                  "message": "Cannot revoke required consent. The consent policy for data-sharing:wearable-data is set to required by your organization."
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "UserSecurity": [
+              "delete:consent"
+            ]
+          }
+        ]
+      }
+    },
+    "/organizations/{orgId}/consent-policies": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create consent policy",
+        "description": "Creates a consent policy for the specified organization. Policies define whether a consent\nscope is `required`, `optional`, or `disabled` for the org's members.\n\n- `required` - Members must grant this consent during onboarding. Cannot proceed without it.\n- `optional` - Members can grant or revoke at any time. Shown during onboarding with `defaultValue`.\n- `disabled` - Consent scope is not available for this org. Not shown during onboarding.\n\nReturns `409 Conflict` if a policy already exists for the same `orgId + category + scope`.\n",
+        "operationId": "createConsentPolicy",
+        "x-swagger-router-controller": "consentPolicyController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrgIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewConsentPolicy"
+              },
+              "example": {
+                "category": "data-sharing",
+                "scope": "wearable-data",
+                "requirement": "optional",
+                "defaultValue": false,
+                "displayName": "Wearable Data Sharing",
+                "description": "Allow your anonymized wearable and sleep data to contribute to organization-level analytics dashboards."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consent policy created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ConsentPolicy"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "pol-550e8400-e29b-41d4-a716-001",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "requirement": "optional",
+                    "defaultValue": false,
+                    "displayName": "Wearable Data Sharing",
+                    "description": "Allow your anonymized wearable and sleep data to contribute to organization-level analytics dashboards.",
+                    "version": "1",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-12T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "create:consentPolicy"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "Admin",
+          "User"
+        ],
+        "summary": "List org consent policies",
+        "description": "Returns all consent policies for the specified organization.\nSupports filtering by category and scope.\n\nUserSecurity callers can view policies for their own org (used during onboarding to display available consents).\nAdminSecurity callers can view policies for any org.\n",
+        "operationId": "listConsentPolicies",
+        "x-swagger-router-controller": "consentPolicyController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrgIdParam"
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by consent category: `communication`, `data-sharing`, or `feature`",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "communication",
+                "data-sharing",
+                "feature"
+              ]
+            },
+            "example": "data-sharing"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "description": "Filter by scope within the category",
+            "schema": {
+              "type": "string"
+            },
+            "example": "wearable-data"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved consent policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConsentPolicy"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "pol-550e8400-e29b-41d4-a716-001",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "category": "data-sharing",
+                      "scope": "wearable-data",
+                      "requirement": "optional",
+                      "defaultValue": false,
+                      "displayName": "Wearable Data Sharing",
+                      "description": "Allow your anonymized wearable and sleep data to contribute to organization-level analytics dashboards.",
+                      "version": "1",
+                      "createdAt": "2026-03-12T14:30:00Z",
+                      "updatedAt": "2026-03-12T14:30:00Z"
+                    },
+                    {
+                      "id": "pol-550e8400-e29b-41d4-a716-002",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "category": "communication",
+                      "scope": "transactional",
+                      "requirement": "required",
+                      "defaultValue": true,
+                      "displayName": "Transactional Notifications",
+                      "description": "Required notifications for account activity and security alerts.",
+                      "version": "1",
+                      "createdAt": "2026-03-12T14:30:00Z",
+                      "updatedAt": "2026-03-12T14:30:00Z"
+                    },
+                    {
+                      "id": "pol-550e8400-e29b-41d4-a716-003",
+                      "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                      "category": "feature",
+                      "scope": "ai-coaching",
+                      "requirement": "optional",
+                      "defaultValue": true,
+                      "displayName": "AI Sleep Coaching",
+                      "description": "Enable personalized AI-powered sleep coaching and recommendations.",
+                      "version": "1",
+                      "createdAt": "2026-03-12T14:30:00Z",
+                      "updatedAt": "2026-03-12T14:30:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:consentPolicy"
+            ]
+          },
+          {
+            "UserSecurity": [
+              "read:consentPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/organizations/{orgId}/consent-policies/{id}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update consent policy",
+        "description": "Updates an existing consent policy. The `version` field is auto-incremented on each update.\n\nChanging `requirement` from `optional` to `required` does not retroactively revoke existing opt-outs\n- it applies to new members going forward. Existing members are prompted to grant consent on next app visit.\n\nChanging `requirement` to `disabled` does not revoke existing consents - it hides the scope from\nonboarding and stops new grants.\n",
+        "operationId": "updateConsentPolicy",
+        "x-swagger-router-controller": "consentPolicyController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrgIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/PolicyIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsentPolicy"
+              },
+              "example": {
+                "requirement": "required",
+                "defaultValue": true,
+                "displayName": "Wearable Data Sharing",
+                "description": "Required for participation in the wellness program. Your anonymized data contributes to organization-level health analytics."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consent policy updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ConsentPolicy"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "pol-550e8400-e29b-41d4-a716-001",
+                    "orgId": "550e8400-e29b-41d4-a716-446655440000",
+                    "category": "data-sharing",
+                    "scope": "wearable-data",
+                    "requirement": "required",
+                    "defaultValue": true,
+                    "displayName": "Wearable Data Sharing",
+                    "description": "Required for participation in the wellness program. Your anonymized data contributes to organization-level health analytics.",
+                    "version": "2",
+                    "createdAt": "2026-03-12T14:30:00Z",
+                    "updatedAt": "2026-03-15T09:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "update:consentPolicy"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Remove consent policy",
+        "description": "Removes a consent policy from the organization. This does not revoke existing consents\ngranted under this policy - it only removes the policy definition.\n\nAfter deletion, the consent scope is no longer shown during onboarding and no new consents\ncan be granted for this scope in this org.\n",
+        "operationId": "deleteConsentPolicy",
+        "x-swagger-router-controller": "consentPolicyController",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrgIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/PolicyIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consent policy removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "ID of the deleted policy"
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "pol-550e8400-e29b-41d4-a716-001"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "delete:consentPolicy"
+            ]
+          }
+        ]
+      }
+    },
+    "/info": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Service inventory & counters",
+        "description": "Retrieve counters and status snapshots for selected resource types.\n",
+        "operationId": "getInfo",
+        "x-swagger-router-controller": "infoController",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "description": "Types of information to retrieve",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "consents",
+                  "consentPolicies",
+                  "config",
+                  "healthCheck"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Information about the service and its resources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "value": {
+                      "data": {
+                        "consents": {
+                          "count": 1240
+                        },
+                        "consentPolicies": {
+                          "count": 18
+                        },
+                        "healthCheck": {
+                          "status": "ok"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "security": [
+          {
+            "AdminSecurity": [
+              "read:system"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AdminSecurity": {
+        "type": "oauth2",
+        "description": "OAuth2 client credentials flow for administrative operations - consent policy management and system info.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "read:system": "Read system information (health, version)",
+              "create:consentPolicy": "Create consent policies for organizations",
+              "read:consentPolicy": "Read consent policies",
+              "update:consentPolicy": "Update consent policies",
+              "delete:consentPolicy": "Delete consent policies"
+            }
+          }
+        }
+      },
+      "SystemSecurity": {
+        "type": "oauth2",
+        "description": "OAuth2 client credentials flow for service-to-service calls - user consent queries.",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "read:consent": "Read user consent records"
+            }
+          }
+        }
+      },
+      "UserSecurity": {
+        "type": "oauth2",
+        "description": "OAuth2 implicit flow for end-user operations - grant, revoke, and view own consents.",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://mimik.auth0.com/authorize",
+            "scopes": {
+              "create:consent": "Grant consent",
+              "read:consent": "Read own consent records",
+              "delete:consent": "Revoke consent",
+              "read:consentPolicy": "View org consent policies (for onboarding)"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "UserIdParam": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "description": "The mID account ID of the user",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "880e8400-e29b-41d4-a716-446655440000"
+      },
+      "ConsentIdParam": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The unique consent record ID",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "cns-550e8400-e29b-41d4-a716-001"
+      },
+      "OrgIdParam": {
+        "name": "orgId",
+        "in": "path",
+        "required": true,
+        "description": "The organization ID",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "PolicyIdParam": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The consent policy ID",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "pol-550e8400-e29b-41d4-a716-001"
+      },
+      "PageSizeParam": {
+        "name": "pageSize",
+        "in": "query",
+        "required": false,
+        "description": "Number of items per page (10-100)",
+        "schema": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "default": 25
+        },
+        "example": 25
+      },
+      "StartAfterParam": {
+        "name": "startAfter",
+        "in": "query",
+        "required": false,
+        "description": "ID of the last record from the previous page for cursor-based pagination",
+        "schema": {
+          "type": "string"
+        },
+        "example": "cns-550e8400-e29b-41d4-a716-001"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters or body",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 400,
+              "title": "Bad Request",
+              "message": "Invalid category. Supported values: communication, data-sharing, feature"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Missing required OAuth2 scope or insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 403,
+              "title": "Forbidden",
+              "message": "Insufficient permissions. Required scope create:consent is missing."
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 404,
+              "title": "Not Found",
+              "message": "Consent record not found."
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Resource already exists",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 409,
+              "title": "Conflict",
+              "message": "A consent policy already exists for data-sharing:wearable-data in this organization."
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Unexpected server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "statusCode": 500,
+              "title": "Internal Server Error",
+              "message": "An unexpected error occurred. Please try again later."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Consent": {
+        "type": "object",
+        "description": "A consent record representing a user's permission for a specific category and scope",
+        "required": [
+          "id",
+          "userId",
+          "orgId",
+          "category",
+          "scope",
+          "status",
+          "grantedAt",
+          "source"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique consent record identifier",
+            "readOnly": true,
+            "example": "cns-550e8400-e29b-41d4-a716-001"
+          },
+          "userId": {
+            "type": "string",
+            "description": "mID account ID of the consenting user",
+            "example": "880e8400-e29b-41d4-a716-446655440000"
+          },
+          "orgId": {
+            "type": "string",
+            "description": "Organization context for this consent",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "category": {
+            "type": "string",
+            "description": "Consent category: `communication` (contact channel permissions), `data-sharing` (data collection/processing permissions), or `feature` (product feature opt-ins)",
+            "enum": [
+              "communication",
+              "data-sharing",
+              "feature"
+            ],
+            "example": "data-sharing"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Category-specific scope. Communication: `marketing`, `transactional`, `operational`. Data-sharing: `wearable-data`, `clinical-data`. Feature: `ai-coaching`, `health-reports`, `nudges`.",
+            "example": "wearable-data"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current consent status: `active` (consent granted) or `revoked` (consent withdrawn)",
+            "enum": [
+              "active",
+              "revoked"
+            ],
+            "example": "active"
+          },
+          "grantedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When consent was granted",
+            "example": "2026-03-12T14:30:00Z"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When consent was revoked (null if still active)",
+            "nullable": true,
+            "example": null
+          },
+          "source": {
+            "type": "string",
+            "description": "How consent was obtained: `app` (mobile app), `web` (browser), `email`, `phone`, `terms-of-service`",
+            "enum": [
+              "app",
+              "web",
+              "email",
+              "phone",
+              "terms-of-service"
+            ],
+            "example": "app"
+          },
+          "version": {
+            "type": "string",
+            "description": "Consent policy version at time of grant (tracks which T&C version the user agreed to)",
+            "example": "1.0"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Contact channel (only present for `communication` category): `email`, `sms`, `push`",
+            "enum": [
+              "email",
+              "sms",
+              "push"
+            ],
+            "example": "email"
+          },
+          "value": {
+            "type": "string",
+            "description": "Contact address or handle (only present for `communication` category, e.g., email address, phone number)",
+            "example": "member@example.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Record creation timestamp",
+            "readOnly": true,
+            "example": "2026-03-12T14:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp",
+            "readOnly": true,
+            "example": "2026-03-12T14:30:00Z"
+          }
+        }
+      },
+      "NewConsent": {
+        "type": "object",
+        "description": "Request body for granting a new consent",
+        "required": [
+          "category",
+          "scope",
+          "source"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Consent category: `communication`, `data-sharing`, or `feature`",
+            "enum": [
+              "communication",
+              "data-sharing",
+              "feature"
+            ],
+            "example": "data-sharing"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Category-specific scope (e.g., `marketing`, `wearable-data`, `ai-coaching`)",
+            "example": "wearable-data"
+          },
+          "source": {
+            "type": "string",
+            "description": "How consent was obtained: `app` (mobile app), `web` (browser), `email`, `phone`, `terms-of-service`",
+            "enum": [
+              "app",
+              "web",
+              "email",
+              "phone",
+              "terms-of-service"
+            ],
+            "example": "app"
+          },
+          "version": {
+            "type": "string",
+            "description": "Consent policy version the user is agreeing to",
+            "example": "1.0"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Contact channel (required for `communication` category): `email`, `sms`, `push`",
+            "enum": [
+              "email",
+              "sms",
+              "push"
+            ],
+            "example": "email"
+          },
+          "value": {
+            "type": "string",
+            "description": "Contact address or handle (required for `communication` category)",
+            "example": "member@example.com"
+          }
+        }
+      },
+      "ConsentPolicy": {
+        "type": "object",
+        "description": "An organization-level consent policy defining requirements for a specific consent scope",
+        "required": [
+          "id",
+          "orgId",
+          "category",
+          "scope",
+          "requirement"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique policy identifier",
+            "readOnly": true,
+            "example": "pol-550e8400-e29b-41d4-a716-001"
+          },
+          "orgId": {
+            "type": "string",
+            "description": "Organization ID this policy belongs to",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "category": {
+            "type": "string",
+            "description": "Consent category this policy applies to",
+            "enum": [
+              "communication",
+              "data-sharing",
+              "feature"
+            ],
+            "example": "data-sharing"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Scope within the category this policy applies to",
+            "example": "wearable-data"
+          },
+          "requirement": {
+            "type": "string",
+            "description": "Requirement level: `required` (must grant, cannot revoke), `optional` (user choice), `disabled` (not available)",
+            "enum": [
+              "required",
+              "optional",
+              "disabled"
+            ],
+            "example": "optional"
+          },
+          "defaultValue": {
+            "type": "boolean",
+            "description": "Default consent state for new members (only meaningful for `optional` policies)",
+            "example": false
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name shown during onboarding consent flow",
+            "example": "Wearable Data Sharing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Explanation shown to the user during onboarding",
+            "example": "Allow your anonymized wearable and sleep data to contribute to organization-level analytics dashboards."
+          },
+          "version": {
+            "type": "string",
+            "description": "Policy version (auto-incremented on updates)",
+            "readOnly": true,
+            "example": "1"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Record creation timestamp",
+            "readOnly": true,
+            "example": "2026-03-12T14:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp",
+            "readOnly": true,
+            "example": "2026-03-12T14:30:00Z"
+          }
+        }
+      },
+      "NewConsentPolicy": {
+        "type": "object",
+        "description": "Request body for creating a new consent policy",
+        "required": [
+          "category",
+          "scope",
+          "requirement",
+          "displayName",
+          "description"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Consent category: `communication`, `data-sharing`, or `feature`",
+            "enum": [
+              "communication",
+              "data-sharing",
+              "feature"
+            ],
+            "example": "data-sharing"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Scope within the category",
+            "example": "wearable-data"
+          },
+          "requirement": {
+            "type": "string",
+            "description": "Requirement level: `required`, `optional`, or `disabled`",
+            "enum": [
+              "required",
+              "optional",
+              "disabled"
+            ],
+            "example": "optional"
+          },
+          "defaultValue": {
+            "type": "boolean",
+            "description": "Default consent state for new members (only meaningful for `optional` policies)",
+            "default": false,
+            "example": false
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name shown during onboarding",
+            "example": "Wearable Data Sharing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Explanation shown to the user",
+            "example": "Allow your anonymized wearable and sleep data to contribute to organization-level analytics dashboards."
+          }
+        }
+      },
+      "UpdateConsentPolicy": {
+        "type": "object",
+        "description": "Request body for updating a consent policy. Only include fields to update.",
+        "properties": {
+          "requirement": {
+            "type": "string",
+            "description": "Updated requirement level: `required`, `optional`, or `disabled`",
+            "enum": [
+              "required",
+              "optional",
+              "disabled"
+            ],
+            "example": "required"
+          },
+          "defaultValue": {
+            "type": "boolean",
+            "description": "Updated default consent state",
+            "example": true
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Updated display name",
+            "example": "Wearable Data Sharing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Updated description",
+            "example": "Required for participation in the wellness program."
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Standard error response following the mimik platform error format",
+        "required": [
+          "statusCode",
+          "title",
+          "message"
+        ],
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "format": "int32",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "title": {
+            "type": "string",
+            "description": "Short error title",
+            "example": "Bad Request"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed error message describing what went wrong",
+            "example": "Invalid category. Supported values: communication, data-sharing, feature"
+          },
+          "info": {
+            "type": "object",
+            "description": "Additional context-specific error information",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

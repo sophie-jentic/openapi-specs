@@ -1,0 +1,300 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Warranty Registration API",
+    "description": "The CLARA Warranty Registration API is a POST API which can be used to perform the warranty registration for a stock inventory in CLARA.",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/ALFEROC_1/warranty-registration-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://eu.api.daimlertruck.com/war/v1.0",
+      "description": "Europe production server"
+    }
+  ],
+  "paths": {
+    "/warrantyregistration": {
+      "post": {
+        "summary": "This interface will perform the warranty registration transaction on any existing CLARA Stock inventory",
+        "operationId": "warrantyRegistration",
+        "tags": [
+          "Interfaces exposed from CLARA"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (The request couldn\u2019t be understood, usually because the JSON or XML body contains an error.)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (The session ID or OAuth token used has expired or is invalid. The response body contains the message and error Code.)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (The subscription is not active. Please check the status on the Developer DTAG API Portal)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RequestDTO": {
+        "type": "object",
+        "required": [
+          "userId",
+          "finOrVin",
+          "retailAccountGsId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Empower User ID of the Warranty Registration submitting user.",
+            "example": "D0X19457",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "finOrVin": {
+            "type": "string",
+            "description": "VIN/FIN for the inventory to perform warranty registration.",
+            "example": "W1T96420010538803"
+          },
+          "retailAccountGsId": {
+            "type": "string",
+            "description": "GS ID of the retailer who provided the warranty registration date/no warranty registration date information.",
+            "example": "GS0004830"
+          },
+          "warrantyRegistrationDate": {
+            "type": "string",
+            "description": "Warranty registration date (Format- YYYYMMDD).",
+            "example": "20240601",
+            "pattern": "^[0-9]{8}$"
+          },
+          "noWarrantyRegistrationDate": {
+            "type": "boolean",
+            "description": "Either NoWarrantyRegistrationDate should be \u201cTrue\u201d (e.g. for airport vehicles which have no registration date) or the WarrantyRegistrationDate should be provided."
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Attachment information",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "attachmentPath": {
+            "type": "string",
+            "description": "Azure File storage path of the attachment.",
+            "example": "https://tst.eu.api.daimlertruck.com/afs/v1.0/files?container=default&filename=835d94b3-37e4-4bb4-bb48-dae37c32edda.png",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        }
+      },
+      "ResponseDTO": {
+        "type": "object",
+        "properties": {
+          "finOrVin": {
+            "type": "string",
+            "description": "VIN/FIN for the inventory to perform warranty registration.",
+            "example": "W1T96420010538803"
+          },
+          "warrantyRegistrationID": {
+            "type": "string",
+            "description": "Warranty Registration Id created in Clara system.",
+            "example": "SR-0000016561"
+          },
+          "warrantyRegistrationDate": {
+            "type": "string",
+            "description": "Warranty Registration Date (Format- YYYYMMDD).",
+            "example": "20240601"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of Warranty Registration possible values (In Progress, Registered, Draft, Completed, etc.)",
+            "example": "Registered"
+          }
+        }
+      },
+      "Error400": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "requestTimestamp": {
+                  "type": "string",
+                  "description": "Timestamp of the request.",
+                  "example": "2025-08-25T07:56:32.7815516Z"
+                },
+                "field": {
+                  "type": "string",
+                  "description": "Field which caused the error.",
+                  "example": "finOrVin"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Description of the error.",
+                  "example": "Inventory is not a stock inventory"
+                },
+                "errorCode": {
+                  "type": "string",
+                  "description": "Error code related to the error.",
+                  "example": "FINORVIN_INVALIDVALUE"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error401": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "string",
+            "description": "Status Code",
+            "example": 401
+          },
+          "message": {
+            "type": "string",
+            "description": "Message of the Error",
+            "example": "Unauthorized"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason of the error",
+            "example": "IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): 8/14/2025 8:33:08 AM, Current time (UTC): 8/25/2025 7:43:36 AM"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Where did the error occur.",
+            "example": "authentication_dt_ciam"
+          },
+          "traceId": {
+            "type": "string",
+            "description": "TraceID for the DTAG API Portal Support Team.",
+            "example": "9d08e564b6cd739419610d1e7e9efc8d"
+          }
+        }
+      },
+      "Error403": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "string",
+            "description": "Status Code",
+            "example": 403
+          },
+          "message": {
+            "type": "string",
+            "description": "Message of the Error",
+            "example": "Forbidden"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason of the error",
+            "example": "Missing or invalid subscription, status = 403"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Where did the error occur.",
+            "example": "authorization_standard"
+          },
+          "traceId": {
+            "type": "string",
+            "description": "TraceID for the DTAG API Portal Support Team.",
+            "example": "8510b16597f8e4e2b2c44b690ae2ca27"
+          }
+        }
+      },
+      "Error500": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "requestTimestamp": {
+                  "type": "string",
+                  "description": "Timestamp of the request.",
+                  "example": "2025-08-25T07:56:32.7815516Z"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Description of the error.",
+                  "example": "Read timed out"
+                },
+                "field": {
+                  "type": "string",
+                  "description": "Field which caused the error.",
+                  "example": ""
+                },
+                "errorCode": {
+                  "type": "string",
+                  "description": "Error code related to the error.",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

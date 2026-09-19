@@ -1,0 +1,1154 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "mSLS - Secure Link Sharing Service",
+    "description": "API for secure file sharing with end-to-end encryption, verification, and delivery tracking.\n\n## Features\n- Public/private key pair generation for secure encryption\n- Encrypted file sharing via unique links\n- Email and SMS notification delivery\n- Recipient verification via OTP\n- Automatic cleanup after successful delivery\n- Link status tracking and management\n\n## Security\nAll endpoints require OAuth 2.0 authentication with appropriate scopes.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "mimik",
+      "url": "https://developer.mimik.com",
+      "email": "support.sdk@mimik.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/mimik/msls/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/msls/v1",
+      "description": "Server path"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "Operations available to authenticated users"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative operations"
+    },
+    {
+      "name": "Portal",
+      "description": "Portal operations"
+    }
+  ],
+  "paths": {
+    "/keys": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Request a unique public key pair",
+        "description": "Generates and returns a unique public key and key ID for encrypting files",
+        "operationId": "generateKeyPair",
+        "security": [
+          {
+            "UserSecurity": [
+              "keys:generate"
+            ]
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Public key pair generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyPairResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "userController"
+      }
+    },
+    "/links": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Create a secure sharing link",
+        "description": "Creates a unique sharing link for an encrypted file and sends notification to recipient(s).\nThe link includes file metadata and delivery information.\n",
+        "operationId": "createShareLink",
+        "security": [
+          {
+            "UserSecurity": [
+              "links:write"
+            ]
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Share link created and notification sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Public key ID or file ID not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "userController"
+      },
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "List user's shared links",
+        "description": "Retrieves all sharing links created by the authenticated user with their current status",
+        "operationId": "listUserLinks",
+        "security": [
+          {
+            "UserSecurity": [
+              "links:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter links by status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "accessed",
+                "delivered",
+                "expired",
+                "deleted",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shared links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "userController"
+      }
+    },
+    "/links/{linkId}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Get shared link details",
+        "description": "Retrieves detailed information about a specific shared link",
+        "operationId": "getLinkDetails",
+        "security": [
+          {
+            "UserSecurity": [
+              "link:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LinkIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDetailsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "User does not have access to this link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "userController"
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Cancel a shared link",
+        "description": "Cancels a shared link, making it no longer accessible to recipients",
+        "operationId": "cancelLink",
+        "security": [
+          {
+            "UserSecurity": [
+              "link:cancel"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LinkIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link cancelled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelLinkResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "User does not have access to this link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Link cannot be cancelled in its current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "userController"
+      }
+    },
+    "/portal/{linkToken}": {
+      "get": {
+        "tags": [
+          "Portal"
+        ],
+        "summary": "Access secure link portal",
+        "description": "Public endpoint for recipients to access the secure link portal.\nReturns file information and triggers verification code delivery.\n",
+        "operationId": "accessPortal",
+        "security": [],
+        "parameters": [
+          {
+            "name": "linkToken",
+            "in": "path",
+            "required": true,
+            "description": "Unique token from the sharing link",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portal information and verification code sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortalResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found or has expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Link has been cancelled or already delivered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "portalController"
+      }
+    },
+    "/portal/{linkToken}/verify": {
+      "post": {
+        "tags": [
+          "Portal"
+        ],
+        "summary": "Verify recipient and download file",
+        "description": "Verifies the recipient's OTP code and initiates encrypted file retrieval,\ndecryption, and download. Upon successful download, marks the link as delivered\nand deletes all associated keys and encrypted files.\n",
+        "operationId": "verifyAndDownload",
+        "security": [],
+        "parameters": [
+          {
+            "name": "linkToken",
+            "in": "path",
+            "required": true,
+            "description": "Unique token from the sharing link",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification successful, file ready for download",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Attachment with original filename"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Link expired or cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "portalController"
+      }
+    },
+    "/admin/links": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List all shared links (admin)",
+        "description": "Administrative endpoint to view all shared links across all users",
+        "operationId": "adminListLinks",
+        "security": [
+          {
+            "AdminSecurity": [
+              "links:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "Filter by user ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "accessed",
+                "delivered",
+                "expired",
+                "deleted",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all shared links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLinkListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "adminController"
+      }
+    },
+    "/admin/links/{linkId}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Force delete a shared link (admin)",
+        "description": "Administrative endpoint to force delete any shared link",
+        "operationId": "adminDeleteLink",
+        "security": [
+          {
+            "AdminSecurity": [
+              "link:delete"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LinkIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-swagger-router-controller": "adminController"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AdminSecurity": {
+        "type": "oauth2",
+        "description": "Admin client credentials (Client Credentials flow)",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://mimik.com/oauth/token",
+            "scopes": {
+              "links:read": "Read all shared links (admin)",
+              "write:links": "Manage all shared links (admin)",
+              "link:delete": "Remove existing link"
+            }
+          }
+        }
+      },
+      "UserSecurity": {
+        "type": "oauth2",
+        "description": "User access tokens (Authorization Code with PKCE)",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://mimik.com/authorize",
+            "scopes": {
+              "keys:generate": "Generate a unique public key and key ID",
+              "links:write": "Create a user's shared link",
+              "link:read": "Get a shared link",
+              "link:cancel": "Cancel existing link",
+              "links:read": "Get all shared links of a user"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "LinkIdParam": {
+        "name": "linkId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the shared link",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "schemas": {
+      "KeyPairResponse": {
+        "type": "object",
+        "required": [
+          "publicKeyId",
+          "publicKey",
+          "expiresAt"
+        ],
+        "properties": {
+          "publicKeyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the key pair"
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "Base64-encoded public key for encryption"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiration timestamp for the key pair"
+          }
+        }
+      },
+      "CreateLinkRequest": {
+        "type": "object",
+        "required": [
+          "publicKeyId",
+          "fileId",
+          "fileName",
+          "senderName",
+          "recipients",
+          "expiryDuration"
+        ],
+        "properties": {
+          "publicKeyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the public key used for encryption"
+          },
+          "fileId": {
+            "type": "string",
+            "description": "ID of the encrypted file in mCS"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "Original name of the file"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Name of the sender"
+          },
+          "recipients": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Recipient"
+            }
+          },
+          "expiryDuration": {
+            "type": "integer",
+            "description": "Link expiry duration in seconds",
+            "minimum": 300,
+            "maximum": 2592000
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message to include in notification",
+            "maxLength": 500
+          },
+          "metaData": {
+            "type": "object",
+            "description": "key value pairs of metadata to be provided",
+            "example": {
+              "patientId": "pid-1234567"
+            }
+          }
+        }
+      },
+      "Recipient": {
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ],
+            "description": "Delivery method"
+          },
+          "value": {
+            "type": "string",
+            "description": "Email address or phone number"
+          }
+        }
+      },
+      "LinkResponse": {
+        "type": "object",
+        "required": [
+          "linkId",
+          "linkToken",
+          "linkUrl",
+          "status",
+          "createdAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the link"
+          },
+          "linkToken": {
+            "type": "string",
+            "description": "Unique token used in the link URL"
+          },
+          "linkUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Full URL for the secure link"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent"
+            ],
+            "description": "Initial status of the link"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notificationsSent": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "recipient": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "sms"
+                  ]
+                },
+                "sentAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "LinkListResponse": {
+        "type": "object",
+        "required": [
+          "links",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkSummary"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total number of links matching the filter"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "LinkSummary": {
+        "type": "object",
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "linkUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "accessed",
+              "delivered",
+              "expired",
+              "deleted",
+              "cancelled"
+            ]
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LinkDetailsResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LinkSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "senderName": {
+                "type": "string"
+              },
+              "fileId": {
+                "type": "string"
+              },
+              "publicKeyId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "message": {
+                "type": "string"
+              },
+              "accessHistory": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "event": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "accessed",
+                        "verified",
+                        "delivered",
+                        "cancelled"
+                      ]
+                    },
+                    "ipAddress": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CancelLinkResponse": {
+        "type": "object",
+        "required": [
+          "linkId",
+          "status",
+          "cancelledAt"
+        ],
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "cancelled"
+            ]
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PortalResponse": {
+        "type": "object",
+        "required": [
+          "fileName",
+          "senderName",
+          "fileSize",
+          "verificationRequired",
+          "verificationMethod",
+          "expiresAt"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "Name of the shared file"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Name of the sender"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "File size in bytes"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message from sender"
+          },
+          "verificationRequired": {
+            "type": "boolean",
+            "description": "Always true for this service"
+          },
+          "verificationMethod": {
+            "type": "string",
+            "enum": [
+              "email",
+              "sms"
+            ],
+            "description": "Method used to send verification code"
+          },
+          "verificationDestination": {
+            "type": "string",
+            "description": "Masked email or phone number where code was sent"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the link expires"
+          }
+        }
+      },
+      "VerificationRequest": {
+        "type": "object",
+        "required": [
+          "verificationCode"
+        ],
+        "properties": {
+          "verificationCode": {
+            "type": "string",
+            "description": "Short-lived verification code sent to recipient",
+            "pattern": "^\\d{6}$"
+          }
+        }
+      },
+      "AdminLinkListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LinkListResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "links": {
+                "type": "array",
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/LinkSummary"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "userId": {
+                          "type": "string",
+                          "description": "ID of the user who created the link"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "required": [
+          "linkId",
+          "deleted",
+          "deletedAt"
+        ],
+        "properties": {
+          "linkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required or invalid credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

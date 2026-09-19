@@ -1,0 +1,279 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DOC API FRM Kebun Raya",
+    "description": "Dokumentasi API untuk detail data transaksi Kebun Raya.",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/krb-f8c/api_frm/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://my-default-host.com",
+      "description": "Server Utama API"
+    }
+  ],
+  "paths": {
+    "/auth/transaction": {
+      "get": {
+        "tags": [
+          "Transaction"
+        ],
+        "summary": "Mendapatkan detail transaksi berdasarkan tanggal dan lokasi.",
+        "operationId": "getTransactionDetail",
+        "parameters": [
+          {
+            "name": "date_transaction",
+            "in": "query",
+            "description": "Tanggal transaksi dengan format Y-m-d (contoh: 2025-10-07).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-10-07"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "ID lokasi (1=Bogor, 2=Cibodas, 3=Purwodadi, 4=Bali).",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sukses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "The selected api key is invalid"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
+      }
+    },
+    "/auth/transactions/voided": {
+      "get": {
+        "tags": [
+          "Transaction"
+        ],
+        "summary": "Mendapatkan daftar transaksi yang dibatalkan (void) berdasarkan rentang tanggal.",
+        "description": "Mengambil semua transaksi dengan status 'void' yang terdaftar dalam periode tanggal yang diminta.",
+        "operationId": "getVoidedTransactions",
+        "parameters": [
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Tanggal mulai untuk filter (format Y-m-d).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-10-01"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "Tanggal akhir untuk filter (format Y-m-d).",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-10-31"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sukses, mengembalikan daftar transaksi void.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TransactionDetailResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TransactionDetailResponse": {
+        "title": "Detail Transaksi",
+        "description": "Skema respons sukses untuk detail transaksi.",
+        "properties": {
+          "pos_name": {
+            "type": "string",
+            "example": "Kenari 1"
+          },
+          "user": {
+            "type": "string",
+            "example": "Pamungkas"
+          },
+          "product_name": {
+            "type": "string",
+            "example": "Scooter RMT"
+          },
+          "order_id": {
+            "type": "string",
+            "example": "Orders-00010"
+          },
+          "qr_id": {
+            "type": "string",
+            "example": "RENTAL-68E4F350AF4D2"
+          },
+          "qty": {
+            "type": "integer",
+            "example": 1
+          },
+          "price_unit": {
+            "type": "string",
+            "example": "35000.00"
+          },
+          "price_subtotal": {
+            "type": "string",
+            "example": "35000.00"
+          },
+          "payment_method": {
+            "type": "string",
+            "example": "QRIS"
+          }
+        },
+        "type": "object"
+      },
+      "ValidationError": {
+        "title": "Kesalahan Validasi",
+        "description": "Skema respons untuk error validasi 422.",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Validation Error"
+          },
+          "messages": {
+            "description": "Detail pesan kesalahan per field",
+            "properties": {
+              "date_transaction": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "example": "The date transaction field must match the format Y-m-d."
+                }
+              },
+              "location": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "example": "The selected location is invalid."
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "AuthError": {
+        "title": "Error Otentikasi",
+        "description": "Skema respons untuk error otentikasi 401.",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "The selected api key is invalid"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "x-api-key": {
+        "type": "apiKey",
+        "description": "Token API Key yang dibutuhkan untuk otentikasi.",
+        "name": "x-api-key",
+        "in": "header"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Transaction",
+      "description": "Transaction"
+    }
+  ]
+}

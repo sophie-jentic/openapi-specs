@@ -1,0 +1,3871 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RESOURCES",
+    "description": "# Hyperwallet Documentation\n\nThis collection provides a comprehensive set of API requests for integrating with the **Hyperwallet/Paylution** payout platform. It enables programmatic management of users, transfer methods, payments, and related resources.\n\n## Purpose\n\nHyperwallet is a global payout platform that allows businesses to disburse funds to recipients worldwide. This collection covers the core REST API endpoints for:\n\n- Creating and managing payout recipients (users)\n\n- Configuring transfer methods (bank accounts, bank cards, prepaid cards, Venmo, crypto, etc.)\n\n- Initiating and tracking payments and transfers\n\n- Handling status transitions and compliance workflows\n\n\n## Main Resource Groups\n\n| Resource | Description |\n| --- | --- |\n| **Users** | Create, retrieve, update users and their status transitions |\n| **Bank Accounts** | Manage bank account transfer methods for direct deposit or wire |\n| **Bank Cards** | Register and manage debit/credit cards for payouts |\n| **Prepaid Cards** | Issue and manage prepaid cards, balances, and receipts |\n| **Venmo Accounts** | Link and manage Venmo as a payout method |\n| **Crypto Accounts** | Configure cryptocurrency wallets for payouts |\n| **Wallet Accounts** | Manage Hyperwallet wallet balances |\n| **Payments** | Create payments, track status, and manage supplemental data |\n| **Transfers** | Initiate transfers between accounts, including refunds |\n| **Business Stakeholders** | Manage stakeholders for business profiles |\n\n## Security Model (JWS / JWE)\n\nAll requests in this collection use **JSON Web Signature (JWS)** and **JSON Web Encryption (JWE)** for secure communication:\n\n1. **JWS (Signing)**: Request payloads are signed using your private signing key (`PRIVATE_JWK` or `PRIVATE_JWK_SIG` environment variable) with RS256 algorithm.\n\n2. **JWE (Encryption)**: The signed payload is then encrypted using Hyperwallet's public encryption key (fetched from `HYPERWALLET_JWKS_URL`).\n\n3. **Response Decryption**: Responses are decrypted and stored in `DECRYPTED_PAYLOAD` environment variable for validation.\n\n\n## Environment Configuration\n\nSet the following variables in your Postman environment:\n\n| Variable | Description |\n| --- | --- |\n| `base_url` | API base URL (e.g., `https://api.paylution.com/rest/v4`) |\n| `PRIVATE_JWK` | Your private JWK for signing requests (JSON format) |\n| `PRIVATE_JWK_SIG` | Alternative signing key (if separate from encryption) |\n| `HYPERWALLET_JWKS_URL` | URL to fetch Hyperwallet's public JWKS (defaults to `https://api.paylution.com/jwkset`) |\n\n## Running Requests\n\n1. **Select an environment** with the required variables configured.\n\n2. **Open any request** in the collection.\n\n3. **Send the request** \u2014 the pre-request script automatically handles JWS signing and JWE encryption.\n\n4. **View results** \u2014 check the `DECRYPTED_PAYLOAD` environment variable or the Visualizer tab for the decrypted response.\n\n5. **Run tests** \u2014 post-response scripts validate status codes, payload structure, and key fields.\n\n\n## Collection Runner\n\nUse the Postman Collection Runner to execute multiple requests in sequence. The collection-level scripts ensure consistent JWS/JWE handling and response validation across all requests.\n",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/MACRO-SOFT/resources/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.paylution.com/rest/v4",
+      "description": "Hyperwallet Production"
+    },
+    {
+      "url": "https://uat-api.paylution.com/rest/v4",
+      "description": "Hyperwallet UAT"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users",
+        "description": "You can retrieve a list of users belonging to your program by sending a\u00a0GET\u00a0request to the\u00a0/users\u00a0endpoint.\n\nListing Users Corresponding to a Program\n\nOverview  \nRetrieve users from Hyperwallet/Paylution associated with your program. Supports rich filtering, sorting, and pagination. Responses are JOSE-encoded (JWE payload, JWS signature) as per Hyperwallet security requirements.\n\nEndpoint  \nGET {{base_url}}/users\n\nHeaders\n\n- Content-Type: application/jose+json\n\n- Accept: application/jose+json\n\n\nAuthentication & Security\n\n- Requests are signed (JWS) and encrypted (JWE) using your program keys.\n\n- This request\u2019s pre-request script prepares the JWS/JWE. Ensure these environment variables exist:\n\n    - PRIVATE_JWK, PRIVATE_JWK_SIG\n\n    - HYPERWALLET_JWKS_URL (optional; defaults to [https://api.paylution.com/jwkset](https://api.paylution.com/jwkset))\n\n\nQuery Parameters  \nAll parameters are optional unless noted. Use only those relevant to your filter.\n\n- clientUserId (string)\n\n- createdBefore (ISO8601 datetime)\n\n- createdAfter (ISO8601 datetime)\n\n- email (string)\n\n- programToken (string)\n\n- status (string)\n\n- verificationStatus (string; allowed values: NOT_REQUIRED, REQUIRED, UNDER_REVIEW, VERIFIED)\n\n- taxVerificationStatus (string; allowed values: NOT_REQUIRED, REQUIRED, FAILED, UNDER_REVIEW, VERIFIED, READY_FOR_REVIEW. Note: FAILED is a temporary status before changing to REQUIRED.)\n\n- businessStakeholderVerificationStatus (string; allowed values: NOT_REQUIRED, REQUIRED, FAILED, UNDER_REVIEW, VERIFIED, READY_FOR_REVIEW. Note: FAILED is a temporary status before changing to REQUIRED.)\n\n- letterOfAuthorizationStatus (string; allowed values: NOT_REQUIRED, REQUIRED, FAILED, UNDER_REVIEW, VERIFIED, READY_FOR_REVIEW. Note: FAILED is a temporary status before changing to REQUIRED.)\n\n- createdOn (ISO8601 date)\n\n- profileType (string; allowed values: INDIVIDUAL, BUSINESS)\n\n- firstName, middleName, lastName (string)\n\n- dateOfBirth (YYYY-MM-DD)\n\n- countryOfBirth, countryOfNationality (ISO 3166-1 alpha-2)\n\n- phoneNumber, mobileNumber (E.164)\n\n- governmentId (string)\n\n- governmentIdType (string)\n\n- passportId, driversLicenseId, employerId (string)\n\n- addressLine1, addressLine2, city, stateProvince, country, postalCode (string; country = ISO 3166-1 alpha-2)\n\n- language (ISO 639-1)\n\n- businessType (string)\n\n- businessName, businessRegistrationId, businessRegistrationStateProvince, businessRegistrationCountry, businessOperatingName (string)\n\n\n### Example requests\n\nMinimal list (no filters, default limit):\n\n``` http\nGET {{base_url}}/users\n\n ```\n\nList individual users by email:\n\n``` http\nGET {{base_url}}/users?profileType=INDIVIDUAL&email=test.user@example.com\n\n ```\n\nList users by verification and tax verification status:\n\n``` http\nGET {{base_url}}/users?verificationStatus=UNDER_REVIEW&taxVerificationStatus=READY_FOR_REVIEW\n\n ```\n\nCombined filters (program, profile type, status, and verification flags):\n\n``` http\nGET {{base_url}}/users?programToken=prg-14b739d1-2bd5-4879-9a1c-ec3421c77d42&profileType=INDIVIDUAL&status=ACTIVATED&verificationStatus=VERIFIED&taxVerificationStatus=VERIFIED&businessStakeholderVerificationStatus=VERIFIED\n\n ```\n\n### Common filter patterns\n\n| Use case | Key params | Example |\n| --- | --- | --- |\n| Filter by exact email | `email` | `GET {{base_url}}/users?email=test.user@example.com` |\n| Filter by client user id | `clientUserId` | `GET {{base_url}}/users?clientUserId=t-1707994378490` |\n| Filter by profile type | `profileType` (`INDIVIDUAL` or `BUSINESS`) | `GET {{base_url}}/users?profileType=INDIVIDUAL` |\n| Filter by creation date range | `createdAfter`, `createdBefore` (ISO8601) | `GET {{base_url}}/users?createdAfter=2024-01-01T00:00:00&createdBefore=2024-12-31T23:59:59` |\n| Filter by verification flags | `verificationStatus`, `taxVerificationStatus` (for example `VERIFIED`, `READY_FOR_REVIEW`) | `GET {{base_url}}/users?verificationStatus=VERIFIED&taxVerificationStatus=READY_FOR_REVIEW` |\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users",
+        "description": "**Purpose**\n\nCreate a Hyperwallet user (INDIVIDUAL or BUSINESS) by sending a JWS-signed and JWE-encrypted payload to the /users endpoint, aligned with the official Hyperwallet v4 **Create User** API.\n\nEndpoint  \nPOST {{base_url}}/users\n\nMethod  \nPOST\n\nHeaders\n\n- Content-Type: `application/jose+json`\n\n- Accept: `application/jose+json`\n\n\nAuthentication and Crypto Prerequisites\n\nThis collection uses a JOSE-based integration pattern on top of the standard Hyperwallet Create User endpoint:\n\n- Two-step cryptographic flow in the pre-request script:\n\n    1. **JWS signing (RS256)** using your private JWK held in the environment.\n\n    2. **JWE encryption (RSA-OAEP + A256GCM)** to the Hyperwallet public key fetched from JWKS.\n\n- Required environment variables:\n\n    - `base_url`: Base API URL (for example, `https://api.paylution.com/rest/v4`).\n\n    - `PRIVATE_JWK`: Private JWK JSON string used for RS256 signing.\n\n    - `PRIVATE_JWK_SIG` (if applicable in your setup): Optional secondary signing material.\n\n    - `HYPERWALLET_JWKS_URL` (optional): JWKS endpoint for encryption key. Defaults to `https://api.paylution.com/jwkset`.\n\n- No bearer tokens are added directly; the JOSE payload is the authorization mechanism expected by this collection\u2019s examples.\n\n\nRequest Body\n\nBody mode: **raw JSON**, which is transformed by the pre-request script into JWS, then JWE before sending.\n\nBelow is a concise summary of the core **Create User** fields, aligned with Hyperwallet\u2019s v4 documentation for the `POST /users` endpoint. Unless indicated otherwise, fields are provided in the JSON body (not as query parameters).\n\n### Core Identity & Program Fields\n\n- **profileType** (string, **required**)\n\n    - The user\u2019s profile type.\n\n    - Allowed values:\n\n        - `INDIVIDUAL`\n\n        - `BUSINESS`\n\n    - Notes:\n\n        - When `profileType = BUSINESS`, personal fields such as `firstName`, `middleName`, `lastName`, and `dateOfBirth` are ignored on this call. Use **Create Business Stakeholder** to add individual stakeholders for a business.\n\n\n[... existing field documentation and minimal/rich JSON examples remain here ...]\n\n### Common create patterns\n\nThe table below summarizes some typical **Create User** payload shapes you\u2019re likely to use. These are conceptual groupings; exact fields and validation rules should follow Hyperwallet\u2019s official API reference.\n\n| Use case | Key fields (illustrative) | Notes |\n| --- | --- | --- |\n| Minimal INDIVIDUAL user | `clientUserId`, `profileType = INDIVIDUAL`, `programToken`, `email`, `country` | Smallest practical payload to register an individual user. Additional optional KYC fields (name, dateOfBirth, address) can be added later or in subsequent flows depending on your compliance requirements. |\n| Minimal BUSINESS user | `clientUserId`, `profileType = BUSINESS`, `programToken`, `businessName`, `email`, `country` | Basic business onboarding when you only need to identify the legal entity and tie it to your program. Use **Create Business Stakeholder** APIs to add individuals linked to this business. |\n| INDIVIDUAL with extended KYC info | All minimal INDIVIDUAL fields, plus `firstName`, `middleName` (optional), `lastName`, `dateOfBirth`, and address fields such as `addressLine1`, `city`, `stateProvince`, `country`, `postalCode` | Recommended pattern when you want to collect KYC-relevant information up front for individuals to reduce later remediation. Exact address requirements depend on the user\u2019s country and program configuration. |\n| BUSINESS with extended business data | All minimal BUSINESS fields, plus `businessType`, `businessRegistrationId`, `businessRegistrationCountry`, `businessOperatingName` (and optionally `businessRegistrationStateProvince`) | Use when you need richer business context for compliance or reporting. Some combinations of `businessType` and registration fields may be mandatory depending on jurisdiction and Hyperwallet configuration. |\n| INDIVIDUAL with language and phone | Minimal INDIVIDUAL fields, plus `language`, and one or more phone-related fields such as `phoneNumber` and/or `mobileNumber` | Useful when you want to control communication preferences and have at least one reachable phone contact. `language` should follow the allowed language codes documented by Hyperwallet for your program. |\n\n### Validation checklist (before sending)\n\n- For all users: non-empty `clientUserId`, a valid `programToken`, a well-formed `email`, and a `country` using ISO 3166-1 alpha-2 codes (for example, `US`, `CA`, `DE`).\n\n- For INDIVIDUAL users: `profileType = INDIVIDUAL` and at least basic name fields populated (for example, `firstName` and `lastName`) where your program or KYC rules require them.\n\n- For BUSINESS users: `profileType = BUSINESS` and a non-empty `businessName`; include `businessType`, `businessRegistrationId`, `businessRegistrationCountry`, and `businessRegistrationStateProvince` where required by your program or local regulations.\n\n- Optional but recommended: `dateOfBirth` for individuals, plus address fields such as `addressLine1`, `city`, `stateProvince`, and `postalCode` to support KYC and downstream compliance checks.\n\n- If using `phoneNumber` or `mobileNumber`, send values in E.164 format where possible (for example, `+14155550123`).\n\n- Confirm that your environment variables for JOSE are set and valid: `PRIVATE_JWK` (and `PRIVATE_JWK_SIG` if applicable), `HYPERWALLET_JWKS_URL` (or the default JWKS URL), and `base_url` for the correct environment.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "profileType": "INDIVIDUAL",
+                  "clientUserId": "CS4b8Ffch",
+                  "country": "TZ",
+                  "email": "test+sig@example.com",
+                  "programToken": "prg-da2bf439-bf8e-4420-89bd-1b53350a2377"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users"
+      }
+    },
+    "/users/usr-d787d153-045b-4ba3-925f-ebb538342a01": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}",
+        "description": "### Overview\n\nRetrieve a single user resource by user-token from the Hyperwallet/Paylution API. This request is read-only.\n\n### Method & URL\n\n- GET {{base_url}}/users/:user-token\n\n\n### Required headers\n\n- Content-Type: application/jose+json\n\n- Accept: application/jose+json\n\n\n### Security\n\nThis request is prepared in the pre-request script using:\n\n- JWS signature (RSASSA-PKCS1-v1_5, SHA-256) with PRIVATE_JWK_SIG\n\n- JWE encryption (RSA-OAEP, SHA-256) using the platform JWKS at {{HYPERWALLET_JWKS_URL}} (or default [https://api.paylution.com/jwkset](https://api.paylution.com/jwkset))\n\n\nEnvironment variables expected:\n\n- base_url: API base URL\n\n- PRIVATE_JWK, PRIVATE_JWK_SIG: client private keys for encryption/signing\n\n- HYPERWALLET_JWKS_URL (optional): JWKS endpoint for recipient public keys\n\n\n### Path parameter\n\n- :user-token (string) \u2014 The unique identifier of the user to fetch.\n\n\n### Optional query parameters\n\nThe endpoint supports many filters; leave blank to fetch by token only. Common keys include: token, status, verificationStatus, taxVerificationStatus, businessStakeholderVerificationStatus, letterOfAuthorizationStatus, createdOn, clientUserId, profileType, firstName, middleName, lastName, dateOfBirth, countryOfBirth, countryOfNationality, phoneNumber, mobileNumber, email, governmentId, governmentIdType, passportId, driversLicenseId, employerId, addressLine1, addressLine2, city, stateProvince, country, postalCode, language, programToken, businessType, businessName, businessRegistrationId, businessRegistrationStateProvince, businessRegistrationCountry, businessOperatingName.\n\nReference requests with similar shapes: [/users/{user-token}](https://request/20632464-a5449a0f-8b61-4dcb-bf7c-eed112f64a6b), [/users/{user-token}](https://request/20632464-4239169e-a9d4-406d-9155-c0418c8e4300), [/users/{user-token}](https://request/20632464-88cdf91a-5464-4c65-85cc-a89496f9efb1).\n\n### Scripts\n\n- Pre-request: Builds JWS and JWE envelopes and sets JWE/JWS payload variables.\n\n- Tests: Attempts to parse DECRYPTED_PAYLOAD and validates presence of links. Logs JWE/JWS when present.\n\n\n### Example\n\nGET {{base_url}}/users/usr-d787d153-045b-4ba3-925f-ebb538342a01  \nHeaders:  \nContent-Type: application/jose+json  \nAccept: application/jose+json\n\n### Responses\n\n- 200 OK \u2014 Encrypted response body; post-response script will decrypt and store as DECRYPTED_PAYLOAD.\n\n- 4xx/5xx \u2014 Check signing/encryption configuration and required variables.\n\n\n### Notes\n\n- Do not edit this request\u2019s method, URL, or headers when using this template\u2014only adjust :user-token and filters as needed.\n\n- Use the Production Paylution environment to resolve variables like base_url and key material.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_d787d153_045b_4ba3_925f_ebb538342a01"
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}",
+        "description": "# Endpoint\n\nUpdate user\n\n- Method: PUT\n\n- Path: /users/{user-token}\n\n- Base URL: {{base_url}}\n\n\n## Summary\n\nUpdates an existing user\u2019s profile details in Hyperwallet/Paylution. The request payload is signed (JWS) and encrypted (JWE) per the pre-request script. The server expects application/jose+json content.\n\n## Path variables\n\n- user-token (required): The unique user token, e.g., usr-d787d153-045b-4ba3-925f-ebb538342a01\n\n\n## Query parameters (optional)\n\nThese may be accepted by the upstream API but are typically omitted when updating. Leave blank to avoid sending them.\n\n- clientUserId\n\n- profileType\n\n- businessStakeholderVerificationStatus\n\n- firstName, middleName, lastName\n\n- dateOfBirth\n\n- countryOfBirth, countryOfNationality\n\n- phoneNumber, mobileNumber, email\n\n- governmentId, governmentIdType, passportId, driversLicenseId, employerId\n\n- addressLine1, addressLine2, city, stateProvince, country, postalCode\n\n- language\n\n- programToken\n\n- businessType, businessName, businessOperatingName\n\n- businessRegistrationId, businessRegistrationStateProvince, businessRegistrationCountry\n\n\n## Headers\n\n- Content-Type: application/jose+json\n\n- Accept: application/jose+json\n\n\n## Authentication & Security\n\n- Request body is signed (RS256) and then encrypted (RSA-OAEP-256 + AES-GCM) by the pre-request script using values from the active environment (e.g., PRIVATE_JWK, HYPERWALLET_JWKS_URL).\n\n- Ensure PRIVATE_JWK (and, if applicable, PRIVATE_JWK_SIG) is set in the active environment.\n\n\n## Request body example (before signing/encryption)\n\n``` json\n{\n  \"email\": \"jim.432@company.com\",\n  \"firstName\": \"Jim\",\n  \"lastName\": \"Smithe\"\n}\n\n ```\n\n## Success response\n\n- Status: 200 OK\n\n- Body: Encrypted JWE. The post-response script will attempt to decrypt and place the plaintext in the environment variable DECRYPTED_PAYLOAD.\n\n\n## Tests & Scripts\n\n- Pre-request: Builds JWS and JWE around the raw JSON body.\n\n- Tests: Parses DECRYPTED_PAYLOAD and validates structure (e.g., presence of links) when available.\n\n\n## Notes\n\n- Use {{base_url}} to switch between environments.\n\n- Examples are available under this request to demonstrate typical responses.[https://docs.hyperwallet.com/content/api/v4/overview/errors#ret](https://docs.hyperwallet.com/content/api/v4/overview/errors#retrieve-a-user%5BRead)([https://docs.hyperwallet.com/content/api](https://docs.hyperwallet.com/content/api/v4/overview/errors#retrieve-a-user)\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "email": "jim.432@company.com",
+                  "firstName": "Jim",
+                  "lastName": "Smithe"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users_usr_d787d153_045b_4ba3_925f_ebb538342a01"
+      }
+    },
+    "/users/usr-d787d153-045b-4ba3-925f-ebb538342a01/business-stakeholders": {
+      "get": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_d787d153_045b_4ba3_925f_ebb538342a01_business_stakeholders"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/business-stakeholders": {
+      "post": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "isBusinessContact": "true",
+                  "profileType": "INDIVIDUAL",
+                  "firstName": "Abdulrahman",
+                  "lastName": "Mohammed",
+                  "dateOfBirth": "1995-02-04",
+                  "countryOfBirth": "US",
+                  "countryOfNationality": "US",
+                  "phoneNumber": "1876543210",
+                  "mobileNumber": "1876543210",
+                  "email": "jamaldin907@gmail.com",
+                  "governmentId": "12342345",
+                  "driversLicenseId": "12341A1A",
+                  "addressLine1": "123 Main Street",
+                  "city": "New York",
+                  "stateProvince": "NY",
+                  "country": "US",
+                  "postalCode": "10016"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_business_stakeholders"
+      }
+    },
+    "/users/usr-d787d153-045b-4ba3-925f-ebb538342a01/business-stakeholders/{stakeholder-token}": {
+      "put": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders/{stakeholder-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "stakeholder-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "firstName": "James",
+                  "lastName": "Smithe",
+                  "isDirector": "true"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users_usr_d787d153_045b_4ba3_925f_ebb538342a01_business_stakeholders__stakeholder_token_"
+      }
+    },
+    "/users/{user-token}/bank-accounts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts",
+        "description": "Summary  \nRetrieves bank accounts for a specific user in Hyperwallet/Paylution.\n\nRequest\n\n- Method: GET\n\n- URL template: {{base_url}}/users/{user-token}/bank-accounts\n\n- Path variables:\n    - user-token (string, required): Unique identifier of the user whose bank accounts are being retrieved.\n\n\nQuery parameters  \nProvide any of the following as query string filters. All values are strings unless noted. Examples use realistic values; adjust as needed.\n\n- :user-token (string) \u2014 Do not use in the query string; the user-token is a path variable. (Present in the autogenerated URL; ignore.)\n\n- createdBefore (ISO 8601 datetime): e.g., 2024-12-31T23:59:59Z\n\n- createdAfter (ISO 8601 datetime): e.g., 2024-01-01T00:00:00Z\n\n- createdOn (ISO 8601 date): e.g., 2024-05-10\n\n- type (string): Bank account type. e.g., \"BANK_ACCOUNT\"\n\n- status (string): e.g., \"ACTIVATED\", \"VERIFIED\", \"DEACTIVATED\"\n\n- sortBy (string): Field to sort by; use \"createdOn\" or other supported fields. Use prefix - for descending when applicable (see Notes). e.g., \"createdOn\"\n\n- limit (integer as string): Page size. e.g., \"20\"\n\n- token (string): Specific bank account token to fetch.\n\n- transferMethodCurrency (string): ISO 4217, e.g., \"USD\"\n\n- isDefaultTransferMethod (boolean as string): \"true\" or \"false\"\n\n- addressLine1 (string)\n\n- bankAccountId (string)\n\n- bankAccountPurpose (string)\n\n- bankId (string)\n\n- bankName (string)\n\n- branchAddressLine1 (string)\n\n- branchAddressLine2 (string)\n\n- branchCity (string)\n\n- branchCountry (ISO 3166-1 alpha-2), e.g., \"US\"\n\n- branchId (string)\n\n- branchName (string)\n\n- branchPostalCode (string)\n\n- branchStateProvince (string)\n\n- businessName (string)\n\n- businessRegistrationCountry (ISO 3166-1 alpha-2)\n\n- businessRegistrationId (string)\n\n- businessRegistrationStateProvince (string)\n\n- businessType (string)\n\n- city (string)\n\n- countryOfBirth (ISO.\n\n## Example decrypted payload\nThis is an example of the plaintext JSON the post-response script places into DECRYPTED_PAYLOAD after decryption. It matches the schema above.\n\n```json\n{\n  \"count\": 2,\n  \"limit\": 20,\n  \"hasNextPage\": false,\n  \"hasPreviousPage\": false,\n  \"offset\": 0,\n  \"links\": [\n    { \"rel\": \"self\", \"href\": \"https://api.paylution.com/users/usr-123456789/bank-accounts?limit=20\" },\n    { \"rel\": \"next\", \"href\": \"https://api.paylution.com/users/usr-123456789/bank-accounts?limit=20&offset=20\" }\n  ],\n  \"data\": [\n    {\n      \"token\": \"trm-111aaa\",\n      \"type\": \"BANK_ACCOUNT\",\n      \"status\": \"ACTIVATED\",\n      \"createdOn\": \"2025-01-10T12:34:56Z\",\n      \"transferMethodCurrency\": \"USD\",\n      \"isDefaultTransferMethod\": true,\n      \"bankAccountId\": \"****6789\",\n      \"bankAccountPurpose\": \"CHECKING\",\n      \"bankId\": \"021000021\",\n      \"bankName\": \"JPMORGAN CHASE\",\n      \"branchId\": \"001\",\n      \"branchName\": \"NYC MAIN\",\n      \"branchAddressLine1\": \"270 Park Ave\",\n      \"branchCity\": \"New York\",\n      \"branchStateProvince\": \"NY\",\n      \"branchPostalCode\": \"10017\",\n      \"branchCountry\": \"US\",\n      \"addressLine1\": \"123 Market St\",\n      \"city\": \"San Francisco\",\n      \"stateProvince\": \"CA\",\n      \"postalCode\": \"94105\",\n      \"profileType\": \"INDIVIDUAL\"\n    },\n    {\n      \"token\": \"trm-222bbb\",\n      \"type\": \"BANK_ACCOUNT\",\n      \"status\": \"DEACTIVATED\",\n      \"createdOn\": \"2024-11-02T08:15:00Z\",\n      \"transferMethodCurrency\": \"EUR\",\n      \"isDefaultTransferMethod\": false,\n      \"bankAccountId\": \"****4321\",\n      \"bankAccountPurpose\": \"SAVINGS\",\n      \"bankId\": \"DE89370400440532013000\",\n      \"bankName\": \"DEUTSCHE BANK\",\n      \"branchAddressLine1\": \"Taunusanlage 12\",\n      \"branchCity\": \"Frankfurt\",\n      \"branchPostalCode\": \"60325\",\n      \"branchCountry\": \"DE\",\n      \"profileType\": \"INDIVIDUAL\"\n    }\n  ]\n}\n```\n\nTip: You can copy this JSON into DECRYPTED_PAYLOAD manually for local script validation runs without making a network call.\n",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__bank_accounts"
+      }
+    },
+    "/users/usr-fdc7d7ed-6583-44ed-945a-547e190a1f49/bank-accounts": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts",
+        "description": "## Overview\nCreates a bank account transfer method for a Hyperwallet user. This request is JWS-signed and JWE-encrypted via the pre-request script and expects a JWE response.\n\n- Method: POST\n- URL: `{{base_url}}/users/:user-token/bank-accounts`\n- Protocol: HTTP\n- Auth: Handled by JWS (RS256) signing and JWE (RSA-OAEP-256 + AES-GCM) encryption in pre-request script.\n\n## Path and Query Parameters\n- `:user-token` (path/query): The Hyperwallet user token. In this request it is currently supplied as a query placeholder `:user-token=` in the URL.\n- Supported query keys (from workspace references): `profileType`, `transferMethodCountry`, `transferMethodCurrency`, `type`, `branchId`, `bankAccountId`, `bankAccountPurpose`, `firstName`, `middleName`, `lastName`, `country`, `stateProvince`, `addressLine1`, `addressLine2`, `city`, `postalCode`.\n\n## Required Headers\n- `Content-Type: application/jose+json`\n- `Accept: application/jose+json`\n\n## Request Body\nContent type: JSON (wrapped and transformed by the pre-request script into JWS + JWE).\n\nExample body:\n```json\n{\n  \"profileType\": \"INDIVIDUAL\",\n  \"transferMethodCountry\": \"US\",\n  \"transferMethodCurrency\": \"USD\",\n  \"type\": \"BANK_ACCOUNT\",\n  \"branchId\": \"101089292\",\n  \"bankAccountId\": \"7991012345\",\n  \"bankAccountPurpose\": \"SAVINGS\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"country\": \"US\",\n  \"stateProvince\": \"WA\",\n  \"addressLine1\": \"123 Main Street\",\n  \"city\": \"Hometown\",\n  \"postalCode\": \"12345\",\n  \"bankAccountRelationship\": \"SELF\"\n}\n```\n\nBody schema (guide): `profileType: INDIVIDUAL`, `transferMethodCountry: US`, `transferMethodCurrency: USD`, `type: BANK_ACCOUNT`, bank and address fields as strings.\n\n## Scripts\n- Pre-request: Signs payload with RS256 using `PRIVATE_JWK` and encrypts using recipient JWKS at `HYPERWALLET_JWKS_URL` (defaults to https://api.paylution.com/jwkset). Produces `JWS_PAYLOAD` and `JWE_PAYLOAD`.\n- Tests (post-response): Decrypts response and stores it in `DECRYPTED_PAYLOAD`; asserts presence of `token` and `createdOn`.\n\nEnvironment variables used:\n- `{{base_url}}` (URL base)\n- `PRIVATE_JWK`, `PRIVATE_JWK_SIG` (keys)\n- Optional: `HYPERWALLET_JWKS_URL` (JWKS endpoint)\n\n## Responses\nCommon outcomes:\n- `201 Created`: Bank account transfer method created. Decrypted payload typically includes `token`, `status`, `createdOn`, and `links`.\n- `400 Bad Request`: Validation or schema errors.\n- `401/403`: Auth/signature or encryption issues (verify keys and JWKS).\n- `409 Conflict`: Duplicate bank account for user.\n\nSaved examples:\n- See saved responses under this request for variations: \n  - Example 1 and Example 2 named \"/users/{user-token}/bank-accounts\".\n\n## Notes\n- Ensure `PRIVATE_JWK` is configured in the active environment (Production Paylution).\n- Headers must remain `application/jose+json` for both request and response.\n- The request currently includes placeholders for query values; these may be provided either in the body (preferred) or as query parameters depending on API behavior.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "profileType": {
+                    "type": "string",
+                    "enum": [
+                      "Individual",
+                      "Business"
+                    ],
+                    "description": "Profile Type: Select Individual or Business"
+                  },
+                  "transferMethodCountry": "US",
+                  "transferMethodCurrency": "USD",
+                  "accountType": {
+                    "type": "string",
+                    "enum": [
+                      "Wire",
+                      "Bank Account"
+                    ],
+                    "description": "**Account Type**: Select Wire or Bank Account"
+                  },
+                  "branchId": "101089292",
+                  "bankAccountId": "7991012345",
+                  "bankAccountPurpose": "SAVINGS",
+                  "firstName": "John",
+                  "lastName": "Smith",
+                  "country": {
+                    "type": "string",
+                    "enum": [
+                      "Afghanistan",
+                      "Albania",
+                      "Algeria",
+                      "Andorra",
+                      "Angola",
+                      "Antigua and Barbuda",
+                      "Argentina",
+                      "Armenia",
+                      "Australia",
+                      "Austria",
+                      "Azerbaijan",
+                      "Bahamas",
+                      "Bahrain",
+                      "Bangladesh",
+                      "Barbados",
+                      "Belarus",
+                      "Belgium",
+                      "Belize",
+                      "Benin",
+                      "Bhutan",
+                      "Bolivia",
+                      "Bosnia and Herzegovina",
+                      "Botswana",
+                      "Brazil",
+                      "Brunei",
+                      "Bulgaria",
+                      "Burkina Faso",
+                      "Burundi",
+                      "Cabo Verde",
+                      "Cambodia",
+                      "Cameroon",
+                      "Canada",
+                      "Central African Republic",
+                      "Chad",
+                      "Chile",
+                      "China",
+                      "Colombia",
+                      "Comoros",
+                      "Congo (Congo-Brazzaville)",
+                      "Costa Rica",
+                      "Croatia",
+                      "Cuba",
+                      "Cyprus",
+                      "Czechia (Czech Republic)",
+                      "Democratic Republic of the Congo",
+                      "Denmark",
+                      "Djibouti",
+                      "Dominica",
+                      "Dominican Republic",
+                      "Ecuador",
+                      "Egypt",
+                      "El Salvador",
+                      "Equatorial Guinea",
+                      "Eritrea",
+                      "Estonia",
+                      "Eswatini (fmr. Swaziland)",
+                      "Ethiopia",
+                      "Fiji",
+                      "Finland",
+                      "France",
+                      "Gabon",
+                      "Gambia",
+                      "Georgia",
+                      "Germany",
+                      "Ghana",
+                      "Greece",
+                      "Grenada",
+                      "Guatemala",
+                      "Guinea",
+                      "Guinea-Bissau",
+                      "Guyana",
+                      "Haiti",
+                      "Honduras",
+                      "Hungary",
+                      "Iceland",
+                      "India",
+                      "Indonesia",
+                      "Iran",
+                      "Iraq",
+                      "Ireland",
+                      "Israel",
+                      "Italy",
+                      "Jamaica",
+                      "Japan",
+                      "Jordan",
+                      "Kazakhstan",
+                      "Kenya",
+                      "Kiribati",
+                      "Kuwait",
+                      "Kyrgyzstan",
+                      "Laos",
+                      "Latvia",
+                      "Lebanon",
+                      "Lesotho",
+                      "Liberia",
+                      "Libya",
+                      "Liechtenstein",
+                      "Lithuania",
+                      "Luxembourg",
+                      "Madagascar",
+                      "Malawi",
+                      "Malaysia",
+                      "Maldives",
+                      "Mali",
+                      "Malta",
+                      "Marshall Islands",
+                      "Mauritania",
+                      "Mauritius",
+                      "Mexico",
+                      "Micronesia",
+                      "Moldova",
+                      "Monaco",
+                      "Mongolia",
+                      "Montenegro",
+                      "Morocco",
+                      "Mozambique",
+                      "Myanmar",
+                      "Namibia",
+                      "Nauru",
+                      "Nepal",
+                      "Netherlands",
+                      "New Zealand",
+                      "Nicaragua",
+                      "Niger",
+                      "Nigeria",
+                      "North Korea",
+                      "North Macedonia",
+                      "Norway",
+                      "Oman",
+                      "Pakistan",
+                      "Palau",
+                      "Palestine State",
+                      "Panama",
+                      "Papua New Guinea",
+                      "Paraguay",
+                      "Peru",
+                      "Philippines",
+                      "Poland",
+                      "Portugal",
+                      "Qatar",
+                      "Romania",
+                      "Russia",
+                      "Rwanda",
+                      "Saint Kitts and Nevis",
+                      "Saint Lucia",
+                      "Saint Vincent and the Grenadines",
+                      "Samoa",
+                      "San Marino",
+                      "Sao Tome and Principe",
+                      "Saudi Arabia",
+                      "Senegal",
+                      "Serbia",
+                      "Seychelles",
+                      "Sierra Leone",
+                      "Singapore",
+                      "Slovakia",
+                      "Slovenia",
+                      "Solomon Islands",
+                      "Somalia",
+                      "South Africa",
+                      "South Korea",
+                      "South Sudan",
+                      "Spain",
+                      "Sri Lanka",
+                      "Sudan",
+                      "Suriname",
+                      "Sweden",
+                      "Switzerland",
+                      "Syria",
+                      "Tajikistan",
+                      "Tanzania",
+                      "Thailand",
+                      "Timor-Leste",
+                      "Togo",
+                      "Tonga",
+                      "Trinidad and Tobago",
+                      "Tunisia",
+                      "Turkey",
+                      "Turkmenistan",
+                      "Tuvalu",
+                      "Uganda",
+                      "Ukraine",
+                      "United Arab Emirates",
+                      "United Kingdom",
+                      "United States",
+                      "Uruguay",
+                      "Uzbekistan",
+                      "Vanuatu",
+                      "Vatican City",
+                      "Venezuela",
+                      "Vietnam",
+                      "Yemen",
+                      "Zambia",
+                      "Zimbabwe"
+                    ],
+                    "description": "**Country**: Select the country for your account"
+                  },
+                  "stateProvince": "WA",
+                  "addressLine1": "123 Main Street",
+                  "city": "Hometown",
+                  "postalCode": "12345",
+                  "bankAccountRelationship": "SELF"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_fdc7d7ed_6583_44ed_945a_547e190a1f49_bank_accounts"
+      }
+    },
+    "/users/usr-4a3658f5-1fdc-4553-b2da-0b69c195c5ac/bank-accounts/trm-54a9c571-602a-4592-b7a1-f378026a7205": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts/{bank-account-token}",
+        "description": "Retrieve details of a specific bank account (transfer method) that belongs to a given user.\n\n### Overview\nThis endpoint returns the current state and configuration of a single bank account (also referred to as a transfer method) for a user in Hyperwallet. It is typically used to:\n\n- Display a user\u2019s registered payout bank account in your UI\n- Verify that a bank account is active/verified before creating or scheduling a payment\n- Retrieve compliance- and banking\u2011related attributes for audit or troubleshooting\n\nThe request is signed (JWS) and encrypted (JWE) by the pre\u2011request script before it is sent to the Hyperwallet API.\n\n### Path and key identifiers\nAlthough concrete IDs are hard\u2011coded in the sample URL for demonstration, conceptually the resource follows this pattern:\n\n- `user-token` (`usr-\u2026`): Unique, auto\u2011generated identifier of the user who owns the bank account.\n- `bank-account-token` (`trm-\u2026`): Unique, auto\u2011generated identifier of the bank account / transfer method.\n\nThe sample URL in this request uses fixed `usr-\u2026` and `trm-\u2026` values so you can run it directly. In production you should replace them with the appropriate user and transfer\u2011method tokens from your environment or variables.\n\n### Query parameters\nThis request includes a comprehensive set of optional query parameters that mirror the fields of a Hyperwallet bank account. Commonly used parameters include:\n\n- `token`: Bank account (transfer method) token.\n- `status`: Bank account status (for example: `ACTIVATED`, `VERIFIED`, `INVALID`, `DE_ACTIVATED`).\n- `type`: Transfer method type, such as `BANK_ACCOUNT` (direct deposit) or `WIRE_ACCOUNT` (wire transfer).\n- `transferMethodCountry` / `transferMethodCurrency`: Country and currency of the bank account.\n- `isDefaultTransferMethod`: Indicates whether this is the user\u2019s default payout method.\n- Holder details such as `firstName`, `lastName`, `profileType` (`INDIVIDUAL` or `BUSINESS`), `addressLine1`, `city`, `stateProvince`, `country`, and `postalCode`.\n- Business details such as `businessName`, `businessType`, and business registration fields.\n- Banking details such as `bankAccountId`, `bankAccountPurpose`, `bankId`, `bankName`, `branchId`, and branch address fields.\n- Wire\u2011specific and intermediary\u2011bank fields (for `WIRE_ACCOUNT`), including `intermediaryBankId`, `intermediaryBankAccountId`, and `wireInstructions`.\n\nThe included example values are illustrative. Adjust or remove query parameters as needed for your specific integration or to reproduce particular scenarios.\n\n### Authentication and headers\nThis request uses HTTP Basic authentication at the request level (username/password for your Hyperwallet API user) and relies on a pre\u2011request script to apply JWS signing and JWE encryption:\n\n- **Auth**: Basic Auth (Hyperwallet API username and password).\n- **Content-Type**: `application/jose+json`\n- **Accept**: `application/jose+json`\n\nThe pre\u2011request script:\n\n1. Builds a JWS using your private key (`PRIVATE_JWK` in the active environment) to sign the payload.\n2. Encrypts the signed payload into a compact JWE using Hyperwallet\u2019s public encryption key obtained from the JWKS endpoint (`HYPERWALLET_JWKS_URL`).\n3. Replaces the raw request body with the final JWE compact representation before the request is sent.\n\nEnsure the following environment variables are configured:\n\n- `PRIVATE_JWK`: Your RSA private key in JWK format used to sign the JWS.\n- `HYPERWALLET_JWKS_URL`: URL for retrieving Hyperwallet\u2019s JWKS set (defaults to `https://api.paylution.com/jwkset` if not set).\n\n### Responses\nTypical responses include:\n\n- **200 OK** \u2013 Bank account retrieved successfully. The response payload (decrypted by your client or helper utilities) contains the bank account details, including token, status, transfer\u2011method type, currency, and KYC\u2011related attributes.\n- **401 Unauthorized** \u2013 Authentication failed (for example, incorrect Basic Auth credentials). See the example response in this collection for the `INCORRECT_LOGIN_CREDENTIALS` error.\n- **403 Forbidden** \u2013 The credentials are valid but do not have access to the specified user or bank account.\n- **404 Not Found** \u2013 The specified `user-token` or `bank-account-token` does not exist or is not associated.\n- **4xx Validation errors** \u2013 One or more parameters are invalid or not supported for your program.\n\nUse the saved examples associated with this request to explore the exact response structure and error payloads returned by the Hyperwallet API.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_4a3658f5_1fdc_4553_b2da_0b69c195c5ac_bank_accounts_trm_54a9c571_602a_4592_b7a1_f378026a7205"
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "users/{user-token}/bank-accounts/{bank-account-token}",
+        "description": "### Overview\nThis endpoint updates an existing bank account associated with a specific user in Hyperwallet.\n\n- **HTTP method:** `PUT`\n- **Path:** `/users/{user-token}/bank-accounts/{bank-account-token}`\n- **Content type:** `application/jose+json` (JWE/JWS wrapped payload)\n\nUse this operation to modify stored details for a user\u2019s bank account (for example, updating the underlying bank account identifier).\n\n---\n### Path parameters\n- `user-token` (string, required)\n  - Unique token of the user who owns the bank account.\n  - Must reference an existing user in Hyperwallet.\n\n- `bank-account-token` (string, required)\n  - Unique token of the bank account to be updated.\n  - Must reference an existing bank account belonging to the specified user.\n\n---\n### Query parameters\nUnless otherwise specified by your Hyperwallet integration, these query parameters are typically used as alternative ways to pass the same values that are contained in the encrypted body. In most integrations they are either omitted or left blank, and the JWE/JWS payload is the source of truth.\n\n- `user-token` (string, optional)\n  - User token; should match the path-level `user-token` when used.\n\n- `bank-account-token` (string, optional)\n  - Bank account token; should match the path-level `bank-account-token` when used.\n\n- `profileType` (string, optional)\n  - User profile type (e.g. `INDIVIDUAL`, `BUSINESS`).\n\n- `transferMethodCurrency` (string, optional)\n  - Currency code (ISO 4217, e.g. `USD`, `EUR`) for this bank account transfer method.\n\n- `branchId` (string, optional)\n  - Bank branch identifier (e.g. routing code, sort code, or local equivalent).\n\n- `bankAccountId` (string, optional)\n  - Bank account number or local account identifier. Typically should match the `bankAccountId` in the request body when both are provided.\n\n- `bankAccountPurpose` (string, optional)\n  - Describes the intended purpose of the account (e.g. `CHECKING`, `SAVINGS`, or country-specific values).\n\n- `firstName`, `middleName`, `lastName` (string, optional)\n  - Name fields for the bank account holder. Should match the user\u2019s registered profile where applicable.\n\n- `country` (string, optional)\n  - Country code (ISO 3166-1 alpha-2, e.g. `US`, `CA`).\n\n- `stateProvince` (string, optional)\n  - State or province, when applicable for the specified country.\n\n- `addressLine1`, `addressLine2` (string, optional)\n  - Street address fields for the bank account holder.\n\n- `city` (string, optional)\n  - City of the bank account holder\u2019s address.\n\n- `postalCode` (string, optional)\n  - Postal or ZIP code of the bank account holder\u2019s address.\n\n---\n### Request body\nThe body must be sent as a JWE/JWS wrapped JSON object (content type `application/jose+json`). The encrypted payload, once decrypted by Hyperwallet, typically includes:\n\n- Identification of the bank account being updated\n- Updated account holder information\n- Updated bank routing and account fields\n\nExample (pre-encryption, conceptual only):\n\n```json\n{\n  \"bankAccountId\": \"7845012345\"\n}\n```\n\n> Note: The actual payload you send to Hyperwallet must be wrapped in a signed JWS and then encrypted as a JWE according to your integration\u2019s security configuration. The cleartext JSON above is for illustration only and is never sent directly.\n\n---\n### Security\nThis endpoint requires:\n\n- A valid Hyperwallet API program configuration.\n- JWS signing using your private key.\n- JWE encryption using Hyperwallet\u2019s public key (retrieved from their JWKS endpoint).\n\nEnsure that:\n\n- The `alg`, `kid`, and related JOSE header fields match your program configuration.\n- The decrypted payload is consistent with the path and query parameters (e.g. `userToken`, `bankAccountId`).\n\n---\n### Typical use cases\n- Updating a user\u2019s bank account number while keeping the same bank account token.\n- Correcting account holder details (name, address) for compliance reasons.\n- Updating account purpose or related metadata while keeping the transfer method active.\n\n---\n### Error handling\nCommon error scenarios include:\n\n- **400 Bad Request** \u2013 Invalid or missing fields in the decrypted payload, or inconsistent values between the payload and the path/query parameters.\n- **401/403 Unauthorized/Forbidden** \u2013 Missing or invalid authentication, or JOSE signature/encryption issues.\n- **404 Not Found** \u2013 Specified user or bank account token does not exist or does not belong to the user.\n- **409 Conflict** \u2013 Business rule violations (e.g. attempting to modify an account in a non-modifiable state).\n\nErrors are returned as encrypted responses, which you should decrypt to inspect the underlying JSON error structure.\n\n---\n### Decrypted response examples\n\n#### 200 OK \u2013 Bank account updated (decrypted JSON)\n```json\n{\n  \"token\": \"trm-54a9c571-602a-4592-b7a1-f378026a7205\",\n  \"userToken\": \"usr-4a3658f5-1fdc-4553-b2da-0b69c195c5ac\",\n  \"type\": \"BANK_ACCOUNT\",\n  \"status\": \"ACTIVATED\",\n  \"profileType\": \"INDIVIDUAL\",\n  \"transferMethodCurrency\": \"USD\",\n  \"transferMethodCountry\": \"US\",\n\n  \"bankName\": \"Example Bank\",\n  \"branchId\": \"021000021\",\n  \"bankAccountId\": \"7845012345\",\n  \"bankAccountPurpose\": \"CHECKING\",\n\n  \"firstName\": \"John\",\n  \"middleName\": \"A\",\n  \"lastName\": \"Doe\",\n  \"country\": \"US\",\n  \"stateProvince\": \"CA\",\n  \"addressLine1\": \"123 Market Street\",\n  \"addressLine2\": \"Suite 500\",\n  \"city\": \"San Francisco\",\n  \"postalCode\": \"94105\",\n\n  \"verificationStatus\": \"VERIFIED\",\n  \"createdOn\": \"2024-08-15T10:12:34Z\",\n  \"updatedOn\": \"2024-09-01T09:30:00Z\",\n\n  \"links\": [\n    {\n      \"rel\": \"self\",\n      \"href\": \"https://api.paylution.com/users/usr-4a3658f5-1fdc-4553-b2da-0b69c195c5ac/bank-accounts/trm-54a9c571-602a-4592-b7a1-f378026a7205\",\n      \"method\": \"GET\"\n    },\n    {\n      \"rel\": \"deactivate\",\n      \"href\": \"https://api.paylution.com/users/usr-4a3658f5-1fdc-4553-b2da-0b69c195c5ac/bank-accounts/trm-54a9c571-602a-4592-b7a1-f378026a7205\",\n      \"method\": \"PUT\"\n    }\n  ]\n}\n```\n\n#### 400 Bad Request \u2013 Validation error (decrypted JSON)\n```json\n{\n  \"errorCode\": \"BANK_ACCOUNT_VALIDATION_ERROR\",\n  \"message\": \"One or more fields failed validation.\",\n  \"fieldErrors\": [\n    {\n      \"fieldName\": \"bankAccountId\",\n      \"errorCode\": \"INVALID_FORMAT\",\n      \"message\": \"The bankAccountId provided is not valid for the specified country.\"\n    }\n  ],\n  \"timestamp\": \"2024-09-01T09:30:05Z\",\n  \"correlationId\": \"c2f3a1d6-12ab-4a8c-b3af-98a7ef12c345\"\n}\n```\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "bankAccountId": "7845012345"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users_usr_4a3658f5_1fdc_4553_b2da_0b69c195c5ac_bank_accounts_trm_54a9c571_602a_4592_b7a1_f378026a7205"
+      }
+    },
+    "/users/usr-59341414-475b-4c02-9b8b-b79e00786c28/bank-cards": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards",
+        "description": "## Sample response schema\n\n``` json\n{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"title\": \"Bank Cards List\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"count\": { \"type\": [\"integer\", \"string\"] },\n    \"limit\": { \"type\": [\"integer\", \"string\"] },\n    \"hasNextPage\": { \"type\": [\"boolean\", \"string\"], \"enum\": [true, false, \"true\", \"false\"] },\n    \"hasPreviousPage\": { \"type\": [\"boolean\", \"string\"], \"enum\": [true, false, \"true\", \"false\"] },\n    \"offset\": { \"type\": [\"integer\", \"string\"], \"nullable\": true },\n    \"links\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"object\", \"properties\": { \"rel\": {\"type\":\"string\"}, \"href\": {\"type\":\"string\", \"format\":\"uri\"} }, \"required\": [\"rel\",\"href\"], \"additionalProperties\": true }\n    },\n    \"data\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"token\": { \"type\": \"string\" },\n          \"type\": { \"type\": \"string\" },\n          \"status\": { \"type\": \"string\" },\n          \"createdOn\": { \"type\": \"string\", \"format\": \"date-time\" },\n          \"cardType\": { \"type\": \"string\" },\n          \"cardBrand\": { \"type\": \"string\" },\n          \"cardNumberMask\": { \"type\": \"string\" },\n          \"expiryMonth\": { \"type\": [\"string\",\"integer\"] },\n          \"expiryYear\": { \"type\": [\"string\",\"integer\"] },\n          \"isDefaultTransferMethod\": { \"type\": [\"boolean\",\"string\"], \"enum\": [true, false, \"true\", \"false\"] }\n        },\n        \"required\": [\"token\",\"type\",\"status\",\"createdOn\"],\n        \"additionalProperties\": true\n      }\n    }\n  },\n  \"required\": [\"data\"],\n  \"additionalProperties\": true\n}\n\n ```\n\n## Example decrypted payload\n\n``` json\n{\n  \"count\": 1,\n  \"limit\": 20,\n  \"hasNextPage\": false,\n  \"hasPreviousPage\": false,\n  \"offset\": 0,\n  \"links\": [ { \"rel\": \"self\", \"href\": \"https://api.paylution.com/users/usr-123/bank-cards?limit=20\" } ],\n  \"data\": [\n    {\n      \"token\": \"trm-card-001\",\n      \"type\": \"BANK_CARD\",\n      \"status\": \"ACTIVATED\",\n      \"createdOn\": \"2025-01-12T10:00:00Z\",\n      \"cardType\": \"DEBIT\",\n      \"cardBrand\": \"VISA\",\n      \"cardNumberMask\": \"**** **** **** 4242\",\n      \"expiryMonth\": 12,\n      \"expiryYear\": 2030,\n      \"isDefaultTransferMethod\": true\n    }\n  ]\n}\n\n ```\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_59341414_475b_4c02_9b8b_b79e00786c28_bank_cards"
+      }
+    },
+    "/users/usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca/bank-cards": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards",
+        "description": "Creates a bank card transfer method for an existing Hyperwallet user.\n\n### Overview\n\nThis endpoint creates and registers a bank card (e.g. debit/credit card) as a transfer method for the specified user. The request payload is signed as a JWS and then encrypted as a JWE by the existing pre-request script before being sent to Hyperwallet.\n\n### Path\n\n- `user-token` (path): The unique token of the user for whom the bank card transfer method is being created. It appears in the URL as `/users/{user-token}/bank-cards`.\n\n\n### Query Parameters (current URL)\n\nThese are currently present in the request URL and may be used by some integrations. They are typically not required when the same values are provided in the JSON body.\n\n- `user-token` (query): Optional. User token; usually supplied as a path variable instead.\n\n- `type` (query): Optional. Transfer method type (e.g. `BANK_CARD`).\n\n- `transferMethodCountry` (query): Optional. 2-letter ISO country code for the transfer method (e.g. `US`).\n\n- `transferMethodCurrency` (query): Optional. 3-letter ISO currency code for the transfer method (e.g. `USD`).\n\n- `cardNumber` (query): Optional. Bank card number.\n\n- `cvv` (query): Optional. Card security code.\n\n\n### Headers\n\n- `Content-Type`: Typically `application/jose+json`. Indicates that the request body is a JWE-wrapped JWS JSON payload.\n\n- `Accept`: Typically `application/jose+json`. Indicates the client expects a JWE-wrapped JWS JSON response.\n\n\n### JSON Body\n\nRaw JSON is authored in the request, then the pre-request script:\n\n1. Signs the JSON as a JWS using the configured private key.\n\n2. Encrypts the JWS as a JWE using the Hyperwallet JWKS.\n\n\nFields in the body before signing/encryption:\n\n- `cardNumber` (string): Full primary account number of the bank card (e.g. `\"440353001767298\"`).\n\n- `dateOfExpiry` (string): Card expiry in `YYYY-MM` format (e.g. `\"2027-11\"`).\n\n- `cvv` (string): Card security code (e.g. `\"683\"`).\n\n- `transferMethodCountry` (string): 2-letter ISO country code for the card (e.g. `\"US\"`).\n\n- `transferMethodCurrency` (string): 3-letter ISO currency code for the card (e.g. `\"USD\"`).\n\n- `type` (string): Transfer method type. For this endpoint it is typically `\"BANK_CARD\"`.\n\n\n---\n\n### Examples\n\nThe following examples describe the **decrypted JSON payload** that the pre-request/post-response scripts expose via `DECRYPTED_PAYLOAD` after JWE/JWS processing. These are **not** the raw JOSE envelopes sent over the wire.\n\n#### 1. Successful bank card creation (201/200-style)\n\nOn success, Hyperwallet returns a bank card transfer method resource. After decryption, `DECRYPTED_PAYLOAD` typically has a structure similar to:\n\n``` json\n{\n  \"token\": \"trm-12345678-aaaa-bbbb-cccc-1234567890ab\",\n  \"type\": \"BANK_CARD\",\n  \"status\": \"ACTIVATED\",\n  \"cardNumber\": \"************7298\",\n  \"dateOfExpiry\": \"2027-11\",\n  \"transferMethodCountry\": \"US\",\n  \"transferMethodCurrency\": \"USD\",\n  \"userToken\": \"usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca\",\n  \"createdOn\": \"2024-01-15T10:23:45Z\",\n  \"links\": [\n    {\n      \"rel\": \"self\",\n      \"href\": \"https://api.paylution.com/rest/v4/users/usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca/bank-cards/trm-12345678-aaaa-bbbb-cccc-1234567890ab\",\n      \"method\": \"GET\"\n    },\n    {\n      \"rel\": \"deactivate\",\n      \"href\": \"https://api.paylution.com/rest/v4/users/usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca/bank-cards/trm-12345678-aaaa-bbbb-cccc-1234567890ab/de-status\",\n      \"method\": \"PUT\"\n    }\n  ]\n}\n\n ```\n\nKey points:\n\n- `cardNumber` is usually masked in the response.\n\n- `status` reflects the current state of the transfer method (e.g. `ACTIVATED`, `DE_ACTIVATED`).\n\n- `links` provides HATEOAS-style navigation and operations for this transfer method.\n\n\n#### 2. Typical validation/business error\n\nFor validation or business errors (e.g. invalid card number, expired card, unsupported currency), the decrypted payload usually follows Hyperwallet's standard error format:\n\n``` json\n{\n  \"errors\": [\n    {\n      \"code\": \"BANK_CARD_VALIDATION_ERROR\",\n      \"message\": \"The bank card number is invalid.\",\n      \"fieldName\": \"cardNumber\"\n    }\n  ],\n  \"links\": [\n    {\n      \"rel\": \"self\",\n      \"href\": \"https://api.paylution.com/rest/v4/users/usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca/bank-cards\",\n      \"method\": \"POST\"\n    }\n  ]\n}\n\n ```\n\nCharacteristics:\n\n- One or more `errors` entries may be present.\n\n- `code` is a machine-readable error identifier.\n\n- `message` is human readable and may be localized.\n\n- `fieldName` (when present) points to the offending request field.\n\n\n---\n\n### Decrypted Response Schema\n\nThe following schema describes the **application-level JSON** placed into `DECRYPTED_PAYLOAD` by the decryption logic in the post-response script. It does **not** describe the outer JWE/JWS envelope, which remains opaque to the collection user.\n\nDepending on the outcome, the decrypted payload will be either a **bank card transfer method resource** or an **error container**.\n\n#### Success payload (bank card transfer method)\n\n``` jsonc\n{\n  \"token\": \"string\",                 // Transfer method token (e.g. \"trm-...\")\n  \"type\": \"string\",                  // Expected: \"BANK_CARD\"\n  \"status\": \"string\",                // e.g. \"ACTIVATED\", \"DE_ACTIVATED\", \"PRE_ACTIVATED\"\n  \"cardNumber\": \"string\",            // Masked PAN, e.g. \"************7298\"\n  \"dateOfExpiry\": \"string\",          // YYYY-MM\n  \"transferMethodCountry\": \"string\", // ISO 3166-1 alpha-2, e.g. \"US\"\n  \"transferMethodCurrency\": \"string\",// ISO 4217, e.g. \"USD\"\n  \"userToken\": \"string\",             // Owning user token, e.g. \"usr-...\"\n  \"createdOn\": \"string\",             // ISO 8601 timestamp of creation\n  \"links\": [                          // Optional but usually present\n    {\n      \"rel\": \"string\",              // Relationship, e.g. \"self\", \"deactivate\"\n      \"href\": \"string\",             // Absolute URL for the link\n      \"method\": \"string\"            // HTTP method, e.g. \"GET\", \"PUT\"\n    }\n  ]\n}\n\n ```\n\nFields are indicative; exact presence and values may vary based on Hyperwallet configuration and lifecycle state.\n\n#### Error payload\n\n``` jsonc\n{\n  \"errors\": [\n    {\n      \"code\": \"string\",        // Machine-readable code, e.g. \"BANK_CARD_VALIDATION_ERROR\"\n      \"message\": \"string\",     // Human-readable message\n      \"fieldName\": \"string\"    // (Optional) Field the error relates to, e.g. \"cardNumber\"\n    }\n  ],\n  \"links\": [\n    {\n      \"rel\": \"string\",        // Usually \"self\"\n      \"href\": \"string\",       // Endpoint URL that produced the error\n      \"method\": \"string\"      // e.g. \"POST\"\n    }\n  ]\n}\n\n ```\n\nAgain, this schema reflects the structure of the **decrypted** JSON that the test script parses from `DECRYPTED_PAYLOAD`, not the encrypted/signed JOSE wrapper returned on the wire.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "cardNumber": "440353001767298",
+                  "dateOfExpiry": " 2027-11",
+                  "cvv": "683",
+                  "transferMethodCountry": "US",
+                  "transferMethodCurrency": "USD",
+                  "type": "BANK_CARD"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_ff57e5f6_f6b0_4bc4_aa6a_6b9d0af5e6ca_bank_cards"
+      }
+    },
+    "/users/{user-token}/bank-cards/{bank-card-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards/{bank-card-token}",
+        "description": "### Get Bank Card Details\n\nRetrieves details for a specific bank card that belongs to a given user.\n\nThis endpoint is typically used to:\n- Display a user\u2019s registered bank card details (for review/verification)\n- Check card attributes such as status, brand, type, expiry, and default-transfer-method flag\n\n#### HTTP Request\n`GET {{base_url}}/users/{user-token}/bank-cards/{bank-card-token}`\n\n- `{{base_url}}` is provided by the active environment.\n- `user-token` uniquely identifies the user.\n- `bank-card-token` uniquely identifies the bank card belonging to that user.\n\n#### Path Parameters\n- `user-token` (required) \u2014 The user\u2019s unique token.\n- `bank-card-token` (required) \u2014 The unique token of the bank card associated with the user.\n\n#### Query Parameters\nAll query parameters are optional filters/attributes that may be included by the API but are usually not required for a simple lookup.\n\n- `token` \u2014 Bank card token filter.\n- `status` \u2014 Card status (for example, `ACTIVATED`, `DEACTIVATED`, etc.).\n- `createdOn` \u2014 Creation date/time filter.\n- `type` \u2014 Bank card type or category.\n- `transferMethodCountry` \u2014 ISO country code of the transfer method.\n- `transferMethodCurrency` \u2014 ISO currency code of the transfer method.\n- `isDefaultTransferMethod` \u2014 Indicates whether this is the default transfer method.\n- `cardBrand` \u2014 Card brand (for example, `VISA`, `MASTERCARD`).\n- `cardNumber` \u2014 Masked or partial card number filter.\n- `cardType` \u2014 Card type (for example, `DEBIT`, `CREDIT`).\n- `dateOfExpiry` \u2014 Card expiry date filter.\n\n#### Authentication & Security (JWS / JWE)\nThis endpoint expects:\n- **Signed request payload (JWS)** using your private signing key.\n- **Encrypted payload (JWE)** using Hyperwallet\u2019s published JWKS.\n\nThe pre-request script for this request:\n- Fetches the encryption key from `HYPERWALLET_JWKS_URL` (or the default JWKS endpoint).\n- Uses `PRIVATE_JWK` / `PRIVATE_JWK_SIG` from the active environment to sign the payload.\n- Produces a JWS, then encrypts it into a JWE and sets the request body/headers accordingly (even for GET requests, as required by Hyperwallet\u2019s security model).\n\n**Required headers** (already configured):\n- `Content-Type: application/jose+json`\n- `Accept: application/jose+json`\n\nEnsure the environment variables for your private keys and JWKS URL are correctly set before sending the request.\n\n#### Responses\nTypical behavior (see saved examples for full wire-level details):\n\n- **200 OK** \u2014 Bank card details successfully retrieved. The encrypted response body (JWE) is decrypted by the collection utilities and stored as `DECRYPTED_PAYLOAD` in the environment. The post-response script validates that:\n  - `payload.links` is present.\n  - `payload.processingTime` is present.\n\n- **4xx Client Errors** \u2014 Validation, authorization, or not-found issues, such as:\n  - Missing/invalid `user-token` or `bank-card-token`.\n  - Invalid or expired credentials / signature / encryption.\n  - Bank card not found for the specified user.\n\n- **5xx Server Errors** \u2014 Transient or internal server issues in the upstream Hyperwallet service.\n\nUse the saved examples for this request to understand specific status codes, response shapes, and query parameter combinations.\n",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__bank_cards__bank_card_token_"
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards/{bank-card-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "dateOfExpiry": "2022-11",
+                  "cvv": "123"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users__user_token__bank_cards__bank_card_token_"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/paypal-accounts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/PayPal-accounts",
+        "description": "## Overview\n\nRetrieves the collection of PayPal transfer methods (PayPal accounts) associated with a specific Hyperwallet user. Use this endpoint to inspect which PayPal account(s) a user has registered, determine the default PayPal transfer method before initiating a payout, and page through historical or multiple PayPal accounts linked to the same user.\n\nThe resource is exposed at `/users/{user-token}/PayPal-accounts` and returns a paginated list of PayPal transfer methods for the specified user.\n\n## Authentication\n\nThis operation uses Hyperwallet\u2019s JOSE-based security model. On the wire, both request and response are transported as signed JWS wrapped in encrypted JWE:\n\n- **Content-Type**: `application/jose+json`\n- **Accept**: `application/jose+json`\n\nThe pre-request script signs the logical request payload and encrypts it using the Hyperwallet public key. The response is decrypted by the collection utilities, and the clear-text JSON is stored in `DECRYPTED_PAYLOAD` for inspection and testing. The examples and tests attached to this request describe the **decrypted JSON** shape, not the raw JWE/JWS envelope.\n\n## Path Parameters\n\n- `user-token`  \n  - **Required**  \n  - Hyperwallet user token (for example: `usr-6243d549-be97-486d-ac0f-385dec42ebb4`).  \n  - Identifies the user whose PayPal transfer methods you want to list.\n\n## Query Parameters\n\nAll query parameters are optional. When omitted, the endpoint returns the first page of PayPal accounts for the specified user.\n\n- `token`  \n  - Filter by a specific PayPal transfer method token (for example: `trm-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).\n- `accountId`  \n  - Filter by the PayPal account identifier for the user (email address, phone number, or payer ID as stored in Hyperwallet).\n- `status`  \n  - Filter by transfer method status (for example: `ACTIVATED`, `VERIFIED`, `INVALID`, `DE_ACTIVATED`), depending on your program configuration.\n- `type`  \n  - Filter by transfer method type. For this resource the value is typically `PAYPAL_ACCOUNT`.\n- `transferMethodCountry`  \n  - Restrict results to PayPal accounts configured for a specific country (ISO 3166\u20111 alpha\u20112, such as `US`, `GB`).\n- `transferMethodCurrency`  \n  - Restrict results to PayPal accounts for a specific currency (ISO 4217, such as `USD`, `EUR`).\n- `isDefaultTransferMethod`  \n  - When `true`, returns only the default PayPal transfer method for the user; when `false`, returns only non-default transfer methods.\n- `createdBefore`  \n  - Returns PayPal accounts created **before** this timestamp (ISO 8601, UTC). If only a date (`YYYY-MM-DD`) is provided, the time portion defaults to `00:00:00`.\n- `createdAfter`  \n  - Returns PayPal accounts created **after** this timestamp (ISO 8601, UTC). If only a date is provided, the time portion defaults to `00:00:00`.\n- `createdOn`  \n  - Returns PayPal accounts created **exactly on** this datetime (ISO 8601, UTC).\n- `sortBy`  \n  - Attribute used to sort the result set. Commonly `createdOn`; by default, results are sorted in ascending order.\n- `limit`  \n  - Maximum number of records to return in a single page (default `100`, range `1`\u2013`1000`).\n\n## Responses\n\n- **200 OK** \u2013 Returns a **paginated list object** containing PayPal transfer methods for the user. The decrypted JSON response typically includes:\n  - `count`, `offset`, `limit` \u2013 pagination counters.\n  - `hasNextPage`, `hasPreviousPage` \u2013 paging flags.\n  - `data` \u2013 array of PayPal transfer method objects (each representing a PayPal account registered for the user).\n  - `links` \u2013 HATEOAS-style links for navigation (e.g., self, next, previous).\n\nEach PayPal transfer method object in `data` includes fields such as `token`, `type` (`PAYPAL_ACCOUNT`), `status`, `transferMethodCountry`, `transferMethodCurrency`, and related metadata.\n\n## Error Codes\n\nTypical HTTP responses for this operation include:\n\n- **400 Bad Request** \u2013 The request is syntactically correct but one or more query parameters are invalid or inconsistent.\n- **401 Unauthorized / 403 Forbidden** \u2013 Authentication failed, JOSE credentials are missing/invalid, or the API client is not permitted to access the user\u2019s transfer methods.\n- **404 Not Found** \u2013 The specified `user-token` does not exist or is not available under your program.\n- **409 Conflict** \u2013 A conflict was detected when resolving the request (for example, inconsistent filters versus program configuration).\n- **429 Too Many Requests** \u2013 Rate limit exceeded for the calling program or credentials.\n- **5xx Server Error** \u2013 An unexpected error occurred in the Hyperwallet/Paylution platform. The operation may be retried according to your resiliency policy.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/PayPal-accounts",
+        "description": "## Overview\n\nCreates (registers) a new PayPal transfer method (PayPal account) for a specific Hyperwallet user. Once created and activated, this PayPal transfer method can be used as a payout destination for funds sent through your Hyperwallet program.\n\nThe resource is exposed at `/users/{user-token}/PayPal-accounts` and represents a single PayPal transfer method owned by the specified user.\n\n## Authentication\n\nThis operation uses Hyperwallet\u2019s JOSE-based security model. On the wire, both request and response are transported as signed JWS wrapped in encrypted JWE:\n\n- **Content-Type**: `application/jose+json`\n\n- **Accept**: `application/jose+json`\n\n\nThe pre-request script signs the logical JSON payload and encrypts it using the Hyperwallet public key. The response is decrypted by the collection utilities, and the clear-text JSON is stored in `DECRYPTED_PAYLOAD` for inspection and testing. The request examples and tests attached here describe the **decrypted JSON** structure, not the raw JWE/JWS envelope.\n\n## Path Parameters\n\n- `user-token`\n\n    - **Required**\n\n    - Hyperwallet user token (for example: `usr-6243d549-be97-486d-ac0f-385dec42ebb4`).\n\n    - Identifies the user who will own the new PayPal transfer method.\n\n\n## Request Body\n\nAlthough the actual payload is transmitted as an encrypted JWE, the logical/decrypted request body is a JSON object with the following fields:\n\n- `type` _(string, required)_\n\n    - Transfer method type. For this endpoint the value is typically `PAYPAL_ACCOUNT`.\n\n    - **Example**: `\"PAYPAL_ACCOUNT\"`\n\n- `accountId` _(string, required)_\n\n    - PayPal account identifier for the user. Commonly the PayPal email address, but may also be a supported phone number or payer ID depending on your program configuration.configuration.\n\n    - **Example**: `\"user.paypal@example.com\"`\n\n- `transferMethodCountry` _(string, required)_\n\n    - Country where the PayPal account will be used. Must be supported for your program (ISO 3166\u20111 alpha\u20112 code).\n\n    - **Example**: `\"US\"`, `\"GB\"`\n\n- `transferMethodCurrency` _(string, required)_\n\n    - Currency in which payouts will be made to this PayPal account. Must be supported for your program in combination with the country (ISO 4217 code).\n\n    - **Example**: `\"USD\"`, `\"EUR\"`\n\n- `isDefaultTransferMethod` _(boolean or boolean string, optional)_\n\n    - When `true`, marks this PayPal transfer method as the user\u2019s default payout method (subject to program rules and any existing default).\n\n    - **Example**: `true` or `\"true\"`\n\n\n## Responses\n\n- **201 Created** \u2013 PayPal transfer method successfully created. The decrypted JSON response body represents a single PayPal transfer method object and typically includes:\n\n    - `token` \u2013 unique PayPal transfer method token (for example: `trm-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).\n\n    - `type` \u2013 should be `PAYPAL_ACCOUNT`.\n\n    - `status` \u2013 current status of the transfer method (for example: `ACTIVATED`, `VERIFIED`, `INVALID`, `DE_ACTIVATED`).\n\n    - `transferMethodCountry`, `transferMethodCurrency` \u2013 configured country and currency for payouts.\n\n    - `userToken` \u2013 the owning Hyperwallet user token.\n\n    - `isDefaultTransferMethod` \u2013 indicates whether this is the default payout method for the user.\n\n    - `links` \u2013 HATEOAS-style links to this resource and related operations.\n\n\n## Error Codes\n\nTypical HTTP responses for this operation include:\n\n- **400 Bad Request** \u2013 Validation error, such as invalid `accountId` format, unsupported country/currency combination, or missing required fields in the decrypted JSON body.\n\n- **401 Unauthorized / 403 Forbidden** \u2013 Authentication failed, JOSE credentials are missing/invalid, or the API client is not permitted to create PayPal transfer methods for this user.\n\n- **404 Not Found** \u2013 The specified `user-token` does not exist or is not available under your program.\n\n- **409 Conflict** \u2013 A PayPal transfer method with the same account details already exists for this user, or the operation conflicts with current program rules.\n\n- **429 Too Many Requests** \u2013 Rate limit exceeded for the calling program or crledentials.\n\n- **5xx Server Error** \u2013 An unexpected error occurred in the Hyperwallet/Paylution platform. The operation may be retried according to your resiliency policy.\n\n\n## 1. Purpose of `POST /users/{user-token}/PayPal-accounts`\n\nThis endpoint creates/registers a **new PayPal transfer method** for an existing Hyperwallet user.\n\nTypical uses:\n\n- Onboarding flow: user links a new PayPal account to receive payouts\n\n- Account management: add a new PayPal account while keeping existing ones\n\n- Setting a default payout method: mark the new account as the default transfer method\n\n\nResource path:  \n`POST /users/{user-token}/paypal-accounts`\n\n- `user-token` (path): existing Hyperwallet user token (`usr-\u2026`) for whom you\u2019re adding the PayPal account.\n\n\nHeaders (same JOSE pattern as your GET):\n\n- `Content-Type: application/jose+json` (JWE-wrapped JSON payload you sign/encrypt in the pre-request script)\n\n- `Accept: application/jose+json` (you expect a JWE-wrapped JSON response)\n\n\nInternally, the decrypted JSON you care about will be in `DECRYPTED_PAYLOAD` (as you already do for the GET).\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "type": "PAYPAL_ACCOUNT",
+                  "transferMethodCountry": "US",
+                  "transferMethodCurrency": "USD",
+                  "accountId": "abdutrevo@outlook.com"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/paypal-accounts/trm-6a51511f-5621-41c3-9054-3a9b7a717618": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/PayPal-accounts/{PayPal-account-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts_trm_6a51511f_5621_41c3_9054_3a9b7a717618"
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/PayPal-accounts/{PayPal-account-token} Copy",
+        "description": "Note: This request is not the list endpoint (it's a PUT to a\nspecific PayPal account). Skipping schema append for list view.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "accountId": "john2@company.com"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts_trm_6a51511f_5621_41c3_9054_3a9b7a717618"
+      }
+    },
+    "/users/{user-token}/wallet-accounts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/wallet-accounts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__wallet_accounts"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/wallet-accounts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users__user_token__wallet_accounts",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user-token}/wallet-accounts/{wallet-account-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/wallet-accounts/{wallet-account-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "wallet-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__wallet_accounts__wallet_account_token"
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/wallet-accounts/{wallet-account-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "wallet-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users__user_token__wallet_accounts__wallet_account_token",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user-token}/venmo-accounts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/Venmo-accounts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__venmo_accounts"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/Venmo-accounts": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/Venmo-accounts",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "type": "VENMO_ACCOUNT",
+                  "transferMethodCountry": "US",
+                  "transferMethodCurrency": "USD",
+                  "accountId": "9876543210"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_Venmo_accounts"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/venmo-accounts/trm-c28497c8-72ca-41cc-974c-04908e95ea7e": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/Venmo-accounts/{Venmo-account-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_venmo_accounts_trm_c28497c8_72ca_41cc_974c_04908e95ea7e"
+      }
+    },
+    "/users/{user-token}/Venmo-accounts/{Venmo-account-token}": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/Venmo-accounts/{Venmo-account-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Venmo-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "accountId": "19876543211"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users__user_token__Venmo_accounts__Venmo_account_token_"
+      }
+    },
+    "/users/{user-token}/crypto-accounts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/crypto-accounts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__crypto_accounts"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/crypto-accounts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users__user_token__crypto_accounts",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user-token}/crypto-accounts/{crypto-account-token}": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/crypto-accounts/{crypto-account-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "crypto-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__users__user_token__crypto_accounts__crypto_account_token_",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/prepaid-cards": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_prepaid_cards"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "type": "PREPAID_CARD",
+                  "cardPackage": "GL123800",
+                  "replacementOf": "trm-1a695240-37f2-4e7f-84ee-0ac2afadd09b",
+                  "replacementReason": "DAMAGED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_prepaid_cards"
+      }
+    },
+    "/users/usr-9e9c4ac0-09f2-46b1-9ea5-5dffba39219e/prepaid-cards": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "cardPackage": "DEFAULT",
+                  "type": "PREPAID_CARD"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_9e9c4ac0_09f2_46b1_9ea5_5dffba39219e_prepaid_cards"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/prepaid-cards/trm-04886d56-b1f4-48ec-b30e-f7ca8f8d274c": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards/{prepaid-card-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_prepaid_cards_trm_04886d56_b1f4_48ec_b30e_f7ca8f8d274c"
+      }
+    },
+    "/users/{user-token}/paper-checks": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paper-checks",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__paper_checks"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/paper-checks": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paper-checks",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transferMethodCountry": "US",
+                  "transferMethodCurrency": "USD",
+                  "type": "PAPER_CHECK"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_paper_checks"
+      }
+    },
+    "/paper-checks/trm-d4d5a00e-b1cc-4f55-b226-39591978a8fa": {
+      "get": {
+        "tags": [
+          "Paper Checks"
+        ],
+        "summary": "/users/{user-token}/paper-checks/{paper-check-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__paper_checks_trm_d4d5a00e_b1cc_4f55_b226_39591978a8fa"
+      },
+      "put": {
+        "tags": [
+          "Paper Checks"
+        ],
+        "summary": "/paper-checks/{paper-check-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "addressLine1": "123 Other Street",
+                  "city": "Hometown"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__paper_checks_trm_d4d5a00e_b1cc_4f55_b226_39591978a8fa"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/transfer-methods": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "users/{user-token}/transfer-methods.",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_transfer_methods"
+      }
+    },
+    "/payments": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments",
+        "description": "Retrieves a filtered, paginated list of payments for the program.\n\n### Overview\nUse this endpoint to search and list payments created in your program. You can filter by creation and release dates, status, amount, destination, and other attributes, and optionally page through results.\n\n### Authentication & Headers\n- **Auth**: Inherits authentication from the parent **Hyperwallet Documentation** collection/folder (JWS/JWE signing handled by the pre-request script).\n- **Content-Type**: `application/jose+json` (required)\n- **Accept**: `application/jose+json` (required)\n\n### Query Parameters\nAll parameters are optional unless noted otherwise. When omitted, the API uses its defaults.\n\n- `clientPaymentId` (string)\n  - Client-defined identifier for the payment. Can be used to search for a specific payment created with this client ID.\n\n- `createdBefore` (datetime, ISO 8601)\n  - Returns payments **created before** this timestamp.\n\n- `createdAfter` (datetime, ISO 8601)\n  - Returns payments **created after** this timestamp.\n\n- `createdOn` (date, ISO 8601)\n  - Returns payments created **on** this specific date.\n\n- `releaseDate` (date, ISO 8601)\n  - Returns payments with this scheduled release date.\n\n- `releaseOn` (date, ISO 8601)\n  - Alias/variant filter for release date; when provided, returns payments scheduled to release on this date.\n\n- `status` (string)\n  - Filters by payment status (for example: `PENDING`, `SCHEDULED`, `COMPLETED`, `FAILED`, etc.).\n\n- `amount` (number)\n  - Filters payments by exact amount.\n\n- `currency` (string, ISO 4217)\n  - Filters by payment currency (for example: `USD`, `EUR`).\n\n- `destinationToken` (string)\n  - Filters by the destination token (e.g., user or transfer method token) associated with the payment.\n\n- `programToken` (string)\n  - Filters payments belonging to a specific program.\n\n- `purpose` (string)\n  - Filters by business purpose/category of the payment, if configured.\n\n- `expiresOn` (date, ISO 8601)\n  - Filters by the date on which the payment expires, if applicable.\n\n- `memo` (string)\n  - Filters by memo text stored on the payment.\n\n- `notes` (string)\n  - Filters by notes text stored on the payment.\n\n- `sortBy` (string)\n  - Sort order for the result set. Typical values include fields such as `createdOn` or `releaseDate`, optionally with direction (e.g., `createdOn desc`).\n\n- `limit` (integer)\n  - Maximum number of records to return in a single page of results.\n\n- `token` (string)\n  - Pagination cursor/token returned from a previous call. Use this to fetch the **next page** of results.\n",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments"
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "amount": "1000.00",
+                  "clientPaymentId": "D47P70VG",
+                  "currency": "USD",
+                  "destinationToken": "usr-78c03528-9916-4856-a92d-bdf79a04d430",
+                  "programToken": "prg-da2bf439-bf8e-4420-89bd-1b53350a2377",
+                  "purpose": "INCOME"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments"
+      }
+    },
+    "/payments/pmt-f37611f5-9ff4-45d4-92bb-3a20ba8adc82": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments_pmt_f37611f5_9ff4_45d4_92bb_3a20ba8adc82"
+      }
+    },
+    "/transfers": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__transfers"
+      },
+      "post": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "clientTransferId": "6712348070812",
+                  "destinationAmount": "1000",
+                  "destinationCurrency": "USD",
+                  "notes": "Partial-Balance Transfer",
+                  "memo": "TransferClientId56387",
+                  "sourceToken": "usr-923c6f09-cd13-47d2-849e-1ee62d1a0d09",
+                  "destinationToken": "act-1c685047-97c0-4c72-9acb-1f3e18bb173d"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__transfers"
+      }
+    },
+    "/transfers/trf-9236f64c-1be3-4f0d-830b-8f0914221683/status-transitions": {
+      "post": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "SCHEDULED",
+                  "notes": "Completing the Partial-Balance Transfer"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__transfers_trf_9236f64c_1be3_4f0d_830b_8f0914221683_status_transitions"
+      }
+    },
+    "/transfers/trf-9236f64c-1be3-4f0d-830b-8f0914221683": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__transfers_trf_9236f64c_1be3_4f0d_830b_8f0914221683"
+      }
+    },
+    "/transfers/{transfer-token}/status-transitions": {
+      "post": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "transfer-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "SCHEDULED",
+                  "notes": "Completing the Partial-Balance Transfer"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__transfers__transfer_token__status_transitions"
+      }
+    },
+    "/transfers/trf-c433ee42-99ff-4ec1-b67f-5b40154d14ad/refunds": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__transfers_trf_c433ee42_99ff_4ec1_b67f_5b40154d14ad_refunds"
+      }
+    },
+    "/transfers/trf-72016e17-28a8-4996-8996-50f04e77b415/refunds": {
+      "post": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}/refunds",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "clientRefundId": "671634878812",
+                  "notes": "Merchant Payment return to Wallet Balance",
+                  "memo": "TransferClientId56387"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__transfers_trf_72016e17_28a8_4996_8996_50f04e77b415_refunds"
+      }
+    },
+    "/transfers/{transfer-token}/refunds/{refund-token}": {
+      "get": {
+        "tags": [
+          "Transfers"
+        ],
+        "summary": "/transfers/{transfer-token}/refunds/{refund-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "transfer-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "refund-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__transfers__transfer_token__refunds__refund_token_"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/balances": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/balances",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_balances"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/prepaid-cards/trm-04886d56-b1f4-48ec-b30e-f7ca8f8d274c/balances": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards/{prepaid-card-token}/balances",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_prepaid_cards_trm_04886d56_b1f4_48ec_b30e_f7ca8f8d274c_balances"
+      }
+    },
+    "/programs/prg-da2bf439-bf8e-4420-89bd-1b53350a2377/accounts/act-1c685047-97c0-4c72-9acb-1f3e18bb173d/balances": {
+      "get": {
+        "tags": [
+          "Programs"
+        ],
+        "summary": "/programs/{program-token}/accounts/{account-token}/balances",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__programs_prg_da2bf439_bf8e_4420_89bd_1b53350a2377_accounts_act_1c685047_97c0_4c72_9acb_1f3e18bb173d_balances"
+      }
+    },
+    "/users/usr-e5d8942f-4015-4c52-a17d-ffc836b2005b/receipts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/receipts",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_e5d8942f_4015_4c52_a17d_ffc836b2005b_receipts"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/prepaid-cards/trm-04886d56-b1f4-48ec-b30e-f7ca8f8d274c/receipts": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards/{prepaid-card-token}/receipts ",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_prepaid_cards_trm_04886d56_b1f4_48ec_b30e_f7ca8f8d274c_receipts"
+      }
+    },
+    "/programs/prg-da2bf439-bf8e-4420-89bd-1b53350a2377/accounts/act-1c685047-97c0-4c72-9acb-1f3e18bb173d/receipts": {
+      "get": {
+        "tags": [
+          "Programs"
+        ],
+        "summary": "/programs/{program-token}/accounts/{account-token}/receipts",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__programs_prg_da2bf439_bf8e_4420_89bd_1b53350a2377_accounts_act_1c685047_97c0_4c72_9acb_1f3e18bb173d_receipts"
+      }
+    },
+    "/programs/": {
+      "get": {
+        "tags": [
+          "Programs"
+        ],
+        "summary": "/programs/{program-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__programs"
+      }
+    },
+    "/programs/prg-da2bf439-bf8e-4420-89bd-1b53350a2377/accounts/act-1c685047-97c0-4c72-9acb-1f3e18bb173d/": {
+      "get": {
+        "tags": [
+          "Programs"
+        ],
+        "summary": "/programs/{program-token}/accounts/{account-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__programs_prg_da2bf439_bf8e_4420_89bd_1b53350a2377_accounts_act_1c685047_97c0_4c72_9acb_1f3e18bb173d"
+      }
+    },
+    "/transfer-method-configurations": {
+      "get": {
+        "tags": [
+          "Transfer Method Configurations"
+        ],
+        "summary": "/transfer-method-configurations?userToken={userToken}&country={country}&currency={currency}&type={type}&profileType={ProfileType}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__transfer_method_configurations"
+      }
+    },
+    "/webhook-notifications": {
+      "get": {
+        "tags": [
+          "Webhook Notifications"
+        ],
+        "summary": "/webhook-notifications",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__webhook_notifications"
+      }
+    },
+    "/webhook-notifications/{webhook-notification-token}": {
+      "get": {
+        "tags": [
+          "Webhook Notifications"
+        ],
+        "summary": "/webhook-notifications/{webhook-notification-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "webhook-notification-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__webhook_notifications__webhook_notification_token_"
+      }
+    },
+    "/users/usr-e5d8942f-4015-4c52-a17d-ffc836b2005b/status-transitions": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/status-transitions",
+        "description": "This endpoint sends an HTTP GET request to retrieve the status transitions for a specific user identified by the user token. The user token is included as a path parameter and as a query parameter in the URL.\n\nThe response of this request is a JSON schema representing the status transitions for the user. The JSON schema will outline the structure and data types of the response, providing a clear understanding of the information that will be returned.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_e5d8942f_4015_4c52_a17d_ffc836b2005b_status_transitions"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/status-transitions": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Closing this account.",
+                  "transition": "LOCKED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_status_transitions"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/status-transitions/sts-e2562a9b-0adc-4365-bef5-ca035d204994": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_status_transitions_sts_e2562a9b_0adc_4365_bef5_ca035d204994"
+      }
+    },
+    "/users/{user-token}/business-stakeholders/{stakeholder-token}/status-transitions": {
+      "get": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders/{stakeholder-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stakeholder-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__business_stakeholders__stakeholder_token__status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders/{stakeholder-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stakeholder-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Closing this business stakeholder account.",
+                  "transition": "DE_ACTIVATED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users__user_token__business_stakeholders__stakeholder_token__status_transitions"
+      }
+    },
+    "/users/{user-token}/business-stakeholders/{stakeholder-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Business Stakeholders"
+        ],
+        "summary": "/users/{user-token}/business-stakeholders/{stakeholder-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stakeholder-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__business_stakeholders__stakeholder_token__status_transitions__status_transition_token_"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/bank-accounts/trm-036b84f4-be4b-4ffd-a3e2-e9621aebc7d4/status-transitions": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts/{bank-account-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_bank_accounts_trm_036b84f4_be4b_4ffd_a3e2_e9621aebc7d4_status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts/{bank-account-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Closing this account.",
+                  "transition": "DE_ACTIVATED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_bank_accounts_trm_036b84f4_be4b_4ffd_a3e2_e9621aebc7d4_status_transitions"
+      }
+    },
+    "/users/{user-token}/bank-accounts/{bank-account-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-accounts/{bank-account-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_bank_accounts_trm_036b84f4_be4b_4ffd_a3e2_e9621aebc7d4_status_transitions_sts_9d03ff4b_fe70_479b_88b1_9170dcb10310"
+      }
+    },
+    "/users/{user-token}/bank-cards/{bank-card-token}/status-transitions": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards/{bank-card-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__bank_cards__bank_card_token__status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards/{bank-card-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Closing this account.",
+                  "transition": "DE_ACTIVATED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users__user_token__bank_cards__bank_card_token__status_transitions"
+      }
+    },
+    "/users/{user-token}/bank-cards/{bank-card-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/bank-cards/{bank-card-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bank-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users__user_token__bank_cards__bank_card_token__status_transitions__status_transition_token_"
+      }
+    },
+    "/users/{user-token}/paypal-accounts/{paypal-account-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paypal-accounts/{paypal-account-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paypal-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts_trm_6a51511f_5621_41c3_9054_3a9b7a717618_status_transitions_sts_54e2a9e1_c2dc_42c7_89a3_7a23cee91448"
+      }
+    },
+    "/users/{user-token}/paypal-accounts/{paypal-account-token}/status-transitions": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/PayPal-accounts/{paypal-account-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paypal-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "DE_ACTIVATED",
+                  "notes": "PayPal account removed."
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_paypal_accounts_trm_6a51511f_5621_41c3_9054_3a9b7a717618_status_transitions"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/venmo-accounts/trm-c28497c8-72ca-41cc-974c-04908e95ea7e/status-transitions": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/venmo-accounts/{venmo-account-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_venmo_accounts_trm_c28497c8_72ca_41cc_974c_04908e95ea7e_status_transitions"
+      }
+    },
+    "/users/{user-token}/venmo-accounts/{venmo-account-token}/status-transitions": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/venmo-accounts/{venmo-account-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "venmo-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "DE_ACTIVATED",
+                  "notes": "Venmo account removed."
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_venmo_accounts_trm_c28497c8_72ca_41cc_974c_04908e95ea7e_status_transitions"
+      }
+    },
+    "/users/{user-token}/venmo-accounts/{venmo-account-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/venmo-accounts/{venmo-account-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "venmo-account-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_venmo_accounts_trm_c28497c8_72ca_41cc_974c_04908e95ea7e_status_transitions_sts_8786de7b_7ba7_468d_9b8f_c9e6db458c45"
+      }
+    },
+    "/users/usr-6243d549-be97-486d-ac0f-385dec42ebb4/prepaid-cards/trm-066fe443-430d-430b-8406-34a57101a488/status-transitions": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paper-checks/{paper-check-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_prepaid_cards_trm_066fe443_430d_430b_8406_34a57101a488_status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards/{prepaid-card-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Locking card temporarily.",
+                  "transition": "LOCKED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_prepaid_cards_trm_066fe443_430d_430b_8406_34a57101a488_status_transitions"
+      }
+    },
+    "/users/{user-token}/prepaid-cards/{prepaid-card-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/prepaid-cards/{prepaid-card-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prepaid-card-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_6243d549_be97_486d_ac0f_385dec42ebb4_prepaid_cards_trm_066fe443_430d_430b_8406_34a57101a488_status_transitions_sts_74886420_0d4e_41f5_acb6_502503cd91ef"
+      }
+    },
+    "/users/usr-23f11240-acdd-4d0e-a999-12e85e13a599/paper-checks/trm-d4d5a00e-b1cc-4f55-b226-39591978a8fa/status-transitions": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paper-checks/{paper-check-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Closing check.",
+                  "transition": "DE_ACTIVATED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_paper_checks_trm_d4d5a00e_b1cc_4f55_b226_39591978a8fa_status_transitions"
+      }
+    },
+    "/users/{user-token}/paper-checks/{paper-check-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/paper-checks/{paper-check-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "user-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "paper-check-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__users_usr_23f11240_acdd_4d0e_a999_12e85e13a599_paper_checks_trm_d4d5a00e_b1cc_4f55_b226_39591978a8fa_status_transitions_sts_5721d1fb_2379_4829_a4a6_e7fb17c4f786"
+      }
+    },
+    "/payments/{payment-token}/status-transitions": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/status-transitions\u202f",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Cancel an unclaimed Venmo payout.",
+                  "transition": "CANCELLED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments__payment_token__status_transitions"
+      }
+    },
+    "/payments/pmt-f37611f5-9ff4-45d4-92bb-3a20ba8adc82/status-transitions": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/status-transitions",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "notes": "Cancel a payment upon customer request.",
+                  "transition": "CANCELLED"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments_pmt_f37611f5_9ff4_45d4_92bb_3a20ba8adc82_status_transitions"
+      }
+    },
+    "/payments/{payment-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__status_transitions__status_transition_token_"
+      }
+    },
+    "/users/usr-ff57e5f6-f6b0-4bc4-aa6a-6b9d0af5e6ca/authentication-token": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "/users/{user-token}/authentication-token",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__users_usr_ff57e5f6_f6b0_4bc4_aa6a_6b9d0af5e6ca_authentication_token",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/pmt-4b84fecc-3a23-4386-b8e3-ef9ba4870ab0/supplemental-data": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments_pmt_4b84fecc_3a23_4386_b8e3_ef9ba4870ab0_supplemental_data"
+      }
+    },
+    "/payments/pmt-f37611f5-9ff4-45d4-92bb-3a20ba8adc82/supplemental-data": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "industryType": "airlines",
+                  "otherDeductionsAmount": "200",
+                  "otherDeductionsCurrency": "CNY"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments_pmt_f37611f5_9ff4_45d4_92bb_3a20ba8adc82_supplemental_data"
+      }
+    },
+    "/payments/pmt-f37611f5-9ff4-45d4-92bb-3a20ba8adc82/supplemental-data/{spd-group-token}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments_pmt_f37611f5_9ff4_45d4_92bb_3a20ba8adc82_supplemental_data__spd_group_token_"
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}": {
+      "put": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "industryType": "airlines",
+                  "otherDeductionsAmount": "200",
+                  "otherDeductionsCurrency": "CNY"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__payments__payment_token__supplemental_data__spd_group_token_"
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments__payment_token__supplemental_data__spd_group_token__line_items",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-line-item-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__supplemental_data__spd_group_token__line_items__spd_line_item_token_"
+      },
+      "put": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-line-item-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "orderNumber": "123456",
+                  "orderDate": "12/11/2018"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "put__payments__payment_token__supplemental_data__spd_group_token__line_items__spd_line_item_token_"
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-line-item-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "CANCELLED",
+                  "notes": "status transition notes"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments__payment_token__supplemental_data__spd_group_token__line_items__spd_line_item_token_"
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/line-items/{spd-line-item-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-line-item-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__supplemental_data__spd_group_token__line_items__spd_line_item_token__status_transitions__status_transition_token_"
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}/status-transitions": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__supplemental_data__spd_group_token__status_transitions"
+      },
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "/payments/{payment-token}/supplemental-data/{spd-group-token}/status-transitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transition": "PENDING_REVIEW",
+                  "notes": "status transition notes"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post__payments__payment_token__supplemental_data__spd_group_token__status_transitions"
+      }
+    },
+    "/payments/{payment-token}/supplemental-data/{spd-group-token}/status-transitions/{status-transition-token}": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "payments/{payment-token}/supplemental-data/{spd-group-token}/status-transitions/{status-transition-token}",
+        "description": "",
+        "parameters": [
+          {
+            "name": "payment-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "spd-group-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status-transition-token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get__payments__payment_token__supplemental_data__spd_group_token__status_transitions__status_transition_token_"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SuccessEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "requestId": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      }
+    },
+    "securitySchemes": {}
+  },
+  "tags": [
+    {
+      "name": "Users",
+      "description": "Users"
+    },
+    {
+      "name": "Business Stakeholders",
+      "description": "Business Stakeholders"
+    },
+    {
+      "name": "Paper Checks",
+      "description": "Paper Checks"
+    },
+    {
+      "name": "Payments",
+      "description": "Payments"
+    },
+    {
+      "name": "Transfers",
+      "description": "Transfers"
+    },
+    {
+      "name": "Programs",
+      "description": "Programs"
+    },
+    {
+      "name": "Transfer Method Configurations",
+      "description": "Transfer Method Configurations"
+    },
+    {
+      "name": "Webhook Notifications",
+      "description": "Webhook Notifications"
+    }
+  ]
+}

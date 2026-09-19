@@ -1,0 +1,568 @@
+{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "eOSCAR services API - Auth.",
+    "description": "<h3>Auth provides authentication for all eoscar-services.</h3>",
+    "termsOfService": "https://www.e-oscar.org/news/terms-of-use",
+    "contact": {
+      "name": "Support Form",
+      "url": "https://app.smartsheet.com/b/form/7ac657bd7d374fbeadf830501fb97b33"
+    },
+    "license": {
+      "name": "Copyright \u00a92021 Online Data Exchange LLC",
+      "url": "https://www.e-oscar.org/site-terms-conditions"
+    },
+    "version": "2.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/AMIT25KUMAR/eoscar-services-api-auth/2.0"
+  },
+  "externalDocs": {
+    "description": "About Us",
+    "url": "https://www.e-oscar.org/implementation/about-us"
+  },
+  "servers": [
+    {
+      "url": "https://stage-api.e-oscar-web.net/prweb/api",
+      "description": "-STAGE"
+    },
+    {
+      "url": "https://api.e-oscar-web.net/prweb/api",
+      "description": "-PROD"
+    }
+  ],
+  "tags": [
+    {
+      "name": "AUTH",
+      "description": "AUTH call is initiated by the DF and CRAs to obtain a authorization token that is required to access eoscar-services."
+    }
+  ],
+  "paths": {
+    "/auth/v2/authRequest": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "get auth token by user credentials",
+        "description": "<b>Requires API-key, Accept(application/xml or application/json) to be passed in the request header</b><br><br> Accepts a user name, password  and registration Id and returns an auth token if authorization succeedes. <br/> <I>Note: First time user accesses auth end-point; he/she is advised to change the password (using /auth/v1/changePwd) provided with the rules around new password.</I><br><br>\n  Enum values may be passed to the Data Furnisher in either upper or lower case.",
+        "operationId": "authUsingPOST",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "description": "Api key specific to client that grants access to service.",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "f7c42aa3-0891-4ee4-9a6f-5594a3ea0c9c"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_authRequest_body"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequestVo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully authenticated the user and returned an Auth token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_400"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "FAILURE",
+                    "value": "Auth Failed."
+                  },
+                  "error": {
+                    "code": 400,
+                    "value": "Invalid Request"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_500"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "FAILURE",
+                    "value": "Auth Failed."
+                  },
+                  "error": {
+                    "code": 500,
+                    "value": "System Error: Auth Request"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/auth/v1/changePwd": {
+      "post": {
+        "tags": [
+          "AUTH"
+        ],
+        "summary": "change API user password",
+        "description": "<b>Requires API-key, Accept(application/xml or application/json) to be passed in the request header</b><br><br>  Accepts a user name, password, new password and registration Id and returns an auth token if authorization succeedes.<br/> <I>A password change is prompted/allowed in 3 scenarios</I> <ul> <li>CREATION: When a new user is created in eOscar and the user try's to login to API using /auth/v2/authRequest call. Current(newly created) password should be provided to user by DF admin to perform changePwd.</li> <li>RESET: When a user's password get reset with a new one by DF admin. Current(changed) password should be provided to user by DF admin to perform changePwd.</li> <li>FORCE_CHANGE_PWD: when a user's account is forced to change password by DF admin. User can use the existing password to perform changePwd.</li> <li>First time a user accesses auth end-point, he/she is advised to change the password provided with the rules around new password.</li> <li>Password update is only allowed once after the creation/reset/forceChangePwd is done on the account. If the user tries to change it again, then should receive an error.</li> <li>Password will expire annually, and the DF_Admin will have the ability to reset the password and restrict the user from accessing the service.</li> <li>On password expiry, an admin needs to reset it, and the user will receive a temporary password. User has to change the password in order to be able to access the service.</li> </ul> Enum values may be passed to the Data Furnisher in either upper or lower case",
+        "operationId": "changePwdUsingPOST",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "description": "Api key specific to client that grants access to service.",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "type": "string",
+              "example": "f7c42aa3-0891-4ee4-9a6f-5594a3ea0c9c"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v1_changePwd_body"
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthChangePwdRequestVo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updates the password of the user and returned an Auth token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_200"
+                },
+                "example": {
+                  "authResponse": {
+                    "transactionId": "3dd13e42-fdf3-4a0c",
+                    "message": {
+                      "id": "SUCCESS",
+                      "value": "Password Change Succeed."
+                    },
+                    "user": {
+                      "name": "TestApi User",
+                      "regId": 1000022
+                    }
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "SUCCESS",
+                    "value": "Password Change Succeed."
+                  },
+                  "user": {
+                    "name": "TestApi User",
+                    "regId": 1000022
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_400"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "FAILURE",
+                    "value": "Auth Failed."
+                  },
+                  "error": {
+                    "code": 400,
+                    "value": "Invalid Request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User Unauthorized to access Service",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_401"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "FAILURE",
+                    "value": "Auth Failed."
+                  },
+                  "error": {
+                    "code": 401,
+                    "value": "USERNAME/PASSWORD ERROR: You have entered an invalid username or password."
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/inline_response_500"
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseVo"
+                },
+                "example": {
+                  "transactionId": "3dd13e42-fdf3-4a0c",
+                  "message": {
+                    "id": "FAILURE",
+                    "value": "Auth Failed."
+                  },
+                  "error": {
+                    "code": 500,
+                    "value": "System Error: Auth Request"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthRequestVo": {
+        "title": "AuthRequest",
+        "required": [
+          "pwd",
+          "regId",
+          "uname"
+        ],
+        "type": "object",
+        "properties": {
+          "uname": {
+            "maxLength": 20,
+            "type": "string",
+            "example": "APIUSER"
+          },
+          "pwd": {
+            "type": "string",
+            "example": "blue0913"
+          },
+          "regId": {
+            "maxLength": 7,
+            "type": "integer",
+            "format": "int32",
+            "example": 1000126
+          }
+        },
+        "xml": {
+          "name": "authRequest"
+        }
+      },
+      "AuthChangePwdRequestVo": {
+        "title": "AuthChangePwdRequest",
+        "required": [
+          "newPwd",
+          "pwd",
+          "regId",
+          "uname"
+        ],
+        "type": "object",
+        "properties": {
+          "uname": {
+            "maxLength": 20,
+            "type": "string",
+            "example": "APIUSER"
+          },
+          "pwd": {
+            "type": "string",
+            "example": "blue0913"
+          },
+          "newPwd": {
+            "type": "string",
+            "example": "blue09132@"
+          },
+          "regId": {
+            "maxLength": 7,
+            "type": "integer",
+            "format": "int32",
+            "example": 1000126
+          }
+        },
+        "xml": {
+          "name": "authRequest"
+        }
+      },
+      "AuthResponseVo": {
+        "title": "AuthResponse",
+        "xml": {
+          "name": "authResponse"
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJBUElVU0VSIiwiaXNzIjoibExWSHJMUlZCeTNvY2N4Y2NWeTIrNTFoR1FSY2U3VSIsImlhdCI6MTU4MDQ1Nzk1NCwianRpIjoiMzg3OTc4NiJ9.E-XhnVv9LcTVAgZXvtYH_QpzRwsYGsZLn-AYq-WS5pxcrZnzOsTt2X5YmZaZ6xtbUdAj2PsLldLPfmEFy0MQK__wFtoQDIaNAUQTOZEFCTiJTB1KVtF93DUfBJ-JMZ_SMB4es10wST5sIUHDRJ3mow2RreZIeJF7gYd8ktuA5aZQd_-_7aKrT91AWIbm54C6OtipvqgdrKTI6hP2XY97zNodOuSgDor-Q-szrAGl04QcVlezMq1tuy3_lAjYQVO7_BODExxfyIGlawthgSUU22PCicJlkRnhbQfxpyLDp6oleat9mEboScoudDxkZ6B1y2iY7v8ofzrPRh_6YwCe9w"
+              },
+              "user": {
+                "$ref": "#/components/schemas/UserVo"
+              }
+            }
+          }
+        ]
+      },
+      "UserVo": {
+        "title": "User",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "APIUSER TESTUSER"
+          },
+          "regId": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1000126
+          }
+        }
+      },
+      "BaseResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "xml": {
+              "attribute": true
+            }
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "error": {
+            "$ref": "#/components/schemas/Error"
+          }
+        }
+      },
+      "Error": {
+        "title": "Error",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0,
+            "xml": {
+              "attribute": true
+            }
+          },
+          "value": {
+            "type": "string",
+            "example": "none"
+          }
+        }
+      },
+      "Message": {
+        "title": "Message",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "xml": {
+              "attribute": true
+            },
+            "enum": [
+              "SUCCESS",
+              "FAILURE"
+            ]
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "v2_authRequest_body": {
+        "type": "object",
+        "properties": {
+          "authRequest": {
+            "$ref": "#/components/schemas/AuthRequestVo"
+          }
+        }
+      },
+      "inline_response_200": {
+        "type": "object",
+        "properties": {
+          "authResponse": {
+            "$ref": "#/components/schemas/AuthResponseVo"
+          }
+        }
+      },
+      "inline_response_400": {
+        "type": "object",
+        "properties": {
+          "authResponse": {
+            "$ref": "#/components/schemas/AuthResponseVo"
+          }
+        },
+        "example": {
+          "authResponse": {
+            "transactionId": "3dd13e42-fdf3-4a0c",
+            "message": {
+              "id": "FAILURE",
+              "value": "Auth Failed."
+            },
+            "error": {
+              "code": 400,
+              "value": "Invalid Request"
+            }
+          }
+        }
+      },
+      "inline_response_500": {
+        "type": "object",
+        "properties": {
+          "authResponse": {
+            "$ref": "#/components/schemas/AuthResponseVo"
+          }
+        },
+        "example": {
+          "authResponse": {
+            "transactionId": "3dd13e42-fdf3-4a0c",
+            "message": {
+              "id": "FAILURE",
+              "value": "Auth Failed."
+            },
+            "error": {
+              "code": 500,
+              "value": "System Error: Auth Request"
+            }
+          }
+        }
+      },
+      "v1_changePwd_body": {
+        "type": "object",
+        "properties": {
+          "authRequest": {
+            "$ref": "#/components/schemas/AuthChangePwdRequestVo"
+          }
+        }
+      },
+      "inline_response_401": {
+        "type": "object",
+        "properties": {
+          "authResponse": {
+            "$ref": "#/components/schemas/AuthResponseVo"
+          }
+        },
+        "example": {
+          "authResponse": {
+            "transactionId": "3dd13e42-fdf3-4a0c",
+            "message": {
+              "id": "FAILURE",
+              "value": "Auth Failed."
+            },
+            "error": {
+              "code": 401,
+              "value": "USERNAME/PASSWORD ERROR: You have entered an invalid username or password."
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "xApiKeyHeader": {
+        "name": "x-api-key",
+        "in": "header",
+        "description": "Api key specific to client that grants access to service.",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": {
+          "type": "string",
+          "example": "f7c42aa3-0891-4ee4-9a6f-5594a3ea0c9c"
+        }
+      }
+    }
+  }
+}

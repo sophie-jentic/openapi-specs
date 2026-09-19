@@ -1,0 +1,600 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "InvoiceQ dataCollection OpenAPI definition",
+    "version": "v1",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/MONEEBDEV/invoiceq-datacollection-openapi-definition/v1"
+  },
+  "servers": [
+    {
+      "url": "https://jo.invoiceq.com",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication API"
+    }
+  ],
+  "paths": {
+    "/api/dataCollection/transaction/sync/v1/upload": {
+      "post": {
+        "tags": [
+          "data-collection-controller"
+        ],
+        "operationId": "upload",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                },
+                "example": {
+                  "traceId": "80d4a075-0fbf-41c4-af3f-f50bc2edf8d7",
+                  "valid": true,
+                  "errors": [],
+                  "body": {
+                    "status": "SUCCESS"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                },
+                "example": {
+                  "traceId": "80d4a075-0fbf-41c4-af3f-f50bc2edf8d7",
+                  "valid": false,
+                  "errors": [
+                    {
+                      "reason": "transactions[0].concessionerName",
+                      "errorDescription": "Missing Concessioner Name"
+                    },
+                    {
+                      "reason": "transactions[0].shopId",
+                      "errorDescription": "Missing Shop Id"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid or missing Authorization token"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/auth": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticate user and return JWT token",
+        "description": "Receives orgKey, channelId, apiKey as request params and returns JWT",
+        "operationId": "authenticate",
+        "parameters": [
+          {
+            "name": "orgKey",
+            "in": "query",
+            "description": "Organization Key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "channelId",
+            "in": "query",
+            "description": "Channel ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "apiKey",
+            "in": "query",
+            "description": "API Key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FlightInformation": {
+        "type": "object",
+        "properties": {
+          "flight": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Flight number, Required if transaction is linked to a flight",
+            "example": "RJ500"
+          },
+          "flightDateTime": {
+            "type": "string",
+            "description": "Flight date/time, Required if Flight field is provided in format DD/MM/YYYY HH24:MI",
+            "example": "08/02/2017 23:15"
+          },
+          "airportOrg": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Origin airport code",
+            "example": "AMM"
+          },
+          "airportDes": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Destination airport code",
+            "example": "CAI"
+          },
+          "airportDes2": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Additional destination airport info, Optional secondary destination",
+            "example": null
+          },
+          "airportDes3": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Additional destination airport info,Optional tertiary destination",
+            "example": null
+          },
+          "passengerIdName": {
+            "maxLength": 155,
+            "minLength": 0,
+            "type": "string",
+            "description": "Passenger ID or name, Required for duty-free or flight-linked transactions",
+            "example": 432521342
+          },
+          "nationality": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Passenger nationality, Required if Passenger ID is provided.",
+            "example": "Jordanian"
+          },
+          "passportId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Passenger passport ID, Required for international passengers",
+            "example": "P1234567"
+          },
+          "nationalId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Passenger national ID, For local passengers if available",
+            "example": "J123456789"
+          },
+          "birthdate": {
+            "type": "string",
+            "description": "Passenger birthdate, Optional passenger detail in format DD/MM/YYYY",
+            "example": "01/01/1990"
+          },
+          "gender": {
+            "type": "string",
+            "description": "Passenger gender, Optional passenger detail",
+            "example": "Male",
+            "enum": [
+              "Male",
+              "Female"
+            ]
+          }
+        },
+        "description": "these columns are mandatory if the concessionaires use the boarding pass or passenger passport"
+      },
+      "Transaction": {
+        "required": [
+          "concessionerName",
+          "currency",
+          "invoiceNumber",
+          "isUnitPriceInclusiveTax",
+          "location",
+          "netSalesAfterTax",
+          "paymentMethod",
+          "posId",
+          "productCategory",
+          "productId",
+          "productName",
+          "quantity",
+          "salesTaxJod",
+          "salesTaxPercentage",
+          "shopId",
+          "shopName",
+          "totalAmountAfterDiscount",
+          "totalAmountBeforeDiscount",
+          "transactionDate",
+          "transactionTime",
+          "transactionType",
+          "unitPrice",
+          "voidCancelationType",
+          "actualPaymentCurrencyType",
+          "fxRate"
+        ],
+        "type": "object",
+        "properties": {
+          "concessionerName": {
+            "maxLength": 155,
+            "minLength": 0,
+            "type": "string",
+            "description": "The name of the concession operating the shop.",
+            "example": "Danata"
+          },
+          "shopId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Unique identifier of the shop within the airport system.",
+            "example": 5
+          },
+          "shopName": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Display name of the shop.",
+            "example": "Sahwerma Rama"
+          },
+          "location": {
+            "type": "string",
+            "description": "Airport area (e.g., Departure, Arrival).",
+            "example": "Departures Terminal"
+          },
+          "posId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Point-of-sale machine identifier",
+            "example": 3
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "description": "The invoice number from the concessionaire system",
+            "example": 5000001,
+            "Note": "the invoice can be repeated in multiple records (per each item in same invoice)"
+          },
+          "transactionDate": {
+            "type": "string",
+            "description": "Transaction date in DD/MM/YYYY format",
+            "example": "08/02/2017",
+            "format": "date"
+          },
+          "transactionTime": {
+            "type": "string",
+            "description": "Transaction time in HH24:MI format",
+            "example": "05:00",
+            "format": "time"
+          },
+          "shift": {
+            "type": "string",
+            "description": "Shift can be A, B, C or 1, 2, 3",
+            "example": 1
+          },
+          "productId": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Internal unique ID for each item from concessionaire system",
+            "example": 2639689001
+          },
+          "upc": {
+            "type": "string",
+            "description": "the universal product code for the items that contains this code, this field is mandatory for these items (e.g. Water, Pepsi, Snickers,etc.)",
+            "example": 123456789012
+          },
+          "productName": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Item description from concessionaire system",
+            "example": "TOBLERONE GOLD 360GR"
+          },
+          "productCategory": {
+            "type": "string",
+            "description": "First level of item categorization",
+            "example": "Chocolate"
+          },
+          "productSubCategory": {
+            "type": "string",
+            "description": "the second level of item categorization, this column is mandatory if applicable",
+            "example": "Dark Chocolate"
+          },
+          "brandName": {
+            "type": "string",
+            "description": "Brand name of the item",
+            "example": "sw"
+          },
+          "quantity": {
+            "minimum": 0,
+            "type": "number",
+            "description": "number of sold items of the same item/product per invoice , should be grater than ZERO",
+            "example": 3
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "the selling price of the item without sales tax",
+            "note": "in case of Transaction Type Void it unitPrice should be negative.",
+            "example": 10
+          },
+          "totalAmountBeforeDiscount": {
+            "minimum": 0,
+            "type": "number",
+            "description": "the formula is Quantity * Unit Price",
+            "example": 30
+          },
+          "discountAmountJod": {
+            "minimum": 0,
+            "type": "number",
+            "description": "the discount amount in Jordanian Dinar per item not per invoice, this column accepts zero amount",
+            "example": 5
+          },
+          "discountType": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string",
+            "description": "Discount type (VIP, Staff, etc.), mandatory if there is a discount",
+            "example": "VIP"
+          },
+          "totalAmountAfterDiscount": {
+            "minimum": 0,
+            "type": "number",
+            "description": "the formula is Total Amount before Discount (Gross Sales) - discount amount",
+            "example": 25
+          },
+          "salesTaxPercentage": {
+            "minimum": 0,
+            "type": "integer",
+            "description": "Tax Percentage, i.e. for 15% should be 15",
+            "format": "int32",
+            "example": 16
+          },
+          "salesTaxJod": {
+            "minimum": 0,
+            "type": "number",
+            "description": "the tax amount in Jordanian Dinar per item not per invoice, this column accepts zero amount, The formula is Total Amount After Discount (Net Sales) * tax percentage",
+            "example": 4
+          },
+          "netSalesAfterTax": {
+            "type": "number",
+            "description": "the formula is Total Amount After Discount (Net Sales) + Sales Tax",
+            "example": 29
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "this column is to specify the payment method (e.g. visa card, cash, epoints, etc.). the payment method of the highest amount must be reported if multiple methods related to same transaction. If the amounts are equal please report any payment method",
+            "example": "Cash"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency must be JOD",
+            "example": "JOD",
+            "enum": [
+              "JOD",
+              "USD",
+              "SAR",
+              "EGP",
+              "AED",
+              "BHD",
+              "QAR",
+              "EUR",
+              "KWD",
+              "OMR",
+              "YER",
+              "IQD",
+              "INR",
+              "HKD",
+              "GBP"
+            ]
+          },
+          "fxRate": {
+            "minimum": 0,
+            "example": 0.714,
+            "type": "number",
+            "description": "foreign exchange rate (must be 1 for JOD currency )"
+          },
+          "actualPaymentCurrencyType": {
+            "type": "string",
+            "description": "the currency of the highest amount must be reported if multiple currencies related to same transaction. If the amounts are equal please report any currency",
+            "example": "USD",
+            "enum": [
+              "JOD",
+              "USD",
+              "SAR",
+              "EGP",
+              "AED",
+              "BHD",
+              "QAR",
+              "EUR",
+              "KWD",
+              "OMR",
+              "YER",
+              "IQD",
+              "INR",
+              "HKD",
+              "GBP"
+            ]
+          },
+          "transactionType": {
+            "type": "string",
+            "description": "Indicates sale type.",
+            "example": "Sales",
+            "enum": [
+              "Sales",
+              "Void"
+            ]
+          },
+          "voidCancelationType": {
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string",
+            "description": "Mandatory if transaction type is void, e.g., credit note reason",
+            "example": "Customer Return"
+          },
+          "flightInformation": {
+            "$ref": "#/components/schemas/FlightInformation"
+          },
+          "isUnitPriceInclusiveTax": {
+            "type": "boolean",
+            "description": "Indicates if the unit price is inclusive of tax",
+            "example": false
+          },
+          "transactionFromDate": {
+            "type": "string",
+            "description": "Optional transaction from date filter in DD/MM/YYYY format",
+            "example": "01/12/2025"
+          },
+          "transactionToDate": {
+            "type": "string",
+            "description": "Optional transaction to date filter in DD/MM/YYYY format",
+            "example": "15/12/2025"
+          }
+        },
+        "description": "Represents a single transaction record from a concessionaire system"
+      },
+      "UploadRequest": {
+        "required": [
+          "transactions"
+        ],
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          }
+        }
+      },
+      "Body": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS"
+            ]
+          }
+        }
+      },
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "traceId": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            }
+          },
+          "body": {
+            "$ref": "#/components/schemas/Body"
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "could be field name or GENERIC as per root cause of rejection"
+          },
+          "errorDescription": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    }
+  }
+}

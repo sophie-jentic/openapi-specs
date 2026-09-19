@@ -1,0 +1,1871 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "5.4.0.2-oas3",
+    "title": "Striim TQL Files REST API version 5.4.0.2",
+    "description": "API for uploading, listing, and deleting TQL files in Striim.",
+    "contact": {
+      "name": "Striim support",
+      "url": "https://go2.striim.com/request-support-striim",
+      "email": "support@striim.com"
+    },
+    "termsOfService": "http://www.striim.com/eula/",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/RobertAtStriim/striim-tql-files-rest-api-version-5402/5.4.0.2-oas3"
+  },
+  "tags": [
+    {
+      "name": "tqlfiles",
+      "x-displayName": "tqlfiles"
+    },
+    {
+      "name": "application",
+      "x-displayName": "application"
+    },
+    {
+      "name": "template",
+      "x-displayName": "template"
+    },
+    {
+      "name": "applicationMetadata",
+      "x-displayName": "applicationMetadata"
+    },
+    {
+      "name": "checkpoint",
+      "x-displayName": "checkpoint"
+    },
+    {
+      "name": "monitoring",
+      "x-displayName": "monitoring"
+    },
+    {
+      "name": "tungsten",
+      "x-displayName": "tungsten"
+    }
+  ],
+  "paths": {
+    "/tqlfiles": {
+      "servers": [
+        {
+          "url": "http://localhost:9080/api/v2"
+        }
+      ],
+      "post": {
+        "description": "Uploads a TQL file to the user's home directory on the Striim cluster.\n\n**Requirements:**\n* File must have a `.tql` extension\n* Maximum file size is 50MB\n* File must not be empty\n* Request must be `multipart/form-data`\n\n**Example using curl:**\n```\ncurl --request POST \\\n  --url http://localhost:9080/api/v2/tqlfiles \\\n  --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6' \\\n  --form 'file=@/path/to/your-application.tql'\n```\n\nThe file is uploaded to the authenticated user's upload directory and distributed across the cluster. If a file with the same name already exists, a numeric suffix is added (e.g., `myfile1.tql`, `myfile2.tql`).\n\n**Response example:**\n```json\n[{\"command\":\"uploadTQLFile\",\"executionStatus\":\"success\",\"output\":\"myfile.tql successfully uploaded\",\"responseCode\":200}]\n```",
+        "summary": "upload a TQL file",
+        "tags": [
+          "tqlfiles"
+        ],
+        "operationId": "TqlFilesUpload",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "description": "The TQL file to upload. Must have a `.tql` extension and be no larger than 50MB.",
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid file format, empty file, file too large, or not multipart/form-data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing authorization token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - failed to create directory or distribute file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      },
+      "get": {
+        "description": "Retrieves a list of all TQL files in the authenticated user's upload directory.\n\n**Example using curl:**\n```\ncurl --request GET \\\n  --url http://localhost:9080/api/v2/tqlfiles \\\n  --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6'\n```\n\n**Response example:**\n```json\n[{\"command\":\"listUploads\",\"executionStatus\":\"success\",\"output\":[{\"name\":\"myfile.tql\",\"size\":1234,\"lastModified\":1704067200000}],\"responseCode\":200}]\n```",
+        "summary": "list uploaded TQL files",
+        "tags": [
+          "tqlfiles"
+        ],
+        "operationId": "TqlFilesList",
+        "responses": {
+          "200": {
+            "description": "Success - returns list of files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing authorization token, or no permission to access location",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - failed to determine home directory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/tqlfiles/{name}": {
+      "servers": [
+        {
+          "url": "http://localhost:9080/api/v2"
+        }
+      ],
+      "delete": {
+        "description": "Deletes the specified TQL file from the authenticated user's upload directory.\n\nFor **name**, specify the file name (e.g., `myfile.tql`).\n\n**Example using curl:**\n```\ncurl --request DELETE \\\n  --url http://localhost:9080/api/v2/tqlfiles/myfile.tql \\\n  --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6'\n```\n\n**Response example:**\n```json\n[{\"command\":\"deleteUpload\",\"executionStatus\":\"success\",\"output\":\"myfile.tql successfully deleted\",\"responseCode\":200}]\n```",
+        "summary": "delete a TQL file",
+        "tags": [
+          "tqlfiles"
+        ],
+        "operationId": "TqlFilesDelete",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the TQL file to delete (e.g., myfile.tql)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - file name is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing authorization token, or no permission to delete files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error - failed to delete file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TqlFilesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Retrieves a list of all applications currently in the Striim cluster.\n",
+        "summary": "list all applications",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsGet",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Application"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      },
+      "post": {
+        "description": "Creates an application based on the specified template, or template definition using template and property values specified in a JSON object. Get the template for the JSON object using `GET /applications/templates/{templateId}`.\n\nTo generate code, provide the template name, a name for the new application, and properties for the source and target on the **Body** tab. For example:\n```\n{\n  \"templateId\": \"database-to-kafka-avro-initialload\",\n  \"applicationName\": \"ns1.OracleReader_to_DatabaseWriter\",\n  \"sourceParameters\": {\n    \"Username\": \"myname\",\n    \"Password\": \"mypassword\",\n\t\t\"Password_encrypted\": \"false\",\n    \"ConnectionURL\": \"198.51.100.15:1521:orcl\",\n    \"Tables\": \"MYSCHEMA.%\"},\n  \"targetParameters\": {\n    \"version\": \"0.10.0\",\n    \"Mode\": \"Sync\",\n    \"Topic\": \"MyTopic\",\n    \"brokerAddress\": \"198.51.100.55:9092\"\n  },\n  \"parserParameters\": {},\n  \"formatterParameters\": {\"schemaFileName\"\": \"MySchema.avro\"}\n}\n```\nNote that all properties and values must be in double quotes. In this example, parserParameters is blank since OracleReader does not use a parser.\n\nTo use a cleartext password, `Password_encrypted` must be added to the template . Alternatively, enter the cleartext password in a source in the Flow Designer, export the application, and copy the encrypted password from the TQL file.",
+        "summary": "create an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsPost",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationParameters"
+              }
+            }
+          },
+          "description": "A JSON object that specifies the template, namespace, application name, and source and target property values to be used to create the application. One of `templateId` **or** `templateDefinition` is required.\n\n#Example JSON\n````json\n  {\n      \"templateId\": \"oracle-to-database-cdc\",\n      \"applicationName\": \"admin.InvoiceDataMigration\",\n      \"sourceParameters\" :{\n         \"Username\":\"miner\",\n         \"Password\":\"miner\",\n         \"ConnectionURL\":\"192.168.15.144:1521:XE\",\n         \"Tables\":\"TPCH.H_REGION;TPCH.H_NATION;TPCH.H_CUSTOMER\",\n         \"FetchSize\":\"10\",\n         \"StartSCN\":\"0\",\n         \"QueueSize\": \"40000\",\n         \"Compression\": \"true\",\n         \"SkipOpenTransactions\": \"false\"\n     },\n      \"targetParameters\": {\n          \"ConnectionURL\":\"jdbc:sqlserver://striimsqldb.database.windows.net:1433;database=sqldbonazure;user=rajesh@striimsqldb;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;\",\n          \"Username\":\"rajesh\",\n          \"Password\":\"strm123456@\",\n      \"BatchPolicy\": \"EventCount:0,Interval:0\",\n        \"CommitPolicy\": \"EventCount:1,Interval:1\",\n          \"Tables\":\"TPCH.H_NATION,dbo.nation;TPCH.H_REGION,dbo.region;TPCH.H_CUSTOMER,dbo.customer\"\n      }\n  }\n````",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/{appFqn}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Returns details for the specified application.\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`. \n",
+        "summary": "get application details",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsByAppFqnGet",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the application",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "App not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      },
+      "delete": {
+        "description": "Drops the specified application and all the components it contains (equivalent to `DROP <namespace>.<application name> CASCADE`).\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`.\n",
+        "summary": "drop an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsByAppFqnDelete",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the app",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "App not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed. App not in correct state to deploy",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/{appFqn}/deployment": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "post": {
+        "description": "Deploys the specified application. The AppDeploymentPlan parameter is used only when the app contains multiple flows.\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`. \n\nTo generate code to deploy an application that contains no flows, such as Samples.PosApp, leave the **Body** blank:\n\n`[]`\n\nThis is equivalent to `DEPLOY APPLICATION <namespace>.<application name> ON ANY IN default;`.\n\nTo specify other deployment options, you must create a flow within the application.\n\nTo deploy Samples.MultiLogApp, use the **Body**:\n\n```\n[{\"flowName\":\"Samples.ApiFlow\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.CompanyApiFlow\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.ErrorHandling\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.ErrorsAndWarnings\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.HackerCheck\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.InfoFlow\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.LargeRTCheck\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.MonitorLogs\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.ProxyCheck\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.UserApiFlow\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.WarningHandling\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"},\n{\"flowName\":\"Samples.ZeroContentCheck\",\"deploymentGroupName\":\"default\",\"deploymentType\":\"ANY\"}]\n```\nIf a flow is in the authentication user's namespace, you may omit the namespace. `ANY` is equivalent to `ON ONE`.\n\nFor more information, see [Managing deployment groups](https://docs.striim.com/en/managing-deployment-groups.html).",
+        "summary": "deploy an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsDeploymentByAppFqnPost",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the app",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeploymentPlan"
+              }
+            }
+          },
+          "description": "As of the 3.9.0 release, the format has changed to object type. The earlier format of sub-flows-array is also supported, but may be deprecated in a future release.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "App not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed. App not in correct state to deploy",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      },
+      "delete": {
+        "description": "Undeploys the specified application.\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`.",
+        "summary": "undeploy an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsDeploymentByAppFqnDelete",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the app",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "App not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed. App not in correct state to deploy",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/{appFqn}/sprint": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "post": {
+        "description": "Starts the specified deployed application.\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`.",
+        "summary": "start an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsSprintByAppFqnPost",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the app",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resume",
+            "in": "query",
+            "required": false,
+            "description": "Set to `true` to resume a crashed application.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "App not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed. App not in correct state to deploy",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      },
+      "delete": {
+        "description": "Stops the specified running application.\n\nFor **AppFqn**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`.",
+        "summary": "stop an application",
+        "tags": [
+          "application"
+        ],
+        "operationId": "ApplicationsSprintByAppFqnDelete",
+        "parameters": [
+          {
+            "name": "appFqn",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified name of the app",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "quiesce",
+            "in": "query",
+            "required": false,
+            "description": "Set to true to quiesce the application, leave at false to stop normally",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Application not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed. App not in correct state to deploy",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/templates": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Returns a list of all application templates currently in the Striim cluster. An application template specifies a list of source and target properties to be used when creating an application.\n",
+        "summary": "list application templates",
+        "tags": [
+          "template"
+        ],
+        "operationId": "ApplicationsTemplatesGet",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/templates/definition": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "post": {
+        "description": "Creates an application template for the specified source, parser (if required), target, and formatter (if required). For example:\n\n```\ncurl --request POST \\\n  --url http://localhost:9080/api/v2/applications/templates/definition \\\n  --header 'authorization: STRIIM-TOKEN 01eac2da-9b8a-69a1-9895-9e21505bed40' \\\n  --header 'content-type: application/json' \\\n  --data '{\"sourceAdapter\":\"OracleReader\",\"targetAdapter\":\"BigQueryWriter\"}'\n```\n\nwill return a JSON template for an Oracle CDC source and a Google BigQuery target. After you fill in the property values, use the JSON as the body for`POST /applications` to create an application.",
+        "summary": "create a template",
+        "tags": [
+          "template"
+        ],
+        "operationId": "ApplicationsTemplatesTemplateDefinition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateDefinition"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ]
+      }
+    },
+    "/applications/templates/{templateId}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Returns the type, default value (if any), and other information for each property of the specified template. Use `GET /applications/templates` to get the `templateId` value.\n",
+        "summary": "get an application template",
+        "tags": [
+          "template"
+        ],
+        "operationId": "ApplicationsTemplatesByTemplateIdGet",
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "description": "unique name of the template",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/applicationMetadata/olm/{oracleReaderName}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Retrieves file lineage for the specified OracleReader source.\n\nFor **oracleReaderName**, specify `<namespace>.<source name>` (the fully qualified name), for example, `ns1.OracleCDCSource`.\n\nFor more information, see [File lineage in Oracle](https://docs.striim.com/en/file-lineage-in-oracle.html).\n\nThe old endpoint `/applications/applicationMetadata/{oracleReaderName}` is also supported but may be removed in a future release.\n",
+        "summary": "retrieve OracleReader file lineage",
+        "tags": [
+          "applicationMetadata"
+        ],
+        "operationId": "ApplicationsApplicationMetadataByOracleReaderNameGet",
+        "parameters": [
+          {
+            "name": "oracleReaderName",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified component name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OracleLineageMetadataObject"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Oracle Reader not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/applicationMetadata/flm/{fileReaderName}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Retrieves file lineage data for the specified source or target. (For OracleReader sources, use `GET /applications/applicationMetadata/olm/{oracleReaderName}`).\n\nFor **fileReaderName**, specify `<namespace>.<source or target name>` (the fully qualified name), for example, `ns1.S3WriterTarget`.\n\nOptionally, for **startTimeStamp** or **endTimeStamp**, specify a time in milliseconds, for example, `1580473268534`.\n\nOptionally, for **status**, specify `CREATED`, `COMPLETED`, `PROCESSING`, or `CRASHED` to retrieve data only for files with that status.\n\nFor more information, see [File lineage in readers and writers](https://docs.striim.com/en/file-lineage-in-readers-and-writers.html).\n",
+        "summary": "retrieve source or target file lineage",
+        "tags": [
+          "applicationMetadata"
+        ],
+        "operationId": "ApplicationsApplicationMetadataByFileReaderNameGet",
+        "parameters": [
+          {
+            "name": "fileReaderName",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified component name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startTimeStamp",
+            "in": "query",
+            "required": false,
+            "description": "A timestamp in milliseconds that specifies a start time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endTimeStamp",
+            "in": "query",
+            "required": false,
+            "description": "A timestamp in milliseconds that specifies an end time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "status of the files to be queried",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileLineageMetadataObject"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "File Reader not found",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/checkpoint/{applicationname}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Returns restart position and current position of the specified application. For example, Samples.ApplicationName.\n\nFor **applicationName**, specify `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`. ",
+        "summary": "retrieve checkpoint data",
+        "tags": [
+          "checkpoint"
+        ],
+        "operationId": "ApplicationsApplicationCheckpointByApplicationNameGet",
+        "parameters": [
+          {
+            "name": "applicationname",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified application name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Specified application name is not in fullly qualified format",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "No valid User found for specified authentication token",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Specified application name is not found or No checkpoint information available yet for the application",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/applications/monitoring/report/{applicationnameOrComponentName}": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "get": {
+        "description": "Returns monitoring report for the specified application, source, or target.\n\nSpecify **applicationName** as `<namespace>.<application name>` (the fully qualified name), for example, `Samples.PosApp`, or `<namespace>.<component name>`, for example, `Samples.CsvDataSource`.\n\nSpecify **starttime** and **endtime** as `HH:mm` (current day), `yyyy/MM/dd-HH:mm`, `yyyy/MM/dd-HH:mm:ss`, or `yyyy/MM/dd-HH:mm:ss:SSS`. \n\nThe default rollup interval is 15 minutes. To change that, specify **rollupinterval** as `30m` (30 minutes) or `1h` (one hour).\n\nFor more information, see [Using monitor reports](https://www.striim.com/docs/en/using-monitor-reports.html) and [Using the MON command](https://www.striim.com/docs/en/using-the-mon-command.html).",
+        "summary": "retrieve monitoring report",
+        "tags": [
+          "monitoring"
+        ],
+        "operationId": "ApplicationsApplicationMonitoringReportByApplicationNameGet",
+        "parameters": [
+          {
+            "name": "applicationnameOrComponentName",
+            "in": "path",
+            "required": true,
+            "description": "Fully qualified component or application name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "starttime",
+            "in": "query",
+            "required": true,
+            "description": "A required parameter which specifies the start time from which application/component monitoring report has to be generated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endtime",
+            "in": "query",
+            "required": true,
+            "description": "A required parameter which specifies the end time from which application/component monitoring report has to be generated",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rollupinterval",
+            "in": "query",
+            "required": false,
+            "description": "An optional parameter that specifies interval at which this application/component report metrics have to be rolled up. If not specified default is 15m, accepted values for this parameter are 15m, 30m and 1h.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Specified application or component name is not in fully qualified format or an invalid start/end time or rollup interval is specifed",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "No valid User found for specified authentication token",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Application or component name not found.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    },
+    "/tungsten": {
+      "servers": [
+        {
+          "url": "http://localhost:8080/api/v2"
+        }
+      ],
+      "post": {
+        "description": "Executes a console or TQL DDL command. See [Console commands](https://www.striim.com/docs/en/console-commands.html) and [DDL and component reference](https://www.striim.com/docs/en/ddl-and-component-reference.html).\n\n* For the `EXPORT <namespace>.<application>` command, the TQL for the specified application will be attached to the response. For `EXPORT ALL` the attachment will be a ZIP file.\n* The `HISTORY` command is not supported.\n* When creating an application, all commands from `USE <namespace>; CREATE APPLICATION <name>;` to `END APPLICATION <name>;` must be included in the same API call.\n* When altering an application, all commands from `ALTER APPLICATION <name>;` to `ALTER APPLICATION <name> RECOMPILE;` must be included in the same call.\n\nIf the command has any output, it will be returned as `output`. For example:\n\n```\ncurl --request POST \\\n>    --url http://localhost:9080/api/v2/tungsten \\\n>    --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6' \\\n>    --header 'content-type: text/plain' \\\n>    --data 'STATUS Samples.MultiLogApp;'\n[{\"command\":\"STATUS Samples.MultiLogApp\",\"executionStatus\":\"Success\",\"output\":{\"applicationName\":\"MultiLogApp\",\"status\":\"CREATED\"},\"responseCode\":200}]\n```\n\nIf the command fails, the return will include `failuremessage`. For example:\n\n```\nurl --request POST \\\n>    --url http://localhost:9080/api/v2/tungsten \\\n>    --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6' \\\n>    --header 'content-type: text/plain' \\\n>    --data 'CREATE NAMESPACE Samples;'\n[{\"command\":\"CREATE NAMESPACE Samples\",\"executionStatus\":\"Failure\",\"failureMessage\":\"Namespace Samples already exists\",\"responseCode\":400}]\n```\n\nWhen importing an application that requires a passphrase, append the passphrase to the end of the URL and specify the file to be uploaded using `--data-binary`, for example:\n\n```\nurl --request POST \\\n>    --url http://localhost:9080/api/v2/tungsten?passphrase=******** \\\n>    --header 'authorization: STRIIM-TOKEN 01eb29d5-75e9-9fb1-9b31-8cae4cf129d6' \\\n>    --header 'content-type: text/plain' \\\n>    --data-binary @MyApp.tql\n```",
+        "summary": "execute a console or TQL command",
+        "tags": [
+          "tungsten"
+        ],
+        "operationId": "TungstenCommandExecution",
+        "responses": {
+          "200": {
+            "description": "Command is executed successfully."
+          },
+          "400": {
+            "description": "Compilation of command to be executed failed. Typical reason would be a missing \u2018;\u2019. Other reasons would be a missing parameter or using an incorrect keyword."
+          },
+          "401": {
+            "description": "Specified authentication token as part of authorization header is invaid or incorrect."
+          },
+          "404": {
+            "description": "Most of the commands operate on any of the Striim\u2019s component. This indicates that specified resource/component as part of the command doesn\u2019t exista anymore. Optionally this error code is also returned when requested information isn\u2019t ready for a specified component."
+          },
+          "500": {
+            "description": "Internal Server error"
+          }
+        },
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "x-unitTests": [],
+        "x-operation-settings": {
+          "CollectParameters": false,
+          "AllowDynamicQueryParameters": false,
+          "AllowDynamicFormParameters": false,
+          "IsMultiContentStreaming": false
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Authorization": {
+        "type": "apiKey",
+        "description": "",
+        "name": "Authorization",
+        "in": "header",
+        "x-testValue": "",
+        "x-skip-client-authentication": false
+      }
+    },
+    "schemas": {
+      "TqlFilesResponse": {
+        "title": "TqlFilesResponse",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "description": "The command that was executed",
+              "example": "uploadTQLFile",
+              "type": "string"
+            },
+            "executionStatus": {
+              "description": "Status of the command execution (success or failure)",
+              "example": "success",
+              "type": "string"
+            },
+            "output": {
+              "description": "The output of the command (string message or object depending on command)",
+              "type": "object"
+            },
+            "responseCode": {
+              "description": "HTTP response code",
+              "example": 200,
+              "type": "integer",
+              "format": "int32"
+            },
+            "failureMessage": {
+              "description": "Error message when executionStatus is failure",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TqlFilesListResponse": {
+        "title": "TqlFilesListResponse",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "description": "The command that was executed",
+              "example": "listUploads",
+              "type": "string"
+            },
+            "executionStatus": {
+              "description": "Status of the command execution",
+              "example": "success",
+              "type": "string"
+            },
+            "output": {
+              "description": "Array of file information",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TqlFileInfo"
+              }
+            },
+            "responseCode": {
+              "description": "HTTP response code",
+              "example": 200,
+              "type": "integer",
+              "format": "int32"
+            },
+            "failureMessage": {
+              "description": "Error message when executionStatus is failure",
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TqlFileInfo": {
+        "title": "TqlFileInfo",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the TQL file",
+            "example": "myfile.tql",
+            "type": "string"
+          },
+          "size": {
+            "description": "Size of the file in bytes",
+            "example": 1234,
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastModified": {
+            "description": "Last modified timestamp in milliseconds since epoch",
+            "example": 1704067200000,
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DeploymentPlan": {
+        "title": "DeploymentPlan",
+        "type": "object",
+        "properties": {
+          "deploymentGroupName": {
+            "description": "name of deployment group under which to be deployed",
+            "example": "Agent",
+            "type": "string",
+            "minLength": 3
+          },
+          "deploymentType": {
+            "$ref": "#/components/schemas/DeploymentType"
+          },
+          "flows": {
+            "title": "DeploymentPlan",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FlowDeploymentPlan"
+            }
+          }
+        }
+      },
+      "FlowDeploymentPlan": {
+        "title": "FlowDeploymentPlan",
+        "type": "object",
+        "properties": {
+          "flowName": {
+            "description": "name of the flow to be deployed",
+            "example": "SourceFlow",
+            "type": "string",
+            "minLength": 3
+          },
+          "deploymentGroupName": {
+            "description": "name of deployment group under which to be deployed",
+            "example": "Agent",
+            "type": "string",
+            "minLength": 3
+          },
+          "deploymentType": {
+            "$ref": "#/components/schemas/DeploymentType"
+          }
+        }
+      },
+      "DeploymentType": {
+        "title": "DeploymentType",
+        "example": "ANY",
+        "x-enum-elements": [
+          {
+            "name": "ANY",
+            "description": ""
+          },
+          {
+            "name": "ONE",
+            "description": "Same as ANY"
+          },
+          {
+            "name": "ALL",
+            "description": ""
+          }
+        ],
+        "type": "string",
+        "enum": [
+          "ANY",
+          "ALL"
+        ]
+      },
+      "Application": {
+        "title": "Application",
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "description": "namespace under which application is created",
+            "example": "admin",
+            "type": "string",
+            "minLength": 3
+          },
+          "name": {
+            "description": "Name of the Striim Application",
+            "example": "OracleToAzureApp",
+            "type": "string",
+            "minLength": 3
+          },
+          "status": {
+            "description": "current status of the app",
+            "example": "RUNNING",
+            "type": "string"
+          },
+          "links": {
+            "description": "A link relation that points to \"self\" and the link to deployment and sprint resources along with allowed methods on that",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Link"
+            }
+          }
+        }
+      },
+      "Link": {
+        "title": "Link",
+        "type": "object",
+        "properties": {
+          "rel": {
+            "description": "Link relation to object",
+            "type": "string"
+          },
+          "allow": {
+            "description": "The HTTP methods allowed on the href",
+            "type": "string"
+          },
+          "href": {
+            "description": "",
+            "type": "string"
+          }
+        }
+      },
+      "ApplicationParameters": {
+        "title": "ApplicationParameters",
+        "description": "The request body for creation of application. It consists of the `templateId` **or** `templateDefinition`, and the source and target parameters as required by the template.",
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "description": "Name of the template",
+            "example": "oracle-to-database-cdc",
+            "type": "string",
+            "minLength": 3
+          },
+          "templateDefinition": {
+            "$ref": "#/components/schemas/TemplateDefinition"
+          },
+          "applicationName": {
+            "description": "Unique fully qualified name for the application. Must be of format namespace.applicationName",
+            "example": "admin.InvoiceDataMigration",
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 150
+          },
+          "applicationSettings": {
+            "$ref": "#/components/schemas/ApplicationSettings"
+          },
+          "sourceParameters": {
+            "description": "A valid JSON object which should confirm to the source parameters of the template being used",
+            "type": "object"
+          },
+          "targetParameters": {
+            "description": "A valid JSON object which should confirm to the target parameters of the template being used",
+            "type": "object"
+          },
+          "parserParameters": {
+            "description": "A valid JSON object which should confirm to the parser parameters of the template being used",
+            "type": "object"
+          },
+          "formatterParameters": {
+            "description": "A valid JSON object which should confirm to the formatter parameters of the template being used",
+            "type": "object"
+          }
+        }
+      },
+      "ApplicationSettings": {
+        "title": "ApplicationSettings",
+        "type": "object",
+        "properties": {
+          "recovery": {
+            "$ref": "#/components/schemas/Recovery"
+          },
+          "encryption": {
+            "description": "specified whether the application should be created with encryption on",
+            "example": false,
+            "type": "boolean",
+            "default": false
+          },
+          "exceptionHandlers": {
+            "description": "specified the list of exceptions and associated action for this application",
+            "type": "object"
+          }
+        }
+      },
+      "Recovery": {
+        "title": "Recovery",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "description": "",
+            "type": "boolean"
+          },
+          "period": {
+            "description": "",
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TemplateDefinition": {
+        "title": "TemplateDefinition",
+        "description": "Define a dynamic application template",
+        "type": "object",
+        "properties": {
+          "sourceAdapter": {
+            "description": "Source Adapter name",
+            "example": "OracleReader",
+            "type": "string"
+          },
+          "formatter": {
+            "description": "Formatter name",
+            "type": "string"
+          },
+          "parser": {
+            "description": "Parser name",
+            "type": "string"
+          },
+          "targetAdapter": {
+            "description": "Target Adapter name",
+            "example": "DatabaseWriter",
+            "type": "string"
+          }
+        }
+      },
+      "Template": {
+        "title": "Template",
+        "description": "A template acts as a template for integration from a specific source to a specific target. A template defines the list of source and target parameters required.",
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "description": "Unique name of the template",
+            "example": "oracle-to-database-cdc",
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "sourceParameters": {
+            "description": "List of Source parameters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateParameter"
+            }
+          },
+          "targetParameters": {
+            "description": "List of target parameters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateParameter"
+            }
+          },
+          "formatterParameters": {
+            "description": "List of target parameters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateParameter"
+            }
+          },
+          "parserParameters": {
+            "description": "List of target parameters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateParameter"
+            }
+          }
+        }
+      },
+      "TemplateParameter": {
+        "title": "TemplateParameter",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "name of the parameter",
+            "example": "ConnectionURL",
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "parameterType": {
+            "$ref": "#/components/schemas/ParameterType"
+          },
+          "required": {
+            "description": "whether required parameter",
+            "type": "boolean"
+          },
+          "defaultValue": {
+            "description": "Default value to be used if one is not provided. Valid only for non-required parameters.",
+            "type": "object"
+          }
+        }
+      },
+      "ParameterType": {
+        "title": "ParameterType",
+        "example": "string",
+        "x-enum-elements": [
+          {
+            "name": "Enum_string",
+            "description": ""
+          },
+          {
+            "name": "securestring",
+            "description": ""
+          },
+          {
+            "name": "Enum_int",
+            "description": ""
+          },
+          {
+            "name": "Enum_bool",
+            "description": ""
+          },
+          {
+            "name": "Enum_object",
+            "description": ""
+          },
+          {
+            "name": "secureObject",
+            "description": ""
+          },
+          {
+            "name": "array",
+            "description": ""
+          }
+        ],
+        "type": "string",
+        "enum": [
+          "string",
+          "securestring",
+          "int",
+          "bool",
+          "object",
+          "secureObject",
+          "array"
+        ]
+      },
+      "OracleLineageMetadataObject": {
+        "title": "OracleLineageMetadataObject",
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "description": "fileName",
+            "type": "string"
+          },
+          "status": {
+            "description": "status of the file",
+            "type": "string"
+          },
+          "directoryName": {
+            "description": "directoryName",
+            "type": "string"
+          },
+          "fileCreationTime": {
+            "description": "the time at which the archive log file was created",
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfEvents": {
+            "description": "total number of events",
+            "type": "integer",
+            "format": "int32"
+          },
+          "threadId": {
+            "description": "thread ID",
+            "type": "string"
+          },
+          "firstChangeNumber": {
+            "description": "Start SCN",
+            "type": "string"
+          },
+          "lastChangeNumber": {
+            "description": "End SCN",
+            "type": "string"
+          }
+        }
+      },
+      "FileLineageMetadataObject": {
+        "title": "FileLineageMetadataObject",
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "description": "fileName",
+            "type": "string"
+          },
+          "status": {
+            "description": "status of the file",
+            "type": "string"
+          },
+          "directoryName": {
+            "description": "directoryName",
+            "type": "string"
+          },
+          "fileCreationTime": {
+            "description": "the time at which the archive log file was created",
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfEvents": {
+            "description": "total number of events",
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    }
+  },
+  "x-tagGroups": [
+    {
+      "name": "Striim TQL Files REST API version 5.4.0.2",
+      "tags": [
+        "tqlfiles"
+      ]
+    },
+    {
+      "name": "Striim Application Management REST API version 3.10.3",
+      "tags": [
+        "application",
+        "template",
+        "applicationMetadata",
+        "checkpoint",
+        "monitoring",
+        "tungsten"
+      ]
+    }
+  ]
+}

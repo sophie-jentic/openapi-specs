@@ -1,0 +1,692 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "procurement plans API",
+    "description": "API per il recupero dei data ordering",
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/PAOLOBERRY42/procurement-plans-api/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://dco-api.iride.earth/iride/pc/api-v1",
+      "description": "Base url per ambiente test"
+    }
+  ],
+  "paths": {
+    "/ordering/{id}": {
+      "get": {
+        "operationId": "getOrderingByActivation",
+        "summary": "recupero degli ordering a partire dall'attivazione",
+        "description": "Recupera la lista degli ordering plan",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "identificativo dell'attivazione",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object con i dettagli dell'oggetto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOrdering"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest, richiesta incompleta. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Errore generico elaborazione server. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasource": {
+      "get": {
+        "operationId": "getDataSourceListOrderingByActivation",
+        "summary": "recupero delle data source",
+        "description": "Recupera la lista delle sorgenti dati",
+        "responses": {
+          "200": {
+            "description": "JSON object con i dettagli dell'oggetto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDataSource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest, richiesta incompleta. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Errore generico elaborazione server. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/datasource/{id}/collections": {
+      "get": {
+        "operationId": "getCollectionsByDataSource",
+        "summary": "recupero la lista delle collections di una fonte dati",
+        "description": "Recupera la lista delle collections",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "identificativo della fonte dati",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON object con i dettagli dell'oggetto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageCollections"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest, richiesta incompleta. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Errore generico elaborazione server. Dettagli dell'errore riscontrato",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dco": {
+      "post": {
+        "operationId": "createOrderingPlan",
+        "summary": "creazione ordering plan",
+        "description": "Creazione ordering plan",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "smServiceRequestId": {
+                    "type": "string"
+                  },
+                  "somDataCollectionRequestId": {
+                    "type": "integer"
+                  },
+                  "somPsgId": {
+                    "type": "integer"
+                  },
+                  "somPsId": {
+                    "type": "integer"
+                  },
+                  "inputs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DcoInput"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON object con i dettagli dell'oggetto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDco"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/svc": {
+      "post": {
+        "operationId": "executeSvc",
+        "summary": "esecuzione delle SVC",
+        "description": "Avvia la pipeline di processing delle SVC per una attivazione. In una sistematica, posso avere pi\u00f9 run SVC per la stessa attivazione, con somPsId diverse. Per on-demand, posso avere pi\u00f9 run SVC per la stessa attivazione ma con stessa somPsId Gli input che sono stati usati per quel run sono associati al run tramite [smServiceRequestId,smPsgId,SmPsId]",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SvcRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "risultato dell'esecuzione delle SVC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageSvc"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest, richiesta incompleta o parametri non validi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "errore generico lato server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IsoDate": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "EwktGeometry": {
+        "type": "string",
+        "format": "ewkt",
+        "description": "Geometria in formato ewkt",
+        "example": "SRID=4326;POLYGON ((11.8 44.2, 11.9 44.5, 12.2 44.5, 12.2 44.2, 11.8 44.2))"
+      },
+      "GeoJson": {
+        "description": "geometria dell'area di interesse in formato GEOJSON",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "ScheduleStatus": {
+        "type": "string",
+        "enum": [
+          "EXPIRED",
+          "FAILED",
+          "PARTIALLY_SATISFIED",
+          "PLANNED",
+          "FEASIBILITY",
+          "SATISFIED"
+        ]
+      },
+      "Error": {
+        "description": "Struttura della busta per TUTTI i messaggi di risposta",
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "default": null
+          }
+        }
+      },
+      "MessageOrdering": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "ordering_plans": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Ordering"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MessageDataSource": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DataSource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MessageCollections": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "collections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Collections"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MessageDco": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "dcoDataCollectionBatchId": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "example": "ACCEPTED"
+              }
+            }
+          }
+        }
+      },
+      "MessageSvc": {
+        "type": "object",
+        "properties": {
+          "msg": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "hnd": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "activationId": {
+                "type": "integer"
+              },
+              "serviceRequest": {
+                "type": "integer"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SvcResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SvcRequest": {
+        "type": "object",
+        "properties": {
+          "smServiceRequestId": {
+            "type": "integer"
+          },
+          "somPsgId": {
+            "type": "integer"
+          },
+          "somPsId": {
+            "type": "integer"
+          },
+          "somSvcActivationId": {
+            "type": "integer"
+          },
+          "svc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SvcProduct"
+            }
+          }
+        }
+      },
+      "SvcProduct": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "processing_params": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "SvcResult": {
+        "type": "object",
+        "properties": {
+          "svc": {
+            "type": "string"
+          },
+          "schedule_id": {
+            "type": "integer"
+          },
+          "result": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Acquisition": {
+        "type": "object",
+        "properties": {
+          "ref_date": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "id_status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "ORDERED",
+              "ASSET_DELIVERED",
+              "ASSET_RETRIEVED",
+              "METADATA_CREATED",
+              "ASSET_REJECTED",
+              "NOT_FULLFILLED"
+            ]
+          },
+          "params": {
+            "type": "string"
+          }
+        }
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "end_date": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "annotation": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "constraints": {
+            "type": "string"
+          },
+          "start_date": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScheduleStatus"
+          },
+          "acquisitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Acquisition"
+            }
+          }
+        }
+      },
+      "Ordering": {
+        "type": "object",
+        "properties": {
+          "end_date": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "closing_criteria": {
+            "type": "string"
+          },
+          "manual_acquisition": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "params": {
+            "type": "string"
+          },
+          "start_date": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScheduleStatus"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Schedule"
+            }
+          }
+        }
+      },
+      "SourceCategory": {
+        "type": "string",
+        "enum": [
+          "Commercial",
+          "IRIDE",
+          "Legacy"
+        ]
+      },
+      "DataSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "descr": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "id_source_category": {
+            "$ref": "#/components/schemas/SourceCategory"
+          }
+        }
+      },
+      "Collections": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "property": {
+            "type": "string"
+          },
+          "id_mission_class": {
+            "type": "string"
+          },
+          "geom": {
+            "$ref": "#/components/schemas/EwktGeometry"
+          }
+        }
+      },
+      "DcoInput": {
+        "type": "object",
+        "properties": {
+          "somInputId": {
+            "type": "integer"
+          },
+          "aoi": {
+            "$ref": "#/components/schemas/GeoJson"
+          },
+          "inputStartDate": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "inputEndDate": {
+            "$ref": "#/components/schemas/IsoDate"
+          },
+          "frequency": {
+            "type": "integer"
+          },
+          "manualAcq": {
+            "type": "boolean"
+          },
+          "acqCount": {
+            "type": "integer"
+          },
+          "latency": {
+            "type": "string"
+          },
+          "additionalFilters": {
+            "type": "string"
+          },
+          "processingParams": {
+            "type": "string"
+          },
+          "inputResultFolder": {
+            "type": "string"
+          },
+          "dcoDataProvider": {
+            "type": "object",
+            "properties": {
+              "dataProviderId": {
+                "type": "string"
+              },
+              "datasetId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

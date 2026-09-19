@@ -1,0 +1,2092 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Vaggo Parking System API",
+    "description": "API for Vaggo Parking System based on provided requirements and business rules.\nThis system manages user registration, vehicle registration, parking spot and establishment management,\nreservation workflows, chat, reports, and evaluations.",
+    "termsOfService": "https://swagger.io/terms/",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.0",
+    "x-jentic-source-url": "https://api.swaggerhub.com/apis/vaggo/Veggo/1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.vaggo.com/v1",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "user",
+      "description": "Operations about users including registration, login, and profile management"
+    },
+    {
+      "name": "vehicle",
+      "description": "Operations about vehicle registration and management"
+    },
+    {
+      "name": "establishment",
+      "description": "Operations about establishments and parking spots (vagas)"
+    },
+    {
+      "name": "reservation",
+      "description": "Operations about reservation requests and approvals"
+    },
+    {
+      "name": "chat",
+      "description": "Internal chat between users and parking spot owners"
+    },
+    {
+      "name": "report",
+      "description": "Reporting and suspension of parking spots"
+    },
+    {
+      "name": "evaluation",
+      "description": "Ratings and reviews for parking spots and users"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Register a new user",
+        "description": "Register a user with basic data and mandatory acceptance of terms of use.",
+        "operationId": "registerUser",
+        "requestBody": {
+          "description": "User registration data including acceptance of terms",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully; account active; confirmation email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or terms not accepted"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "User login and authentication",
+        "description": "Authenticate user and start a session securely.",
+        "operationId": "loginUser",
+        "requestBody": {
+          "description": "User login credentials",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login; session started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "Authentication token"
+                    },
+                    "expiresIn": {
+                      "type": "integer",
+                      "description": "Token expiration time in seconds"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid username or password"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get user profile by ID",
+        "description": "Retrieve user details by user ID.",
+        "operationId": "getUserById",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update user profile",
+        "description": "Update user data; user must be logged in.",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user to update"
+          }
+        ],
+        "requestBody": {
+          "description": "Updated user data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Delete user account",
+        "description": "Delete user account; user must be logged in.",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "ID of the user to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          },
+          "400": {
+            "description": "Invalid user ID"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles": {
+      "post": {
+        "tags": [
+          "vehicle"
+        ],
+        "summary": "Register a new vehicle",
+        "description": "Register a vehicle for a logged-in user; multiple vehicles allowed.",
+        "operationId": "registerVehicle",
+        "requestBody": {
+          "description": "Vehicle data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or user not logged in"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}": {
+      "get": {
+        "tags": [
+          "vehicle"
+        ],
+        "summary": "Get vehicle details by ID",
+        "description": "Retrieve vehicle details.",
+        "operationId": "getVehicleById",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Vehicle ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicle details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vehicle"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "vehicle"
+        ],
+        "summary": "Update vehicle details",
+        "description": "Update vehicle data; user must be logged in.",
+        "operationId": "updateVehicle",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Vehicle ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Updated vehicle data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vehicle updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Vehicle not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "vehicle"
+        ],
+        "summary": "Delete a vehicle",
+        "description": "Delete vehicle; user must be logged in.",
+        "operationId": "deleteVehicle",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Vehicle ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicle deleted successfully"
+          },
+          "400": {
+            "description": "Invalid vehicle ID"
+          },
+          "404": {
+            "description": "Vehicle not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/establishments": {
+      "post": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Register a new establishment",
+        "description": "Register an establishment; user must be logged in.",
+        "operationId": "registerEstablishment",
+        "requestBody": {
+          "description": "Establishment data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstablishmentRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Establishment registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or user not logged in"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/establishments/{establishmentId}": {
+      "get": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Get establishment details by ID",
+        "description": "Retrieve establishment details.",
+        "operationId": "getEstablishmentById",
+        "parameters": [
+          {
+            "name": "establishmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Establishment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Establishment details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Establishment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Establishment not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Update establishment details",
+        "description": "Update establishment data; user must be logged in.",
+        "operationId": "updateEstablishment",
+        "parameters": [
+          {
+            "name": "establishmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Establishment ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Updated establishment data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstablishmentUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Establishment updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Establishment not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Delete an establishment",
+        "description": "Delete establishment; user must be logged in.",
+        "operationId": "deleteEstablishment",
+        "parameters": [
+          {
+            "name": "establishmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Establishment ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Establishment deleted successfully"
+          },
+          "400": {
+            "description": "Invalid establishment ID"
+          },
+          "404": {
+            "description": "Establishment not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/establishments/{establishmentId}/spots": {
+      "post": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Register a new parking spot (vaga) for an establishment",
+        "description": "Register a parking spot with parameters; user must be logged in.",
+        "operationId": "registerSpot",
+        "parameters": [
+          {
+            "name": "establishmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Establishment ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Parking spot data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpotRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Parking spot registered successfully; pending approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Spot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or user not logged in"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spots/{spotId}": {
+      "get": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Get parking spot details by ID",
+        "description": "Retrieve parking spot details.",
+        "operationId": "getSpotById",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking spot details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Spot"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Update parking spot details",
+        "description": "Update parking spot data; user must be logged in.",
+        "operationId": "updateSpot",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Updated parking spot data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpotUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parking spot updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Delete a parking spot",
+        "description": "Delete parking spot; user must be logged in.",
+        "operationId": "deleteSpot",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parking spot deleted successfully"
+          },
+          "400": {
+            "description": "Invalid parking spot ID"
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spots/{spotId}/approval": {
+      "post": {
+        "tags": [
+          "establishment"
+        ],
+        "summary": "Approve, reject or suspend a parking spot registration",
+        "description": "Administrative approval process for parking spots.",
+        "operationId": "approveSpot",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Approval decision and optional comments",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "rejected",
+                      "suspended"
+                    ]
+                  },
+                  "comments": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval status updated"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spots/search": {
+      "get": {
+        "tags": [
+          "reservation"
+        ],
+        "summary": "Search available parking spots by location and filters",
+        "description": "Search spots by GPS coordinates or destination with filters.",
+        "operationId": "searchSpots",
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "Latitude for search location"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "Longitude for search location"
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5
+            },
+            "description": "Search radius in kilometers"
+          },
+          {
+            "name": "vehicleDimensions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Vehicle dimensions filter (e.g., \"small\", \"medium\", \"large\")"
+          },
+          {
+            "name": "allowedVehicleModels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Allowed vehicle models filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available parking spots matching criteria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Spot"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search parameters"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservations": {
+      "post": {
+        "tags": [
+          "reservation"
+        ],
+        "summary": "Request a reservation for a parking spot",
+        "description": "Request reservation; user must have at least one registered vehicle.",
+        "operationId": "requestReservation",
+        "requestBody": {
+          "description": "Reservation request data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation request created; pending owner approval; confirmation code generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or user/vehicle not eligible"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reservations/{reservationId}": {
+      "get": {
+        "tags": [
+          "reservation"
+        ],
+        "summary": "Get reservation details by ID",
+        "description": "Retrieve reservation details.",
+        "operationId": "getReservationById",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation details retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reservation not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "reservation"
+        ],
+        "summary": "Approve or reject a reservation request",
+        "description": "Owner approves or rejects reservation requests.",
+        "operationId": "updateReservationStatus",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Approval decision",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "approved",
+                      "rejected"
+                    ]
+                  },
+                  "comments": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reservation status updated"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Reservation not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "reservation"
+        ],
+        "summary": "Cancel a reservation",
+        "description": "User can cancel reservation within allowed time; penalties may apply if late.",
+        "operationId": "cancelReservation",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation cancelled successfully"
+          },
+          "400": {
+            "description": "Cancellation not allowed or invalid request"
+          },
+          "404": {
+            "description": "Reservation not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chats/{reservationId}": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Send a chat message related to a reservation",
+        "description": "Communication between user and spot owner for clarifications.",
+        "operationId": "sendChatMessage",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Chat message content",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "message"
+                ],
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent and saved"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Reservation not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Get chat history for a reservation",
+        "description": "Retrieve chat messages related to a reservation.",
+        "operationId": "getChatHistory",
+        "parameters": [
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat history retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessage"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reservation not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/spots/{spotId}": {
+      "post": {
+        "tags": [
+          "report"
+        ],
+        "summary": "Report a parking spot for irregularities",
+        "description": "Users can report spots; system suspends after recurring valid reports.",
+        "operationId": "reportSpot",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Report details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report logged; suspension applied if threshold reached"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/spots/{spotId}/reanalyze": {
+      "post": {
+        "tags": [
+          "report"
+        ],
+        "summary": "Request reanalysis of a suspended parking spot",
+        "description": "Owner can request administrative review of suspension.",
+        "operationId": "requestSpotReanalysis",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reanalysis request submitted"
+          },
+          "400": {
+            "description": "Invalid request or spot not suspended"
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluations": {
+      "post": {
+        "tags": [
+          "evaluation"
+        ],
+        "summary": "Submit an evaluation for a parking spot or user",
+        "description": "Only users with completed reservations can evaluate.",
+        "operationId": "submitEvaluation",
+        "requestBody": {
+          "description": "Evaluation data",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Evaluation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evaluation saved; public average updated"
+          },
+          "400": {
+            "description": "Invalid input or user not eligible"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluations/spots/{spotId}": {
+      "get": {
+        "tags": [
+          "evaluation"
+        ],
+        "summary": "Get evaluations for a parking spot",
+        "description": "Retrieve list and average rating for a spot.",
+        "operationId": "getSpotEvaluations",
+        "parameters": [
+          {
+            "name": "spotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Parking spot ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of evaluations and average rating",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parking spot not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluations/users/{userId}": {
+      "get": {
+        "tags": [
+          "evaluation"
+        ],
+        "summary": "Get evaluations for a user",
+        "description": "Retrieve list and average rating for a user.",
+        "operationId": "getUserEvaluations",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of evaluations and average rating",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegistration": {
+        "type": "object",
+        "required": [
+          "username",
+          "email",
+          "password",
+          "acceptTerms"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "strongPassword123"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "acceptTerms": {
+            "type": "boolean",
+            "description": "Must be true to accept terms of use and responsibility policy",
+            "example": true
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 123
+          },
+          "username": {
+            "type": "string",
+            "example": "johndoe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe"
+          }
+        }
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          }
+        }
+      },
+      "VehicleRegistration": {
+        "type": "object",
+        "required": [
+          "licensePlate",
+          "model",
+          "dimensions",
+          "year"
+        ],
+        "properties": {
+          "licensePlate": {
+            "type": "string",
+            "example": "ABC-1234"
+          },
+          "model": {
+            "type": "string",
+            "example": "Sedan"
+          },
+          "dimensions": {
+            "type": "string",
+            "example": "4.5m x 1.8m x 1.4m"
+          },
+          "year": {
+            "type": "integer",
+            "example": 2018
+          }
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 456
+          },
+          "licensePlate": {
+            "type": "string",
+            "example": "ABC-1234"
+          },
+          "model": {
+            "type": "string",
+            "example": "Sedan"
+          },
+          "dimensions": {
+            "type": "string",
+            "example": "4.5m x 1.8m x 1.4m"
+          },
+          "year": {
+            "type": "integer",
+            "example": 2018
+          },
+          "ownerId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 123
+          }
+        }
+      },
+      "VehicleUpdate": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          }
+        }
+      },
+      "EstablishmentRegistration": {
+        "type": "object",
+        "required": [
+          "name",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Vaggo Parking Lot"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of ownership documents or permits"
+          }
+        }
+      },
+      "Establishment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 789
+          },
+          "name": {
+            "type": "string",
+            "example": "Vaggo Parking Lot"
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main St, City"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EstablishmentUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SpotRegistration": {
+        "type": "object",
+        "required": [
+          "size",
+          "allowedVehicleModels",
+          "allowedVehicleDimensions",
+          "operatingHours"
+        ],
+        "properties": {
+          "size": {
+            "type": "string",
+            "example": "medium"
+          },
+          "allowedVehicleModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Sedan",
+              "SUV"
+            ]
+          },
+          "allowedVehicleDimensions": {
+            "type": "string",
+            "example": "up to 5m length"
+          },
+          "operatingHours": {
+            "type": "string",
+            "example": "08:00-20:00"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Documents proving ownership or permission"
+          }
+        }
+      },
+      "Spot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1011
+          },
+          "establishmentId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 789
+          },
+          "size": {
+            "type": "string",
+            "example": "medium"
+          },
+          "allowedVehicleModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedVehicleDimensions": {
+            "type": "string"
+          },
+          "operatingHours": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "suspended"
+            ],
+            "example": "pending"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SpotUpdate": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string"
+          },
+          "allowedVehicleModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedVehicleDimensions": {
+            "type": "string"
+          },
+          "operatingHours": {
+            "type": "string"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReservationRequest": {
+        "type": "object",
+        "required": [
+          "spotId",
+          "vehicleId",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "spotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2022
+          },
+          "spotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled"
+            ],
+            "example": "pending"
+          },
+          "confirmationCode": {
+            "type": "string",
+            "example": "ABC123XYZ"
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reservationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "senderId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Evaluation": {
+        "type": "object",
+        "required": [
+          "reservationId",
+          "rating",
+          "targetType",
+          "targetId"
+        ],
+        "properties": {
+          "reservationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "spot",
+              "user"
+            ]
+          },
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "EvaluationSummary": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "format": "float"
+          },
+          "evaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Evaluation"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
+    }
+  }
+}
